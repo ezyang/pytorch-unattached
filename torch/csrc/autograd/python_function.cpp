@@ -697,8 +697,8 @@ PyObject *THPFunction_apply(PyObject *cls, PyObject *_inputs)
 
   // Prepare inputs and allocate context (grad fn)
   auto info_pair = unpack_input<false>(_inputs);
-  auto& unpacked_input = info_pair.first;
-  auto& input_info = info_pair.second;
+  UnpackedInput& unpacked_input = info_pair.first;
+  InputFlags& input_info = info_pair.second;
   bool is_volatile = input_info.flags.is_volatile;
   ctx->cdata.set_flags(std::move(input_info.flags));
   ctx->needs_input_grad = input_info.needs_input_grad.release();
@@ -719,6 +719,10 @@ PyObject *THPFunction_apply(PyObject *cls, PyObject *_inputs)
   if (!forward_fn) return NULL;
   THPObjectPtr tensor_outputs(PyObject_CallObject(forward_fn, ctx_tensor_input));
   if (!tensor_outputs) return NULL;
+
+  // Create trace
+  THPObjectPtr fwd_obj = PyObject_CallFunctionObjArgs(cls, NULL);
+  if (!fwd_obj) return NULL;
 
   return process_outputs(ctx, unpacked_input, std::move(tensor_outputs), is_volatile);
   END_HANDLE_TH_ERRORS

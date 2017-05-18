@@ -35,6 +35,7 @@ class Variable(_C._VariableBase):
         is_leaf: Boolean indicating if the Variable is a graph leaf (i.e
             if it was created by the user).
         grad_fn: Gradient function graph trace.
+        trace_fn: Original function graph trace
 
     Parameters:
         data (any tensor class): Tensor to wrap.
@@ -218,11 +219,13 @@ class Variable(_C._VariableBase):
         """
         result = NoGrad()(self)  # this is needed, because it merges version counters
         result._grad_fn = None
+        result._trace_fn = None
         return result
 
     def detach_(self):
         """Detaches the Variable from the graph that created it, making it a leaf."""
         self._grad_fn = None
+        self._trace_fn = None
         self.requires_grad = False
 
     def contiguous(self):
