@@ -54,7 +54,7 @@ def parallelCCompile(self, sources, output_dir=None, macros=None,
         src, ext = build[obj]
         self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
     num_jobs = multiprocessing.cpu_count()
-    multiprocessing.pool.ThreadPool(num_jobs).map(_single_compile, objects)
+    list(multiprocessing.pool.ThreadPool(num_jobs).imap(_single_compile, objects))
 
     return objects
 
