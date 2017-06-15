@@ -16,6 +16,7 @@
 #include "torch/csrc/DynamicTypes.h"
 #include "torch/csrc/utils/auto_gil.h"
 #include "torch/csrc/utils/auto_gpu.h"
+#include "torch/csrc/utils/python_tuples.h"
 #include "torch/csrc/Exceptions.h"
 
 #ifdef WITH_CUDA
@@ -734,8 +735,8 @@ static void _prepare_grad_output(THPFunction *self, THPObjectPtr& raw_grad_outpu
   int num_grad_output = PyTuple_GET_SIZE(raw_grad_output.get());
   // First, check if any of grad_outputs is None. If not, there's nothing to do
   bool has_none = false;
-  for (int i = 0; i < num_grad_output; i++) {
-    has_none |= PyTuple_GET_ITEM(raw_grad_output.get(), i) == Py_None;
+  for (auto p : PyTuple(raw_grad_output.get())) {
+    has_none |= p == Py_None;
   }
   if (!has_none)
       return;
