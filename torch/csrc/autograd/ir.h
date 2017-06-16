@@ -38,8 +38,11 @@ struct Node {
 };
 
 struct InputNode : public Node {
-  InputNode()
+  std::string debug_name;
+
+  InputNode(std::string debug_name)
     : Node({})
+    , debug_name(debug_name)
     {}
   virtual std::string name() const override;
 };
@@ -54,6 +57,7 @@ struct PyNode : public Node {
   THPObjectPtr pyobj;
 };
 
-void printGraph(const Node*, int);
+void printFreeVariables(const Node*);
+void printGraph(const Node*);
 
 }}

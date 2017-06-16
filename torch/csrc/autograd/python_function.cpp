@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <exception>
+#include <sstream>
 #include <THPP/THPP.h>
 
 #include "THP.h"
@@ -1089,7 +1090,12 @@ variable_list interpret_node(std::shared_ptr<Node> node, input_map& inputs, memo
         input_vars.emplace_back(interpret_output(input, inputs, memo));
     }
     if (auto n = dynamic_cast<InputNode*>(node.get())) {
-        return {inputs.at(n)};
+        auto g = inputs.find(n);
+        if (g == inputs.end()) {
+          throw std::logic_error("Missing input " + n->name());
+        } else {
+          return {inputs.at(n)};
+        }
     } else if (auto n = dynamic_cast<PyNode*>(node.get())) {
         auto& cls = n->pyobj;
         // Massage variables into form where we can THPFunction_apply it.

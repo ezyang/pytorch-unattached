@@ -70,7 +70,7 @@ auto Variable::get_input_node() -> std::shared_ptr<InputNode> {
   auto result = input_node.lock();
   if (result) return result;
 
-  result = std::make_shared<InputNode>();
+  result = std::make_shared<InputNode>("Unknown");
   input_node = result;
   return result;
 }
