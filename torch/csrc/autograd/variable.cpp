@@ -3,6 +3,8 @@
 #include "torch/csrc/autograd/functions/accumulate_grad.h"
 #include "torch/csrc/utils/auto_gpu.h"
 
+#include <sstream>
+
 using namespace torch;
 using namespace thpp;
 
@@ -20,6 +22,9 @@ Variable::Variable(
     , requires_grad(requires_grad)
     , is_volatile(is_volatile)
     , output_nr(0)
+    , file("unknown")
+    , line(0)
+    , func("")
     , pyobj(nullptr)
 {
   if (!this->data) {
@@ -38,6 +43,9 @@ Variable::Variable(
     , requires_grad(grad_fn->is_executable)
     , is_volatile(false)
     , output_nr(grad_fn->num_inputs++)
+    , file("unknown")
+    , line(0)
+    , func("")
     , pyobj(nullptr)
 {
   if (!this->data) {
@@ -70,7 +78,9 @@ auto Variable::get_input_node() -> std::shared_ptr<InputNode> {
   auto result = input_node.lock();
   if (result) return result;
 
-  result = std::make_shared<InputNode>("Unknown");
+  std::stringstream ss;
+  ss << file << ":" << line << "(" << func << ")";
+  result = std::make_shared<InputNode>(ss.str());
   input_node = result;
   return result;
 }
@@ -110,6 +120,9 @@ auto SavedVariable::unpack(std::shared_ptr<Function> saved_for) -> std::shared_p
   if (requires_grad && !new_var->grad_fn && grad_accumulator.expired())
     throw std::logic_error("No grad accumulator for a saved leaf!");
   new_var->grad_accumulator = grad_accumulator;
+  new_var->file = file;
+  new_var->line = line;
+  new_var->func = func;
 
   return new_var;
 }

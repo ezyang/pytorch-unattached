@@ -1,7 +1,10 @@
+#include <Python.h>
+#include <frameobject.h>
 #include "torch/csrc/autograd/python_variable.h"
 #include "torch/csrc/autograd/python_ir.h"
 
 #include <structmember.h>
+#include <iostream>
 
 #include "THP.h"
 #include "torch/csrc/DynamicTypes.h"
@@ -11,6 +14,7 @@
 #include "torch/csrc/autograd/functions/accumulate_grad.h"
 #include "torch/csrc/cuda/AutoGPU.h"
 #include "torch/csrc/utils/auto_gil.h"
+#include "torch/csrc/utils/python_strings.h"
 #include "torch/csrc/Exceptions.h"
 #include <THPP/tensors/THTensor.hpp>
 
@@ -53,6 +57,9 @@ PyObject * THPVariable_NewWithFunction(PyObject *data, const std::shared_ptr<tor
 {
   THPUtils_assert(THPModule_isTensor(data), "data must be a Tensor");
   auto v = std::make_shared<Variable>(torch::createTensor(data), grad_fn->is_executable, false);
+  v->file = __FILE__;
+  v->line = __LINE__;
+  v->func = "THPVariable_NewWithFunction";
   v->grad_fn = grad_fn;
   PyObject* obj = THPVariable_NewWithVar((PyTypeObject*)THPVariableClass, v);
   if (obj) {
@@ -67,6 +74,9 @@ PyObject * THPVariable_NewWithFunction(PyObject *data, const std::shared_ptr<tor
 PyObject * THPVariable_NewVolatile(PyObject *data)
 {
   auto v = std::make_shared<Variable>(torch::createTensor(data), false, true);
+  v->file = __FILE__;
+  v->line = __LINE__;
+  v->func = "THPVariable_NewVolatile";
   PyObject* obj = THPVariable_NewWithVar((PyTypeObject*)THPVariableClass, v);
   if (obj) {
     v->pyobj = obj;
@@ -80,6 +90,9 @@ PyObject * THPVariable_NewVolatile(PyObject *data)
 PyObject * THPVariable_NewLeaf(PyObject *data)
 {
   auto v = std::make_shared<Variable>(torch::createTensor(data), false, false);
+  v->file = __FILE__;
+  v->line = __LINE__;
+  v->func = "THPVariable_NewLeaf";
   PyObject* obj = THPVariable_NewWithVar((PyTypeObject*)THPVariableClass, v);
   if (obj) {
     v->pyobj = obj;
@@ -165,6 +178,18 @@ PyObject *THPVariable_pynew(PyTypeObject *type, PyObject *args, PyObject *kwds)
   } else {
     var = std::make_shared<Variable>(torch::createTensor(data), requires_grad, is_volatile);
   }
+  var->file = __FILE__;
+  var->line = __LINE__;
+  var->func = "THPVariable_pynew";
+
+  PyThreadState *tstate = PyThreadState_GET();
+  if (tstate != NULL && tstate->frame != NULL) {
+    PyFrameObject *frame = tstate->frame;
+    var->line = PyCode_Addr2Line(frame->f_code, frame->f_lasti);
+    var->file = THPUtils_unpackString(frame->f_code->co_filename);
+    var->func = THPUtils_unpackString(frame->f_code->co_name);
+  }
+
   PyObject* self = THPVariable_NewWithVar(type, var);
   if (self) {
     var->pyobj = self;

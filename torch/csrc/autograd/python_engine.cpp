@@ -262,6 +262,7 @@ PyObject *THPEngine_run_forward(THPEngine *self, PyObject *args, PyObject *kwarg
         "tuple is not a Variable", i);
     auto& output_var = ((THPVariable*)output_obj)->cdata;
     outputs.emplace_back(output_var->trace_fn, output_var->output_nr);
+    printGraph(output_var->trace_fn.get());
   }
 
   variable_list results = interpret(outputs, inputs);

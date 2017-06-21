@@ -48,6 +48,9 @@ struct Variable : std::enable_shared_from_this<Variable> {
     bool requires_grad;
     bool is_volatile;
     int expected_version;
+    std::string file;
+    int line;
+    std::string func;
 
     std::shared_ptr<Variable> unpack(std::shared_ptr<Function> saved_for=nullptr);
 
@@ -102,6 +105,10 @@ struct Variable : std::enable_shared_from_this<Variable> {
   // We use this to make sure we can setup the backwards trace
   // correctly when this variable is passed to another function.
   int output_nr;
+  // Debugging stuff
+  std::string file;
+  int line;
+  std::string func;
   PyObject *pyobj;  // weak reference
 };
 
