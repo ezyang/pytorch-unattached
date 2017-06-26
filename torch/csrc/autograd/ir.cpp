@@ -94,7 +94,7 @@ public:
   }
   void visitLocals(std::shared_ptr<Locals> e, int indent) {
     s << std::string(indent, ' ');
-    s << "Ret ";
+    s << "(";
     bool first = true;
     for (auto l : e->locals) {
       if (first) {
@@ -104,6 +104,7 @@ public:
       }
       visitLocal(l);
     }
+    s << ")";
   }
 };
 
