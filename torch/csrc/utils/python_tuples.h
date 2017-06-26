@@ -2,6 +2,7 @@
 
 #include <Python.h>
 
+// Comparing iterators from different tuples is undefined behavior
 class PyTuple {
 private:
   PyObject* tuple;
@@ -35,7 +36,7 @@ public:
     proxy operator*() const { return proxy(tuple, index); }
     iterator& operator++() { index++; return *this; }
     iterator operator++(int) { auto r = *this; ++(*this); return r; }
-    bool operator==(iterator other) const { return tuple == other.tuple && index == other.index; }
+    bool operator==(iterator other) const { return index == other.index; }
     bool operator!=(iterator other) const { return !(*this == other); }
     friend difference_type operator-(iterator it1, iterator it2) { return it1.index - it2.index; }
 
