@@ -35,6 +35,7 @@ static PyObject* THPVariable_NewWithVar(PyTypeObject* type, std::shared_ptr<Vari
       v->cdata->grad_fn = THPFunction_asFunction((THPFunction*)fn->obj);
     }
   }
+  std::cerr << "new_with_var " << obj << " " << ((THPVariable*)obj)->cdata << std::endl;
   return obj;
 }
 
@@ -104,6 +105,7 @@ PyObject * THPVariable_NewLeaf(PyObject *data)
 
 static int THPVariable_traverse(THPVariable *self, visitproc visit, void *arg)
 {
+  std::cerr << "traverse " << self << std::endl;
   Py_VISIT(self->data);
   Py_VISIT(self->backward_hooks);
   if (self->cdata) {
@@ -121,6 +123,7 @@ static int THPVariable_traverse(THPVariable *self, visitproc visit, void *arg)
 
 static int THPVariable_clear(THPVariable *self)
 {
+  std::cerr << "clear " << self << " " << self->cdata << std::endl;
   Py_CLEAR(self->data);
   Py_CLEAR(self->backward_hooks);
   if (self->cdata) {
@@ -135,6 +138,7 @@ static int THPVariable_clear(THPVariable *self)
 
 static void THPVariable_dealloc(THPVariable* self)
 {
+  std::cerr << "dealloc " << self << " " << self->cdata << std::endl;
   PyObject_GC_UnTrack(self);
   THPVariable_clear(self);
   self->cdata.~shared_ptr<Variable>();
@@ -197,6 +201,7 @@ PyObject *THPVariable_pynew(PyTypeObject *type, PyObject *args, PyObject *kwds)
     ((THPVariable*)self)->data = data;
     Py_INCREF(data);
   }
+  std::cerr << "new " << self << " " << var << std::endl;
 
   return self;
 }

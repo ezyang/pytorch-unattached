@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include <exception>
 #include <sstream>
+#include <iostream>
 #include <THPP/THPP.h>
 
 #include "THP.h"
@@ -233,6 +234,7 @@ auto PyFunction::name() -> std::string {
 // Traverse and clear are required for supporting Python's GC cycle handling.
 static int THPFunction_traverse(THPFunction *self, visitproc visit, void *arg)
 {
+  std::cerr << "fn traverse " << self << std::endl;
   for (auto& hook : self->cdata.pre_hooks) {
     if (auto pyhook = dynamic_cast<PyFunctionPreHook*>(hook.get())) {
       Py_VISIT(pyhook->dict);
@@ -252,6 +254,7 @@ static int THPFunction_traverse(THPFunction *self, visitproc visit, void *arg)
 
 static int THPFunction_clear(THPFunction *self)
 {
+  std::cerr << "fn clear " << self << std::endl;
   self->cdata.num_inputs = 0;
 
   Py_CLEAR(self->needs_input_grad);
@@ -283,6 +286,7 @@ static int THPFunction_clear(THPFunction *self)
 
 static void THPFunction_dealloc(THPFunction* self)
 {
+  std::cerr << "fn dealloc " << self << std::endl;
   PyObject_GC_UnTrack(self);
   THPFunction_clear(self);
   self->cdata.~PyFunction();
@@ -299,6 +303,7 @@ PyObject *THPFunction_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
   new (&self->cdata) torch::autograd::PyFunction(obj);
   self->cdata.num_inputs = -1;
   self->cdata.is_stochastic = PyObject_IsInstance(obj, THPStochasticFunctionClass);
+  std::cerr << "fn new " << self << std::endl;
   return obj;
 }
 
