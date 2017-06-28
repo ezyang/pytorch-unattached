@@ -23,7 +23,7 @@ class Embedding(Function):
 
     @classmethod
     def forward(cls, ctx, indices, weight, padding_idx, max_norm, norm_type, scale_grad_by_freq,
-                 sparse=False):
+                sparse=False):
 
         ctx.padding_idx = padding_idx
         ctx.scale_grad_by_freq = scale_grad_by_freq
