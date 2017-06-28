@@ -10,15 +10,18 @@ import contextlib
 # model = model.RNNModel(args.model, ...)
 # model = torch.jit.wrap_model(model)
 
+
 def flatten(x):
     return tuple(F._iter_variables(x))
+
 
 def record_trace(f, inputs):
     torch._C._tracer_enter(inputs)
     out = f()
     trace = torch._C._tracer_exit(flatten(out))
-    print(trace) # TODO: Debug remove me
+    print(trace)  # TODO: Debug remove me
     return (trace, out)
+
 
 @contextlib.contextmanager
 def fork_rng():
@@ -45,6 +48,7 @@ def fork_rng():
     if gpu_rng_state is not None:
         torch.cuda.set_rng_state(gpu_rng_state)
 
+
 # LIMITATIONS:
 # - This assumes that the model will run exactly identically the
 #   next time you call forward; if the model looks at some global
@@ -56,6 +60,7 @@ def wrap_model(model):
     to execute the model on subsequent runs.
     """
     real_forward = model.forward
+
     def forward(self, *args):
         if not hasattr(self, "saved_trace"):
             # TODO: saved_out LEAKS those tensors
@@ -64,10 +69,13 @@ def wrap_model(model):
                              tuple(self.parameters()) + flatten(args))
             return self.saved_out
         else:
-            flat_out = Variable._execution_engine.run_forward(self.saved_trace, tuple(self.parameters()) + flatten(args))
+            flat_out = Variable._execution_engine.run_forward(
+                self.saved_trace,
+                tuple(self.parameters()) + flatten(args))
             return F._unflatten(flat_out, self.saved_out)
     model.forward = types.MethodType(forward, model)
     return model
+
 
 def verify_model(model):
     """
@@ -77,6 +85,7 @@ def verify_model(model):
     identically, you can use wrap_model.
     """
     real_forward = model.forward
+
     def forward(self, *args):
         if not hasattr(self, "saved_trace"):
             self.saved_trace, real_out = \
