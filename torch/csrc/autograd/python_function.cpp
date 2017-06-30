@@ -1162,15 +1162,16 @@ struct TraceInterpreter
         switch (type) {
           case PyFunctionCConv::ArgType::Tensor:
             val = THPVariable_Wrap(*tensor_it);
+            PyTuple_SET_ITEM(input_objs, i, val);
             ++tensor_it;
             break;
           case PyFunctionCConv::ArgType::Scalar:
             val = (*scalar_it).get();
             Py_INCREF(val);
+            PyTuple_SET_ITEM(input_objs, i, val);
             ++scalar_it;
             break;
         }
-        PyTuple_SET_ITEM(input_objs, i, val);
       }
       THPObjectPtr output_objs;
       if (e->is_legacy) {
