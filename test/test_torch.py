@@ -392,7 +392,7 @@ class TestTorch(TestCase):
         m1 = torch.Tensor(10, 10).uniform_(-10., 10.)
         res1 = m1.clone()
         res2 = m1.clone()
-        qs = torch.range(-5.1, 4.1)
+        qs = torch.arange(-5.1, 4.1)
         # Check the case where the divisor is a simple float
         for col_idx, q in enumerate(qs):
             # Reference
@@ -410,7 +410,7 @@ class TestTorch(TestCase):
         long_m1 = torch.LongTensor(10, 10).random_(-10, 10)
         long_res1 = long_m1.clone()
         long_res2 = long_m1.clone()
-        long_qs = torch.range(-5, 4).long()
+        long_qs = torch.arange(-5, 5).long()
         long_qs[5] = 5  # Can't handle the divisor=0 case
         for col_idx, long_q in enumerate(long_qs):
             # Reference
@@ -1539,7 +1539,14 @@ class TestTorch(TestCase):
             x = torch.rand(size, size)
             x0 = x.clone()
 
-            res1val, res1ind = torch.median(x, keepdim=False)
+            nelem = x.nelement()
+            res1val = torch.median(x)
+            res2val, _ = torch.sort(x.view(nelem))
+            ind = int(math.floor((nelem + 1) / 2) - 1)
+
+            self.assertEqual(res2val[ind], res1val, 0)
+
+            res1val, res1ind = torch.median(x, dim=1, keepdim=False)
             res2val, res2ind = torch.sort(x)
             ind = int(math.floor((size + 1) / 2) - 1)
 
@@ -3608,12 +3615,12 @@ class TestTorch(TestCase):
             torch.save(xh, f)
             f.seek(0)
             xh2 = torch.load(f)
-            self.assertEqual(xh, xh2)
+            self.assertEqual(xh.float(), xh2.float())
 
     @unittest.skipIf(not torch.cuda.is_available(), 'no CUDA')
     def test_half_tensor_cuda(self):
         x = torch.randn(5, 5).half()
-        self.assertEqual(x.cuda().cpu(), x)
+        self.assertEqual(x.cuda(), x)
 
         xc = x.cuda()
         with tempfile.NamedTemporaryFile() as f:
@@ -3621,7 +3628,7 @@ class TestTorch(TestCase):
             f.seek(0)
             xc2 = torch.load(f)
             self.assertIsInstance(xc2, type(xc))
-            self.assertEqual(xc, xc2)
+            self.assertEqual(xc.float(), xc2.float())
 
     @unittest.skipIf(not torch.cuda.is_available(), 'no CUDA')
     def test_serialization_cuda(self):
@@ -3766,6 +3773,8 @@ class TestTorch(TestCase):
 
     def test_print(self):
         for t in torch._tensor_classes:
+            if t == torch.HalfTensor:
+                continue  # HalfTensor does not support fill
             if t in torch.sparse._sparse_tensor_classes:
                 continue
             if t.is_cuda and not torch.cuda.is_available():
@@ -3804,6 +3813,9 @@ class TestTorch(TestCase):
         x = torch.randn(5, 5)
         for i, sub in enumerate(x):
             self.assertEqual(sub, x[i])
+
+        x = torch.Tensor()
+        self.assertEqual(list(x), [])
 
     def test_accreal_type(self):
         x = torch.randn(2, 3, 4) * 10

@@ -1,15 +1,15 @@
 import torch
-from torch.autograd import Variable
 from torch.autograd.function import InplaceFunction
+from torch.autograd import Variable
 from itertools import repeat
 
 
 class Dropout(InplaceFunction):
+
     @staticmethod
     def _make_noise(input):
         return input.new().resize_as_(input)
 
-    # classmethod so we can override _make_noise
     @classmethod
     def forward(cls, ctx, input, p=0.5, train=False, inplace=False):
         if p < 0 or p > 1:
@@ -17,18 +17,20 @@ class Dropout(InplaceFunction):
                              "but got {}".format(p))
         ctx.p = p
         ctx.train = train
-        if inplace:
+        ctx.inplace = inplace
+
+        if ctx.inplace:
             ctx.mark_dirty(input)
             output = input
         else:
             output = input.clone()
 
-        if p > 0 and train:
+        if ctx.p > 0 and ctx.train:
             ctx.noise = cls._make_noise(input)
-            if p == 1:
+            if ctx.p == 1:
                 ctx.noise.fill_(0)
             else:
-                ctx.noise.bernoulli_(1 - p).div_(1 - p)
+                ctx.noise.bernoulli_(1 - ctx.p).div_(1 - ctx.p)
             ctx.noise = ctx.noise.expand_as(input)
             output.mul_(ctx.noise)
 

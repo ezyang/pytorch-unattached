@@ -7,6 +7,7 @@ import math
 import torch
 from . import _functions
 from .modules import utils
+from ._functions.linear import Bilinear
 from ._functions.padding import ConstantPad2d
 from ..autograd import _functions as _autograd_functions
 from torch.autograd import Variable
@@ -532,18 +533,21 @@ def sigmoid(input):
 # etc.
 
 def linear(input, weight, bias=None):
-    if bias is None:
-        return _functions.linear.Linear.apply(input, weight)
-    else:
-        return _functions.linear.Linear.apply(input, weight, bias)
+    if input.dim() == 2 and bias is not None:
+        # fused op is marginally faster
+        return torch.addmm(bias, input, weight.t())
+
+    output = input.matmul(weight.t())
+    if bias is not None:
+        output += bias
+    return output
 
 
 def bilinear(input1, input2, weight, bias=None):
-    state = _functions.linear.Bilinear()
     if bias is None:
-        return state(input1, input2, weight)
+        return Bilinear.apply(input1, input2, weight)
     else:
-        return state(input1, input2, weight, bias)
+        return Bilinear.apply(input1, input2, weight, bias)
 
 
 def batch_norm(input, running_mean, running_var, weight=None, bias=None,
@@ -670,6 +674,10 @@ def binary_cross_entropy(input, target, weight=None, size_average=True):
                 sizeAverage is set to False, the losses are instead summed
                 for each minibatch.
     """
+    if not target.is_same_size(input):
+        warnings.warn("Using a target size ({}) that is different to the input size ({}) is deprecated. "
+                      "Please ensure they have the same size.".format(target.size(), input.size()))
+
     return _functions.thnn.BCELoss(size_average, weight=weight)(input, target)
 
 
@@ -688,8 +696,12 @@ def binary_cross_entropy_with_logits(input, target, weight=None, size_average=Tr
                 sizeAverage is set to False, the losses are instead summed
                 for each minibatch.
     """
+    if not target.is_same_size(input):
+        raise ValueError("Target size ({}) must be the same as input size ({})".format(target.size(), input.size()))
+
     if weight is not None and target.dim() != 1:
         weight = weight.view(1, target.size(1)).expand_as(target)
+
     neg_abs = - input.abs()
     loss = input.clamp(min=0) - input * target + (1 + neg_abs.exp()).log()
 
@@ -825,7 +837,7 @@ def pad(input, pad, mode='constant', value=0):
     if input.dim() == 4:
         assert len(pad) == 4, '4D tensors expect 4 values for padding'
         if mode == 'constant':
-            return ConstantPad2d(pad, value)(input)
+            return ConstantPad2d.apply(input, pad, value)
         elif mode == 'reflect':
             return _functions.thnn.ReflectionPad2d(*pad)(input)
         elif mode == 'replicate':
