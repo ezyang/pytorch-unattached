@@ -11,6 +11,29 @@
 
 namespace torch { namespace autograd {
 
+// Notes about memory management:
+//
+// Facts:
+// - C++ is not a GC'ed language, and we won't introduce any sort
+//   of GC mechanism.
+// - Shared pointers can't handle cycles.  Thus, shared_ptr must
+//   reflect ownership structure.
+// - For efficient access to the definition of a local, we'd like
+//   to store a back pointer to it (this lets us get "inlining"
+//   information.)
+// - Optimizations to the IR may involve removing/adding nodes to
+//   the structure.
+//
+// Idea: locals will have NON-OWNING pointer to the let that bound
+// them.
+// - How do we know the Let is live? Whenever we manipulate a local,
+//   we must be operating on some context where the variable is live.
+//   That means there must be a binding for it (the let that bound it).
+// - You are NOT allowed to stash locals in other data structures;
+//   the nodes they point to could become dead.
+// - When can you delete a Let node?  When there are no more locals
+//   referring to it.  Best to do this in a dead code elimination pass.
+
 // ---------------------------- >8 -------------------------------------
 // Some comments on the IR:
 //
@@ -82,6 +105,7 @@ struct Instruction;
 // But in the functional interpretation, its a series of let-bindings
 // until you get to the end.  It's not very efficient.
 struct Expr;
+struct Let;
 
 // There are a bunch of ways to think about this IR, depending on your
 // background.
@@ -107,8 +131,17 @@ using Location = std::string;
 
 struct Local {
   int unique;
+  // The Let which defined this local.  This is NULL if the
+  // local is a formal parameter of the function.  This is
+  // a NON-owning reference (if we made it a shared_ptr that
+  // would introduce a cycle.)
+  //
+  // NB: This is NEVER initialized in the constructor, since
+  // we're building a cycle!
+  Let* def;
   Local(int unique)
     : unique(unique)
+    , def(nullptr)
     {}
 };
 

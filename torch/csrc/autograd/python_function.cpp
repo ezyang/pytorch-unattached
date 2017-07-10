@@ -467,7 +467,8 @@ static void _wrap_outputs(THPFunction *self, t2var_type &t2var,
       if (output_var->cdata->trace_local) {
           throw std::logic_error("trace already has local variable");
       }
-      auto local = GlobalTracingState->makeLocal();
+      // See Note [Use-to-def pointer]
+      auto local = GlobalTracingState->makeLocal(this_expr.get());
       new_locals.push_back(local);
       output_var->cdata->trace_local = local;
     }
