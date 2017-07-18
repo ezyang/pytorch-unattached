@@ -282,6 +282,9 @@ public:
   const node_list & nodes() {
     return nodes_;
   }
+  // A lint pass which checks a number of invariants we expect to hold
+  // on the IR.
+  void lint() const;
   ~Graph() {
     for(auto n : all_nodes)
       delete n;

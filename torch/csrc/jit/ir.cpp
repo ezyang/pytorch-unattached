@@ -61,4 +61,61 @@ std::ostream& operator<<(std::ostream & out, Graph & g) {
   return out;
 }
 
+// NB: Prefer using at() for bounds checking.
+void Graph::lint() const {
+  // Basic structural properties
+  std::unordered_set<Node*> known_nodes;
+  for (auto& n : all_nodes) {
+    JIT_ASSERT(!known_nodes.count(n));
+    known_nodes.insert(n);
+  }
+  // TODO: nodes_ is a permutation of known_nodes
+  for (auto& n : nodes_) {
+    JIT_ASSERT(known_nodes.count(n));
+  }
+  std::unordered_set<Node*> known_inputs;
+  for (auto& n : inputs_) {
+    JIT_ASSERT(known_nodes.count(n));
+    JIT_ASSERT(!known_inputs.count(n));
+    JIT_ASSERT(n->kind_ == NodeKind::Param);
+    known_inputs.insert(n);
+  }
+  JIT_ASSERT(known_nodes.count(output_));
+  JIT_ASSERT(output_->kind_ == NodeKind::Return);
+  for (auto& n : all_nodes) {
+    JIT_ASSERT(all_nodes.at(n->unique_) == n);
+    for (auto& u : n->uses_) {
+      JIT_ASSERT(known_nodes.count(u.user));
+      JIT_ASSERT(u.user->inputs_.at(u.offset) == n);
+    }
+    // TODO: The select invariant (there is a unique select node for each
+    // output of an op, if the node is a multi-return op).
+    // See https://github.com/ezyang/pytorch/issues/8
+    IR_IF(n, Return)
+      JIT_ASSERT(n->uses_.size() == 0);
+    IR_ELSEIF(Param)
+      JIT_ASSERT(n->inputs_.size() == 0);
+    IR_ELSEIF(Select)
+      JIT_ASSERT(n->inputs_.size() == 1);
+    IR_ELSEIF(PythonOp)
+      int n_scalars = 0, n_tensors = 0;
+      for (auto c : value->cconv) {
+        if (c == 's') {
+          n_scalars++;
+        } else if (c == 't') {
+          n_tensors++;
+        } else {
+          JIT_ASSERT(0);
+        }
+        JIT_ASSERT(value->pyobj != nullptr);
+      }
+      JIT_ASSERT(n_scalars == value->scalar_args.size());
+      JIT_ASSERT(n_tensors == n->inputs_.size());
+    IR_ELSE()
+      // no-op
+    IR_END()
+  }
+
+}
+
 }}
