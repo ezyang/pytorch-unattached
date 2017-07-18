@@ -15,9 +15,10 @@ barf(const char *fmt, ...)
   vsnprintf(msg, 2048, fmt, args);
   va_end(args);
 
-  // Convenience for gdb; helps you avoid fumbling around
-  // to figure out how to trap on throwing a C++ exception.
-  __builtin_trap();
+  // If you uncomment this, gdb will break at this point so you
+  // can inspect the backtrace.  DO NOT commit this, since this
+  // will cause a hard failure rather than a soft one.
+  // __builtin_trap();
 
   throw assert_error(msg);
 }
