@@ -273,15 +273,18 @@ public:
     nodes_.push_back(n);
     return n;
   }
-  const param_list & inputs() {
+  const param_list & inputs() const {
     return inputs_;
   }
-  const node_list & outputs() {
+  const node_list & outputs() const {
     return output_->inputs();
   }
-  const node_list & nodes() {
+  const node_list & nodes() const {
     return nodes_;
   }
+  // A lint pass which checks a number of invariants we expect to hold
+  // on the IR.
+  void lint() const;
   ~Graph() {
     for(auto n : all_nodes)
       delete n;
