@@ -273,20 +273,11 @@ public:
     nodes_.push_back(n);
     return n;
   }
-  const param_list & inputs() {
-    return inputs_;
-  }
   const param_list & inputs() const {
     return inputs_;
   }
-  const node_list & outputs() {
-    return output_->inputs();
-  }
   const node_list & outputs() const {
     return output_->inputs();
-  }
-  const node_list & nodes() {
-    return nodes_;
   }
   const node_list & nodes() const {
     return nodes_;
