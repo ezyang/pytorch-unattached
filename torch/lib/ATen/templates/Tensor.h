@@ -126,8 +126,8 @@ struct Tensor {
   template<typename T>
   T * data() const;
 
-  void * unsafeGetTH() {
-    return pImpl->unsafeGetTH();
+  void * unsafeGetTH(bool retain) {
+    return pImpl->unsafeGetTH(retain);
   }
 
   //toLongData(), toFloatData() etc.
