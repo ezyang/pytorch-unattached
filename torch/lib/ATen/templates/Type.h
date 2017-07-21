@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <limits>
 
 #include "ATen/ArrayRef.h"
 #include "ATen/Half.h"
@@ -44,6 +45,8 @@ constexpr Backend kCPU = Backend::CPU;
 constexpr Backend kCUDA = Backend::CUDA;
 constexpr Backend kSparseCPU = Backend::SparseCPU;
 constexpr Backend kSparseCUDA = Backend::SparseCUDA;
+
+constexpr int64_t kUndefinedDimensions = std::numeric_limits<int64_t>::min();
 
 static inline const char * toString(Backend b) {
   switch(b) {
@@ -96,7 +99,7 @@ struct Type {
   virtual std::unique_ptr<Storage> storage(size_t size) = 0;
   virtual std::unique_ptr<Storage> storageFromBlob(void * data, int64_t size) = 0;
   virtual std::unique_ptr<Generator> generator() = 0;
-  virtual Tensor unsafeTensorFromTH(void * th_pointer) = 0;
+  virtual Tensor unsafeTensorFromTH(void * th_pointer, bool retain) = 0;
   virtual const char * toString() const = 0;
   Type & toBackend(Backend b);
   Type & toScalarType(ScalarType s);

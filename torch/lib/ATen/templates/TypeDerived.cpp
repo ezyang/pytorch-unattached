@@ -33,7 +33,10 @@ std::unique_ptr<Storage> ${Type}::storageFromBlob(void * data, int64_t size) {
     return std::unique_ptr<Storage>(
       new ${Storage}(context,data,size));
 }
-Tensor ${Type}::unsafeTensorFromTH(void * th_pointer) {
+// Calls retain on th_pointer
+Tensor ${Type}::unsafeTensorFromTH(void * th_pointer, bool retain) {
+  if (retain)
+    ${THTensor}_retain(${state,} (${THTensor}*) th_pointer);
   return Tensor(new ${Tensor}(context,(${THTensor}*)(th_pointer)));
 }
 std::unique_ptr<Generator> ${Type}::generator() {
