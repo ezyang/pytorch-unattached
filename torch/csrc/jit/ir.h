@@ -82,12 +82,8 @@ struct Node {
   friend struct Graph;
 private:
   graph_node_list::iterator nodes_iter_;
-  Node* next() { return *std::next(nodes_iter_); }
-  Node* prev() { return *std::prev(nodes_iter_); }
-
-  void set_nodes_iter(graph_node_list::iterator iter) {
-    nodes_iter_ = std::move(iter);
-  }
+  graph_node_list::iterator next() { return std::next(nodes_iter_); }
+  graph_node_list::iterator prev() { return std::prev(nodes_iter_); }
 
   const NodeKind kind_;
   Type * type_;
@@ -210,7 +206,10 @@ public:
   // Result:  %3 = f(%1, %2)
   //          %5 = h(%1)
   //          %4 = g(%3)
-  void insertBefore(Node * n);
+  void insertBefore(Node * n) {
+    JIT_ASSERT(n->inGraphList());
+    insertAt(n->nodes_iter_);
+  }
 
   // Insert unattached 'this' node after 'n' in the topological order.
   //
@@ -222,7 +221,8 @@ public:
   //          %4 = g(%3)
   //          %5 = h(%1)
   void insertAfter(Node * n) {
-    insertBefore(n->next());
+    JIT_ASSERT(n->inGraphList());
+    insertAt(n->next());
   }
 
   // Move 'this' (already in the graph) after 'n' in the topological order.
@@ -283,10 +283,14 @@ public:
   // iterators of the node list starting at this node
   // useful for resuming a search starting at this node
   graph_node_list::iterator iterator() {
+    JIT_ASSERT(inGraphList());
     return nodes_iter_;
   }
   graph_node_list::reverse_iterator reverseIterator() {
-    return graph_node_list::reverse_iterator(nodes_iter_);
+    JIT_ASSERT(inGraphList());
+    // newly created reverse_iterator points to an element preceding
+    // (in forward order) the one pointed to by forward iter used to create it
+    return graph_node_list::reverse_iterator(std::next(nodes_iter_));
   }
 
   // Remove 'this' from the instruction list and deallocate it.
@@ -321,6 +325,8 @@ private:
     JIT_ASSERT(use_it != input_uses.end());
     return use_it;
   }
+
+  void insertAt(graph_node_list::iterator it);
 
   // remove the use of input i, this sets input i to nullptr, but
   // is only used internally to Node before setting it to a new value
@@ -415,7 +421,7 @@ public:
   Graph()
   : next_unique_(0) {
     output_ = create<Return>();
-    nodes_.push_back(output_);
+    output_->insertAt(nodes_.begin());
   }
 
   const param_list & inputs() {
@@ -473,12 +479,12 @@ public:
   }
 
   Node * appendNode(Node * n) {
-    nodes_.push_back(n);
+    n->insertBefore(output_);
     return n;
   }
 
   Node * prependNode(Node * n) {
-    nodes_.push_front(n);
+    n->insertAt(nodes_.begin());
     return n;
   }
 
@@ -517,9 +523,9 @@ private:
   }
 };
 
-inline void Node::insertBefore(Node * n) {
-  JIT_ASSERT(!inGraphList() && n->inGraphList());
-  nodes_iter_ = graph_->nodes_.insert(n->nodes_iter_, this);
+inline void Node::insertAt(graph_node_list::iterator it) {
+  JIT_ASSERT(!inGraphList())
+  nodes_iter_ = graph_->nodes_.insert(it, this);
 }
 
 inline bool Node::inGraphList() {
