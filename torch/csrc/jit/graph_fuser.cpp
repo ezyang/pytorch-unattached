@@ -25,19 +25,20 @@ struct GraphFuser {
   void replacePythonOps() {
     auto nodes = graph->nodes();
     for(auto it = nodes.begin(), end = nodes.end(); it != end; ++it) {
-      if(auto p = it->cast<PythonOp>()) {
+      if(auto p = (*it)->cast<PythonOp>()) {
         std::string name = p->name();
         if(simple_mappable.count(name) > 0) {
           // replaces the Select(PythonOp,0) with just SimpleMap(opname)
           auto new_op = graph->create<SimpleMap>(name,p->inputs());
           new_op->insertAfter(p);
-          JIT_ASSERT(1 == p->uses().size());
+          JIT_ASSERT(p->uses().size() == 1);
           auto single_select = p->uses()[0].user;
           JIT_ASSERT(single_select->kind() == NodeKind::Select);
           single_select->replaceAllUsesWith(new_op);
-          single_select->eraseFromParent();
-          //erasing p directly would invalidate iterator
-          it.eraseCurrentFromParent();
+          single_select->destroy();
+          // Erasing p directly would invalidate iterator
+          --it;
+          p->destroy();
         }
       }
     }
@@ -120,7 +121,7 @@ struct GraphFuser {
     auto sel = graph->create<Select>(group,0);
     sel->insertAfter(group);
     n->replaceAllUsesWith(sel);
-    n->eraseFromParent();
+    n->destroy();
     return group;
   }
 
@@ -141,12 +142,12 @@ struct GraphFuser {
       new_producer->insertAfter(group);
       producer->replaceAllUsesWith(new_producer);
     }
-    producer->eraseFromParent();
+    producer->destroy();
     return group;
   }
 
   // returns where to continue scanning
-  graph_node_list_iterator scanNode(Node * consumer) {
+  graph_node_list::reverse_iterator scanNode(Node * consumer) {
     if(isFusable(consumer)) {
       // handle inputs in reverse topological order as well...
       // otherwise in f(a,a+b) it will appear a is used twice if we consider
@@ -176,11 +177,11 @@ struct GraphFuser {
     for(auto p : graph->inputs()) {
       topological_index[p] = i++;
     }
-    for(auto consumer : graph->nodes()) {
+    const auto & nodes = graph->nodes();
+    for(auto consumer : nodes) {
       topological_index[consumer] = i++;
     }
-    auto reversed = graph->nodes().reverse();
-    for(auto it = reversed.begin(), end = reversed.end(); it != end;) {
+    for(auto it = nodes.rbegin(), end = nodes.rend(); it != end;) {
       it = scanNode(*it);
     }
     return std::move(graph);
