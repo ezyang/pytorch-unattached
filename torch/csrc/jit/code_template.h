@@ -6,6 +6,13 @@
 
 namespace torch { namespace jit {
 
+// A template environment is a mapping from template variable names, e.g.,
+// identifier (corresponding to $identifier) to their expansions.
+//
+// This template environment supports storing strings, numbers and lists
+// of strings, and can be chained together (so that lookup proceeds in
+// in the top level environment, and then recurses into a parent
+// environment if the key is not found.)
 struct TemplateEnv {
   TemplateEnv(TemplateEnv * parent = nullptr)
   : parent(parent) {}
