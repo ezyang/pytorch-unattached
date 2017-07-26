@@ -304,6 +304,7 @@ main_sources = [
     "torch/csrc/jit/init.cpp",
     "torch/csrc/jit/ir.cpp",
     "torch/csrc/jit/graph_fuser.cpp",
+    "torch/csrc/jit/test_jit.cpp",
     "torch/csrc/jit/tracer.cpp",
     "torch/csrc/jit/python_ir.cpp",
     "torch/csrc/jit/python_tracer.cpp",
@@ -365,7 +366,7 @@ if WITH_CUDA:
     extra_link_args.append('-Wl,-rpath,' + cuda_lib_path)
     extra_compile_args += ['-DWITH_CUDA']
     extra_compile_args += ['-DCUDA_LIB_PATH=' + cuda_lib_path]
-    main_libraries += ['cudart', 'nvToolsExt']
+    main_libraries += ['cudart', 'nvToolsExt', 'nvrtc', 'cuda']
     main_link_args += [THC_LIB, THCS_LIB, THCUNN_LIB]
     main_sources += [
         "torch/csrc/cuda/Module.cpp",
@@ -375,6 +376,7 @@ if WITH_CUDA:
         "torch/csrc/cuda/utils.cpp",
         "torch/csrc/cuda/expand_utils.cpp",
         "torch/csrc/cuda/serialization.cpp",
+        "torch/csrc/jit/fusion_compiler.cpp",
     ]
     main_sources += split_types("torch/csrc/cuda/Tensor.cpp")
 
