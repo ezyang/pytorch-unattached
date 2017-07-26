@@ -185,6 +185,10 @@ private:
     if(comma_after && strings.size() > 0)
       out << ", ";
   }
+  // These indentation functions follow the convention that they never emit
+  // leading or trailing newlines when the input string does not have leading
+  // or trailing newlines. It's the responsibility of the calling function
+  // to indent correctly in the context.
   void emitIndent(std::ostream & out, size_t indent) {
     for(size_t i = 0; i < indent; ++i) {
       out << " ";
