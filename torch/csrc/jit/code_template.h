@@ -83,10 +83,10 @@ private:
 };
 
 /*
-# Match $identifier or ${identifier} and replace with value in env.
+# Match $identifier or ${identifier} and replace with the value in env.
 # If this identifier is at the beginning of whitespace on a line
 # and its value is a list then it is treated as
-# block subsitution by indenting all lines of all elements.
+# block substitution by indenting all lines of all elements.
 # If the identifier is on a line starting with non-whitespace and a list
 # then it is comma separated. ${,foo} will insert a comma before the list
 # if this list is not empty and ${foo,} will insert one after.
