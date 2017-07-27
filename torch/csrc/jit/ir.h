@@ -33,18 +33,109 @@ struct Graph;
 // and dependencies on a list of values. The "prim-ops", so to speak.
 struct Node;
 
-// Indicates if a Node is multireturn or not
-enum class ReturnKind {
-  Multi,
-  Single
+#define TH_FORALL_TYPES(_) \
+_(Multi) \
+_(Single)
+
+enum class TypeKind {
+#define DEFINE_TYPE(T) T,
+  TH_FORALL_TYPES(DEFINE_TYPE)
+#undef DEFINE_TYPE
 };
 
 struct Type {
-  ReturnKind kind;
-  // These are only used if kind == ReturnKind::Single
-  std::vector<std::int64_t> sizes;
-  std::vector<std::int64_t> strides;
+private:
+  TypeKind kind_;
+
+protected:
+  Type(TypeKind kind)
+    : kind_(kind) {}
+
+public:
+  TypeKind kind() const {
+    return kind_;
+  }
+
+  // Dynamically cast this object to the subclass indicated by the
+  // template variable, returning nullptr if the cast is invalid..
+  template<typename T>
+  T* cast() {
+    if (T::Kind == kind())
+      return static_cast<T*>(this);
+    return nullptr;
+  }
+
+  std::unique_ptr<Type> clone();
+
+  static std::unique_ptr<Type> newWithKind(TypeKind kind);
 };
+
+// Type of nodes with a single output
+struct TypeSingle : public Type {
+private:
+  friend struct Type;
+
+  std::vector<std::int64_t> sizes_;
+  std::vector<std::int64_t> strides_;
+
+  TypeSingle()
+    : Type(TypeKind::Single) {}
+
+public:
+  static const TypeKind Kind = TypeKind::Single;
+
+  void inferFrom(thpp::Tensor* tensor) {
+    auto ndim = tensor->nDim();
+    sizes_.resize(ndim);
+    strides_.resize(ndim);
+    // NOTE: This is not memcpy! These are assignments.
+    std::copy(tensor->rawSizes(), tensor->rawSizes() + ndim, sizes_.begin());
+    std::copy(tensor->rawStrides(), tensor->rawStrides() + ndim, strides_.begin());
+  }
+
+  const std::vector<std::int64_t>& sizes() {
+    return sizes_;
+  }
+  const std::vector<std::int64_t>& strides() {
+    return strides_;
+  }
+};
+
+// Type of multireturn nodes. Note that it doesn't mean that they must always
+// have multiple outputs.
+struct TypeMulti : public Type {
+private:
+  friend struct Type;
+
+  TypeMulti()
+    : Type(TypeKind::Multi) {}
+
+public:
+  static const TypeKind Kind = TypeKind::Multi;
+};
+
+inline std::unique_ptr<Type> Type::newWithKind(TypeKind kind) {
+  switch (kind) {
+#define HANDLE_KIND(KIND) \
+  case TypeKind::KIND:    \
+    return std::unique_ptr<Type>(static_cast<Type*>(new Type##KIND()));
+    TH_FORALL_TYPES(HANDLE_KIND)
+  }
+#undef HANDLE_KIND
+  __builtin_unreachable();
+}
+
+inline std::unique_ptr<Type> Type::clone() {
+#define HANDLE_KIND(KIND) \
+  case TypeKind::KIND:    \
+    return std::unique_ptr<Type>(static_cast<Type*>( \
+          new Type##KIND(*(static_cast<Type##KIND*>(this)))));
+  switch (kind_) {
+    TH_FORALL_TYPES(HANDLE_KIND)
+  }
+#undef HANDLE_KIND
+  __builtin_unreachable();
+}
 
 // Each use is represented by this type, see Node::uses()
 // 'user' is the consumer of the node, offset is the index into
@@ -109,26 +200,20 @@ private:
   size_t unique_ = 0;          // unique id
   size_t stage_ = 0;           // 0-forward, 1-backward, 2-double-backward,...
 protected:
-  Type type_;
-  Node(NodeKind kind_, ReturnKind ret_kind)
-  : kind_(kind_), type_() {
-    type_.kind = ret_kind;
-  }
+  std::unique_ptr<Type> type_;
+  Node(NodeKind kind_, TypeKind type_kind)
+  : kind_(kind_), type_(Type::newWithKind(type_kind)) {}
 public:
   NodeKind kind() {
     return kind_;
   }
-  const Type & type() {
-    return type_;
+  const Type* type() {
+    return type_.get();
   }
-  void registerOutput(thpp::Tensor* output) {
-    JIT_ASSERT(type_.kind == ReturnKind::Single);
-    auto ndim = output->nDim();
-    type_.sizes.resize(ndim);
-    type_.strides.resize(ndim);
-    // NOTE: This is not memcpy! These are assignments.
-    std::copy(output->rawSizes(), output->rawSizes() + ndim, type_.sizes.begin());
-    std::copy(output->rawStrides(), output->rawStrides() + ndim, type_.strides.begin());
+  void inferTypeFrom(thpp::Tensor* output) {
+    auto single_type = type_->cast<TypeSingle>();
+    JIT_ASSERT(single_type);
+    single_type->inferFrom(output);
   }
   Graph * owningGraph() {
     return graph_;
@@ -383,13 +468,12 @@ protected:
 // using CRTP so that we can alloc new clones and dispatch to custom clone code
 // without significant boilerplate
 
-template<typename Self, NodeKind K, ReturnKind R>
+template<typename Self, NodeKind K, TypeKind T>
 struct NodeWithKind : public Node {
   friend struct Graph; /* so it can access allocClone() */
   static const NodeKind Kind = K;
-  static const ReturnKind RetKind = R;
   NodeWithKind()
-  : Node(K, R) {}
+  : Node(K, T) {}
   // virtual so we can easily define a default here
   // defined using CRTP so cloneFrom doesn't need casts.
   // called from allocClone
@@ -405,8 +489,8 @@ protected:
 };
 
 // helper to define simple primitive Ops.
-template<typename Self, NodeKind K, ReturnKind R>
-struct Primitive : public NodeWithKind<Self, K, R> {
+template<typename Self, NodeKind K, TypeKind T>
+struct Primitive : public NodeWithKind<Self, K, T> {
   void init() {}
   void init(ArrayRef<Node*> inputs) {
     for(auto i : inputs)
@@ -416,17 +500,17 @@ struct Primitive : public NodeWithKind<Self, K, R> {
 
 // the outputs of the Graph are represented as an Node so that its inputs
 // can be tracked as Uses.
-struct Return : public Primitive<Return, NodeKind::Return, ReturnKind::Single> {};
+struct Return : public Primitive<Return, NodeKind::Return, TypeKind::Single> {};
 
 // an input tensor to the graph
-struct Param : public NodeWithKind<Param, NodeKind::Param, ReturnKind::Single> {
+struct Param : public NodeWithKind<Param, NodeKind::Param, TypeKind::Single> {
   void init() {}
 };
 
 struct Graph {
 TH_DISALLOW_COPY_AND_ASSIGN(Graph);
 friend struct Node;
-template<typename Self, NodeKind K, ReturnKind R>
+template<typename Self, NodeKind K, TypeKind T>
 friend struct NodeWithKind;
 private:
   param_list inputs_;
@@ -576,10 +660,10 @@ inline void Node::destroy() {
   graph_->freeNode(this);
 }
 
-template<typename Self, NodeKind K, ReturnKind R>
-Node * NodeWithKind<Self,K,R>::allocClone(Graph * in_graph) {
+template<typename Self, NodeKind K, TypeKind T>
+Node * NodeWithKind<Self,K,T>::allocClone(Graph * in_graph) {
   auto s = new Self();
-  s->type_ = this->type_;
+  s->type_ = this->type_->clone();
   in_graph->initNewNodeForGraph(s);
   // static cast is needed because the compiler doesn't know NodeWithKind is a CRTP.
   s->cloneFrom(static_cast<Self*>(this));
@@ -637,7 +721,7 @@ static inline const char * toString(NodeKind kind) {
 /************* All nodes not required to be defined before Graph **************/
 
  // execute a Python function, used for Ops we can't optimize but that we want to optimize around
-struct PythonOp : public NodeWithKind<PythonOp,NodeKind::PythonOp,ReturnKind::Multi> {
+struct PythonOp : public NodeWithKind<PythonOp,NodeKind::PythonOp,TypeKind::Multi> {
   //TODO: make this non-autograd specific
   //remove is_legacy, avoid THPObjectPtr to avoid big PyTorch dependency
 
@@ -679,7 +763,7 @@ struct PythonOp : public NodeWithKind<PythonOp,NodeKind::PythonOp,ReturnKind::Mu
 // in this case
 // number_of_outputs = op.uses().size()
 // this will change if Tuples ever become first class.
-struct Select : public NodeWithKind<Select,NodeKind::Select,ReturnKind::Single> {
+struct Select : public NodeWithKind<Select,NodeKind::Select,TypeKind::Single> {
   void init(Node * node, size_t offset) {
     addInput(node);
     this->offset_ = offset;
@@ -702,13 +786,13 @@ private:
 // NB: non-nullary constructors don't get forwarded to the
 // parents, so you have to spell out the constructors you want explicitly.
 
-struct Add : public Primitive<Add,NodeKind::Add,ReturnKind::Single> {};
-struct Mul : public Primitive<Mul,NodeKind::Mul,ReturnKind::Single> {};
-struct Negate : public Primitive<Negate,NodeKind::Negate,ReturnKind::Single> {};
-struct Sigmoid : public Primitive<Sigmoid,NodeKind::Sigmoid,ReturnKind::Single> {};
-struct Tanh : public Primitive<Tanh,NodeKind::Tanh,ReturnKind::Single> {};
+struct Add : public Primitive<Add,NodeKind::Add,TypeKind::Single> {};
+struct Mul : public Primitive<Mul,NodeKind::Mul,TypeKind::Single> {};
+struct Negate : public Primitive<Negate,NodeKind::Negate,TypeKind::Single> {};
+struct Sigmoid : public Primitive<Sigmoid,NodeKind::Sigmoid,TypeKind::Single> {};
+struct Tanh : public Primitive<Tanh,NodeKind::Tanh,TypeKind::Single> {};
 
-struct FusionGroup : public NodeWithKind<FusionGroup,NodeKind::FusionGroup,ReturnKind::Multi> {
+struct FusionGroup : public NodeWithKind<FusionGroup,NodeKind::FusionGroup,TypeKind::Multi> {
   void init() {
     subgraph_ = std::make_shared<Graph>();
   }
