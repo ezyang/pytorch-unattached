@@ -2333,7 +2333,7 @@ class TestNN(NNTestCase):
         with self.assertRaises(ValueError):
             nn.BCEWithLogitsLoss()(input, target)
 
-    def test_bce_with_logits_gives_same_result_as_sigmooid_and_bce_loss(self):
+    def test_bce_with_logits_gives_same_result_as_sigmoid_and_bce_loss(self):
         sigmoid = nn.Sigmoid()
 
         target = Variable(torch.rand(64, 4))
@@ -2342,6 +2342,14 @@ class TestNN(NNTestCase):
         self.assertEqual(nn.BCEWithLogitsLoss()(output, target), nn.BCELoss()(sigmoid(output), target))
 
         weight = torch.rand(4)
+        self.assertEqual(nn.BCEWithLogitsLoss(weight)(output, target), nn.BCELoss(weight)(sigmoid(output), target))
+
+        target = Variable(torch.FloatTensor(4, 1).fill_(0))
+        output = Variable(torch.FloatTensor(4, 1).fill_(-100))
+
+        self.assertEqual(nn.BCEWithLogitsLoss()(output, target), nn.BCELoss()(sigmoid(output), target))
+
+        weight = torch.FloatTensor(1).uniform_()
         self.assertEqual(nn.BCEWithLogitsLoss(weight)(output, target), nn.BCELoss(weight)(sigmoid(output), target))
 
     def test_bce_with_logits_has_correct_grad_at_zero(self):
@@ -3236,7 +3244,6 @@ new_module_tests = [
         input_size=(4, 10),
         cudnn=True,
         desc='affine',
-        check_gradgrad=False,
     ),
     dict(
         module_name='BatchNorm1d',
@@ -3244,7 +3251,6 @@ new_module_tests = [
         input_size=(4, 5, 3),
         cudnn=True,
         desc='3d_input',
-        check_gradgrad=False,
     ),
     dict(
         module_name='BatchNorm1d',
@@ -3252,14 +3258,19 @@ new_module_tests = [
         input_size=(4, 10),
         cudnn=True,
         desc='not_affine',
-        check_gradgrad=False,
+    ),
+    dict(
+        module_name='BatchNorm1d',
+        constructor_args=(5, 1e-3, 0.3, False),
+        input_size=(4, 5, 3),
+        cudnn=True,
+        desc='3d_input_not_affine',
     ),
     dict(
         module_name='BatchNorm2d',
         constructor_args=(3,),
         input_size=(2, 3, 6, 6),
         cudnn=True,
-        check_gradgrad=False,
     ),
     dict(
         module_name='BatchNorm2d',
@@ -3267,22 +3278,19 @@ new_module_tests = [
         input_size=(2, 3, 6, 6),
         cudnn=True,
         desc='momentum',
-        check_gradgrad=False,
     ),
     dict(
         module_name='BatchNorm2d',
         constructor_args=(3, 1e-3, 0.8, False),
         input_size=(2, 3, 6, 6),
         cudnn=True,
-        desc='no_affine',
-        check_gradgrad=False,
+        desc='not_affine',
     ),
     dict(
         module_name='BatchNorm3d',
         constructor_args=(3,),
         input_size=(2, 3, 4, 4, 4),
         cudnn=True,
-        check_gradgrad=False,
     ),
     dict(
         module_name='BatchNorm3d',
@@ -3290,15 +3298,13 @@ new_module_tests = [
         input_size=(2, 3, 4, 4, 4),
         cudnn=True,
         desc='momentum',
-        check_gradgrad=False,
     ),
     dict(
         module_name='BatchNorm3d',
         constructor_args=(3, 1e-3, 0.7, False),
         input_size=(2, 3, 4, 4, 4),
         cudnn=True,
-        desc='no_affine',
-        check_gradgrad=False,
+        desc='not_affine',
     ),
     dict(
         module_name='Conv1d',
