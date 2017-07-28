@@ -13,7 +13,7 @@
 #include <list>
 #include <cstdint>
 
-#include "THPP/THPP.h"
+#include <ATen/ATen.h>
 
 #include "torch/csrc/utils/object_ptr.h"
 
@@ -84,13 +84,13 @@ private:
 public:
   static const TypeKind Kind = TypeKind::Single;
 
-  void inferFrom(thpp::Tensor* tensor) {
-    auto ndim = tensor->nDim();
+  void inferFrom(const at::Tensor& tensor) {
+    auto ndim = tensor.dim();
     sizes_.resize(ndim);
     strides_.resize(ndim);
     // NOTE: This is not memcpy! These are assignments.
-    std::copy(tensor->rawSizes(), tensor->rawSizes() + ndim, sizes_.begin());
-    std::copy(tensor->rawStrides(), tensor->rawStrides() + ndim, strides_.begin());
+    std::copy(tensor.sizes().begin(), tensor.sizes().end(), sizes_.begin());
+    std::copy(tensor.strides().begin(), tensor.strides().end(), strides_.begin());
   }
 
   const std::vector<std::int64_t>& sizes() {
@@ -210,7 +210,7 @@ public:
   const Type* type() {
     return type_.get();
   }
-  void inferTypeFrom(thpp::Tensor* output) {
+  void inferTypeFrom(const at::Tensor& output) {
     auto single_type = type_->cast<TypeSingle>();
     JIT_ASSERT(single_type);
     single_type->inferFrom(output);
@@ -489,8 +489,8 @@ protected:
 };
 
 // helper to define simple primitive Ops.
-template<typename Self, NodeKind K, TypeKind T>
-struct Primitive : public NodeWithKind<Self, K, T> {
+template<typename Self, NodeKind K>
+struct Primitive : public NodeWithKind<Self, K, TypeKind::Single> {
   void init() {}
   void init(ArrayRef<Node*> inputs) {
     for(auto i : inputs)
@@ -500,7 +500,7 @@ struct Primitive : public NodeWithKind<Self, K, T> {
 
 // the outputs of the Graph are represented as an Node so that its inputs
 // can be tracked as Uses.
-struct Return : public Primitive<Return, NodeKind::Return, TypeKind::Single> {};
+struct Return : public Primitive<Return, NodeKind::Return> {};
 
 // an input tensor to the graph
 struct Param : public NodeWithKind<Param, NodeKind::Param, TypeKind::Single> {
@@ -786,11 +786,11 @@ private:
 // NB: non-nullary constructors don't get forwarded to the
 // parents, so you have to spell out the constructors you want explicitly.
 
-struct Add : public Primitive<Add,NodeKind::Add,TypeKind::Single> {};
-struct Mul : public Primitive<Mul,NodeKind::Mul,TypeKind::Single> {};
-struct Negate : public Primitive<Negate,NodeKind::Negate,TypeKind::Single> {};
-struct Sigmoid : public Primitive<Sigmoid,NodeKind::Sigmoid,TypeKind::Single> {};
-struct Tanh : public Primitive<Tanh,NodeKind::Tanh,TypeKind::Single> {};
+struct Add : public Primitive<Add,NodeKind::Add> {};
+struct Mul : public Primitive<Mul,NodeKind::Mul> {};
+struct Negate : public Primitive<Negate,NodeKind::Negate> {};
+struct Sigmoid : public Primitive<Sigmoid,NodeKind::Sigmoid> {};
+struct Tanh : public Primitive<Tanh,NodeKind::Tanh> {};
 
 struct FusionGroup : public NodeWithKind<FusionGroup,NodeKind::FusionGroup,TypeKind::Multi> {
   void init() {
