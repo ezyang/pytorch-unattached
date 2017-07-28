@@ -145,6 +145,7 @@ struct Use {
   : user(user), offset(offset) {}
   Node * user;
   size_t offset;
+  void lint();
 };
 static inline bool operator==(const Use & a, const Use & b) {
   return a.user == b.user && a.offset == b.offset;
@@ -455,6 +456,7 @@ private:
 
   bool inGraphList();
   void removeFromList();
+  void lint();
 protected:
   virtual Node * allocClone(Graph * in_graph) = 0;
 };
@@ -613,6 +615,9 @@ public:
     T* n = create<T>(std::forward<Args>(args)...);
     return prependNode(n);
   }
+
+  // Checks well-formedness and invariants of graph
+  void lint();
 
   ~Graph() {
     for (Node * n : all_nodes)
