@@ -687,15 +687,24 @@ static Node * make_trace(PyObject* pyobj, PyObject *arg_objects,
     }
   }
 
+  // NB: this has to be done before we append the PythonOp, because it
+  // might need to register some values as constants (i.e. append new Nodes)
+  // If we do it the other order, the graph will be in the wrong topological
+  // order.
+  std::vector<Node*> value_traces;
+  value_traces.reserve(input_vars.size());
+  for (auto& i : input_vars)
+    value_traces.emplace_back(GlobalTracingState.getValueTrace(i.get()));
+
   Py_INCREF(pyobj);
   auto op = graph.appendNewNode<PythonOp>(
     THPObjectPtr(pyobj),
     arg_types,
     is_legacy,
     std::move(scalar_args));
-  for (auto i : input_vars) {
-    op->addInput(GlobalTracingState.getValueTrace(i.get()));
-  }
+  for (auto t : value_traces)
+    op->addInput(t);
+
   return op;
 }
 
