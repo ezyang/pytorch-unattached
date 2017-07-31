@@ -510,7 +510,7 @@ struct Param : public NodeWithKind<Param, NodeKind::Param, TypeKind::Single> {
   void init() {}
 };
 
-struct Graph {
+struct Graph : public std::enable_shared_from_this<Graph> {
 TH_DISALLOW_COPY_AND_ASSIGN(Graph);
 friend struct Node;
 template<typename Self, NodeKind K, TypeKind T>
@@ -823,9 +823,9 @@ private:
   std::shared_ptr<Graph> subgraph_;
 };
 
-std::unique_ptr<Graph> LintGraph(std::unique_ptr<Graph> graph);
+void LintGraph(std::shared_ptr<Graph>& graph);
 
-}}
+}} // namespace torch::jit
 
 namespace std {
 

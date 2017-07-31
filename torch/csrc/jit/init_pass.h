@@ -4,6 +4,6 @@
 
 namespace torch { namespace jit {
 
-std::unique_ptr<Graph> InitializePyGraph(std::unique_ptr<Graph> graph);
+void InitializePyGraph(std::shared_ptr<Graph>& graph);
 
 }}

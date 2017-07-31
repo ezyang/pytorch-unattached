@@ -3,6 +3,7 @@
 #include "THP.h"
 #include "torch/csrc/jit/ir.h"
 #include "torch/csrc/jit/graph_fuser.h"
+#include "torch/csrc/jit/init_pass.h"
 #include "torch/csrc/jit/python_tracer.h"
 #include "torch/csrc/jit/python_ir.h"
 
@@ -31,14 +32,14 @@ namespace {
 
 using namespace torch::jit;
 
-using pass_type = std::unique_ptr<Graph> (std::unique_ptr<Graph>);
+using pass_type = void (std::shared_ptr<Graph>&);
 
-template<pass_type optimizer>
-PyObject * wrap_optimizer(PyObject *_unused, PyObject *py_graph) {
+template<pass_type pass>
+PyObject * wrap_pass(PyObject *_unused, PyObject *py_graph) {
   HANDLE_TH_ERRORS
   THPUtils_assert(THPGraph_Check(py_graph), "expected a Graph instance");
   THPGraph *graph = (THPGraph*)py_graph;
-  graph->cdata = optimizer(std::unique_ptr<Graph>{graph->cdata}).release();
+  pass(graph->cdata);
   Py_RETURN_NONE;
   END_HANDLE_TH_ERRORS
 }
@@ -55,8 +56,9 @@ struct PyMethodDef _THPJIT_methods[] = {
   {"_tracer_enter",   (PyCFunction)THPTracer_enter,           METH_VARARGS, NULL},
   {"_tracer_exit",    (PyCFunction)THPTracer_exit,            METH_VARARGS, NULL},
   {"_jit_createAutogradClosure", (PyCFunction)THPTracer_createAutogradClosure, METH_O, NULL},
-  {"_jit_optim_fuse", (PyCFunction)wrap_optimizer<FuseGraph>, METH_O,       NULL},
-  {"_jit_optim_lint", (PyCFunction)wrap_optimizer<LintGraph>, METH_O,       NULL},
+  {"_jit_pass_init", (PyCFunction)wrap_pass<InitializePyGraph>, METH_O,       NULL},
+  {"_jit_pass_fuse", (PyCFunction)wrap_pass<FuseGraph>, METH_O,       NULL},
+  {"_jit_pass_lint", (PyCFunction)wrap_pass<LintGraph>, METH_O,       NULL},
   {"_jit_run_cpp_tests",(PyCFunction)run_cpp_tests,           METH_NOARGS,  NULL},
   {NULL}
 };
