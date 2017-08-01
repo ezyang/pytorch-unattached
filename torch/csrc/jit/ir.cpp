@@ -2,6 +2,7 @@
 
 #include "torch/csrc/utils/auto_gil.h"
 #include "torch/csrc/utils/python_strings.h"
+#include "torch/csrc/autograd/function.h"
 
 #include <iostream>
 #include <unordered_map>
@@ -50,11 +51,20 @@ std::string PythonOp::name() {
   return getPythonName(pyobj.get(),is_legacy);
 }
 
+std::string AutogradOp::name() {
+  return fn->name();
+}
+
 std::ostream& operator<<(std::ostream & out, Graph & g) {
   out << "graph(" << g.inputs() << ") {\n";
   std::vector<FusionGroup*> groups;
+  size_t prev_stage = 0;
   for(auto n : g.nodes()) {
     if(!n->cast<Select>()) { //improve readibility by printing selects inline
+      if (n->stage() != prev_stage) {
+        out << "  ---------------- stage " << n->stage() << " ----------------\n";
+        prev_stage = n->stage();
+      }
       out << "  %" << n->unique() << " = ";
       IR_IF(n,PythonOp)
         out << "^" << value->name();
@@ -69,6 +79,8 @@ std::ostream& operator<<(std::ostream & out, Graph & g) {
       IR_ELSEIF(FusionGroup)
         out << "fusion_group_" << groups.size();
         groups.push_back(value);
+      IR_ELSEIF(AutogradOp)
+        out << "AutogradOp[" << value->name() << "]";
       IR_ELSE()
         out << toString(n->kind());
       IR_END()
@@ -173,6 +185,8 @@ void Node::lint() {
     }
     JIT_ASSERT(n_scalars == value->scalar_args.size());
     JIT_ASSERT(n_tensors == inputs_.size());
+  IR_ELSEIF(AutogradOp)
+    // TODO: assert multireturn?
   // TODO: It's not good for these ops to be top-level, it makes cases longer.
   IR_ELSEIF(Add)
     JIT_ASSERT(inputs_.size() == 2);

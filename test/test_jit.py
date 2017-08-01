@@ -78,7 +78,26 @@ class TestJit(TestCase):
     def test_cpp(self):
         torch._C._jit_run_cpp_tests()
 
+    def test_trace_backward(self):
+        x = Variable(torch.randn(2, 2), requires_grad=True)
+        y = x * 2
+
+        trace = torch._C._tracer_enter((y,))
+
+        z = torch.abs(y + 2 + y)
+
+        torch._C._tracer_exit(trace, (z,))
+
+        z.backward(torch.ones(2, 2), retain_graph=True)
+        torch._C._jit_pass_lint(trace)
+        str_trace = str(trace)
+
+        # Make sure running backward again will not modify the graph
+        z.backward(torch.ones(2, 2))
+        torch._C._jit_pass_lint(trace)
+        self.assertEqual(str(trace), str_trace)
+        self.assertExpected(str(trace))
+
 
 if __name__ == '__main__':
-
     run_tests()

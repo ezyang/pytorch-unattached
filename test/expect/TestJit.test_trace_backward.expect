@@ -1,0 +1,11 @@
+graph(%1, %8) {
+  %2 = ^AddConstant(2, False)(%1), uses = [%2.0.i0];
+  %4 = ^Add(False)(%2.0, %1), uses = [%4.0.i0];
+  %6 = ^Abs()(%4.0), uses = [%6.0.i0];
+  ---------------- stage 1 ----------------
+  %13 = AutogradOp[AbsBackward](%8), uses = [%13.0.i0];
+  %15 = AutogradOp[AddBackward](%13.0), uses = [%15.0.i0, %15.1.i0];
+  %18 = AutogradOp[AddConstantBackward](%15.1), uses = [%18.0.i0];
+  %20 = AutogradOp[N5torch8autograd3AddE](%18.0, %18.0), uses = [%20.0.i0];
+  return (%6.0, %20.0);
+}
