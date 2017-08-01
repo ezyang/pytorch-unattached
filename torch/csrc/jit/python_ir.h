@@ -7,12 +7,12 @@
 
 struct THPGraph {
     PyObject_HEAD
-    torch::jit::Graph * cdata;
+    std::shared_ptr<torch::jit::Graph> cdata;
 };
 
 extern PyObject *THPGraphClass;
 
-PyObject * THPGraph_Wrap(const std::unique_ptr<torch::jit::Graph> node);
+PyObject * THPGraph_Wrap(const std::shared_ptr<torch::jit::Graph> node);
 
 inline bool THPGraph_Check(PyObject *obj)
 {

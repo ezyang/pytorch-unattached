@@ -159,7 +159,7 @@ static variable_list call_function(FunctionTask& task) {
     if (!callback(&fn, inputs)) return variable_list(fn.next_functions.size());
   }
 
-  auto fn_outputs = fn.apply(inputs);
+  auto fn_outputs = fn(inputs);
   return call_post_hooks(fn, std::move(fn_outputs), std::move(inputs));
 }
 

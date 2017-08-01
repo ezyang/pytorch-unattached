@@ -6,15 +6,28 @@
 #include <functional>
 #include <ATen/ATen.h>
 
-#include "torch/csrc/autograd/function.h"
+#include "torch/csrc/jit/ir.h"
+#include "torch/csrc/autograd/function_hook.h"
 #include "torch/csrc/autograd/variable_version.h"
 #include "torch/csrc/Types.h"
 
 namespace torch { namespace autograd {
 
+struct Function;
+
 extern const char* ERR_BACKWARD_TWICE;
 
 struct Variable : std::enable_shared_from_this<Variable> {
+  struct ValueState {
+    std::weak_ptr<torch::jit::Graph> graph;
+    // it's only valid to use this field if !graph.exired()
+    torch::jit::Node* trace = nullptr;
+
+    void reset() {
+      graph.reset();
+      trace = nullptr;
+    }
+  };
 
   struct SavedVariable {
     SavedVariable()
@@ -29,7 +42,8 @@ struct Variable : std::enable_shared_from_this<Variable> {
       , version(variable.version_counter->new_saved_ref())
       , requires_grad(variable.requires_grad)
       , is_volatile(false)
-      , expected_version(**variable.version_counter) {
+      , expected_version(**variable.version_counter)
+      , tracing_state(variable.tracing_state) {
         if (variable.grad_fn.get() != saved_for) {
           grad_fn = variable.grad_fn;
         }
@@ -47,6 +61,7 @@ struct Variable : std::enable_shared_from_this<Variable> {
     bool requires_grad;
     bool is_volatile;
     int expected_version;
+    ValueState tracing_state;
 
     std::shared_ptr<Variable> unpack(std::shared_ptr<Function> saved_for=nullptr);
 
@@ -99,6 +114,9 @@ struct Variable : std::enable_shared_from_this<Variable> {
   // correctly when this variable is passed to another function.
   int output_nr;
   PyObject *pyobj;  // weak reference
+
+  // For use in torch::jit::tracer
+  ValueState tracing_state;
 };
 
 using SavedVariable = Variable::SavedVariable;

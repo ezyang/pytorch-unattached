@@ -9,16 +9,15 @@
 
 PyObject* THPGraphClass = nullptr;
 
-PyObject* THPGraph_Wrap(std::unique_ptr<torch::jit::Graph> e)
+PyObject* THPGraph_Wrap(std::shared_ptr<torch::jit::Graph> e)
 {
   if (!e) {
     Py_RETURN_NONE;
   } else {
     auto type = (PyTypeObject*) THPGraphClass;
     THPGraph* obj = (THPGraph*)type->tp_alloc(type, 0);
-    if (obj) {
-      obj->cdata = e.release();
-    }
+    if (!obj) return nullptr;
+    new (&obj->cdata) std::shared_ptr<torch::jit::Graph>(e);
     return (PyObject*) obj;
   }
 }
@@ -37,7 +36,7 @@ static void THPGraph_dealloc(THPGraph* self)
 {
   PyObject_GC_UnTrack(self);
   JIT_ASSERT(self->cdata);
-  delete self->cdata;
+  self->cdata.~shared_ptr<torch::jit::Graph>();
   Py_TYPE(self)->tp_free((PyObject*)self);
 }
 

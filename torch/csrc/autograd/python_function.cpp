@@ -213,6 +213,10 @@ auto PyFunction::name() -> std::string {
   return std::string(Py_TYPE(f)->tp_name);
 }
 
+auto PyFunction::getSharedPtr() -> std::shared_ptr<Function> {
+  return THPFunction_asFunction((THPFunction*)obj);
+}
+
 }} // namespace torch::autograd
 
 // Traverse and clear are required for supporting Python's GC cycle handling.
@@ -324,6 +328,8 @@ static void _mark_dirty(THPFunction *self, t2var_type &t2var,
         "variables, but detected that there are %d objects sharing it",
         v_counter.var_refcnt());
     v_counter++;
+    // In-place modifications invalidate the trace
+    variable->cdata->tracing_state.reset();
   }
   // We're not going to ever need this so let's remove references now
   Py_DECREF(self->dirty_tensors);
@@ -367,8 +373,7 @@ static void _wrap_outputs(THPFunction *self, t2var_type &t2var,
     PyObject *outputs, Node * this_expr, bool is_volatile)
 {
   // Either both or none should be true
-  assert(!(((bool)this_expr) ^ GlobalTracingState.tracing()));
-  bool is_tracing = this_expr && GlobalTracingState.tracing();
+  bool is_tracing = this_expr;
 
   auto cdata = is_volatile ? nullptr : THPFunction_asFunction(self);
   Py_ssize_t num_outputs = PyTuple_GET_SIZE(raw_output);
@@ -454,9 +459,9 @@ static void _wrap_outputs(THPFunction *self, t2var_type &t2var,
       // NOTE: normally we don't add Select nodes when there's only a single
       // output, but Python nodes can't be optimized away, so we simplify the
       // code here.
-      Node* sel = GlobalTracingState.current().appendNewNode<Select>(this_expr, i);
+      Node* sel = this_expr->owningGraph()->appendNewNode<Select>(this_expr, i);
       sel->inferTypeFrom(output_var->cdata->data);
-      GlobalTracingState.setValueTrace(output_var->cdata.get(), sel);
+      tracer::setValueTrace(output_var->cdata, sel);
     }
     output_var->cdata->output_nr = i;
     PyTuple_SET_ITEM(outputs, i, (PyObject*)output_var);
@@ -663,14 +668,14 @@ PyObject* process_outputs(THPFunction* grad_fn, const UnpackedInput& unpacked, T
 }
 
 // This sort of reimplements unpack_input, but we have our own requirements
-static Node * make_trace(PyObject* pyobj, PyObject *arg_objects,
+static Node* make_trace(PyObject* pyobj, PyObject *arg_objects,
         const variable_list& input_vars,
         const std::vector<bool>& is_variable_input, bool is_legacy)
 {
-  if (!GlobalTracingState.tracing())
+  if (!tracer::isTracing(input_vars))
     return nullptr;
 
-  auto & graph = GlobalTracingState.current();
+  auto graph = tracer::getGraph(input_vars);
   auto num_args = PyTuple_GET_SIZE(arg_objects);
   pyobj_list scalar_args;
   std::string arg_types;
@@ -694,10 +699,10 @@ static Node * make_trace(PyObject* pyobj, PyObject *arg_objects,
   std::vector<Node*> value_traces;
   value_traces.reserve(input_vars.size());
   for (auto& i : input_vars)
-    value_traces.emplace_back(GlobalTracingState.getValueTrace(i.get()));
+    value_traces.emplace_back(tracer::getValueTrace(graph, i));
 
   Py_INCREF(pyobj);
-  auto op = graph.appendNewNode<PythonOp>(
+  auto op = graph->appendNewNode<PythonOp>(
     THPObjectPtr(pyobj),
     arg_types,
     is_legacy,

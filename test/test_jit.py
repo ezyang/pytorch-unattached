@@ -11,21 +11,16 @@ class TestJit(TestCase):
         x = Variable(torch.Tensor([0.4]), requires_grad=True)
         y = Variable(torch.Tensor([0.7]), requires_grad=True)
 
-        torch._C._tracer_enter((x, y))
+        trace = torch._C._tracer_enter((x, y))
         z = torch.sigmoid(torch.tanh(x * (x + y)))
-        trace = torch._C._tracer_exit((z,))
-        torch._C._jit_optim_lint(trace)
-        torch._C._jit_optim_fuse(trace)
-        torch._C._jit_optim_lint(trace)
+        torch._C._tracer_exit(trace, (z,))
+        torch._C._jit_pass_lint(trace)
+        torch._C._jit_pass_init(trace)
+        torch._C._jit_pass_lint(trace)
+        torch._C._jit_pass_fuse(trace)
+        torch._C._jit_pass_lint(trace)
 
         self.assertExpected(str(trace))
-        return
-
-        # Re-enable this when the interpreter is back
-        zs = z._execution_engine.run_forward(trace, (x, y))
-        self.assertEqual(z, zs)
-
-        # TODO: test that backwards works correctly
 
     def test_lstm(self):
         # Careful: don't use fused backend (enabled with CUDA)
@@ -35,22 +30,26 @@ class TestJit(TestCase):
         cx = Variable(torch.randn(3, 20))
         lstm = torch.jit.trace_model(nn.LSTMCell(10, 20))
         trace, _ = lstm(input, (hx, cx))
-        torch._C._jit_optim_lint(trace)
-        torch._C._jit_optim_fuse(trace)
-        torch._C._jit_optim_lint(trace)
+        torch._C._jit_pass_lint(trace)
+        torch._C._jit_pass_init(trace)
+        torch._C._jit_pass_lint(trace)
+        torch._C._jit_pass_fuse(trace)
+        torch._C._jit_pass_lint(trace)
         self.assertExpected(str(trace))
 
     def test_autograd_closure(self):
         x = Variable(torch.Tensor([0.4]), requires_grad=True)
         y = Variable(torch.Tensor([0.7]), requires_grad=True)
 
-        torch._C._tracer_enter((x, y))
+        trace = torch._C._tracer_enter((x, y))
 
         z, _ = torch.max(x * (x + y), 0)
         w = torch.abs(x * x * x + y)
 
-        trace = torch._C._tracer_exit((z, w))
-        torch._C._jit_optim_lint(trace)
+        torch._C._tracer_exit(trace, (z, w))
+        torch._C._jit_pass_lint(trace)
+        torch._C._jit_pass_init(trace)
+        torch._C._jit_pass_lint(trace)
         closure = torch._C._jit_createAutogradClosure(trace)
         z2, w2 = Variable._execution_engine.run_forward(closure, (x, y))
         self.assertEqual(z, z2)
@@ -59,12 +58,12 @@ class TestJit(TestCase):
     def test_constant(self):
         x = Variable(torch.randn(2, 2), requires_grad=True)
 
-        torch._C._tracer_enter((x,))
+        trace = torch._C._tracer_enter((x,))
 
         y = Variable(torch.diag(torch.Tensor([2, 2])))
         z = x.matmul(y)
 
-        trace = torch._C._tracer_exit((z,))
+        torch._C._tracer_exit(trace, (z,))
         closure = torch._C._jit_createAutogradClosure(trace)
 
         z2, = Variable._execution_engine.run_forward(closure, (x,))
@@ -79,7 +78,26 @@ class TestJit(TestCase):
     def test_cpp(self):
         torch._C._jit_run_cpp_tests()
 
+    def test_trace_backward(self):
+        x = Variable(torch.randn(2, 2), requires_grad=True)
+        y = x * 2
+
+        trace = torch._C._tracer_enter((y,))
+
+        z = torch.abs(y + 2 + y)
+
+        torch._C._tracer_exit(trace, (z,))
+
+        z.backward(torch.ones(2, 2), retain_graph=True)
+        torch._C._jit_pass_lint(trace)
+        str_trace = str(trace)
+
+        # Make sure running backward again will not modify the graph
+        z.backward(torch.ones(2, 2))
+        torch._C._jit_pass_lint(trace)
+        self.assertEqual(str(trace), str_trace)
+        self.assertExpected(str(trace))
+
 
 if __name__ == '__main__':
-
     run_tests()

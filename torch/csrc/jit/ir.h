@@ -22,6 +22,12 @@
 #include "ATen/ArrayRef.h"
 #include "torch/csrc/jit/assert.h"
 
+namespace torch { namespace autograd {
+
+struct Function;
+
+}} // namespace torch::autograd
+
 namespace torch { namespace jit {
 
 // Graph represents one "function" of computation.
@@ -168,6 +174,7 @@ using ArrayRef = at::ArrayRef<T>;
 // defined using x-macros so that we can generate toString easily
 #define TH_FORALL_NODES(_) \
 _(PythonOp) \
+_(AutogradOp) \
 _(Param) \
 _(Select) \
 _(Return) \
@@ -222,9 +229,6 @@ public:
   }
   size_t unique() {
     return unique_;
-  }
-  void setStage(size_t s) {
-    stage_ = s;
   }
   size_t stage() {
     return stage_;
@@ -510,7 +514,7 @@ struct Param : public NodeWithKind<Param, NodeKind::Param, TypeKind::Single> {
   void init() {}
 };
 
-struct Graph {
+struct Graph : public std::enable_shared_from_this<Graph> {
 TH_DISALLOW_COPY_AND_ASSIGN(Graph);
 friend struct Node;
 template<typename Self, NodeKind K, TypeKind T>
@@ -531,11 +535,20 @@ private:
   graph_node_list nodes_;
   std::unordered_set<Node*> all_nodes;
   size_t next_unique_;
+  size_t stage_;
 
 public:
+  // NOTE: this is a field that's only to be used by the tracer.
+  // I'd be an overkill to create a new struct just to add a single
+  // bool to a Graph, but please reconsder that if you find yourself
+  // adding more fields.
+  bool tracing = false;
+
   Graph()
-  : next_unique_(0) {
+  : next_unique_(0)
+  , stage_(0) {
     output_ = create<Return>();
+    output_->stage_ = -1; // >= than all stages in the graph
   }
 
   const param_list & inputs() {
@@ -549,6 +562,12 @@ public:
   }
   Node * return_node() {
     return output_;
+  }
+  void advanceStage() {
+    stage_++;
+  }
+  size_t stage() {
+    return stage_;
   }
 
   Param * addInput() {
@@ -631,6 +650,7 @@ private:
   void initNewNodeForGraph(Node * r) {
     r->graph_ = this;
     r->unique_ = next_unique_++;
+    r->stage_ = stage_;
     r->nodes_iter_ = nodes_.end();
     all_nodes.emplace(r);
   }
@@ -762,6 +782,16 @@ struct PythonOp : public NodeWithKind<PythonOp,NodeKind::PythonOp,TypeKind::Mult
   }
 };
 
+struct AutogradOp : public NodeWithKind<AutogradOp,NodeKind::AutogradOp,TypeKind::Multi> {
+  std::shared_ptr<torch::autograd::Function> fn;
+
+  std::string name();
+
+  void init(std::shared_ptr<torch::autograd::Function> fn) {
+    this->fn = std::move(fn);
+  }
+};
+
 // Select nodes are used to handle multiple returns for the ops that actually return
 // multiple values like PythonOp
 // By convention, there is a unique select node for each output of an op
@@ -823,9 +853,9 @@ private:
   std::shared_ptr<Graph> subgraph_;
 };
 
-std::unique_ptr<Graph> LintGraph(std::unique_ptr<Graph> graph);
+void LintGraph(std::shared_ptr<Graph>& graph);
 
-}}
+}} // namespace torch::jit
 
 namespace std {
 
