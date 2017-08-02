@@ -140,6 +140,7 @@ build THPP
 # The shared memory manager depends on TH
 build libshm
 build ATen
+build ToffeeIR
 
 # THD, gloo have dependencies on Torch, CUDA, NCCL etc.
 if [[ $WITH_DISTRIBUTED -eq 1 ]]; then
