@@ -4,7 +4,9 @@
 #include "torch/csrc/jit/ir.h"
 #include "torch/csrc/jit/graph_fuser.h"
 #include "torch/csrc/jit/init_pass.h"
+#include "torch/csrc/jit/graph_exporter.h"
 #include "torch/csrc/jit/python_tracer.h"
+#include "torch/csrc/utils/python_strings.h"
 
 
 PyObject * THPJIT_initExtension(PyObject *_unused)
@@ -40,6 +42,14 @@ PyObject * wrap_pass(PyObject *_unused, PyObject *py_state) {
   END_HANDLE_TH_ERRORS
 }
 
+PyObject * export_graph(PyObject *_unused, PyObject *py_state) {
+  HANDLE_TH_ERRORS
+  THPUtils_assert(THPTracingState_Check(py_state), "expected a TracingState instance");
+  THPTracingState *state = (THPTracingState*)py_state;
+  return THPUtils_packString(ExportGraph(state->cdata->graph));
+  END_HANDLE_TH_ERRORS
+}
+
 PyObject * run_cpp_tests(PyObject *_unused, PyObject *_unused2) {
     HANDLE_TH_ERRORS
     runJITCPPTests();
@@ -55,6 +65,7 @@ struct PyMethodDef _THPJIT_methods[] = {
   {"_jit_pass_init", (PyCFunction)wrap_pass<MatchJITOps>, METH_O,       NULL},
   {"_jit_pass_fuse", (PyCFunction)wrap_pass<FuseGraph>, METH_O,       NULL},
   {"_jit_pass_lint", (PyCFunction)wrap_pass<LintGraph>, METH_O,       NULL},
+  {"_jit_pass_export", (PyCFunction)export_graph, METH_O,       NULL},
   {"_jit_run_cpp_tests",(PyCFunction)run_cpp_tests,           METH_NOARGS,  NULL},
   {NULL}
 };
