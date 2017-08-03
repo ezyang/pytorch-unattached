@@ -1457,6 +1457,21 @@ class TestAutograd(TestCase):
         keepdim_check(torch.std)
         torch.utils.backcompat.keepdim_warning.enabled = False
 
+    def test_reentrant(self):
+        class Reenter(Function):
+            @staticmethod
+            def forward(ctx, x):
+                return x
+            @staticmethod
+            def backward(ctx, grad_output):
+                x = Variable(torch.randn(2,2), requires_grad=True)
+                y = Variable(torch.randn(2,2), requires_grad=True)
+                z = x + y
+                z.sum().backward()
+                return grad_output
+        x = Variable(torch.randn(2,2), requires_grad=True)
+        y = Reenter().apply(x)
+        y.sum().backward()
 
 def index_variable(shape, max_indices):
     if not isinstance(shape, tuple):

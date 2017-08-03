@@ -23,6 +23,9 @@
 
 namespace torch { namespace autograd {
 
+// NB: -1 indicates the CPU worker!
+static thread_local int is_worker_for = -2;
+
 // XXX: Changes to the way multithreading works in execute should be done with
 // great care. Right now the implementation guarantees that a single function's
 // apply will never be entered concurrently (even if multiple graphs are
@@ -105,9 +108,10 @@ Engine::Engine() : ready_queues() {
 // This Engine's ReadyQueues and their corresponding threads are leaked here
 Engine::~Engine() = default;
 
-auto Engine::thread_main(std::shared_ptr<ReadyQueue> queue, int device) -> void {
+auto Engine::thread_main(std::shared_ptr<ReadyQueue> queue, int device, GraphTask* parent_task) -> void {
   THInferNumThreads();
   AutoGPU guard(device);
+  is_worker_for = device;
   while (1) {
     FunctionTask task = queue->pop_back();
     if (!task.base->has_error.load()) {
@@ -120,6 +124,15 @@ auto Engine::thread_main(std::shared_ptr<ReadyQueue> queue, int device) -> void 
     if (--task.base->outstanding_tasks == 0) {
       std::lock_guard<std::mutex> lock(task.base->mutex);
       task.base->not_done.notify_all();
+      if (parent_task == task.base) {
+        // Teeny optimization, avoid an atomic read.
+        return;
+      }
+    }
+    if (parent_task && parent_task != task.base && parent_task->outstanding_tasks == 0) {
+      // We're done! Whee!!!
+      // TODO: Cache the thread
+      return;
     }
   }
 }
@@ -302,6 +315,39 @@ auto Engine::execute(const function_list& input_roots,
   ClearCallbacks _cb_guard(post_callbacks, post_callbacks_lock);
 
   GraphTask graph_task(keep_graph, callbacks);
+
+  std::unique_ptr<std::thread> t;
+  if (is_worker_for != -2) {
+    // OK, time for some fancy footwork.  If we are here, it means that the
+    // fn.apply from call_function has called into the engine reentrantly.  If
+    // we had green threads, we would block the thread of execution, and then
+    // kick back to the thread loop so the worker thread can do some more work.
+    // But we don't have green threads, so instead we have to block the
+    // entire OS level thread.  This means we need to spin up another
+    // worker to handle the requests on this device.
+    //
+    // For this scheme to work, a number of things have to be true:
+    //
+    // - The worker thread must not have taken out any locks.  At
+    //   least within this engine, this is the case.
+    // - We need a hard synchronization at the beginning and end
+    //   of the sub-worker thread, so that any thread-local
+    //   state can be passed from one worker thread to the
+    //   other in the end.
+    //
+    // What is the exit condition for the new worker thread?  Logically,
+    // if we made another copy of the engine, when the fresh outstanding tasks
+    // finish.  But this takes some care, because our new worker thread
+    // may be happily processing tasks from OTHER concurrent graph executions,
+    // and there is no reason that it is the task that finishes off the
+    // graph.  For now, our plan is every time we bounce around the loop,
+    // we check if the originating graph's outstanding_tasks are
+    // zero and bug out if it is.
+    t = std::unique_ptr<std::thread>(
+          new std::thread(&Engine::thread_main, this, ready_queues[is_worker_for + 1],
+                          is_worker_for, &graph_task));
+  }
+
   std::unique_lock<std::mutex> lock(graph_task.mutex);
 
   auto graph_root = std::make_shared<GraphRoot>(input_roots, inputs);
@@ -330,6 +376,10 @@ auto Engine::execute(const function_list& input_roots,
   graph_task.not_done.wait(lock, [&graph_task]{
     return graph_task.outstanding_tasks.load() == 0;
   });
+
+  // If we had to spin up a temporary worker thread, terminate it now!
+  // TODO: Cache it for later.
+  if (t) t->join();
 
   // Check for an exception while running backwards
   if (graph_task.has_error.load()) {
@@ -369,12 +419,13 @@ auto Engine::start_threads() -> void {
     num_devices = 0;
   }
 #endif
+  // One for CPU, plus one for every GPU device
   int num_threads = num_devices + 1;
   ready_queues = std::vector<std::shared_ptr<ReadyQueue>>(num_threads);
   for (int i = 0; i < num_threads; ++i) {
     auto& queue = ready_queues[i];
     queue.reset(new ReadyQueue());
-    std::thread t(&Engine::thread_main, this, queue, i - 1);
+    std::thread t(&Engine::thread_main, this, queue, i - 1, nullptr);
     t.detach();
   }
 }
