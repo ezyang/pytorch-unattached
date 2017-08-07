@@ -49,22 +49,10 @@ auto TracerHook<Subclass>::registerHook(
 
 void TraceEnterHook::run(variable_list& vars) {
   auto& graph = tracing_state->graph;
-  tracing_state->active = true;
-  graph->advanceStage();
+  graph->advanceStage(); // TODO: I think this is dodgy
 
   int num_vars = vars.size();
   for (int i = 0; i < num_vars; ++i) {
-    auto& var_state = vars[i]->tracing_state;
-    auto var_tracing_state = var_state.state.lock();
-    if (var_tracing_state) {
-      JIT_ASSERT(var_tracing_state == tracing_state);
-      // It's ok if an input has a trace from the current stage - we're using a
-      // "global" tracing switch, so we might have traced parts we don't care about.
-      // We'll replace the trace of this Variable, and DCO will destroy unnecessary nodes.
-      // TODO: it might be possible to support values form previous stages being inputs
-      // here, although I don't know how right now.
-      JIT_ASSERT(var_state.trace->stage() == graph->stage());
-    }
     setValueTrace(tracing_state, vars[i], graph->addInput());
   }
   TraceExitHook::registerHook(tracing_state, vars);
@@ -88,7 +76,7 @@ void TraceEnterHook::registerHook(const std::shared_ptr<TracingState>& tracing_s
 ////////////////////////////////////////////////////////////////////////////////
 
 void TraceExitHook::run(variable_list& vars) {
-  exit(vars);
+  exit(tracing_state, vars);
 }
 
 void TraceExitHook::registerHook(const std::shared_ptr<TracingState>& tracing_state, variable_list& inputs) {

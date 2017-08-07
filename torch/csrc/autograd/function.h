@@ -47,6 +47,7 @@ struct Function : std::enable_shared_from_this<Function> {
     , pre_hooks()
     , post_hooks()
     , pyobj(nullptr)
+    , tracing_state(nullptr)
     {}
 
   Function(FunctionFlags&& flags)
@@ -57,6 +58,7 @@ struct Function : std::enable_shared_from_this<Function> {
     , pre_hooks()
     , post_hooks()
     , pyobj(nullptr)
+    , tracing_state(nullptr)
     {}
 
   Function(const Function& other) = delete;
@@ -69,7 +71,7 @@ struct Function : std::enable_shared_from_this<Function> {
   variable_list tracedApply(variable_list inputs);
 
   variable_list operator()(const variable_list& inputs) {
-    if (jit::tracer::isTracing(inputs)) {
+    if (tracing_state) {
       return tracedApply(inputs);
     }
     return apply(inputs);
@@ -109,6 +111,9 @@ struct Function : std::enable_shared_from_this<Function> {
   std::vector<std::shared_ptr<FunctionPostHook>> post_hooks;
 
   PyObject *pyobj;  // weak reference
+
+  // TODO: This can probably be weak
+  std::shared_ptr<jit::tracer::TracingState> tracing_state;
 };
 
 template<typename T>

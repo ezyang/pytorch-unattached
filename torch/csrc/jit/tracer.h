@@ -18,31 +18,23 @@ namespace torch { namespace jit { namespace tracer {
 using torch::autograd::Variable;
 using variable_list = std::vector<std::shared_ptr<Variable>>;
 
+// This is the tracing state associated with the execution of the Python
+// interpreter; e.g., when a user requests tracing from Python.
+std::shared_ptr<TracingState> GlobalPythonTracingState;
+
 // TracingState tracks the necessary state when we are tracing the execution of
 // autograd code; most importantly, it holds a reference to the actual IR
 // graph which we are recording the trace to.
 //
-// The liveness of a TracingState is expected to be a superset of the region
-// of code being traced; in particular, Variables do not keep a TracingState
-// live.  Instead, they hold weak pointers to TracingState, to prevent leaks
-// from arising when a variable that participated in a trace outlives the
-// actual trace itself.
+// TODO: arguably it shouldn't be necessary to shared_ptr at
+// TracingState
 //
-// Multi-threaded tracing is NOT yet supported: it is better to think of
-// tracing as a thread local affair, where we enter and then exit
-// a tracing region.  This not only coincides with how Python code
-// is run (GIL = single-threaded), but also how single Functions in
-// an autograd closure are applied.  Note that the execution of an
-// *entire* autograd closure is multithreaded, in which case extra
-// locking is necessary.
-
 struct TracingState : public std::enable_shared_from_this<TracingState> {
   TracingState()
-    : graph(new Graph())
-    , active(false) {}
+    : graph(new Graph()) {}
 
   std::unique_ptr<Graph> graph;
-  bool active;
+  std::unordered_map<Variable::VariableUnique*, Node*> unique_map;
 };
 
 namespace detail {
@@ -102,6 +94,7 @@ public:
 
 } // namespace detail
 
+/*
 // Should a function which takes 'vars' as inputs be traced?
 // It sufficies for ONE variable to be tracing: any "untraced" variables
 // are treated as constants.
@@ -134,14 +127,13 @@ inline std::shared_ptr<TracingState> getTracingState(const variable_list& vars) 
   JIT_ASSERT(state);
   return state;
 }
+*/
 
 // Having finished adding a new 'node' to the graph IR owned by TracingState 'state',
 // 'setValueTrace' associates this node with an output variable, so that further operations
 // involving this variable know which node in the IR to reference.
 inline void setValueTrace(const std::shared_ptr<TracingState>& state, const std::shared_ptr<Variable>& var, Node *node) {
-  JIT_ASSERT(var->tracing_state.state.lock() == state || var->tracing_state.state.expired());
-  var->tracing_state.state = state;
-  var->tracing_state.trace = node;
+  state->unique_map[var->unique.get()] = node;
 }
 
 // Given a variable 'var', return the 'node' which represents the instruction
@@ -160,19 +152,19 @@ inline void setValueTrace(const std::shared_ptr<TracingState>& state, const std:
 // if we treat it as a constant, everything will work out.
 inline Node* getValueTrace(const std::shared_ptr<TracingState>& state, const std::shared_ptr<Variable>& var, bool mustExist = false) {
   JIT_ASSERTM(var, "Not supported. NULL Variables will need to be removed from autograd");
-  auto var_state = var->tracing_state.state.lock();
-  if (var_state) {
-    JIT_ASSERT(var->tracing_state.state.lock() == state);
-    return var->tracing_state.trace;
+  auto node_it = state->unique_map.find(var->unique.get());
+  if (node_it == state->unique_map.end()) {
+    if (mustExist) throw std::runtime_error("untraced variable");
+    Node *constant = state->graph->appendNewNode<Constant>(var->data);
+    setValueTrace(state, var, constant);
+    return constant;
+  } else {
+    return node_it->second;
   }
-
-  if (mustExist) throw std::runtime_error("untraced variable");
-
-  Node *constant = state->graph->appendNewNode<Constant>(var->data);
-  setValueTrace(state, var, constant);
-  return constant;
 }
 
+/*
+// TODO will need this
 // Start tracing, treating 'inputs' as inputs to the trace, which can be
 // varied on subsequent invocations of the trace.  Any other variables
 // will be treated as constants.
@@ -189,16 +181,17 @@ inline std::shared_ptr<TracingState> enter(variable_list& inputs) {
   detail::TraceExitHook::registerHook(state, inputs);
   return state;
 }
+*/
+
+// gonna need this but not sure what the context is
 
 // Exit a trace, treating 'outputs' as the outputs of the trace.  These
 // are the variables whose values will be computed upon subsequent
 // invocations of the trace.
-inline void exit(variable_list& outputs) {
-  auto state = getTracingState(outputs);
+inline void exit(std::shared_ptr<TracingState> state, variable_list& outputs) {
   for (auto& output : outputs) {
     state->graph->registerOutput(getValueTrace(state, output, true));
   }
-  state->active = false;
   detail::TraceEnterHook::registerHook(state, outputs);
 }
 
