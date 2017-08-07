@@ -19,6 +19,7 @@ Variable::Variable(
     , is_volatile(is_volatile)
     , output_nr(0)
     , pyobj(nullptr)
+    , unique(std::make_shared<Variable::VariableUnique>())
 {
   if (!this->data.defined()) {
     throw std::runtime_error("Variable data is NULL");
@@ -36,6 +37,7 @@ Variable::Variable(
     , is_volatile(false)
     , output_nr(grad_fn->num_inputs++)
     , pyobj(nullptr)
+    , unique(std::make_shared<Variable::VariableUnique>())
 {
   if (!this->data.defined()) {
     throw std::runtime_error("Variable data is NULL");

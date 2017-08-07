@@ -130,12 +130,9 @@ PyObject * THPTracer_enter(PyObject *_unused, PyObject *args)
     inputs.emplace_back(((THPVariable*)input_obj)->cdata);
   }
 
-  THPObjectPtr tracing_state {THPTracingState_Wrap(tracer::enter(inputs))};
-  THPObjectPtr new_inputs {PyTuple_New(num_inputs)};
-  for (int i = 0; i < num_inputs; ++i) {
-    PyTuple_SET_ITEM(new_inputs.get(), i, THPVariable_Wrap(inputs[i]));
-  }
-  return Py_BuildValue("OO", tracing_state.release(), new_inputs.release());
+  tracer::GlobalPythonTracingState = tracer::enter(inputs);
+
+  Py_RETURN_NONE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -161,13 +158,10 @@ PyObject * THPTracer_exit(PyObject *_unused, PyObject *args)
   }
 
   // TODO: reset output vars
-  tracer::exit(outputs);
+  tracer::exit(tracer::GlobalPythonTracingState, outputs);
+  auto trace = std::move(tracer::GlobalPythonTracingState);
 
-  THPObjectPtr new_outputs(PyTuple_New(num_outputs));
-  for (int i = 0; i < num_outputs; ++i) {
-    PyTuple_SET_ITEM(new_outputs.get(), i, THPVariable_Wrap(outputs[i]));
-  }
-  return new_outputs.release();
+  return THPTracingState_Wrap(trace);
   END_HANDLE_TH_ERRORS
 }
 

@@ -49,7 +49,6 @@ auto TracerHook<Subclass>::registerHook(
 
 void TraceEnterHook::run(variable_list& vars) {
   auto& graph = tracing_state->graph;
-  graph->advanceStage(); // TODO: I think this is dodgy
 
   int num_vars = vars.size();
   for (int i = 0; i < num_vars; ++i) {

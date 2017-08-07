@@ -29,11 +29,16 @@ std::shared_ptr<TracingState> GlobalPythonTracingState;
 // TODO: arguably it shouldn't be necessary to shared_ptr at
 // TracingState
 //
+// TODO: I feel... some synchronization may be necessary
+//
 struct TracingState : public std::enable_shared_from_this<TracingState> {
   TracingState()
     : graph(new Graph()) {}
 
   std::unique_ptr<Graph> graph;
+  // NB: This map does not key on Variable*, because variable saving and
+  // restoring can cause the pointer for a Variable to change. The
+  // VariableUnique is a dummy object which stays stable across this.
   std::unordered_map<Variable::VariableUnique*, Node*> unique_map;
 };
 
@@ -163,8 +168,6 @@ inline Node* getValueTrace(const std::shared_ptr<TracingState>& state, const std
   }
 }
 
-/*
-// TODO will need this
 // Start tracing, treating 'inputs' as inputs to the trace, which can be
 // varied on subsequent invocations of the trace.  Any other variables
 // will be treated as constants.
@@ -172,16 +175,13 @@ inline Node* getValueTrace(const std::shared_ptr<TracingState>& state, const std
 inline std::shared_ptr<TracingState> enter(variable_list& inputs) {
   auto state = std::make_shared<TracingState>();
   for (auto& input : inputs) {
-    JIT_ASSERT(input->tracing_state.state.expired());
-    input->tracing_state.state = state;
-    input->tracing_state.trace = state->graph->addInput();
-    input->tracing_state.trace->inferTypeFrom(input->data);
+    Node * node = state->graph->addInput();
+    setValueTrace(state, input, node);
+    node->inferTypeFrom(input->data);
   }
-  state->active = true;
   detail::TraceExitHook::registerHook(state, inputs);
   return state;
 }
-*/
 
 // gonna need this but not sure what the context is
 
