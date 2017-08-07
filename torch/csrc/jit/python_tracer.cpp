@@ -130,7 +130,7 @@ PyObject * THPTracer_enter(PyObject *_unused, PyObject *args)
     inputs.emplace_back(((THPVariable*)input_obj)->cdata);
   }
 
-  tracer::GlobalPythonTracingState = tracer::enter(inputs);
+  tracer::GlobalTracingState = tracer::enter(inputs);
 
   Py_RETURN_NONE;
   END_HANDLE_TH_ERRORS
@@ -158,8 +158,8 @@ PyObject * THPTracer_exit(PyObject *_unused, PyObject *args)
   }
 
   // TODO: reset output vars
-  tracer::exit(tracer::GlobalPythonTracingState, outputs);
-  auto trace = std::move(tracer::GlobalPythonTracingState);
+  tracer::exit(tracer::GlobalTracingState, outputs);
+  auto trace = std::move(tracer::GlobalTracingState);
 
   return THPTracingState_Wrap(trace);
   END_HANDLE_TH_ERRORS

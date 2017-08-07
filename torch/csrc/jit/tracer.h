@@ -20,16 +20,20 @@ using variable_list = std::vector<std::shared_ptr<Variable>>;
 
 // This is the tracing state associated with the execution of the Python
 // interpreter; e.g., when a user requests tracing from Python.
-std::shared_ptr<TracingState> GlobalPythonTracingState;
+//
+// Can't be a unique_ptr because multiple threads may be tracing into
+// the same state (in case of autograd with multiple GPU devices.)  NB:
+// you need locks here!
+thread_local std::shared_ptr<TracingState> ThreadTracingState;
 
 // TracingState tracks the necessary state when we are tracing the execution of
 // autograd code; most importantly, it holds a reference to the actual IR
 // graph which we are recording the trace to.
 //
-// TODO: arguably it shouldn't be necessary to shared_ptr at
-// TracingState
+// TODO: I feel... some synchronization may be necessary.  See also
+// ThreadTracingState above
 //
-// TODO: I feel... some synchronization may be necessary
+// TODO: this structure should maintain current stage, not graph!
 //
 struct TracingState : public std::enable_shared_from_this<TracingState> {
   TracingState()
@@ -48,9 +52,7 @@ template<typename Subclass>
 struct TracerHook : public autograd::FunctionPreHook {
 protected:
   // Returns a vector of hooks that were registered. Subclasses can then perform additional initialization.
-  static std::shared_ptr<Subclass> registerHook(const std::shared_ptr<TracingState>& tracing_state, variable_list& inputs);
-
-  std::shared_ptr<TracingState> tracing_state;
+  static std::shared_ptr<Subclass> registerHook(variable_list& inputs);
 
 public:
   virtual void run(variable_list& inputs) = 0;
@@ -84,7 +86,7 @@ private:
   virtual void run(variable_list& inputs) override;
 
 public:
-  static void registerHook(const std::shared_ptr<TracingState>& tracing_state, variable_list& outputs);
+  static void registerHook(variable_list& outputs);
 };
 
 struct TraceExitHook : public TracerHook<TraceExitHook> {
@@ -94,7 +96,7 @@ private:
   virtual void run(variable_list& outputs) override;
 
 public:
-  static void registerHook(const std::shared_ptr<TracingState>& tracing_state, variable_list& inputs);
+  static void registerHook(variable_list& inputs);
 };
 
 } // namespace detail
@@ -133,6 +135,8 @@ inline std::shared_ptr<TracingState> getTracingState(const variable_list& vars) 
   return state;
 }
 */
+
+// TODO: Make these member functions of TracingState
 
 // Having finished adding a new 'node' to the graph IR owned by TracingState 'state',
 // 'setValueTrace' associates this node with an output variable, so that further operations
@@ -173,13 +177,15 @@ inline Node* getValueTrace(const std::shared_ptr<TracingState>& state, const std
 // will be treated as constants.
 // XXX: this changes variables in inputs!
 inline std::shared_ptr<TracingState> enter(variable_list& inputs) {
-  auto state = std::make_shared<TracingState>();
+  // Nested tracing not supported yet!
+  JIT_ASSERT(ThreadTracingState == nullptr);
+  ThreadTracingState = std::make_shared<TracingState>();
   for (auto& input : inputs) {
     Node * node = state->graph->addInput();
     setValueTrace(state, input, node);
     node->inferTypeFrom(input->data);
   }
-  detail::TraceExitHook::registerHook(state, inputs);
+  detail::TraceExitHook::registerHook(inputs);
   return state;
 }
 
@@ -188,11 +194,11 @@ inline std::shared_ptr<TracingState> enter(variable_list& inputs) {
 // Exit a trace, treating 'outputs' as the outputs of the trace.  These
 // are the variables whose values will be computed upon subsequent
 // invocations of the trace.
-inline void exit(std::shared_ptr<TracingState> state, variable_list& outputs) {
+inline void exit(variable_list& outputs) {
   for (auto& output : outputs) {
     state->graph->registerOutput(getValueTrace(state, output, true));
   }
-  detail::TraceEnterHook::registerHook(state, outputs);
+  detail::TraceEnterHook::registerHook(outputs);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -214,7 +220,7 @@ private:
   virtual void run(variable_list& vars) override;
 
 public:
-  static void registerHook(const std::shared_ptr<TracingState>& tracing_state, variable_list& outputs, std::shared_ptr<EvalCommonState> common_state);
+  static void registerHook(variable_list& outputs, std::shared_ptr<EvalCommonState> common_state);
 };
 
 struct EvalExitHook : public detail::TracerHook<EvalExitHook> {
@@ -226,7 +232,7 @@ private:
   virtual void run(variable_list& vars) override;
 
 public:
-  static std::shared_ptr<EvalCommonState> registerHook(const std::shared_ptr<TracingState>& tracing_state, variable_list& inputs);
+  static std::shared_ptr<EvalCommonState> registerHook(variable_list& inputs);
 };
 
 }}} // namespace torch::jit::tracer

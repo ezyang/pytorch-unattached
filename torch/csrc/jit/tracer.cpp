@@ -32,13 +32,11 @@ static std::shared_ptr<autograd::Function> insertIdentity(variable_list& vars) {
 
 template<typename Subclass>
 auto TracerHook<Subclass>::registerHook(
-        const std::shared_ptr<TracingState>& tracing_state,
         variable_list& vars) -> std::shared_ptr<Subclass> {
   auto id_fn = insertIdentity(vars);
   // We can't use make_shared, because make_shared is not a friend of Subclass,
   // so it can't use its private constructor...
   auto hook = std::shared_ptr<Subclass>(new Subclass());
-  hook->tracing_state = tracing_state;
   id_fn->pre_hooks.emplace_back(hook);
   return hook;
 }

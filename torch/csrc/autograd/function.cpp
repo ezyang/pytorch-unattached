@@ -45,6 +45,10 @@ variable_list Function::tracedApply(variable_list inputs) {
     return apply(inputs);
   }
 
+  // TODO: Check if there is at least one Variable known to the tracing
+  // state.  Avoids fruitlessly recomputing graphs whose outputs are
+  // constants
+
   // Register eval hooks if backward of this function is not traceable.
   // This has to be done early, because it modifies inputs.
   bool is_backward_traceable = false;
