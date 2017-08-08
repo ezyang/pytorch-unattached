@@ -95,40 +95,39 @@ class TestJit(TestCase):
         trace, _ = model(x)
         self.assertExpected(str(trace))
 
-"""
     def test_autograd_closure(self):
-        a = x = Variable(torch.Tensor([0.4]), requires_grad=True)
-        b = y = Variable(torch.Tensor([0.7]), requires_grad=True)
+        x = Variable(torch.Tensor([0.4]), requires_grad=True)
+        y = Variable(torch.Tensor([0.7]), requires_grad=True)
 
-        trace, (x, y) = torch._C._tracer_enter((x, y))
+        def f(x, y):
+            z, _ = torch.max(x * (x + y), 0)
+            w = torch.abs(x * x * x + y)
+            return (z, w)
 
-        z, _ = torch.max(x * (x + y), 0)
-        w = torch.abs(x * x * x + y)
-
-        z, w = torch._C._tracer_exit((z, w))
+        (trace, (z, w)) = torch.jit.trace_fn(f)(x, y)
         torch._C._jit_pass_lint(trace)
         torch._C._jit_pass_init(trace)
         torch._C._jit_pass_lint(trace)
         closure = torch._C._jit_createAutogradClosure(trace)
-        z2, w2 = Variable._execution_engine.run_forward(closure, (a, b))
+        z2, w2 = Variable._execution_engine.run_forward(closure, (x, y))
         self.assertEqual(z, z2)
         self.assertEqual(w, w2)
 
     def test_constant(self):
-        a = x = Variable(torch.randn(2, 2), requires_grad=True)
+        x = Variable(torch.randn(2, 2), requires_grad=True)
 
-        trace, (x,) = torch._C._tracer_enter((x,))
+        box = [None]
+        def f(x):
+            box[0] = Variable(torch.diag(torch.Tensor([2, 2])))
+            return x.matmul(box[0])
 
-        y = Variable(torch.diag(torch.Tensor([2, 2])))
-        z = x.matmul(y)
-
-        z, = torch._C._tracer_exit((z,))
+        (trace, z) = torch.jit.trace_fn(f)(x)
         closure = torch._C._jit_createAutogradClosure(trace)
 
-        z2, = Variable._execution_engine.run_forward(closure, (a,))
+        z2, = Variable._execution_engine.run_forward(closure, (x,))
         self.assertEqual(z, z2)
 
-        y.data.fill_(1000)  # make sure the data has been cloned
+        box[0].data.fill_(1000)  # make sure the data has been cloned
 
         a2 = Variable(torch.ones(2, 2) * 2, requires_grad=True)
         z3, = Variable._execution_engine.run_forward(closure, (a2,))
@@ -136,14 +135,12 @@ class TestJit(TestCase):
 
     def test_c_function(self):
         x = Variable(torch.randn(1, 3, 10, 10))
-        m = nn.Conv2d(3, 8, 3, 1)
 
-        trace, new_vars = torch._C._tracer_enter((x,) + tuple(m.parameters()))
-        x = new_vars[0]
-        y = m(x)
-        _ = torch._C._tracer_exit((y,))
+        m = torch.jit.trace_model(nn.Conv2d(3, 8, 3, 1))
+        trace, _ = m(x)
         self.assertExpected(str(trace))
 
+    """
     def test_legacy_fail(self):
 
         class Legacy(Function):
@@ -185,10 +182,10 @@ class TestJit(TestCase):
         # Run dead code elimination to remove unused trace nodes
         torch._C._jit_pass_dco(trace)
         self.assertExpected(str(trace))
+"""
 
     def test_cpp(self):
         torch._C._jit_run_cpp_tests()
-"""
 
 if __name__ == '__main__':
 

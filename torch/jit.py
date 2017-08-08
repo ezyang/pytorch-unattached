@@ -17,11 +17,15 @@ def flatten(x):
 
 def record_trace(f, inputs):
     inputs = torch._C._tracer_enter(inputs)
-    out = f()
-    # TODO: unflatten
-    trace = torch._C._tracer_exit(flatten(out))
-    torch._C._jit_pass_lint(trace)
-    return (trace, out)
+    try:
+        out = f()
+        # TODO: unflatten
+        trace = torch._C._tracer_exit(flatten(out))
+        torch._C._jit_pass_lint(trace)
+        return (trace, out)
+    except:
+        torch._C._tracer_exit(tuple())
+        raise
 
 
 @contextlib.contextmanager
