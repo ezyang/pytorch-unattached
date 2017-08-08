@@ -140,7 +140,6 @@ class TestJit(TestCase):
         trace, _ = m(x)
         self.assertExpected(str(trace))
 
-    """
     def test_legacy_fail(self):
 
         class Legacy(Function):
@@ -149,19 +148,21 @@ class TestJit(TestCase):
 
             def backward(self, grad_output):
                 return grad_output
-        a = x = Variable(torch.Tensor([0]), requires_grad=True)
-        trace, (x,) = torch._C._tracer_enter((x,))
-        self.assertRaises(RuntimeError, lambda: Legacy()(x))
-        x, = torch._C._tracer_exit((x,))
+
+        x = Variable(torch.Tensor([0]), requires_grad=True)
+        f = torch.jit.trace_fn(Legacy())
+        self.assertRaises(RuntimeError, lambda: f(x))
 
     @unittest.skip("in-place is not supported")
     def test_inplace_transplant(self):
-        a = x = Variable(torch.Tensor([0]), requires_grad=True)
-        trace, (x,) = torch._C._tracer_enter((x,))
-        y = x.clone()
-        y.add_(2)
-        y.add_(3)
-        y, = torch._C._tracer_exit((y,))
+        x = Variable(torch.Tensor([0]), requires_grad=True)
+        # Untested
+        def f(x):
+            y = x.clone()
+            y.add_(2)
+            y.add_(3)
+            return y
+        trace, _ = torch.jit.trace_fn(f)(x)
         self.assertExpected(str(trace))
 
     def test_backward(self):
@@ -171,10 +172,9 @@ class TestJit(TestCase):
         x = a
         y = a * b
 
-        trace, (x, y) = torch._C._tracer_enter((x, y))
-        z = y * 2 * x
-        z, = torch._C._tracer_exit((z,))
-        torch._C._jit_pass_lint(trace)
+        def f(x, y):
+            return y * 2 * x
+        trace, z = torch.jit.trace_fn(f)(x, y)
 
         grad, = torch.autograd.grad(z, x, Variable(torch.ones(2, 2), requires_grad=True), create_graph=True)
         torch._C._jit_pass_lint(trace)
@@ -182,7 +182,6 @@ class TestJit(TestCase):
         # Run dead code elimination to remove unused trace nodes
         torch._C._jit_pass_dco(trace)
         self.assertExpected(str(trace))
-"""
 
     def test_cpp(self):
         torch._C._jit_run_cpp_tests()
