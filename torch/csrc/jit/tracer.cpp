@@ -35,6 +35,7 @@ static std::shared_ptr<autograd::Function> insertIdentity(variable_list& vars) {
 template<typename Subclass>
 auto TracerHook<Subclass>::registerHook(
         variable_list& vars) -> std::shared_ptr<Subclass> {
+  JIT_ASSERT(ThreadTracingState);
   auto id_fn = insertIdentity(vars);
   // We can't use make_shared, because make_shared is not a friend of Subclass,
   // so it can't use its private constructor...
@@ -48,7 +49,6 @@ auto TracerHook<Subclass>::registerHook(
 ////////////////////////////////////////////////////////////////////////////////
 
 void TraceEnterHook::run(variable_list& vars) {
-  std::cerr << "TraceEnterHook\n";
   JIT_ASSERT(ThreadTracingState);
   auto& graph = ThreadTracingState->graph;
 
@@ -60,6 +60,7 @@ void TraceEnterHook::run(variable_list& vars) {
 }
 
 void TraceEnterHook::registerHook(variable_list& outputs) {
+  JIT_ASSERT(ThreadTracingState);
   JIT_ASSERT(outputs.size() > 0);
 
   // Either no (e.g. after last backward) or all outputs should have a grad fn.
@@ -77,7 +78,6 @@ void TraceEnterHook::registerHook(variable_list& outputs) {
 ////////////////////////////////////////////////////////////////////////////////
 
 void TraceExitHook::run(variable_list& outputs) {
-  std::cerr << "TraceExitHook\n";
   // stripped down version of forward_exit
   JIT_ASSERT(ThreadTracingState);
   for (auto& output : outputs) {
@@ -98,7 +98,6 @@ void TraceExitHook::registerHook(variable_list& inputs) {
 ////////////////////////////////////////////////////////////////////////////////
 
 void EvalEnterHook::run(variable_list& vars) {
-  std::cerr << "EvalEnterHook\n";
   JIT_ASSERT(ThreadTracingState);
   auto& graph = ThreadTracingState->graph;
   Node *eval_node = common_state->eval_node = graph->appendNewNode<Eval>();
@@ -120,8 +119,7 @@ void EvalEnterHook::registerHook(variable_list& outputs, std::shared_ptr<EvalCom
 // TODO: handle saved_variable edges. probably need to go through traces of outputs before overwriting
 // and find places where they refer to earlier-stage IR
 void EvalExitHook::run(variable_list& vars) {
-  std::cerr << "EvalExitHook\n";
-  JIT_ASSERT(ThreadTracingState != nullptr);
+  JIT_ASSERT(ThreadTracingState);
   auto& graph = ThreadTracingState->graph;
   int num_vars = vars.size();
   for (int i = 0; i < num_vars; ++i) {
@@ -133,6 +131,7 @@ void EvalExitHook::run(variable_list& vars) {
 }
 
 std::shared_ptr<EvalCommonState> EvalExitHook::registerHook(variable_list& inputs) {
+  JIT_ASSERT(ThreadTracingState);
   auto hook = TracerHook<EvalExitHook>::registerHook(inputs);
   hook->common_state = std::make_shared<EvalCommonState>();
   return hook->common_state;

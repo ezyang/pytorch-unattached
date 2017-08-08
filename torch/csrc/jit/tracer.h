@@ -209,14 +209,15 @@ inline std::shared_ptr<TracingState> forward_exit(variable_list& outputs) {
   JIT_ASSERT(ThreadTracingState != nullptr);
   // TODO: Shouldn't similar logic to this be invoked when we exit
   // backwards?  But AFAICT this is Python only logic...
-  auto state = std::move(ThreadTracingState);
+  auto& state = ThreadTracingState;
   for (auto& output : outputs) {
     state->graph->registerOutput(getValueTrace(state, output, true));
   }
   detail::TraceEnterHook::registerHook(outputs); // NB: modifies!
   // TODO: I hate this, get rid of it
   state->graph->advanceStage();
-  return state;
+  // Move is critical here: we are NULLing ThreadTracingState
+  return std::move(ThreadTracingState);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
