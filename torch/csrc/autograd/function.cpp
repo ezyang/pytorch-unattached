@@ -37,7 +37,7 @@ auto Function::name() -> std::string {
 // This function is analogous to make_trace which operates on PythonOp, but this
 // function instead works for C++ implemented autograd Functions, which don't
 // actually have any backing Python class. We still need to trace them!
-variable_list Function::tracedApply(std::shared_ptr<TracingState> state, variable_list inputs) {
+variable_list Function::tracedApply(std::shared_ptr<jit::tracer::TracingState> state, variable_list inputs) {
   using namespace torch::jit;
   bool is_traceable = static_cast<bool>(dynamic_cast<Identity*>(this));
   // Traceable Functions are completely transparent to the JIT.
