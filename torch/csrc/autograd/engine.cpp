@@ -153,9 +153,7 @@ static variable_list call_function(FunctionTask& task) {
   auto& fn = *task.fn;
 
   auto OldTracingState = jit::tracer::ThreadTracingState;
-  std::cerr << "calling " << fn.name() << "\n";
   if (!jit::tracer::ThreadTracingState) {
-    std::cerr << "setting ts to " << fn.saved_tracing_state << "\n";
     jit::tracer::ThreadTracingState = fn.saved_tracing_state;
   }
 

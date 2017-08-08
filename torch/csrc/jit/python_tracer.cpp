@@ -179,3 +179,20 @@ PyObject * THPTracer_createAutogradClosure(PyObject *_unused, PyObject *pystate)
                         [](void *fn_list) { delete reinterpret_cast<AutogradClosure*>(fn_list); });
   END_HANDLE_TH_ERRORS
 }
+
+PyObject * THPTracer_enabled(PyObject *_unused) {
+  HANDLE_TH_ERRORS
+  if (tracer::ThreadTracingState) {
+    return Py_True;
+  } else {
+    return Py_False;
+  }
+  END_HANDLE_TH_ERRORS
+}
+
+PyObject * THPTracer_disable(PyObject *_unused) {
+  HANDLE_TH_ERRORS
+  tracer::ThreadTracingState = nullptr;
+  Py_RETURN_NONE;
+  END_HANDLE_TH_ERRORS
+}

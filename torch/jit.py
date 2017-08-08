@@ -23,7 +23,9 @@ def record_trace(f, inputs):
         torch._C._jit_pass_lint(trace)
         return (trace, F._unflatten(flat_out, out))
     except:
-        torch._C._tracer_exit(tuple())
+        # For some reason, torch._C._tracer_exit(tuple())
+        # doesn't work.
+        torch._C._tracer_disable()
         raise
 
 
