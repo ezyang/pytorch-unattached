@@ -47,6 +47,8 @@ struct Function : std::enable_shared_from_this<Function> {
     , pre_hooks()
     , post_hooks()
     , pyobj(nullptr)
+      // Hope this is correct!
+    , saved_tracing_state(jit::tracer::ThreadTracingState)
     {}
 
   Function(FunctionFlags&& flags)
@@ -57,6 +59,7 @@ struct Function : std::enable_shared_from_this<Function> {
     , pre_hooks()
     , post_hooks()
     , pyobj(nullptr)
+    , saved_tracing_state(jit::tracer::ThreadTracingState)
     {}
 
   Function(const Function& other) = delete;
@@ -109,6 +112,9 @@ struct Function : std::enable_shared_from_this<Function> {
   std::vector<std::shared_ptr<FunctionPostHook>> post_hooks;
 
   PyObject *pyobj;  // weak reference
+
+  // autograd looks at this to figure out what to do
+  std::shared_ptr<jit::tracer::TracingState> saved_tracing_state;
 };
 
 template<typename T>

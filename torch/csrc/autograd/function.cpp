@@ -54,14 +54,14 @@ variable_list Function::tracedApply(variable_list inputs) {
   bool is_backward_traceable = false;
   std::shared_ptr<tracer::EvalCommonState> eval_state;
   if (!is_backward_traceable) {
-    eval_state = tracer::EvalExitHook::registerHook(tracing_state, inputs);
+    eval_state = tracer::EvalExitHook::registerHook(inputs);
   }
 
   // Insert a CppOp in the trace.
-  auto& graph = tracing_state->graph;
+  auto& graph = tracer::ThreadTracingState->graph;
   auto* this_node = graph->create<CppOp>(getSharedPtr());
   for (auto& input: inputs) {
-      this_node->addInput(tracer::getValueTrace(tracing_state, input));
+      this_node->addInput(tracer::getValueTrace(tracer::ThreadTracingState, input));
   }
   graph->appendNode(this_node);
 
@@ -74,13 +74,13 @@ variable_list Function::tracedApply(variable_list inputs) {
       auto& output = outputs[i];
       Node* sel = graph->appendNewNode<Select>(this_node, i);
       sel->inferTypeFrom(output->data);
-      tracer::setValueTrace(tracing_state, output, sel);
+      tracer::setValueTrace(tracer::ThreadTracingState, output, sel);
   }
 
   // Register the point where Eval region starts in backward.
   // NOTE: this modifies outputs.
   if (!is_backward_traceable) {
-    tracer::EvalEnterHook::registerHook(tracing_state, outputs, eval_state);
+    tracer::EvalEnterHook::registerHook(outputs, eval_state);
   }
   return outputs;
 }

@@ -6,6 +6,8 @@
 
 namespace torch { namespace jit { namespace tracer {
 
+thread_local std::shared_ptr<TracingState> ThreadTracingState;
+
 namespace detail {
 
 static std::shared_ptr<autograd::Function> insertIdentity(variable_list& vars) {
@@ -73,8 +75,7 @@ void TraceEnterHook::registerHook(variable_list& outputs) {
 ////////////////////////////////////////////////////////////////////////////////
 
 void TraceExitHook::run(variable_list& vars) {
-  exit(vars);  // TODO: EEK!  FIX ME.  Careful...
-  // TODO: Turn this into a no-op
+  // TODO: Handle this correctly...
 }
 
 void TraceExitHook::registerHook(variable_list& inputs) {

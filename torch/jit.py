@@ -16,10 +16,10 @@ def flatten(x):
 
 
 def record_trace(f, inputs):
-    trace, inputs = torch._C._tracer_enter(inputs)
+    inputs = torch._C._tracer_enter(inputs)
     out = f()
     # TODO: unflatten
-    out = torch._C._tracer_exit(flatten(out))
+    trace = torch._C._tracer_exit(flatten(out))
     torch._C._jit_pass_lint(trace)
     return (trace, out)
 
@@ -162,6 +162,15 @@ def trace_model(model):
     model.forward = types.MethodType(forward, model)
     return model
 
+
+def trace_fn(f):
+    """
+    Trace a function the first time you run it, but also
+    return the trace.  This function returns (trace, output)
+    """
+    def go(*args):
+        return record_trace(lambda: f(*args), flatten(args))
+    return go
 
 if not torch._C._jit_init():
     raise RuntimeError("JIT initialization failed")

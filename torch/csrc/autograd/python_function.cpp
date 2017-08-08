@@ -652,27 +652,21 @@ PyObject* process_outputs(THPFunction* grad_fn, const UnpackedInput& unpacked, T
 }
 
 struct TraceInfo {
-  bool is_tracing;
-  std::shared_ptr<tracer::TracingState> tracing_state;
-
   bool is_backward_traceable;
   std::shared_ptr<tracer::EvalCommonState> eval_state;
 };
 
 static TraceInfo trace_wrap_inputs(THPObjectPtr& raw_inputs, InputFlags& flags, UnpackedInput& unpacked) {
   TraceInfo info;
-  info.is_tracing = tracer::isTracing(unpacked.input_vars);
-  if (!info.is_tracing)
+  if (tracer::ThreadTracingState == nullptr)
     return info;
-
-  info.tracing_state = tracer::getTracingState(unpacked.input_vars);
 
 
   // TODO: actually trace backward of some ops (e.g. Add)
   info.is_backward_traceable = false;
   if (!info.is_backward_traceable) {
     // NOTE: this modifies unpacked.input_vars
-    info.eval_state = tracer::EvalExitHook::registerHook(info.tracing_state, unpacked.input_vars);
+    info.eval_state = tracer::EvalExitHook::registerHook(unpacked.input_vars);
 
     // Make a copy of raw_inputs with new Variables
     int num_inputs = PyTuple_GET_SIZE(raw_inputs.get());
@@ -700,7 +694,7 @@ static TraceInfo trace_wrap_inputs(THPObjectPtr& raw_inputs, InputFlags& flags, 
 static void trace_create(TraceInfo& info, PyObject* op_obj,
         PyObject *input_objects, THPObjectPtr& output_objects,
         const variable_list& input_vars, const std::vector<bool>& is_variable_input) {
-  if (!info.is_tracing)
+  if (tracer::ThreadTracingState == nullptr)
     return;
 
   // Isolate C variable ptrs in a vector
@@ -712,8 +706,7 @@ static void trace_create(TraceInfo& info, PyObject* op_obj,
   }
 
   // Save scalar args and the calling convention
-  auto& tracing_state = info.tracing_state;
-  auto& graph = tracing_state->graph;
+  auto& graph = tracer::ThreadTracingState->graph;
   auto num_args = PyTuple_GET_SIZE(input_objects);
   pyobj_list scalar_args;
   std::string arg_types;
@@ -742,7 +735,7 @@ static void trace_create(TraceInfo& info, PyObject* op_obj,
   std::vector<Node*> value_traces;
   value_traces.reserve(input_vars.size());
   for (auto& i : input_vars)
-    value_traces.emplace_back(tracer::getValueTrace(tracing_state, i));
+    value_traces.emplace_back(tracer::getValueTrace(tracer::ThreadTracingState, i));
 
   // NB: this function is called only from THPFunction_apply, which is used only
   // when computing forward. All these functions are non-traceable by definition,
@@ -767,11 +760,11 @@ static void trace_create(TraceInfo& info, PyObject* op_obj,
     // code here.
     Node* sel = graph->appendNewNode<Select>(this_expr, i);
     sel->inferTypeFrom(output->data);
-    tracer::setValueTrace(tracing_state, output, sel);
+    tracer::setValueTrace(tracer::ThreadTracingState, output, sel);
   }
 
   if (!info.is_backward_traceable) {
-    tracer::EvalEnterHook::registerHook(tracing_state, output_vars, info.eval_state);
+    tracer::EvalEnterHook::registerHook(output_vars, info.eval_state);
     for (int i = 0; i < PyTuple_GET_SIZE(output_objects.get()); ++i) {
       PyObject *obj = PyTuple_GET_ITEM(output_objects.get(), i);
       PyTuple_SET_ITEM(output_objects.get(), i, THPVariable_Wrap(output_vars[i]));
@@ -803,7 +796,7 @@ PyObject *THPFunction_do_forward(THPFunction *self, PyObject *_inputs)
   THPObjectPtr raw_output(PyObject_CallObject(forward_fn, unpacked_input.tensor_input));
   if (!raw_output) return NULL;
 
-  if (tracer::isTracing(unpacked_input.input_vars)) {
+  if (tracer::ThreadTracingState != nullptr) {
     throw std::runtime_error("legacy tracing not supported");
   }
 
