@@ -158,7 +158,12 @@ PyObject * THPTracer_exit(PyObject *_unused, PyObject *args)
   }
 
   auto trace = tracer::forward_exit(outputs);
-  return THPTracingState_Wrap(trace);
+
+  THPObjectPtr new_outputs(PyTuple_New(num_outputs));
+  for (int i = 0; i < num_outputs; ++i) {
+    PyTuple_SET_ITEM(new_outputs.get(), i, THPVariable_Wrap(outputs[i]));
+  }
+  return Py_BuildValue("OO", THPTracingState_Wrap(trace), new_outputs.release());
   END_HANDLE_TH_ERRORS
 }
 

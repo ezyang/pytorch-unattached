@@ -173,7 +173,8 @@ class TestJit(TestCase):
         y = a * b
 
         def f(x, y):
-            return y * 2 * x
+            z = y * 2 * x
+            return z
         trace, z = torch.jit.trace_fn(f)(x, y)
 
         grad, = torch.autograd.grad(z, x, Variable(torch.ones(2, 2), requires_grad=True), create_graph=True)

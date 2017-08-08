@@ -19,10 +19,9 @@ def record_trace(f, inputs):
     inputs = torch._C._tracer_enter(inputs)
     try:
         out = f()
-        # TODO: unflatten
-        trace = torch._C._tracer_exit(flatten(out))
+        trace, flat_out = torch._C._tracer_exit(flatten(out))
         torch._C._jit_pass_lint(trace)
-        return (trace, out)
+        return (trace, F._unflatten(flat_out, out))
     except:
         torch._C._tracer_exit(tuple())
         raise

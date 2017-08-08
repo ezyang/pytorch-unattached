@@ -171,7 +171,10 @@ inline Node* getValueTrace(const std::shared_ptr<TracingState>& state, const std
   JIT_ASSERTM(var, "Not supported. NULL Variables will need to be removed from autograd");
   auto node_it = state->unique_map.find(var->unique.get());
   if (node_it == state->unique_map.end()) {
-    if (mustExist) throw std::runtime_error("untraced variable");
+    if (mustExist) {
+      std::cerr << *state->graph;
+      throw std::runtime_error("untraced variable");
+    }
     Node *constant = state->graph->appendNewNode<Constant>(var->data);
     setValueTrace(state, var, constant);
     return constant;
@@ -210,7 +213,7 @@ inline std::shared_ptr<TracingState> forward_exit(variable_list& outputs) {
   for (auto& output : outputs) {
     state->graph->registerOutput(getValueTrace(state, output, true));
   }
-  detail::TraceEnterHook::registerHook(outputs);
+  detail::TraceEnterHook::registerHook(outputs); // NB: modifies!
   // TODO: I hate this, get rid of it
   state->graph->advanceStage();
   return state;

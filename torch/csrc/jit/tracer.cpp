@@ -48,6 +48,7 @@ auto TracerHook<Subclass>::registerHook(
 ////////////////////////////////////////////////////////////////////////////////
 
 void TraceEnterHook::run(variable_list& vars) {
+  std::cerr << "TraceEnterHook\n";
   JIT_ASSERT(ThreadTracingState);
   auto& graph = ThreadTracingState->graph;
 
@@ -75,8 +76,15 @@ void TraceEnterHook::registerHook(variable_list& outputs) {
 // TraceExitHook
 ////////////////////////////////////////////////////////////////////////////////
 
-void TraceExitHook::run(variable_list& vars) {
-  // TODO: Handle this correctly...
+void TraceExitHook::run(variable_list& outputs) {
+  std::cerr << "TraceExitHook\n";
+  // stripped down version of forward_exit
+  JIT_ASSERT(ThreadTracingState);
+  for (auto& output : outputs) {
+    ThreadTracingState->graph->registerOutput(getValueTrace(ThreadTracingState, output, true));
+  }
+  detail::TraceEnterHook::registerHook(outputs);
+  ThreadTracingState->graph->advanceStage(); // ugh
 }
 
 void TraceExitHook::registerHook(variable_list& inputs) {
@@ -90,6 +98,7 @@ void TraceExitHook::registerHook(variable_list& inputs) {
 ////////////////////////////////////////////////////////////////////////////////
 
 void EvalEnterHook::run(variable_list& vars) {
+  std::cerr << "EvalEnterHook\n";
   JIT_ASSERT(ThreadTracingState);
   auto& graph = ThreadTracingState->graph;
   Node *eval_node = common_state->eval_node = graph->appendNewNode<Eval>();
@@ -111,6 +120,7 @@ void EvalEnterHook::registerHook(variable_list& outputs, std::shared_ptr<EvalCom
 // TODO: handle saved_variable edges. probably need to go through traces of outputs before overwriting
 // and find places where they refer to earlier-stage IR
 void EvalExitHook::run(variable_list& vars) {
+  std::cerr << "EvalExitHook\n";
   JIT_ASSERT(ThreadTracingState != nullptr);
   auto& graph = ThreadTracingState->graph;
   int num_vars = vars.size();
