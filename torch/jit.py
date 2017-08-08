@@ -16,11 +16,17 @@ def flatten(x):
 
 
 def record_trace(f, inputs):
-    trace = torch._C._tracer_enter(inputs)
-    out = f()
-    torch._C._tracer_exit(flatten(out))
-    torch._C._jit_pass_lint(trace)
-    return (trace, out)
+    inputs = torch._C._tracer_enter(inputs)
+    try:
+        out = f()
+        trace, flat_out = torch._C._tracer_exit(flatten(out))
+        torch._C._jit_pass_lint(trace)
+        return (trace, F._unflatten(flat_out, out))
+    except:
+        # For some reason, torch._C._tracer_exit(tuple())
+        # doesn't work.
+        torch._C._tracer_disable()
+        raise
 
 
 @contextlib.contextmanager
@@ -161,6 +167,15 @@ def trace_model(model):
     model.forward = types.MethodType(forward, model)
     return model
 
+
+def trace_fn(f):
+    """
+    Trace a function the first time you run it, but also
+    return the trace.  This function returns (trace, output)
+    """
+    def go(*args):
+        return record_trace(lambda: f(*args), flatten(args))
+    return go
 
 if not torch._C._jit_init():
     raise RuntimeError("JIT initialization failed")

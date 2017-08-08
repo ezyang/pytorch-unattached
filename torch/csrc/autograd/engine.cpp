@@ -2,6 +2,9 @@
 #include "torch/csrc/autograd/functions/basic_ops.h"
 #include "torch/csrc/utils/auto_gpu.h"
 
+// TODO: Boooooo
+#include "torch/csrc/jit/tracer.h"
+
 #include <atomic>
 #include <condition_variable>
 #include <cstdint>
@@ -148,17 +151,31 @@ static variable_list call_post_hooks(Function& fn, variable_list outputs, variab
 
 static variable_list call_function(FunctionTask& task) {
   auto& fn = *task.fn;
-  auto inputs = call_pre_hooks(fn, InputBuffer::variables(std::move(task.inputs)));
 
-  auto& function_callbacks = task.base->function_callbacks;
-  auto callback_it = function_callbacks.find(&fn);
-  if (callback_it != function_callbacks.end()) {
-    auto& callback = callback_it->second;
-    if (!callback(&fn, inputs)) return variable_list(fn.next_functions.size());
+  auto OldTracingState = jit::tracer::ThreadTracingState;
+  if (!jit::tracer::ThreadTracingState) {
+    jit::tracer::ThreadTracingState = fn.saved_tracing_state;
   }
 
-  auto fn_outputs = fn(inputs);
-  return call_post_hooks(fn, std::move(fn_outputs), std::move(inputs));
+  //try {
+    auto inputs = call_pre_hooks(fn, InputBuffer::variables(std::move(task.inputs)));
+
+    auto& function_callbacks = task.base->function_callbacks;
+    auto callback_it = function_callbacks.find(&fn);
+    if (callback_it != function_callbacks.end()) {
+      auto& callback = callback_it->second;
+      if (!callback(&fn, inputs)) return variable_list(fn.next_functions.size());
+    }
+
+    variable_list fn_outputs;
+    fn_outputs = fn(inputs);
+    variable_list r = call_post_hooks(fn, std::move(fn_outputs), std::move(inputs));
+    jit::tracer::ThreadTracingState = OldTracingState;
+    return r;
+    // TODO: this rethrow needs to be handled correctly
+  /* } catch (std::exception e) { // TODO: more idiomatic way to do this
+    jit::tracer::ThreadTracingState = OldTracingState;
+  } */
 }
 
 auto Engine::evaluate_function(FunctionTask& task) -> void {

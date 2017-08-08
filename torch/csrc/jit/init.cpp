@@ -4,6 +4,7 @@
 #include "torch/csrc/jit/ir.h"
 #include "torch/csrc/jit/graph_fuser.h"
 #include "torch/csrc/jit/init_pass.h"
+#include "torch/csrc/jit/dead_code_elimination.h"
 #include "torch/csrc/jit/python_tracer.h"
 
 
@@ -51,9 +52,12 @@ struct PyMethodDef _THPJIT_methods[] = {
   {"_jit_init",       (PyCFunction)THPJIT_initExtension,      METH_NOARGS,  NULL},
   {"_tracer_enter",   (PyCFunction)THPTracer_enter,           METH_VARARGS, NULL},
   {"_tracer_exit",    (PyCFunction)THPTracer_exit,            METH_VARARGS, NULL},
+  {"_tracer_enabled", (PyCFunction)THPTracer_enabled,         METH_NOARGS, NULL},
+  {"_tracer_disable", (PyCFunction)THPTracer_disable,         METH_NOARGS, NULL},
   {"_jit_createAutogradClosure", (PyCFunction)THPTracer_createAutogradClosure, METH_O, NULL},
   {"_jit_pass_init", (PyCFunction)wrap_pass<MatchJITOps>, METH_O,       NULL},
   {"_jit_pass_fuse", (PyCFunction)wrap_pass<FuseGraph>, METH_O,       NULL},
+  {"_jit_pass_dco",  (PyCFunction)wrap_pass<EliminateDeadCode>, METH_O,       NULL},
   {"_jit_pass_lint", (PyCFunction)wrap_pass<LintGraph>, METH_O,       NULL},
   {"_jit_run_cpp_tests",(PyCFunction)run_cpp_tests,           METH_NOARGS,  NULL},
   {NULL}

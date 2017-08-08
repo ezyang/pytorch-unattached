@@ -47,6 +47,8 @@ struct Function : std::enable_shared_from_this<Function> {
     , pre_hooks()
     , post_hooks()
     , pyobj(nullptr)
+      // Hope this is correct!
+    , saved_tracing_state(jit::tracer::ThreadTracingState)
     {}
 
   Function(FunctionFlags&& flags)
@@ -57,6 +59,7 @@ struct Function : std::enable_shared_from_this<Function> {
     , pre_hooks()
     , post_hooks()
     , pyobj(nullptr)
+    , saved_tracing_state(jit::tracer::ThreadTracingState)
     {}
 
   Function(const Function& other) = delete;
@@ -66,15 +69,14 @@ struct Function : std::enable_shared_from_this<Function> {
   // Implements the operation
   // NOTE: Don't call this function directly. Use apply_fn or operator() instead.
   virtual variable_list apply(const variable_list& inputs) = 0;
+  variable_list tracedApply(std::shared_ptr<jit::tracer::TracingState> state, variable_list inputs);
 
   variable_list operator()(const variable_list& inputs) {
-    variable_list outputs = apply(inputs);
-    if (jit::tracer::isTracing(inputs))
-      createTrace(inputs, outputs);
-    return outputs;
+    if (jit::tracer::ThreadTracingState) {
+      return tracedApply(jit::tracer::ThreadTracingState, inputs);
+    }
+    return apply(inputs);
   }
-
-  void createTrace(const variable_list& inputs, const variable_list& outputs);
 
   // PyFunctions are not managed by shared_ptrs by default, but are bound to the
   // lifetime of their Python object instead.
@@ -110,6 +112,9 @@ struct Function : std::enable_shared_from_this<Function> {
   std::vector<std::shared_ptr<FunctionPostHook>> post_hooks;
 
   PyObject *pyobj;  // weak reference
+
+  // autograd looks at this to figure out what to do
+  std::shared_ptr<jit::tracer::TracingState> saved_tracing_state;
 };
 
 template<typename T>

@@ -130,7 +130,9 @@ PyObject * THPTracer_enter(PyObject *_unused, PyObject *args)
     inputs.emplace_back(((THPVariable*)input_obj)->cdata);
   }
 
-  return THPTracingState_Wrap(tracer::enter(inputs));
+  tracer::forward_enter(inputs);
+
+  Py_RETURN_NONE;
   END_HANDLE_TH_ERRORS
 }
 
@@ -155,9 +157,13 @@ PyObject * THPTracer_exit(PyObject *_unused, PyObject *args)
     outputs.emplace_back(var);
   }
 
-  tracer::exit(outputs);
+  auto trace = tracer::forward_exit(outputs);
 
-  Py_RETURN_NONE;
+  THPObjectPtr new_outputs(PyTuple_New(num_outputs));
+  for (int i = 0; i < num_outputs; ++i) {
+    PyTuple_SET_ITEM(new_outputs.get(), i, THPVariable_Wrap(outputs[i]));
+  }
+  return Py_BuildValue("OO", THPTracingState_Wrap(trace), new_outputs.release());
   END_HANDLE_TH_ERRORS
 }
 
@@ -171,5 +177,22 @@ PyObject * THPTracer_createAutogradClosure(PyObject *_unused, PyObject *pystate)
 
   return THPWrapper_New(closure.release(),
                         [](void *fn_list) { delete reinterpret_cast<AutogradClosure*>(fn_list); });
+  END_HANDLE_TH_ERRORS
+}
+
+PyObject * THPTracer_enabled(PyObject *_unused) {
+  HANDLE_TH_ERRORS
+  if (tracer::ThreadTracingState) {
+    return Py_True;
+  } else {
+    return Py_False;
+  }
+  END_HANDLE_TH_ERRORS
+}
+
+PyObject * THPTracer_disable(PyObject *_unused) {
+  HANDLE_TH_ERRORS
+  tracer::ThreadTracingState = nullptr;
+  Py_RETURN_NONE;
   END_HANDLE_TH_ERRORS
 }

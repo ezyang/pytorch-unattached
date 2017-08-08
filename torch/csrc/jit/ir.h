@@ -208,6 +208,7 @@ _(CppOp) \
 _(Param) \
 _(Select) \
 _(Return) \
+_(Eval) \
 _(Add) \
 _(Mul) \
 _(Negate) \
@@ -258,7 +259,7 @@ public:
     return type()->kind() == TypeKind::MultiType;
   }
   void setType(const Type* type) {
-    type_ = std::move(type->clone());
+    type_ = type->clone();
   }
   void inferTypeFrom(const at::Tensor& output) {
     auto single_type = type_->cast<TensorType>();
@@ -308,6 +309,14 @@ public:
     JIT_ASSERT(graph_ == node->graph_);
     node->uses_.emplace_back(this, inputs_.size());
     inputs_.push_back(node);
+    if (node->stage_ > stage_) {
+      JIT_ASSERTM(uses_.size() == 0, "Staging violation: can't use input of later stage for operator in earlier stage");
+      // We're only willing to bump the stage when there's no
+      // uses. If there are uses, we'd have to propagate the
+      // change to all call sites.  DON'T do that, this usually
+      // indicates a pass bug.
+      stage_ = node->stage_;
+    }
     return node;
   }
 
@@ -583,10 +592,15 @@ private:
   std::unordered_set<Node*> all_nodes;
   size_t next_unique_;
 
+  // TODO: This looks dodgy
+  size_t new_param_stage_;
+
 public:
   Graph()
-  : next_unique_(0) {
+  : next_unique_(0)
+  , new_param_stage_(0) {
     output_ = create<Return>();
+    output_->stage_ = -1; // >= than all stages
   }
 
   const param_list & inputs() {
@@ -604,8 +618,16 @@ public:
 
   Param * addInput() {
     Param* p = create<Param>();
+    p->stage_ = new_param_stage_;
     inputs_.push_back(p);
     return p;
+  }
+
+  void advanceStage() {
+    new_param_stage_++;
+  }
+  size_t stage() {
+    return new_param_stage_;
   }
 
   void eraseInput(size_t i) {
@@ -681,6 +703,7 @@ private:
   // called from NodeWithKind::allocClone and Graph::create
   void initNewNodeForGraph(Node * r) {
     r->graph_ = this;
+    r->stage_ = 0; // TODO: wouldn't -1 be better here?  But we're using unsigned type...
     r->unique_ = next_unique_++;
     r->nodes_iter_ = nodes_.end();
     all_nodes.emplace(r);
@@ -837,6 +860,10 @@ struct CppOp : public NodeWithKind<CppOp,NodeKind::CppOp,TypeKind::MultiType> {
   void init(std::shared_ptr<torch::autograd::Function> fn) {
     this->fn = std::move(fn);
   }
+};
+
+struct Eval : public NodeWithKind<Eval,NodeKind::Eval,TypeKind::MultiType> {
+  void init() {};
 };
 
 // Select nodes are used to handle multiple returns for the ops that actually return

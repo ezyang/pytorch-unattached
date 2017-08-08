@@ -19,6 +19,7 @@ Variable::Variable(
     , is_volatile(is_volatile)
     , output_nr(0)
     , pyobj(nullptr)
+    , unique(std::make_shared<Variable::VariableUnique>())
 {
   if (!this->data.defined()) {
     throw std::runtime_error("Variable data is NULL");
@@ -36,6 +37,7 @@ Variable::Variable(
     , is_volatile(false)
     , output_nr(grad_fn->num_inputs++)
     , pyobj(nullptr)
+    , unique(std::make_shared<Variable::VariableUnique>())
 {
   if (!this->data.defined()) {
     throw std::runtime_error("Variable data is NULL");
@@ -91,7 +93,7 @@ auto SavedVariable::unpack(std::shared_ptr<Function> saved_for) -> std::shared_p
   if (requires_grad && !new_var->grad_fn && grad_accumulator.expired())
     throw std::logic_error("No grad accumulator for a saved leaf!");
   new_var->grad_accumulator = grad_accumulator;
-  new_var->tracing_state = tracing_state;
+  new_var->unique = unique;
 
   return new_var;
 }

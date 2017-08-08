@@ -6,6 +6,8 @@
 
 PyObject * THPTracer_enter(PyObject *_unused, PyObject* args);
 PyObject * THPTracer_exit(PyObject *_unused, PyObject* args);
+PyObject * THPTracer_enabled(PyObject *_unused);
+PyObject * THPTracer_disable(PyObject *_unused);
 PyObject * THPTracer_createAutogradClosure(PyObject *_unused, PyObject *pygraph);
 
 struct THPTracingState {

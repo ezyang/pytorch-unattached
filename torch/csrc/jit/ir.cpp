@@ -248,6 +248,8 @@ void Node::lint() {
     JIT_ASSERT(n_tensors == inputs_.size());
   IR_ELSEIF(CppOp)
     // TODO: add invariants
+  IR_ELSEIF(Eval)
+    // TODO: add invariants
   // TODO: It's not good for these ops to be top-level, it makes cases longer.
   IR_ELSEIF(Add)
     JIT_ASSERT(inputs_.size() == 2);
@@ -340,7 +342,12 @@ void Graph::lint() {
 }
 
 void LintGraph(std::unique_ptr<Graph>& graph) {
-  graph->lint();
+  try {
+    graph->lint();
+  } catch (assert_error e) {
+    std::cerr << "IR lint FAILED on:\n" << *graph;
+    throw e;
+  }
 }
 
 }}

@@ -24,16 +24,7 @@ struct Function;
 extern const char* ERR_BACKWARD_TWICE;
 
 struct Variable : std::enable_shared_from_this<Variable> {
-  struct ValueTracingState {
-    std::weak_ptr<torch::jit::tracer::TracingState> state;
-    // it's only valid to use this field if !state.exired()
-    torch::jit::Node* trace = nullptr;
-
-    void reset() {
-      state.reset();
-      trace = nullptr;
-    }
-  };
+  struct VariableUnique {};
 
   struct SavedVariable {
     SavedVariable()
@@ -49,7 +40,7 @@ struct Variable : std::enable_shared_from_this<Variable> {
       , requires_grad(variable.requires_grad)
       , is_volatile(false)
       , expected_version(**variable.version_counter)
-      , tracing_state(variable.tracing_state) {
+      , unique(variable.unique) {
         if (variable.grad_fn.get() != saved_for) {
           grad_fn = variable.grad_fn;
         }
@@ -67,7 +58,7 @@ struct Variable : std::enable_shared_from_this<Variable> {
     bool requires_grad;
     bool is_volatile;
     int expected_version;
-    ValueTracingState tracing_state;
+    std::shared_ptr<VariableUnique> unique;
 
     std::shared_ptr<Variable> unpack(std::shared_ptr<Function> saved_for=nullptr);
 
@@ -122,7 +113,7 @@ struct Variable : std::enable_shared_from_this<Variable> {
   PyObject *pyobj;  // weak reference
 
   // For use in torch::jit::tracer
-  ValueTracingState tracing_state;
+  std::shared_ptr<VariableUnique> unique;
 };
 
 using SavedVariable = Variable::SavedVariable;
