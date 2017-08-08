@@ -46,16 +46,16 @@ auto TracerHook<Subclass>::registerHook(
 ////////////////////////////////////////////////////////////////////////////////
 
 void TraceEnterHook::run(variable_list& vars) {
-  auto& graph = tracing_state->graph;
+  auto& graph = ThreadTracingState->graph;
 
   int num_vars = vars.size();
   for (int i = 0; i < num_vars; ++i) {
-    setValueTrace(tracing_state, vars[i], graph->addInput());
+    setValueTrace(ThreadTracingState, vars[i], graph->addInput());
   }
-  TraceExitHook::registerHook(tracing_state, vars);
+  TraceExitHook::registerHook(vars);
 }
 
-void TraceEnterHook::registerHook(const std::shared_ptr<TracingState>& tracing_state, variable_list& outputs) {
+void TraceEnterHook::registerHook(variable_list& outputs) {
   JIT_ASSERT(outputs.size() > 0);
 
   // Either no (e.g. after last backward) or all outputs should have a grad fn.
@@ -65,7 +65,7 @@ void TraceEnterHook::registerHook(const std::shared_ptr<TracingState>& tracing_s
   }
   if (!has_grad_fn) return;
 
-  auto hook = TracerHook<TraceEnterHook>::registerHook(tracing_state, outputs);
+  auto hook = TracerHook<TraceEnterHook>::registerHook(outputs);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -73,11 +73,12 @@ void TraceEnterHook::registerHook(const std::shared_ptr<TracingState>& tracing_s
 ////////////////////////////////////////////////////////////////////////////////
 
 void TraceExitHook::run(variable_list& vars) {
-  exit(tracing_state, vars);
+  exit(vars);  // TODO: EEK!  FIX ME.  Careful...
+  // TODO: Turn this into a no-op
 }
 
-void TraceExitHook::registerHook(const std::shared_ptr<TracingState>& tracing_state, variable_list& inputs) {
-  TracerHook<TraceExitHook>::registerHook(tracing_state, inputs);
+void TraceExitHook::registerHook(variable_list& inputs) {
+  TracerHook<TraceExitHook>::registerHook(inputs);
 }
 
 } // namespace detail
@@ -87,16 +88,16 @@ void TraceExitHook::registerHook(const std::shared_ptr<TracingState>& tracing_st
 ////////////////////////////////////////////////////////////////////////////////
 
 void EvalEnterHook::run(variable_list& vars) {
-  auto& graph = tracing_state->graph;
+  auto& graph = ThreadTracingState->graph;
   Node *eval_node = common_state->eval_node = graph->appendNewNode<Eval>();
   for (auto& input : vars)  {
-    eval_node->addInput(tracer::getValueTrace(tracing_state, input, true));
+    eval_node->addInput(tracer::getValueTrace(ThreadTracingState, input, true));
   }
-  common_state->next_common_state = EvalExitHook::registerHook(tracing_state, vars);
+  common_state->next_common_state = EvalExitHook::registerHook(vars);
 }
 
-void EvalEnterHook::registerHook(const std::shared_ptr<TracingState>& tracing_state, variable_list& outputs, std::shared_ptr<EvalCommonState> common_state) {
-  auto hook = TracerHook<EvalEnterHook>::registerHook(tracing_state, outputs);
+void EvalEnterHook::registerHook(variable_list& outputs, std::shared_ptr<EvalCommonState> common_state) {
+  auto hook = TracerHook<EvalEnterHook>::registerHook(outputs);
   hook->common_state = common_state;
 }
 
@@ -107,18 +108,19 @@ void EvalEnterHook::registerHook(const std::shared_ptr<TracingState>& tracing_st
 // TODO: handle saved_variable edges. probably need to go through traces of outputs before overwriting
 // and find places where they refer to earlier-stage IR
 void EvalExitHook::run(variable_list& vars) {
-  auto& graph = tracing_state->graph;
+  JIT_ASSERT(ThreadTracingState != nullptr);
+  auto& graph = ThreadTracingState->graph;
   int num_vars = vars.size();
   for (int i = 0; i < num_vars; ++i) {
     auto& var = vars[i];
     auto select = graph->appendNewNode<Select>(common_state->eval_node, i);
-    tracer::setValueTrace(tracing_state, var, select);
+    tracer::setValueTrace(ThreadTracingState, var, select);
   }
-  EvalEnterHook::registerHook(tracing_state, vars, common_state->next_common_state);
+  EvalEnterHook::registerHook(vars, common_state->next_common_state);
 }
 
-std::shared_ptr<EvalCommonState> EvalExitHook::registerHook(const std::shared_ptr<TracingState>& tracing_state, variable_list& inputs) {
-  auto hook = TracerHook<EvalExitHook>::registerHook(tracing_state, inputs);
+std::shared_ptr<EvalCommonState> EvalExitHook::registerHook(variable_list& inputs) {
+  auto hook = TracerHook<EvalExitHook>::registerHook(inputs);
   hook->common_state = std::make_shared<EvalCommonState>();
   return hook->common_state;
 }

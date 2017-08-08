@@ -18,22 +18,14 @@ namespace torch { namespace jit { namespace tracer {
 using torch::autograd::Variable;
 using variable_list = std::vector<std::shared_ptr<Variable>>;
 
-// This is the tracing state associated with the execution of the Python
-// interpreter; e.g., when a user requests tracing from Python.
-//
-// Can't be a unique_ptr because multiple threads may be tracing into
-// the same state (in case of autograd with multiple GPU devices.)  NB:
-// you need locks here!
-thread_local std::shared_ptr<TracingState> ThreadTracingState;
-
 // TracingState tracks the necessary state when we are tracing the execution of
 // autograd code; most importantly, it holds a reference to the actual IR
 // graph which we are recording the trace to.
 //
-// TODO: I feel... some synchronization may be necessary.  See also
-// ThreadTracingState above
+// TODO: arguably it shouldn't be necessary to shared_ptr at
+// TracingState
 //
-// TODO: this structure should maintain current stage, not graph!
+// TODO: I feel... some synchronization may be necessary
 //
 struct TracingState : public std::enable_shared_from_this<TracingState> {
   TracingState()
@@ -46,7 +38,25 @@ struct TracingState : public std::enable_shared_from_this<TracingState> {
   std::unordered_map<Variable::VariableUnique*, Node*> unique_map;
 };
 
+// This is the tracing state associated with the execution of the Python
+// interpreter; e.g., when a user requests tracing from Python.
+//
+// Can't be a unique_ptr because multiple threads may be tracing into
+// the same state (in case of autograd with multiple GPU devices.)  NB:
+// you need locks here!
+//
+// Autograd engine responsible for setting this.  Could pass around
+// explicitly but need to change calling convention.
+thread_local std::shared_ptr<TracingState> ThreadTracingState;
+
+// For now, we assume that the graph knows what's going on re stage
+// (advanceStage: once you finish a stage, it can't ever be modified).
+// But in principle you could do a graph, run it backwards, and then
+// decide to add more to the first tage.
+
 namespace detail {
+
+// NB: the Eval node needs to know what the tracing state!
 
 template<typename Subclass>
 struct TracerHook : public autograd::FunctionPreHook {
@@ -136,8 +146,6 @@ inline std::shared_ptr<TracingState> getTracingState(const variable_list& vars) 
 }
 */
 
-// TODO: Make these member functions of TracingState
-
 // Having finished adding a new 'node' to the graph IR owned by TracingState 'state',
 // 'setValueTrace' associates this node with an output variable, so that further operations
 // involving this variable know which node in the IR to reference.
@@ -172,21 +180,21 @@ inline Node* getValueTrace(const std::shared_ptr<TracingState>& state, const std
   }
 }
 
+// This is the USER level entry to start tracing
+//
 // Start tracing, treating 'inputs' as inputs to the trace, which can be
 // varied on subsequent invocations of the trace.  Any other variables
 // will be treated as constants.
 // XXX: this changes variables in inputs!
-inline std::shared_ptr<TracingState> enter(variable_list& inputs) {
-  // Nested tracing not supported yet!
+inline void enter(variable_list& inputs) {
   JIT_ASSERT(ThreadTracingState == nullptr);
   ThreadTracingState = std::make_shared<TracingState>();
   for (auto& input : inputs) {
-    Node * node = state->graph->addInput();
-    setValueTrace(state, input, node);
+    Node * node = ThreadTracingState->graph->addInput();
+    setValueTrace(ThreadTracingState, input, node);
     node->inferTypeFrom(input->data);
   }
   detail::TraceExitHook::registerHook(inputs);
-  return state;
 }
 
 // gonna need this but not sure what the context is
@@ -194,11 +202,16 @@ inline std::shared_ptr<TracingState> enter(variable_list& inputs) {
 // Exit a trace, treating 'outputs' as the outputs of the trace.  These
 // are the variables whose values will be computed upon subsequent
 // invocations of the trace.
-inline void exit(variable_list& outputs) {
+inline std::shared_ptr<TracingState> exit(variable_list& outputs) {
+  // TODO: Shouldn't similar logic to this be invoked when we exit
+  // backwards?  But AFAICT this is Python only logic...
+  auto state = std::move(ThreadTracingState);
   for (auto& output : outputs) {
     state->graph->registerOutput(getValueTrace(state, output, true));
   }
   detail::TraceEnterHook::registerHook(outputs);
+  state->graph->advanceStage();
+  return state;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

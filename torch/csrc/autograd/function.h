@@ -68,9 +68,9 @@ struct Function : std::enable_shared_from_this<Function> {
   virtual variable_list apply(const variable_list& inputs) = 0;
   variable_list tracedApply(variable_list inputs);
 
-  variable_list operator()(std::shared_ptr<TracingState> state, const variable_list& inputs) {
-    if (state) {
-      return tracedApply(state, inputs);
+  variable_list operator()(const variable_list& inputs) {
+    if (jit::tracer::ThreadTracingState) {
+      return tracedApply(inputs);
     }
     return apply(inputs);
   }
