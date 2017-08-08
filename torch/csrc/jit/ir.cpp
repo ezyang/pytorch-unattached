@@ -342,7 +342,12 @@ void Graph::lint() {
 }
 
 void LintGraph(std::unique_ptr<Graph>& graph) {
-  graph->lint();
+  try {
+    graph->lint();
+  } catch (assert_error e) {
+    std::cerr << "IR lint FAILED on:\n" << *graph;
+    throw e;
+  }
 }
 
 }}

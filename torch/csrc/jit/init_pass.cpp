@@ -47,7 +47,6 @@ void MatchJITOps(std::unique_ptr<Graph>& graph) {
 
     // Set up the Node that will replace p
     auto new_op = constructor(graph.get(), p);
-    new_op->setStage(p->stage()); // TODO: this is error prone...
     for (Node *input : p->inputs()) {
       new_op->addInput(input);
     }

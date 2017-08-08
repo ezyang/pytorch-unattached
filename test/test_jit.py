@@ -37,7 +37,6 @@ class TestJit(TestCase):
 
         self.assertExpected(str(trace))
 
-"""
     def test_lstm(self):
         # Careful: don't use fused backend (enabled with CUDA)
         # Pasted from test_LSTM_cell
@@ -53,6 +52,7 @@ class TestJit(TestCase):
         torch._C._jit_pass_lint(trace)
         self.assertExpected(str(trace))
 
+"""
     @unittest.skip("in-place is not supported")
     def test_alexnet(self):
 
