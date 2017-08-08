@@ -104,6 +104,7 @@ struct GraphFuser {
   // to prepare for fusion and replace uses of n with the new group
   FusionGroup * createSingletonFusionGroup(Node * n) {
     auto group = graph->create<FusionGroup>();
+    group->setStage(n->stage());
     // propogate position information for the new node so we can always
     // have a valid mapping
     topological_index[group] = topological_index[n];

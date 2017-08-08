@@ -584,6 +584,7 @@ private:
   std::unordered_set<Node*> all_nodes;
   size_t next_unique_;
 
+  // TODO: This looks dodgy
   size_t new_node_stage_;
 
 public:

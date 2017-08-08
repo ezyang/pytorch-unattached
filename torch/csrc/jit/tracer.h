@@ -203,6 +203,7 @@ inline void forward_enter(variable_list& inputs) {
 // are the variables whose values will be computed upon subsequent
 // invocations of the trace.
 inline std::shared_ptr<TracingState> forward_exit(variable_list& outputs) {
+  JIT_ASSERT(ThreadTracingState != nullptr);
   // TODO: Shouldn't similar logic to this be invoked when we exit
   // backwards?  But AFAICT this is Python only logic...
   auto state = std::move(ThreadTracingState);
@@ -210,6 +211,7 @@ inline std::shared_ptr<TracingState> forward_exit(variable_list& outputs) {
     state->graph->registerOutput(getValueTrace(state, output, true));
   }
   detail::TraceEnterHook::registerHook(outputs);
+  // TODO: I hate this, get rid of it
   state->graph->advanceStage();
   return state;
 }

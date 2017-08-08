@@ -16,14 +16,20 @@ class TestJit(TestCase):
         def f(x, y):
             return torch.sigmoid(torch.tanh(x * (x + y)))
 
-        trace, z = torch.jit.trace_fn(f)(x, y)
+        trace, _ = torch.jit.trace_fn(f)(x, y)
 
         torch._C._jit_pass_lint(trace)
         self.assertExpected(str(trace))
 
-"""
-    def test_simple(self):
-        # same as above
+    def test_simple(self): # TODO: rename this test
+        x = Variable(torch.Tensor([0.4]), requires_grad=True)
+        y = Variable(torch.Tensor([0.7]), requires_grad=True)
+
+        def f(x, y):
+            return torch.sigmoid(torch.tanh(x * (x + y)))
+
+        trace, _ = torch.jit.trace_fn(f)(x, y)
+
         torch._C._jit_pass_init(trace)
         torch._C._jit_pass_lint(trace)
         torch._C._jit_pass_fuse(trace)
@@ -31,6 +37,7 @@ class TestJit(TestCase):
 
         self.assertExpected(str(trace))
 
+"""
     def test_lstm(self):
         # Careful: don't use fused backend (enabled with CUDA)
         # Pasted from test_LSTM_cell
