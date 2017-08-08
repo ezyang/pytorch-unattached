@@ -48,6 +48,7 @@ auto TracerHook<Subclass>::registerHook(
 ////////////////////////////////////////////////////////////////////////////////
 
 void TraceEnterHook::run(variable_list& vars) {
+  JIT_ASSERT(ThreadTracingState);
   auto& graph = ThreadTracingState->graph;
 
   int num_vars = vars.size();
@@ -89,6 +90,7 @@ void TraceExitHook::registerHook(variable_list& inputs) {
 ////////////////////////////////////////////////////////////////////////////////
 
 void EvalEnterHook::run(variable_list& vars) {
+  JIT_ASSERT(ThreadTracingState);
   auto& graph = ThreadTracingState->graph;
   Node *eval_node = common_state->eval_node = graph->appendNewNode<Eval>();
   for (auto& input : vars)  {

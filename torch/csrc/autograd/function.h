@@ -69,11 +69,11 @@ struct Function : std::enable_shared_from_this<Function> {
   // Implements the operation
   // NOTE: Don't call this function directly. Use apply_fn or operator() instead.
   virtual variable_list apply(const variable_list& inputs) = 0;
-  variable_list tracedApply(variable_list inputs);
+  variable_list tracedApply(std::shared_ptr<jit::tracer::TracingState> state, variable_list inputs);
 
   variable_list operator()(const variable_list& inputs) {
     if (jit::tracer::ThreadTracingState) {
-      return tracedApply(inputs);
+      return tracedApply(jit::tracer::ThreadTracingState, inputs);
     }
     return apply(inputs);
   }
