@@ -7,6 +7,7 @@
 #include <mutex>
 #include <set>
 #include <unordered_map>
+#include <iostream>
 
 //
 // Yet another caching allocator for CUDA device allocations.
@@ -441,14 +442,39 @@ struct THCCachingAllocator
   }
 };
 
+static std::map<void*,size_t> alloc_sizes;
+static std::map<size_t,size_t> histogram;
+static int count = 0;
+static void dump() {
+  if(count++ % 100 != 0)
+    return;
+  for(auto & a : histogram) {
+    std::cout << a.first << ": " << a.second << "\n";
+  }
+}
+
 static cudaError_t THCCachingAllocator_malloc(void* ctx, void** ptr, size_t size, cudaStream_t stream)
 {
   THCCachingAllocator* a = (THCCachingAllocator*) ctx;
-  return a->malloc(ptr, size, stream);
+  auto r = a->malloc(ptr, size, stream);
+  alloc_sizes[*ptr] = size;
+  if(histogram.count(size) == 0)
+    histogram[size] = 0;
+  histogram[size]++;
+  dump();
+  return r;
 }
 
 static cudaError_t THCCachingAllocator_free(void* ctx, void* ptr)
 {
+  if(ctx != nullptr) {
+    if(alloc_sizes.count(ptr) == 0) {
+      //std::cout << "MISSING ENTRY? " << ptr << "\n";
+    } else {
+      auto size = alloc_sizes[ptr];
+      histogram[size]--;
+    }
+  }
   THCCachingAllocator* a = (THCCachingAllocator*) ctx;
   return a->free(ptr);
 }

@@ -1,0 +1,13 @@
+diff --git a/word_language_model/main.py b/word_language_model/main.py
+index c4ea458..7ff9b61 100644
+--- a/word_language_model/main.py
++++ b/word_language_model/main.py
+@@ -81,6 +81,8 @@ test_data = batchify(corpus.test, eval_batch_size)
+ 
+ ntokens = len(corpus.dictionary)
+ model = model.RNNModel(args.model, ntokens, args.emsize, args.nhid, args.nlayers, args.dropout, args.tied)
++import torch.jit
++model = torch.jit.verify_model(model)
+ if args.cuda:
+     model.cuda()
+ 

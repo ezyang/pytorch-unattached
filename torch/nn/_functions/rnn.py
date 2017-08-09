@@ -21,7 +21,7 @@ def RNNTanhCell(input, hidden, w_ih, w_hh, b_ih=None, b_hh=None):
 
 
 def LSTMCell(input, hidden, w_ih, w_hh, b_ih=None, b_hh=None):
-    if input.is_cuda:
+    if False and input.is_cuda:
         igates = F.linear(input, w_ih)
         hgates = F.linear(hidden[0], w_hh)
         state = fusedBackend.LSTMFused()
