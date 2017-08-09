@@ -19,9 +19,9 @@ def record_trace(f, inputs):
     trace, inputs = torch._C._tracer_enter(inputs)
     out = f()
     # TODO: unflatten
-    out = torch._C._tracer_exit(flatten(out))
+    out2 = torch._C._tracer_exit(flatten(out))
     torch._C._jit_pass_lint(trace)
-    return (trace, out)
+    return (trace, F._unflatten(out2,out))
 
 
 @contextlib.contextmanager
@@ -68,10 +68,11 @@ def wrap_model(model):
             self.saved_trace, self.saved_out = \
                 record_trace(lambda: real_forward(*args),
                              tuple(self.parameters()) + flatten(args))
+            self.saved_closure = torch._C._jit_createAutogradClosure(self.saved_trace)
             return self.saved_out
         else:
             flat_out = Variable._execution_engine.run_forward(
-                self.saved_trace, tuple(self.parameters()) + flatten(args))
+                self.saved_closure, tuple(self.parameters()) + flatten(args))
             return F._unflatten(flat_out, self.saved_out)
     model.forward = types.MethodType(forward, model)
     return model
