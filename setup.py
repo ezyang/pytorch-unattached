@@ -16,10 +16,15 @@ from tools.setup_helpers.env import check_env_flag
 from tools.setup_helpers.cuda import WITH_CUDA, CUDA_HOME
 from tools.setup_helpers.cudnn import WITH_CUDNN, CUDNN_LIB_DIR, CUDNN_INCLUDE_DIR
 from tools.setup_helpers.split_types import split_types
+
+cwd = os.path.dirname(os.path.abspath(__file__))
+lib_path = os.path.join(cwd, "torch", "lib")
+
 DEBUG = check_env_flag('DEBUG')
 WITH_DISTRIBUTED = not check_env_flag('NO_DISTRIBUTED')
 WITH_DISTRIBUTED_MW = WITH_DISTRIBUTED and check_env_flag('WITH_DISTRIBUTED_MW')
 WITH_NCCL = WITH_CUDA and platform.system() != 'Darwin'
+WITH_TOFFEE = os.path.exists(os.path.join(lib_path, "ToffeeIR"))
 SYSTEM_NCCL = False
 
 
@@ -96,6 +101,8 @@ class build_deps(Command):
             build_all_cmd += ['--with-nccl']
         if WITH_DISTRIBUTED:
             build_all_cmd += ['--with-distributed']
+        if WITH_TOFFEE:
+            build_all_cmd += ['--with-toffee']
         if subprocess.call(build_all_cmd) != 0:
             sys.exit(1)
         generate_nn_wrappers()
@@ -163,6 +170,10 @@ class build_ext(setuptools.command.build_ext.build_ext):
             print('-- Building with distributed package ')
         else:
             print('-- Building without distributed package')
+        if WITH_TOFFEE:
+            print('-- Building with Toffee ')
+        else:
+            print('-- Building without Toffee')
 
         # cwrap depends on pyyaml, so we can't import it earlier
         from tools.cwrap import cwrap
@@ -249,9 +260,6 @@ if os.getenv('PYTORCH_BINARY_BUILD') and platform.system() == 'Linux':
         path = path.decode(sys.stdout.encoding)
     extra_link_args += [path]
 
-cwd = os.path.dirname(os.path.abspath(__file__))
-lib_path = os.path.join(cwd, "torch", "lib")
-
 tmp_install_path = lib_path + "/tmp_install"
 include_dirs += [
     cwd,
@@ -261,7 +269,6 @@ include_dirs += [
     tmp_install_path + "/include/THPP",
     tmp_install_path + "/include/THNN",
     tmp_install_path + "/include/ATen",
-    tmp_install_path + "/include/toffee",
 ]
 
 library_dirs.append(lib_path)
@@ -277,7 +284,6 @@ THPP_LIB = os.path.join(lib_path, 'libTHPP.so.1')
 ATEN_LIB = os.path.join(lib_path, 'libATen.so.1')
 THD_LIB = os.path.join(lib_path, 'libTHD.so.1')
 NCCL_LIB = os.path.join(lib_path, 'libnccl.so.1')
-TOFFEE_LIB = os.path.join(lib_path, 'libtoffee.so.1')
 if platform.system() == 'Darwin':
     TH_LIB = os.path.join(lib_path, 'libTH.1.dylib')
     THS_LIB = os.path.join(lib_path, 'libTHS.1.dylib')
@@ -289,7 +295,6 @@ if platform.system() == 'Darwin':
     ATEN_LIB = os.path.join(lib_path, 'libATen.1.dylib')
     THD_LIB = os.path.join(lib_path, 'libTHD.1.dylib')
     NCCL_LIB = os.path.join(lib_path, 'libnccl.1.dylib')
-    TOFFEE_LIB = os.path.join(lib_path, 'libtoffee.1.dylib')
 
 if WITH_NCCL and (subprocess.call('ldconfig -p | grep libnccl >/dev/null', shell=True) == 0 or
                   subprocess.call('/sbin/ldconfig -p | grep libnccl >/dev/null', shell=True) == 0):
@@ -297,7 +302,7 @@ if WITH_NCCL and (subprocess.call('ldconfig -p | grep libnccl >/dev/null', shell
 
 main_compile_args = ['-D_THP_CORE']
 main_libraries = ['shm']
-main_link_args = [TH_LIB, THS_LIB, THPP_LIB, THNN_LIB, ATEN_LIB, TOFFEE_LIB]
+main_link_args = [TH_LIB, THS_LIB, THPP_LIB, THNN_LIB, ATEN_LIB]
 main_sources = [
     "torch/csrc/PtrWrapper.cpp",
     "torch/csrc/Module.cpp",
@@ -317,7 +322,6 @@ main_sources = [
     "torch/csrc/jit/init.cpp",
     "torch/csrc/jit/ir.cpp",
     "torch/csrc/jit/graph_fuser.cpp",
-    "torch/csrc/jit/graph_exporter.cpp",
     "torch/csrc/jit/init_pass.cpp",
     "torch/csrc/jit/dead_code_elimination.cpp",
     "torch/csrc/jit/test_jit.cpp",
@@ -415,6 +419,18 @@ if WITH_CUDNN:
         "torch/csrc/cudnn/Handles.cpp",
     ]
     extra_compile_args += ['-DWITH_CUDNN']
+
+if WITH_TOFFEE:
+    include_dirs.append(tmp_install_path + "/include/toffee")
+    TOFFEE_LIB = os.path.join(lib_path, 'libtoffee.so.1')
+    if platform.system() == 'Darwin':
+        TOFFEE_LIB = os.path.join(lib_path, 'libtoffee.1.dylib')
+    main_libraries += [TOFFEE_LIB]
+    main_sources += [
+        "torch/csrc/toffee/export.cpp",
+        "torch/csrc/toffee/functions/convolution.cpp",
+    ]
+    extra_compile_args += ['-DWITH_TOFFEE']
 
 if DEBUG:
     extra_compile_args += ['-O0', '-g']
