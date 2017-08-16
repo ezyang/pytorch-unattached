@@ -124,8 +124,9 @@ class TestJit(TestCase):
         self.assertEqual(out, out2)
 
     def test_alexnet(self):
-
+        # When inplace works again, turn this True
         inplace = False
+
         class AlexNet(nn.Module):
 
             def __init__(self, num_classes=1000):
@@ -165,7 +166,7 @@ class TestJit(TestCase):
         trace, _ = torch.jit.record_trace(AlexNet(), x)
         self.assertExpected(str(trace))
         # TODO: alexnet primspecs haven't been ported yet
-        #self.assertExpected(torch._C._jit_pass_export(trace), "pbtxt")
+        # self.assertExpected(torch._C._jit_pass_export(trace), "pbtxt")
 
     def test_autograd_closure(self):
         a = x = Variable(torch.Tensor([0.4]), requires_grad=True)
