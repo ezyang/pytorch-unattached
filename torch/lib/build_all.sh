@@ -12,6 +12,7 @@ set -e
 WITH_CUDA=0
 WITH_NCCL=0
 WITH_DISTRIBUTED=0
+WITH_TOFFEE=0
 for arg in "$@"; do
     if [[ "$arg" == "--with-cuda" ]]; then
         WITH_CUDA=1
@@ -19,6 +20,8 @@ for arg in "$@"; do
         WITH_NCCL=1
     elif [[ "$arg" == "--with-distributed" ]]; then
         WITH_DISTRIBUTED=1
+    elif [[ "$arg" == "--with-toffee" ]]; then
+        WITH_TOFFEE=1
     else
         echo "Unknown argument: $arg"
     fi
@@ -140,7 +143,9 @@ build THPP
 # The shared memory manager depends on TH
 build libshm
 build ATen
-build ToffeeIR
+if [[ $WITH_TOFFEE -eq 1 ]]; then
+    build ToffeeIR
+fi
 
 # THD, gloo have dependencies on Torch, CUDA, NCCL etc.
 if [[ $WITH_DISTRIBUTED -eq 1 ]]; then
