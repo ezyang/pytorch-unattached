@@ -1,0 +1,12 @@
+node {
+  input: "1"
+  output: "3"
+  op_type: "LeakyRelu"
+  attribute {
+    name: "alpha"
+    f: 0.02
+  }
+}
+name: "torch-jit-export"
+input: "1"
+output: "3"
