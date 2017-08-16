@@ -165,8 +165,7 @@ class TestJit(TestCase):
         trace, _ = torch.jit.record_trace(AlexNet(), x)
         print(str(trace))
         self.assertExpected(str(trace))
-        # TODO: alexnet primspecs haven't been ported yet
-        #self.assertExpected(torch._C._jit_pass_export(trace), "pbtxt")
+        self.assertExpected(torch._C._jit_pass_export(trace), "pbtxt")
 
     def test_vgg(self):
         inplace = False
