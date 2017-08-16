@@ -425,7 +425,7 @@ if WITH_TOFFEE:
     TOFFEE_LIB = os.path.join(lib_path, 'libtoffee.so.1')
     if platform.system() == 'Darwin':
         TOFFEE_LIB = os.path.join(lib_path, 'libtoffee.1.dylib')
-    main_libraries += [TOFFEE_LIB]
+    main_link_args += [TOFFEE_LIB]
     main_sources += [
         "torch/csrc/toffee/export.cpp",
         "torch/csrc/toffee/functions/convolution.cpp",
