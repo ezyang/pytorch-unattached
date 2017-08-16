@@ -11,7 +11,7 @@ from model_defs.densenet import DenseNet
 from model_defs.dcgan import _netD, _netG, weights_init, bsz, imgsz, nz, ngf, ndf, nc
 
 
-class TestJit(TestCase):
+class TestModels(TestCase):
     maxDiff = None
 
     def test_alexnet(self):
@@ -22,8 +22,7 @@ class TestJit(TestCase):
         )
         trace, _ = torch.jit.record_trace(AlexNet(inplace=inplace), x)
         self.assertExpected(str(trace))
-        # TODO: alexnet primspecs haven't been ported yet
-        # self.assertExpected(torch._C._jit_pass_export(trace), "pbtxt")
+        self.assertExpected(torch._C._jit_pass_export(trace), "pbtxt")
 
     def test_vgg(self):
 
