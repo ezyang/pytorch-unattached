@@ -56,8 +56,6 @@ node {
     name: "dilation"
     i: 1
   }
-  attribute {
-  }
 }
 node {
   input: "23"
@@ -116,8 +114,6 @@ node {
   attribute {
     name: "dilation"
     i: 1
-  }
-  attribute {
   }
 }
 node {
@@ -254,8 +250,6 @@ node {
     name: "dilation"
     i: 1
   }
-  attribute {
-  }
 }
 node {
   input: "45"
@@ -266,8 +260,6 @@ node {
     name: "shape"
     ints: 10
     ints: 9216
-  }
-  attribute {
   }
 }
 node {
@@ -283,8 +275,6 @@ node {
     name: "is_test"
     f: 0
   }
-  attribute {
-  }
 }
 node {
   input: "11"
@@ -297,8 +287,8 @@ node {
   }
 }
 node {
-  input: "12"
-  input: "12"
+  input: "50"
+  input: "52"
   input: "12"
   output: "54"
   op_type: "FC"
@@ -321,8 +311,6 @@ node {
     name: "is_test"
     f: 0
   }
-  attribute {
-  }
 }
 node {
   input: "13"
@@ -335,8 +323,8 @@ node {
   }
 }
 node {
-  input: "14"
-  input: "14"
+  input: "58"
+  input: "60"
   input: "14"
   output: "62"
   op_type: "FC"
@@ -357,8 +345,8 @@ node {
   }
 }
 node {
-  input: "16"
-  input: "16"
+  input: "64"
+  input: "66"
   input: "16"
   output: "68"
   op_type: "FC"
