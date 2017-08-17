@@ -1,6 +1,6 @@
 node {
-  input: "1"
-  output: "3"
+  input: "3"
+  output: "5"
   op_type: "LeakyRelu"
   attribute {
     name: "alpha"
@@ -8,25 +8,50 @@ node {
   }
 }
 node {
-  input: "3"
-  output: "5"
+  input: "5"
+  input: "1"
+  input: "2"
+  input: "saved_mean0"
+  input: "saved_var0"
+  output: "7"
+  op_type: "SpatialBN"
+  attribute {
+    name: "is_test"
+    i: 0
+  }
+  attribute {
+    name: "epsilon"
+    f: 1e-05
+  }
+  attribute {
+    name: "order"
+    s: "NCHW"
+  }
+  attribute {
+    name: "momentum"
+    f: 0.1
+  }
+}
+node {
+  input: "7"
+  output: "9"
   op_type: "AveragePool"
   attribute {
     name: "kernel"
     i: 3
   }
   attribute {
-    name: "pad"
-    i: 1
-  }
-  attribute {
     name: "stride"
     i: 2
   }
+  attribute {
+    name: "pad"
+    i: 1
+  }
 }
 node {
-  input: "5"
-  output: "7"
+  input: "9"
+  output: "11"
   output: "tmp0"
   op_type: "Reshape"
   attribute {
@@ -36,8 +61,8 @@ node {
   }
 }
 node {
-  input: "7"
-  output: "9"
+  input: "11"
+  output: "13"
   op_type: "Squeeze"
   attribute {
     name: "dims"
@@ -45,4 +70,8 @@ node {
 }
 name: "torch-jit-export"
 input: "1"
-output: "1"
+input: "2"
+input: "3"
+input: "saved_mean0"
+input: "saved_var0"
+output: "3"
