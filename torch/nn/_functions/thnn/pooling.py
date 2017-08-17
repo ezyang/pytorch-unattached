@@ -53,15 +53,18 @@ class MaxPool1d(Function):
     def backward(ctx, grad_output, _indices_grad=None):
         input, indices = ctx.saved_variables
 
-        grad_input = MaxPool1dBackward.apply(input, indices, grad_output, ctx.kernel_size, ctx.stride, ctx.pad,
-                                             ctx.dilation, ctx.ceil_mode)
+        grad_input = MaxPool1dBackward.apply(input, indices, grad_output,
+                                             ctx.kernel_size, ctx.stride,
+                                             ctx.pad, ctx.dilation,
+                                             ctx.ceil_mode)
         return grad_input, None, None, None, None, None, None
 
 
 class MaxPool1dBackward(Function):
 
     @staticmethod
-    def forward(ctx, input, indices, grad_output, kernel_size, stride, padding, dilation, ceil_mode):
+    def forward(ctx, input, indices, grad_output, kernel_size, stride, padding,
+                dilation, ceil_mode):
         ctx.kernel_size = kernel_size
         ctx.stride = stride
         ctx.pad = padding
@@ -74,7 +77,9 @@ class MaxPool1dBackward(Function):
         ctx.save_for_backward(indices)
         backend = type2backend[type(input)]
         backend.SpatialDilatedMaxPooling_updateGradInput(backend.library_state,
-                                                         input2d, grad_output2d, grad_input, indices2d,
+                                                         input2d,
+                                                         grad_output2d,
+                                                         grad_input, indices2d,
                                                          ctx.kernel_size, 1,
                                                          ctx.stride, 1,
                                                          ctx.pad, 0,
@@ -106,7 +111,8 @@ class MaxPool2d(Function):
                                _outputs=(0,))
 
     @staticmethod
-    def forward(ctx, input, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False):
+    def forward(ctx, input, kernel_size, stride=None, padding=0, dilation=1,
+                ceil_mode=False):
         ctx.kernel_size = _pair(kernel_size)
         ctx.stride = _pair(stride if stride is not None else kernel_size)
         ctx.padding = _pair(padding)
@@ -116,10 +122,14 @@ class MaxPool2d(Function):
         indices, output = input.new().long(), input.new()
         backend.SpatialDilatedMaxPooling_updateOutput(backend.library_state,
                                                       input, output, indices,
-                                                      ctx.kernel_size[1], ctx.kernel_size[0],
-                                                      ctx.stride[1], ctx.stride[0],
-                                                      ctx.padding[1], ctx.padding[0],
-                                                      ctx.dilation[1], ctx.dilation[0],
+                                                      ctx.kernel_size[1],
+                                                      ctx.kernel_size[0],
+                                                      ctx.stride[1],
+                                                      ctx.stride[0],
+                                                      ctx.padding[1],
+                                                      ctx.padding[0],
+                                                      ctx.dilation[1],
+                                                      ctx.dilation[0],
                                                       ctx.ceil_mode)
         ctx.save_for_backward(input, indices)
         ctx.mark_non_differentiable(indices)
@@ -128,8 +138,10 @@ class MaxPool2d(Function):
     @staticmethod
     def backward(ctx, grad_output, _indices_grad=None):
         input, indices = ctx.saved_variables
-        grad_input = MaxPool2dBackward.apply(input, indices, grad_output, ctx.kernel_size, ctx.stride, ctx.padding,
-                                             ctx.dilation, ctx.ceil_mode)
+        grad_input = MaxPool2dBackward.apply(input, indices, grad_output,
+                                             ctx.kernel_size, ctx.stride,
+                                             ctx.padding, ctx.dilation,
+                                             ctx.ceil_mode)
         return grad_input, None, None, None, None, None, None
 
 
@@ -365,6 +377,17 @@ class FractionalMaxPool2d(Function):
 class AvgPool2d(Function):
 
     @staticmethod
+    def primspec(input, kernel_size, stride=None, padding=0,
+                 ceil_mode=False, count_include_pad=True):
+        if ceil_mode:
+            return None
+        return torch.toffee.op("AveragePool", input,
+                               kernel=kernel_size,
+                               stride=stride,
+                               pad=padding,
+                               _outputs=(0,))
+
+    @staticmethod
     def forward(ctx, input, kernel_size, stride=None, padding=0,
                 ceil_mode=False, count_include_pad=True):
         ctx.kernel_size = _pair(kernel_size)
@@ -388,8 +411,10 @@ class AvgPool2d(Function):
     @staticmethod
     def backward(ctx, grad_output):
         input, = ctx.saved_variables
-        grad_input = AvgPool2dBackward.apply(input, grad_output, ctx.kernel_size, ctx.stride,
-                                             ctx.padding, ctx.ceil_mode, ctx.count_include_pad)
+        grad_input = AvgPool2dBackward.apply(input, grad_output,
+                                             ctx.kernel_size, ctx.stride,
+                                             ctx.padding, ctx.ceil_mode,
+                                             ctx.count_include_pad)
         return grad_input, None, None, None, None, None
 
 
