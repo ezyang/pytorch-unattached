@@ -9,10 +9,22 @@ from model_defs.inception import Inception3
 from model_defs.squeezenet import SqueezeNet
 from model_defs.densenet import DenseNet
 from model_defs.dcgan import _netD, _netG, weights_init, bsz, imgsz, nz, ngf, ndf, nc
+from model_defs.op_test import DummyNet
 
 
 class TestModels(TestCase):
     maxDiff = None
+
+    def test_leaky_relu(self):
+
+        inplace = False
+        x = Variable(
+            torch.randn(10, 3, 224, 224).fill_(1.0), requires_grad=True
+        )
+        trace, _ = torch.jit.record_trace(DummyNet(inplace=inplace), x)
+        print(str(trace))
+        self.assertExpected(str(trace))
+        self.assertExpected(torch._C._jit_pass_export(trace), "pbtxt")
 
     def test_alexnet(self):
 

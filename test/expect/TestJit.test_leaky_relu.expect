@@ -1,0 +1,4 @@
+graph(%1 : Double(10, 3, 224, 224)) {
+  %2.0 : Double(10, 3, 224, 224) = ^LeakyReLU(0.02, False)(%1), uses = [[%0.i0]];
+  return (%2.0);
+}
