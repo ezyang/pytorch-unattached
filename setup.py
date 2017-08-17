@@ -428,7 +428,7 @@ if WITH_TOFFEE:
     main_link_args += [TOFFEE_LIB]
     main_sources += [
         "torch/csrc/toffee/export.cpp",
-        "torch/csrc/toffee/functions/convolution.cpp",
+        "torch/csrc/autograd/functions/toffee/convolution.cpp",
     ]
     extra_compile_args += ['-DWITH_TOFFEE']
 
