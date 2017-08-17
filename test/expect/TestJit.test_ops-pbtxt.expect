@@ -1,0 +1,48 @@
+node {
+  input: "1"
+  output: "3"
+  op_type: "LeakyRelu"
+  attribute {
+    name: "alpha"
+    f: 0.02
+  }
+}
+node {
+  input: "3"
+  output: "5"
+  op_type: "AveragePool"
+  attribute {
+    name: "kernel"
+    i: 3
+  }
+  attribute {
+    name: "pad"
+    i: 1
+  }
+  attribute {
+    name: "stride"
+    i: 2
+  }
+}
+node {
+  input: "5"
+  output: "7"
+  output: "tmp0"
+  op_type: "Reshape"
+  attribute {
+    name: "shape"
+    ints: -1
+    ints: 1
+  }
+}
+node {
+  input: "7"
+  output: "9"
+  op_type: "Squeeze"
+  attribute {
+    name: "dims"
+  }
+}
+name: "torch-jit-export"
+input: "1"
+output: "1"
