@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 
 
@@ -12,3 +13,11 @@ class DummyNet(nn.Module):
     def forward(self, x):
         x = self.features(x)
         return x
+
+class ConcatNet(nn.Module):
+
+    def __init__(self):
+        super(ConcatNet, self).__init__()
+
+    def forward(self, inputs):
+        return torch.cat(inputs, 0)
