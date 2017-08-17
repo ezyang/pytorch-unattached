@@ -1,0 +1,7 @@
+graph(%1 : Double(10, 3, 224, 224)) {
+  %2.0 : Double(10, 3, 224, 224) = ^LeakyReLU(0.02, False)(%1), uses = [[%4.i0]];
+  %4.0 : Double(10, 3, 112, 112) = ^AvgPool2d(3, 2, 1, False, True)(%2.0), uses = [[%6.i0]];
+  %6.0 : Double(376320, 1) = ^View((-1, 1))(%4.0), uses = [[%8.i0]];
+  %8.0 : Double(376320) = ^Squeeze(1)(%6.0), uses = [[]];
+  return (%1);
+}
