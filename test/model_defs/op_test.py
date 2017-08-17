@@ -8,6 +8,7 @@ class DummyNet(nn.Module):
         super(DummyNet, self).__init__()
         self.features = nn.Sequential(
             nn.LeakyReLU(0.02, inplace=inplace),
+            nn.BatchNorm2d(3),
             nn.AvgPool2d(kernel_size=3, stride=2, padding=1, ceil_mode=False)
         )
 
