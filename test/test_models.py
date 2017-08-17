@@ -12,10 +12,10 @@ from model_defs.dcgan import _netD, _netG, weights_init, bsz, imgsz, nz, ngf, nd
 from model_defs.op_test import DummyNet, ConcatNet
 
 
-class TestModels(TestCase):
+class TestJit(TestCase):
     maxDiff = None
 
-    def test_leaky_relu(self):
+    def test_ops(self):
 
         inplace = False
         x = Variable(
