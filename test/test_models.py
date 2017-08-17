@@ -9,7 +9,7 @@ from model_defs.inception import Inception3
 from model_defs.squeezenet import SqueezeNet
 from model_defs.densenet import DenseNet
 from model_defs.dcgan import _netD, _netG, weights_init, bsz, imgsz, nz, ngf, ndf, nc
-from model_defs.op_test import DummyNet
+from model_defs.op_test import DummyNet, ConcatNet
 
 
 class TestModels(TestCase):
@@ -23,6 +23,16 @@ class TestModels(TestCase):
         )
         trace, _ = torch.jit.record_trace(DummyNet(inplace=inplace), x)
         print(str(trace))
+        self.assertExpected(str(trace))
+        self.assertExpected(torch._C._jit_pass_export(trace), "pbtxt")
+
+    def test_concat(self):
+        input_a = Variable(torch.randn(10), requires_grad=True)
+        input_b = Variable(torch.randn(10), requires_grad=True)
+        inputs = [input_a, input_b]
+
+        trace, _ = torch.jit.record_trace(ConcatNet(), inputs)
+        # print(str(trace))
         self.assertExpected(str(trace))
         self.assertExpected(torch._C._jit_pass_export(trace), "pbtxt")
 
