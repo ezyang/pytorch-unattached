@@ -4,6 +4,7 @@ from torch.autograd import Variable
 from common import TestCase, run_tests
 from model_defs.alexnet import AlexNet
 from model_defs.mnist import MNIST
+from model_defs.word_language_model import RNNModel
 from model_defs.vgg import *
 from model_defs.resnet import Bottleneck, ResNet
 from model_defs.inception import Inception3
@@ -167,6 +168,47 @@ class TestJit(TestCase):
         self.assertExpected(str(trace), "dcgan-netG")
         # self.assertExpected(torch._C._jit_pass_export(trace), "dcgan-netG-pbtxt")
 
+    def run_word_language_model(self, model_name):
+        # Args:
+        #   model: string, one of RNN_TANH, RNN_RELU, LSTM, GRU
+        #   ntokens: int, len(corpus.dictionary)
+        #   emsize: int, default 200, size of embedding
+        #   nhid: int, default 200, number of hidden units per layer
+        #   nlayers: int, default 2
+        #   dropout: float, default 0.5
+        #   tied: bool, default False
+        #   batchsize: int, default 2
+        ntokens = 10
+        emsize = 5
+        nhid = 5
+        nlayers = 5
+        dropout = 0.2
+        tied = False
+        batchsize = 5
+        model = RNNModel(model_name, ntokens, emsize,
+                         nhid, nlayers, dropout,
+                         tied, batchsize)
+        x = Variable(torch.LongTensor(10, batchsize).fill_(1),
+                     requires_grad=False)
+        trace, _ = torch.jit.record_trace(model, x)
+        self.assertExpected(str(trace))
+        #self.assertExpected(torch._C._jit_pass_export(trace), "pbtxt")
+
+    def test_word_language_model_RNN_TANH(self):
+        model_name = 'RNN_TANH'
+        self.run_word_language_model(model_name)
+
+    def test_word_language_model_RNN_RELU(self):
+        model_name = 'RNN_RELU'
+        self.run_word_language_model(model_name)
+
+    def test_word_language_model_LSTM(self):
+        model_name = 'LSTM'
+        self.run_word_language_model(model_name)
+
+    def test_word_language_model_GRU(self):
+        model_name = 'GRU'
+        self.run_word_language_model(model_name)
 
 if __name__ == '__main__':
     run_tests()
