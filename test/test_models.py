@@ -4,7 +4,7 @@ from torch.autograd import Variable
 from common import TestCase, run_tests
 from model_defs.alexnet import AlexNet
 from model_defs.mnist import MNIST
-from model_defs.vgg import make_layers, VGG, cfg
+from model_defs.vgg import *
 from model_defs.resnet import Bottleneck, ResNet
 from model_defs.inception import Inception3
 from model_defs.squeezenet import SqueezeNet
@@ -28,8 +28,8 @@ class TestJit(TestCase):
         self.assertExpected(torch._C._jit_pass_export(trace), "pbtxt")
 
     def test_concat(self):
-        input_a = Variable(torch.randn(10), requires_grad=True)
-        input_b = Variable(torch.randn(10), requires_grad=True)
+        input_a = Variable(torch.randn(10, 3), requires_grad=True)
+        input_b = Variable(torch.randn(10, 3), requires_grad=True)
         inputs = [input_a, input_b]
 
         trace, _ = torch.jit.record_trace(ConcatNet(), inputs)
@@ -60,7 +60,7 @@ class TestJit(TestCase):
         # VGG 16-layer model (configuration "D")
         x = Variable(torch.randn(10, 3, 224, 224).fill_(1.0),
                      requires_grad=True)
-        vgg16 = VGG(make_layers(cfg['D']), inplace=inplace)
+        vgg16 = make_vgg16(inplace=inplace)
         trace, _ = torch.jit.record_trace(vgg16, x)
         self.assertExpected(str(trace), "16")
         self.assertExpected(torch._C._jit_pass_export(trace), "16-pbtxt")
@@ -68,7 +68,7 @@ class TestJit(TestCase):
         # VGG 16-layer model (configuration "D") with batch normalization
         x = Variable(torch.randn(10, 3, 224, 224).fill_(1.0),
                      requires_grad=True)
-        vgg16_bn = VGG(make_layers(cfg['D'], inplace=inplace, batch_norm=True))
+        vgg16_bn = make_vgg16_bn(inplace=inplace)
         trace, _ = torch.jit.record_trace(vgg16_bn, x)
         self.assertExpected(str(trace), "16_bn")
         # self.assertExpected(torch._C._jit_pass_export(trace), "16_bn-pbtxt")
@@ -76,7 +76,7 @@ class TestJit(TestCase):
         # VGG 19-layer model (configuration "E")
         x = Variable(torch.randn(10, 3, 224, 224).fill_(1.0),
                      requires_grad=True)
-        vgg19 = VGG(make_layers(cfg['E']), inplace=inplace)
+        vgg19 = make_vgg_19(inplace=inplace)
         trace, _ = torch.jit.record_trace(vgg19, x)
         self.assertExpected(str(trace), "19")
         self.assertExpected(torch._C._jit_pass_export(trace), "19-pbtxt")
@@ -84,7 +84,7 @@ class TestJit(TestCase):
         # VGG 19-layer model (configuration 'E') with batch normalization
         x = Variable(torch.randn(10, 3, 224, 224).fill_(1.0),
                      requires_grad=True)
-        vgg19_bn = VGG(make_layers(cfg['E'], inplace=inplace, batch_norm=True))
+        vgg19_bn = make_vgg19_bn(inplace=inplace)
         trace, _ = torch.jit.record_trace(vgg19_bn, x)
         self.assertExpected(str(trace), "19_bn")
         # self.assertExpected(torch._C._jit_pass_export(trace), "19_bn-pbtxt")
@@ -119,7 +119,7 @@ class TestJit(TestCase):
         sqnet_v1_0 = SqueezeNet(version=1.1, inplace=inplace)
         trace, _ = torch.jit.record_trace(sqnet_v1_0, x)
         self.assertExpected(str(trace), "1_0")
-        # self.assertExpected(torch._C._jit_pass_export(trace), "1_0-pbtxt")
+        self.assertExpected(torch._C._jit_pass_export(trace), "1_0-pbtxt")
 
         # SqueezeNet 1.1 has 2.4x less computation and slightly fewer params
         # than SqueezeNet 1.0, without sacrificing accuracy.
@@ -128,7 +128,7 @@ class TestJit(TestCase):
         sqnet_v1_1 = SqueezeNet(version=1.1, inplace=inplace)
         trace, _ = torch.jit.record_trace(sqnet_v1_1, x)
         self.assertExpected(str(trace), "1_1")
-        # self.assertExpected(torch._C._jit_pass_export(trace), "1_1-pbtxt")
+        self.assertExpected(torch._C._jit_pass_export(trace), "1_1-pbtxt")
 
     def test_densenet(self):
 

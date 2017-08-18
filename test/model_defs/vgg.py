@@ -62,3 +62,19 @@ def make_layers(cfg, inplace=False, batch_norm=False):
                 layers += [conv2d, nn.ReLU(inplace=inplace)]
             in_channels = v
     return nn.Sequential(*layers)
+
+
+def make_vgg16(inplace=False):
+    return VGG(make_layers(cfg['D']), inplace=inplace)
+
+
+def make_vgg16_bn(inplace=False):
+    return VGG(make_layers(cfg['D'], batch_norm=True), inplace=inplace)
+
+
+def make_vgg19(inplace=False):
+    return VGG(make_layers(cfg['E']), inplace=inplace)
+
+
+def make_vgg19_bn(inplace=False):
+    return VGG(make_layers(cfg['E'], batch_norm=True), inplace=inplace)
