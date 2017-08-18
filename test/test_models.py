@@ -22,8 +22,8 @@ class TestJit(TestCase):
             torch.randn(10, 3, 224, 224).fill_(1.0), requires_grad=True
         )
         trace, _ = torch.jit.record_trace(DummyNet(inplace=inplace), x)
-        print(str(trace))
         self.assertExpected(str(trace))
+        proto = torch._C._jit_pass_export(trace)
         self.assertExpected(torch._C._jit_pass_export(trace), "pbtxt")
 
     def test_concat(self):
