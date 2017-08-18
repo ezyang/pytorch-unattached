@@ -3,6 +3,7 @@ import torch.jit
 from torch.autograd import Variable
 from common import TestCase, run_tests
 from model_defs.alexnet import AlexNet
+from model_defs.mnist import MNIST
 from model_defs.vgg import make_layers, VGG, cfg
 from model_defs.resnet import Bottleneck, ResNet
 from model_defs.inception import Inception3
@@ -45,6 +46,13 @@ class TestJit(TestCase):
         trace, _ = torch.jit.record_trace(AlexNet(inplace=inplace), x)
         self.assertExpected(str(trace))
         self.assertExpected(torch._C._jit_pass_export(trace), "pbtxt")
+
+    def test_mnist(self):
+        x = Variable(torch.randn(1000, 1, 28, 28).fill_(1.0),
+                     requires_grad=True)
+        trace, _ = torch.jit.record_trace(MNIST(), x)
+        self.assertExpected(str(trace))
+        #self.assertExpected(torch._C._jit_pass_export(trace), "pbtxt")
 
     def test_vgg(self):
 
