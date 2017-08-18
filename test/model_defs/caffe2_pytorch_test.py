@@ -21,7 +21,7 @@ except ImportError:
 
 import torch.nn as nn
 import torch.jit
-from torch.autograd import Variable, Function
+from torch.autograd import Variable
 
 import toffee
 from toffee.backend import Caffe2Backend as c2
@@ -92,8 +92,7 @@ class TestCaffe2Backend(unittest.TestCase):
 
         # Translate the parameters into Caffe2 form
         W = {}
-        batch_norm_running_values = [
-            s for s in graph_def.input if "saved" in s]
+        batch_norm_running_values = [s for s in graph_def.input if "saved" in s]
         real_inputs = [s for s in graph_def.input if "saved" not in s]
         for v in batch_norm_running_values:
             # print(v)

@@ -24,4 +24,4 @@ class ConcatNet(nn.Module):
         super(ConcatNet, self).__init__()
 
     def forward(self, inputs):
-        return torch.cat(inputs, 0)
+        return torch.cat(inputs, 1)
