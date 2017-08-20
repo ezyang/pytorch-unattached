@@ -30,6 +30,7 @@ import google.protobuf.text_format
 
 import unittest
 
+
 class TestCaffe2Backend(unittest.TestCase):
     def test_alexnet(self):
         # PyTorch AlexNet definition
@@ -54,10 +55,10 @@ class TestCaffe2Backend(unittest.TestCase):
                     nn.MaxPool2d(kernel_size=3, stride=2),
                 )
                 self.classifier = nn.Sequential(
-                    #nn.Dropout(),
+                    # nn.Dropout(),
                     nn.Linear(256 * 6 * 6, 4096),
                     nn.ReLU(inplace=False),
-                    #nn.Dropout(),
+                    # nn.Dropout(),
                     nn.Linear(4096, 4096),
                     nn.ReLU(inplace=False),
                     nn.Linear(4096, num_classes),
@@ -77,7 +78,6 @@ class TestCaffe2Backend(unittest.TestCase):
         # Random (deterministic) input
         x = Variable(torch.randn(10, 3, 224, 224), requires_grad=True)
 
-
         # Enable tracing on the model
         trace, torch_out = torch.jit.record_trace(underlying_model, x)
         proto = torch._C._jit_pass_export(trace)
@@ -92,7 +92,8 @@ class TestCaffe2Backend(unittest.TestCase):
 
         # Translate the parameters into Caffe2 form
         W = {}
-        batch_norm_running_values = [s for s in graph_def.input if "saved" in s ]
+        batch_norm_running_values = [
+            s for s in graph_def.input if "saved" in s]
         real_inputs = [s for s in graph_def.input if "saved" not in s]
         for v in batch_norm_running_values:
             # print(v)
@@ -109,7 +110,8 @@ class TestCaffe2Backend(unittest.TestCase):
             predict_graph=graph_def,
             inputs=W)
         caffe2_out = list(caffe2_out_workspace.values())[0]
-        np.testing.assert_almost_equal(torch_out.data.numpy(), caffe2_out, decimal=3)
+        np.testing.assert_almost_equal(
+            torch_out.data.numpy(), caffe2_out, decimal=3)
 
 
 if __name__ == '__main__':
