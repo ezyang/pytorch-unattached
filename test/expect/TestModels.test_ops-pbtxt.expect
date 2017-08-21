@@ -1,0 +1,81 @@
+node {
+  input: "3"
+  output: "5"
+  op_type: "LeakyRelu"
+  attribute {
+    name: "alpha"
+    f: 0.02
+  }
+}
+node {
+  input: "5"
+  input: "1"
+  input: "2"
+  input: "saved_mean_3_0"
+  input: "saved_var_3_0"
+  output: "7"
+  output: "saved_mean_3_0"
+  output: "saved_var_3_0"
+  output: "batch_norm_dead_output_30"
+  output: "batch_norm_dead_output_40"
+  op_type: "SpatialBN"
+  attribute {
+    name: "is_test"
+    i: 0
+  }
+  attribute {
+    name: "epsilon"
+    f: 1e-05
+  }
+  attribute {
+    name: "order"
+    s: "NCHW"
+  }
+  attribute {
+    name: "momentum"
+    f: 0.9
+  }
+}
+node {
+  input: "7"
+  output: "9"
+  op_type: "AveragePool"
+  attribute {
+    name: "kernel"
+    i: 3
+  }
+  attribute {
+    name: "stride"
+    i: 2
+  }
+  attribute {
+    name: "pad"
+    i: 1
+  }
+}
+node {
+  input: "9"
+  output: "11"
+  output: "tmp0"
+  op_type: "Reshape"
+  attribute {
+    name: "shape"
+    ints: -1
+    ints: 1
+  }
+}
+node {
+  input: "11"
+  output: "13"
+  op_type: "Squeeze"
+  attribute {
+    name: "dims"
+  }
+}
+name: "torch-jit-export"
+input: "1"
+input: "2"
+input: "3"
+input: "saved_mean_3_0"
+input: "saved_var_3_0"
+output: "3"

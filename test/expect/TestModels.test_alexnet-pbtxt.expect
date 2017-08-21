@@ -273,7 +273,7 @@ node {
   }
   attribute {
     name: "is_test"
-    f: 0
+    i: 0
   }
 }
 node {
@@ -309,7 +309,7 @@ node {
   }
   attribute {
     name: "is_test"
-    f: 0
+    i: 0
   }
 }
 node {

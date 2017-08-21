@@ -13,7 +13,7 @@ from model_defs.dcgan import _netD, _netG, weights_init, bsz, imgsz, nz, ngf, nd
 from model_defs.op_test import DummyNet, ConcatNet
 
 
-class TestJit(TestCase):
+class TestModels(TestCase):
     maxDiff = None
 
     def test_ops(self):
