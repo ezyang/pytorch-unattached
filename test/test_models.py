@@ -192,7 +192,7 @@ class TestJit(TestCase):
                      requires_grad=False)
         trace, _ = torch.jit.record_trace(model, x)
         self.assertExpected(str(trace))
-        #self.assertExpected(torch._C._jit_pass_export(trace), "pbtxt")
+        # self.assertExpected(torch._C._jit_pass_export(trace), "pbtxt")
 
     def test_word_language_model_RNN_TANH(self):
         model_name = 'RNN_TANH'
