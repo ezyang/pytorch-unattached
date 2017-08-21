@@ -52,7 +52,7 @@ class TestJit(TestCase):
                      requires_grad=True)
         trace, _ = torch.jit.record_trace(MNIST(), x)
         self.assertExpected(str(trace))
-        #self.assertExpected(torch._C._jit_pass_export(trace), "pbtxt")
+        # self.assertExpected(torch._C._jit_pass_export(trace), "pbtxt")
 
     def test_vgg(self):
 
