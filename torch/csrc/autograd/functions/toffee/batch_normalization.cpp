@@ -27,7 +27,7 @@ void BatchNormForward::primspec(PrimSpecContext* ctx, jit::node_list inputs, jit
     attr->set_name(name); \
     attr->set_##format(value);
 
-  ADD_ATTR("is_test",i,0);
+  ADD_ATTR("is_test",i,!this->training);
   ADD_ATTR("epsilon",f,eps);
   ADD_ATTR("order",s,"NCHW");
   ADD_ATTR("momentum",f,1-momentum);
@@ -42,17 +42,17 @@ void BatchNormForward::primspec(PrimSpecContext* ctx, jit::node_list inputs, jit
   ctx->graph->add_input(sm);
   ctx->graph->add_input(sv);
   p_n->add_input(sm);
-  p_n->add_output(sm);
   p_n->add_input(sv);
-  p_n->add_output(sv);
-
-  // dummy output
-  for(int i = 3; i < 5; i++) {
-    p_n->add_output(
-        "batch_norm_dead_output_" + std::to_string(i)+std::to_string(ctx->batch_norm_count)
-    );
+  if(this->training) {
+    p_n->add_output(sm);
+    p_n->add_output(sv);
+    // dummy output
+    for(int i = 3; i < 5; i++) {
+      p_n->add_output(
+          "batch_norm_dead_output_" + std::to_string(i)+std::to_string(ctx->batch_norm_count)
+      );
+    }
   }
-
   ctx->batch_norm_count++;
 }
 
