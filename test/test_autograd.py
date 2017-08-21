@@ -255,9 +255,9 @@ class TestAutograd(TestCase):
     def test_grad_badcalls(self):
         x = Variable(torch.ones(1))
         y = x ** 2
-        with self.assertRaisesRegex(RuntimeError, 'does not require grad'):
+        with self.assertRaisesRegex(RuntimeError, 'unreachable'):
             torch.autograd.grad(x, y)
-        with self.assertRaisesRegex(RuntimeError, 'not have been used in the graph'):
+        with self.assertRaisesRegex(RuntimeError, 'no graph nodes that require computing gradients'):
             torch.autograd.grad(y, x)
 
         x = Variable(torch.ones(1), requires_grad=True)
@@ -1462,6 +1462,27 @@ class TestAutograd(TestCase):
         keepdim_check(torch.var)
         keepdim_check(torch.std)
         torch.utils.backcompat.keepdim_warning.enabled = False
+
+    def test_reentrant(self):
+        y_data = torch.randn(2, 2)
+
+        class Reenter(Function):
+            @staticmethod
+            def forward(ctx, x_data):
+                ctx.x = Variable(x_data, requires_grad=True)
+                ctx.y = Variable(y_data, requires_grad=True)
+                ctx.output_var = ctx.x * ctx.y
+                return ctx.output_var.data
+
+            @staticmethod
+            def backward(ctx, grad_output):
+                ctx.output_var.sum().backward()
+                return ctx.x.grad * grad_output
+
+        x = Variable(torch.randn(2, 2), requires_grad=True)
+        out = Reenter.apply(x)
+        out.sum().backward()
+        self.assertEqual(x.grad.data, y_data)
 
 
 def index_variable(shape, max_indices):

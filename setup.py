@@ -16,10 +16,15 @@ from tools.setup_helpers.env import check_env_flag
 from tools.setup_helpers.cuda import WITH_CUDA, CUDA_HOME
 from tools.setup_helpers.cudnn import WITH_CUDNN, CUDNN_LIB_DIR, CUDNN_INCLUDE_DIR
 from tools.setup_helpers.split_types import split_types
+
+cwd = os.path.dirname(os.path.abspath(__file__))
+lib_path = os.path.join(cwd, "torch", "lib")
+
 DEBUG = check_env_flag('DEBUG')
 WITH_DISTRIBUTED = not check_env_flag('NO_DISTRIBUTED')
 WITH_DISTRIBUTED_MW = WITH_DISTRIBUTED and check_env_flag('WITH_DISTRIBUTED_MW')
 WITH_NCCL = WITH_CUDA and platform.system() != 'Darwin'
+WITH_TOFFEE = os.path.exists(os.path.join(lib_path, "ToffeeIR"))
 SYSTEM_NCCL = False
 
 
@@ -96,6 +101,8 @@ class build_deps(Command):
             build_all_cmd += ['--with-nccl']
         if WITH_DISTRIBUTED:
             build_all_cmd += ['--with-distributed']
+        if WITH_TOFFEE:
+            build_all_cmd += ['--with-toffee']
         if subprocess.call(build_all_cmd) != 0:
             sys.exit(1)
         generate_nn_wrappers()
@@ -163,6 +170,10 @@ class build_ext(setuptools.command.build_ext.build_ext):
             print('-- Building with distributed package ')
         else:
             print('-- Building without distributed package')
+        if WITH_TOFFEE:
+            print('-- Building with Toffee ')
+        else:
+            print('-- Building without Toffee')
 
         # cwrap depends on pyyaml, so we can't import it earlier
         from tools.cwrap import cwrap
@@ -226,6 +237,12 @@ class clean(distutils.command.clean.clean):
 ################################################################################
 
 include_dirs = []
+
+# TODO: This is a hack: this needs to eventually be replaced with a sustainable
+# way of getting our hands on protobuf headers
+if os.getenv('CONDA_PREFIX'):
+    include_dirs.append(os.path.join(os.getenv('CONDA_PREFIX'), "include"))
+
 library_dirs = []
 extra_link_args = []
 extra_compile_args = ['-std=c++11', '-Wno-write-strings',
@@ -242,9 +259,6 @@ if os.getenv('PYTORCH_BINARY_BUILD') and platform.system() == 'Linux':
     if type(path) != str:  # python 3
         path = path.decode(sys.stdout.encoding)
     extra_link_args += [path]
-
-cwd = os.path.dirname(os.path.abspath(__file__))
-lib_path = os.path.join(cwd, "torch", "lib")
 
 tmp_install_path = lib_path + "/tmp_install"
 include_dirs += [
@@ -304,11 +318,22 @@ main_sources = [
     "torch/csrc/utils/tuple_parser.cpp",
     "torch/csrc/allocators.cpp",
     "torch/csrc/serialization.cpp",
+    "torch/csrc/jit/assert.cpp",
+    "torch/csrc/jit/init.cpp",
+    "torch/csrc/jit/ir.cpp",
+    "torch/csrc/jit/graph_fuser.cpp",
+    "torch/csrc/jit/init_pass.cpp",
+    "torch/csrc/jit/dead_code_elimination.cpp",
+    "torch/csrc/jit/test_jit.cpp",
+    "torch/csrc/jit/tracer.cpp",
+    "torch/csrc/jit/python_tracer.cpp",
+    "torch/csrc/jit/interned_strings.cpp",
     "torch/csrc/autograd/init.cpp",
     "torch/csrc/autograd/engine.cpp",
     "torch/csrc/autograd/function.cpp",
     "torch/csrc/autograd/variable.cpp",
     "torch/csrc/autograd/input_buffer.cpp",
+    "torch/csrc/autograd/jit_closure.cpp",
     "torch/csrc/autograd/python_function.cpp",
     "torch/csrc/autograd/python_cpp_function.cpp",
     "torch/csrc/autograd/python_variable.cpp",
@@ -319,6 +344,7 @@ main_sources = [
     "torch/csrc/autograd/functions/basic_ops.cpp",
     "torch/csrc/autograd/functions/tensor.cpp",
     "torch/csrc/autograd/functions/accumulate_grad.cpp",
+    "torch/csrc/autograd/functions/special.cpp",
     "torch/csrc/autograd/functions/utils.cpp",
     "torch/csrc/autograd/functions/init.cpp",
 ]
@@ -360,7 +386,7 @@ if WITH_CUDA:
     extra_link_args.append('-Wl,-rpath,' + cuda_lib_path)
     extra_compile_args += ['-DWITH_CUDA']
     extra_compile_args += ['-DCUDA_LIB_PATH=' + cuda_lib_path]
-    main_libraries += ['cudart', 'nvToolsExt']
+    main_libraries += ['cudart', 'nvToolsExt', 'nvrtc', 'cuda']
     main_link_args += [THC_LIB, THCS_LIB, THCUNN_LIB]
     main_sources += [
         "torch/csrc/cuda/Module.cpp",
@@ -370,6 +396,7 @@ if WITH_CUDA:
         "torch/csrc/cuda/utils.cpp",
         "torch/csrc/cuda/expand_utils.cpp",
         "torch/csrc/cuda/serialization.cpp",
+        "torch/csrc/jit/fusion_compiler.cpp",
     ]
     main_sources += split_types("torch/csrc/cuda/Tensor.cpp")
 
@@ -394,6 +421,19 @@ if WITH_CUDNN:
         "torch/csrc/cudnn/Handles.cpp",
     ]
     extra_compile_args += ['-DWITH_CUDNN']
+
+if WITH_TOFFEE:
+    include_dirs.append(tmp_install_path + "/include/toffee")
+    TOFFEE_LIB = os.path.join(lib_path, 'libtoffee.so.1')
+    if platform.system() == 'Darwin':
+        TOFFEE_LIB = os.path.join(lib_path, 'libtoffee.1.dylib')
+    main_link_args += [TOFFEE_LIB]
+    main_sources += [
+        "torch/csrc/toffee/export.cpp",
+        "torch/csrc/autograd/functions/toffee/convolution.cpp",
+        "torch/csrc/autograd/functions/toffee/batch_normalization.cpp",
+    ]
+    extra_compile_args += ['-DWITH_TOFFEE']
 
 if DEBUG:
     extra_compile_args += ['-O0', '-g']

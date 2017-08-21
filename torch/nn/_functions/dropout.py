@@ -10,6 +10,13 @@ class Dropout(InplaceFunction):
     def _make_noise(input):
         return input.new().resize_as_(input)
 
+    @staticmethod
+    def primspec(input, p=0.5, train=False, inplace=False):
+        if inplace:
+            return None
+        return torch.toffee.op("Dropout", input, ratio=float(p),
+                               is_test=int(not train), _outputs=(0, -1))
+
     @classmethod
     def forward(cls, ctx, input, p=0.5, train=False, inplace=False):
         if p < 0 or p > 1:
@@ -45,6 +52,10 @@ class Dropout(InplaceFunction):
 
 
 class FeatureDropout(Dropout):
+
+    @staticmethod
+    def primspec(input, p=0.5, train=False, inplace=False):
+        return None
 
     @staticmethod
     def _make_noise(input):

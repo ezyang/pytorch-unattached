@@ -1,8 +1,11 @@
 #include "torch/csrc/autograd/python_engine.h"
 
 #include "torch/csrc/autograd/engine.h"
+#include "torch/csrc/autograd/python_function.h"
+#include "torch/csrc/autograd/jit_closure.h"
 #include "torch/csrc/THP.h"
 #include "torch/csrc/DynamicTypes.h"
+#include "torch/csrc/PtrWrapper.h"
 #include "torch/csrc/utils/auto_gil.h"
 
 #include <unordered_set>
@@ -13,26 +16,32 @@ struct THPEngine {
     PyObject_HEAD
 };
 
-struct PythonEngine : public Engine {
-  virtual void thread_main(std::shared_ptr<ReadyQueue> queue, int device) override {
-    // Create a PyThreadState, but release the GIL. This lets AutoGIL calls
-    // inside thread_main acquire the GIL without having to create a new
-    // PyThreadState each time.
-    AutoGIL gil;
-    AutoNoGIL no_gil;
-    Engine::thread_main(queue, device);
-  }
+static torch::autograd::python::PythonEngine engine;
 
-  virtual void thread_on_exception(FunctionTask& task, std::exception& e) override {
-    auto python_err = dynamic_cast<python_error*>(&e);
-    if (python_err) {
-      python_err->persist();
-    }
-    Engine::thread_on_exception(task, e);
-  }
-};
+namespace torch { namespace autograd { namespace python {
 
-static PythonEngine engine;
+void PythonEngine::thread_main(std::shared_ptr<ReadyQueue> queue, int device) {
+  // Create a PyThreadState, but release the GIL. This lets AutoGIL calls
+  // inside thread_main acquire the GIL without having to create a new
+  // PyThreadState each time.
+  AutoGIL gil;
+  AutoNoGIL no_gil;
+  Engine::thread_main(queue, device);
+}
+
+void PythonEngine::thread_on_exception(FunctionTask& task, std::exception& e) {
+  auto python_err = dynamic_cast<python_error*>(&e);
+  if (python_err) {
+    python_err->persist();
+  }
+  Engine::thread_on_exception(task, e);
+}
+
+PythonEngine& PythonEngine::getDefaultEngine() {
+  return engine;
+}
+
+}}} // namespace torch::autograd::python
 
 PyObject *THPEngineClass = NULL;
 
@@ -106,6 +115,55 @@ void compute_partial_exec_callbacks(const function_list& roots,
   }
 }
 
+PyObject *THPEngine_run_forward(THPEngine *self, PyObject *args, PyObject *kwargs)
+{
+  HANDLE_TH_ERRORS
+  PyObject *pyclosure = NULL;
+  PyObject *inputs = NULL;
+  const char *accepted_kwargs[] = {"closure", "inputs", NULL};
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO", (char**)accepted_kwargs,
+        &pyclosure, &inputs))
+    return NULL;
+
+  THPUtils_assert(THPWrapper_check(pyclosure), "closure should be a PtrWrapper object");
+  THPUtils_assert(PyTuple_Check(inputs), "inputs should be a tuple");
+
+  variable_list var_inputs;
+  auto num_inputs = PyTuple_GET_SIZE(inputs);
+  var_inputs.reserve(1 + num_inputs);
+  var_inputs.emplace_back(nullptr); // For ConstantFactory
+  for (int i = 0; i < num_inputs; ++i) {
+    PyObject *input = PyTuple_GET_ITEM(inputs, i);
+    THPUtils_assert(THPVariable_Check(input), "%d input is not a Variable", i);
+    var_inputs.emplace_back(((THPVariable*)input)->cdata);
+  }
+
+  AutogradClosure *closure = reinterpret_cast<AutogradClosure*>(THPWrapper_get(pyclosure));
+
+  variable_list outputs;
+  Engine::callback_map callbacks;
+  callbacks.emplace(closure->output.get(), [&outputs](Function* _unused, variable_list& inputs) -> bool {
+    outputs = inputs;
+    return false;
+  });
+
+  try {
+    AutoNoGIL no_gil;
+    engine.execute(closure->roots, var_inputs, true, callbacks);
+  } catch (python_error &e) {
+    e.restore();
+    return nullptr;
+  }
+
+  int num_outputs = outputs.size();
+  THPObjectPtr pyoutputs { PyTuple_New(num_outputs) };
+  for (int i = 0; i < num_outputs; ++i) {
+    PyTuple_SET_ITEM(pyoutputs.get(), i, THPVariable_Wrap(outputs[i]));
+  }
+  return pyoutputs.release();
+  END_HANDLE_TH_ERRORS
+}
+
 // Implementation of torch._C._EngineBase.run_backward
 PyObject *THPEngine_run_backward(THPEngine *self, PyObject *args, PyObject *kwargs)
 {
@@ -143,10 +201,9 @@ PyObject *THPEngine_run_backward(THPEngine *self, PyObject *args, PyObject *kwar
     // If grad_fn is NULL (as is the case for a leaf node), we instead
     // interpret the gradient function to be a grad accumulator,
     // which will accumulate its inputs into the grad property of the
-    // variable.  These nodes get suppressed in some situations,
+    // variable. These nodes get suppressed in some situations,
     // see "suppress grad accumulation" below.
     auto grad_fn = variable->grad_fn ? variable->grad_fn : variable->get_grad_accumulator();
-    THPUtils_assert(grad_fn, "element %d of variables tuple does not require grad", i);
     int output_nr = variable->grad_fn ? variable->output_nr : 0;
     roots[i] = std::make_pair<>(std::move(grad_fn), output_nr);
 
@@ -243,6 +300,7 @@ PyObject *THPEngine_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 
 static struct PyMethodDef THPEngine_methods[] = {
   {(char*)"run_backward", (PyCFunction)THPEngine_run_backward, METH_VARARGS | METH_KEYWORDS, NULL},
+  {(char*)"run_forward", (PyCFunction)THPEngine_run_forward, METH_VARARGS | METH_KEYWORDS, NULL},
   {(char*)"queue_callback", (PyCFunction)THPEngine_queue_callback, METH_O, NULL},
   {NULL}
 };

@@ -1,5 +1,6 @@
 from functools import reduce
 import torch
+import torch.toffee
 from torch._utils import _accumulate
 
 from ..function import Function, InplaceFunction, once_differentiable
@@ -76,6 +77,10 @@ class NoGrad(Function):
 class Transpose(Function):
 
     @staticmethod
+    def primspec(i, dim1, dim2):
+        return torch.toffee.op("Transpose", i, axes=(dim1, dim2))
+
+    @staticmethod
     def forward(ctx, i, dim1, dim2):
         result = i.transpose(dim1, dim2)
         ctx.dims = (dim1, dim2)
@@ -88,6 +93,10 @@ class Transpose(Function):
 
 
 class View(Function):
+
+    @staticmethod
+    def primspec(i, sizes):
+        return torch.toffee.op("Reshape", i, shape=sizes, _outputs=(0, -1))
 
     @staticmethod
     def forward(ctx, i, sizes):
@@ -311,6 +320,10 @@ class IndexSelect(Function):
 class Concat(Function):
 
     @staticmethod
+    def primspec(dim, *inputs):
+        return torch.toffee.op("Concat", *inputs, axis=dim, _outputs=(0, -1))
+
+    @staticmethod
     def forward(ctx, dim, *inputs):
         ctx.dim = dim
         ctx.input_sizes = [i.size(dim) for i in inputs]
@@ -362,6 +375,12 @@ class Clone(Function):
 
 
 class Squeeze(InplaceFunction):
+
+    @staticmethod
+    def primspec(input, dim, inplace=False):
+        if inplace:
+            return None
+        return torch.toffee.op("Squeeze", input, dims=[dim])
 
     @staticmethod
     def forward(ctx, input, dim=None, inplace=False):
