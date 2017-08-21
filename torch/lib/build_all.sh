@@ -144,7 +144,7 @@ build THPP
 build libshm
 build ATen
 if [[ $WITH_TOFFEE -eq 1 ]]; then
-    build ToffeeIR
+    (cd torch/lib/ToffeeIR; python setup.py install);
 fi
 
 # THD, gloo have dependencies on Torch, CUDA, NCCL etc.
