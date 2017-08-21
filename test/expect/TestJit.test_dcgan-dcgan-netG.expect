@@ -1,0 +1,17 @@
+graph(%1 : Double(100, 512, 4, 4), %2 : Double(512), %3 : Double(512), %4 : Double(512), %5 : Double(512, 256, 4, 4), %6 : Double(256), %7 : Double(256), %8 : Double(256), %9 : Double(256, 128, 4, 4), %10 : Double(128), %11 : Double(128), %12 : Double(128), %13 : Double(128, 64, 4, 4), %14 : Double(64), %15 : Double(64), %16 : Double(64), %17 : Double(64, 3, 4, 4), %18 : Double(3), %19 : Double(64, 100, 1, 1)) {
+  %20.0 : Double(64, 512, 4, 4) = CppOp[ConvForward](%19, %1, %2), uses = [[%22.i0]];
+  %22.0 : Double(64, 512, 4, 4) = CppOp[N5torch8autograd16BatchNormForwardE](%20.0, %3, %4), uses = [[%24.i0]];
+  %24.0 : Double(64, 512, 4, 4) = ^Threshold(0, 0, False)(%22.0), uses = [[%26.i0]];
+  %26.0 : Double(64, 256, 8, 8) = CppOp[ConvForward](%24.0, %5, %6), uses = [[%28.i0]];
+  %28.0 : Double(64, 256, 8, 8) = CppOp[N5torch8autograd16BatchNormForwardE](%26.0, %7, %8), uses = [[%30.i0]];
+  %30.0 : Double(64, 256, 8, 8) = ^Threshold(0, 0, False)(%28.0), uses = [[%32.i0]];
+  %32.0 : Double(64, 128, 16, 16) = CppOp[ConvForward](%30.0, %9, %10), uses = [[%34.i0]];
+  %34.0 : Double(64, 128, 16, 16) = CppOp[N5torch8autograd16BatchNormForwardE](%32.0, %11, %12), uses = [[%36.i0]];
+  %36.0 : Double(64, 128, 16, 16) = ^Threshold(0, 0, False)(%34.0), uses = [[%38.i0]];
+  %38.0 : Double(64, 64, 32, 32) = CppOp[ConvForward](%36.0, %13, %14), uses = [[%40.i0]];
+  %40.0 : Double(64, 64, 32, 32) = CppOp[N5torch8autograd16BatchNormForwardE](%38.0, %15, %16), uses = [[%42.i0]];
+  %42.0 : Double(64, 64, 32, 32) = ^Threshold(0, 0, False)(%40.0), uses = [[%44.i0]];
+  %44.0 : Double(64, 3, 64, 64) = CppOp[ConvForward](%42.0, %17, %18), uses = [[%46.i0]];
+  %46.0 : Double(64, 3, 64, 64) = ^Tanh()(%44.0), uses = [[%0.i0]];
+  return (%46.0);
+}
