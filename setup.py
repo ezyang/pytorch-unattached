@@ -11,6 +11,7 @@ import subprocess
 import shutil
 import sys
 import os
+import json
 
 from tools.setup_helpers.env import check_env_flag
 from tools.setup_helpers.cuda import WITH_CUDA, CUDA_HOME
@@ -422,11 +423,12 @@ if WITH_CUDNN:
     extra_compile_args += ['-DWITH_CUDNN']
 
 if WITH_TOFFEE:
-    include_dirs.append(tmp_install_path + "/include/toffee")
-    TOFFEE_LIB = os.path.join(lib_path, 'libtoffee.so.1')
-    if platform.system() == 'Darwin':
-        TOFFEE_LIB = os.path.join(lib_path, 'libtoffee.1.dylib')
-    main_link_args += [TOFFEE_LIB]
+    # TODO: MASSIVE HACK TO FIND toffee
+    conda_info = json.loads(subprocess.check_output(['conda', 'info', '--json']))
+    conda_prefix = conda_info['default_prefix']
+    toffee_lib = subprocess.check_output(['find', conda_prefix, '-name', 'toffee_cpp2py_export.so'])
+    main_link_args += [toffee_lib.strip()]
+    include_dirs.append(lib_path + "/ToffeeIR")
     main_sources += [
         "torch/csrc/toffee/export.cpp",
         "torch/csrc/autograd/functions/toffee/convolution.cpp",
