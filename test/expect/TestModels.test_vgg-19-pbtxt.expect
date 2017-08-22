@@ -3,7 +3,6 @@ node {
   input: "1"
   input: "2"
   output: "41"
-  output: "42"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -42,7 +41,6 @@ node {
   input: "3"
   input: "4"
   output: "47"
-  output: "48"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -102,7 +100,6 @@ node {
   input: "5"
   input: "6"
   output: "57"
-  output: "58"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -141,7 +138,6 @@ node {
   input: "7"
   input: "8"
   output: "63"
-  output: "64"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -201,7 +197,6 @@ node {
   input: "9"
   input: "10"
   output: "73"
-  output: "74"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -240,7 +235,6 @@ node {
   input: "11"
   input: "12"
   output: "79"
-  output: "80"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -279,7 +273,6 @@ node {
   input: "13"
   input: "14"
   output: "85"
-  output: "86"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -318,7 +311,6 @@ node {
   input: "15"
   input: "16"
   output: "91"
-  output: "92"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -378,7 +370,6 @@ node {
   input: "17"
   input: "18"
   output: "101"
-  output: "102"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -417,7 +408,6 @@ node {
   input: "19"
   input: "20"
   output: "107"
-  output: "108"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -456,7 +446,6 @@ node {
   input: "21"
   input: "22"
   output: "113"
-  output: "114"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -495,7 +484,6 @@ node {
   input: "23"
   input: "24"
   output: "119"
-  output: "120"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -555,7 +543,6 @@ node {
   input: "25"
   input: "26"
   output: "129"
-  output: "130"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -594,7 +581,6 @@ node {
   input: "27"
   input: "28"
   output: "135"
-  output: "136"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -633,7 +619,6 @@ node {
   input: "29"
   input: "30"
   output: "141"
-  output: "142"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -672,7 +657,6 @@ node {
   input: "31"
   input: "32"
   output: "147"
-  output: "148"
   op_type: "Conv"
   attribute {
     name: "kernels"

@@ -3,7 +3,6 @@ node {
   input: "1"
   input: "2"
   output: "55"
-  output: "56"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -63,7 +62,6 @@ node {
   input: "3"
   input: "4"
   output: "65"
-  output: "66"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -102,7 +100,6 @@ node {
   input: "5"
   input: "6"
   output: "71"
-  output: "72"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -141,7 +138,6 @@ node {
   input: "7"
   input: "8"
   output: "77"
-  output: "78"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -191,7 +187,6 @@ node {
   input: "9"
   input: "10"
   output: "86"
-  output: "87"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -230,7 +225,6 @@ node {
   input: "11"
   input: "12"
   output: "92"
-  output: "93"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -269,7 +263,6 @@ node {
   input: "13"
   input: "14"
   output: "98"
-  output: "99"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -340,7 +333,6 @@ node {
   input: "15"
   input: "16"
   output: "111"
-  output: "112"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -379,7 +371,6 @@ node {
   input: "17"
   input: "18"
   output: "117"
-  output: "118"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -418,7 +409,6 @@ node {
   input: "19"
   input: "20"
   output: "123"
-  output: "124"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -468,7 +458,6 @@ node {
   input: "21"
   input: "22"
   output: "132"
-  output: "133"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -507,7 +496,6 @@ node {
   input: "23"
   input: "24"
   output: "138"
-  output: "139"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -546,7 +534,6 @@ node {
   input: "25"
   input: "26"
   output: "144"
-  output: "145"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -617,7 +604,6 @@ node {
   input: "27"
   input: "28"
   output: "157"
-  output: "158"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -656,7 +642,6 @@ node {
   input: "29"
   input: "30"
   output: "163"
-  output: "164"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -695,7 +680,6 @@ node {
   input: "31"
   input: "32"
   output: "169"
-  output: "170"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -745,7 +729,6 @@ node {
   input: "33"
   input: "34"
   output: "178"
-  output: "179"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -784,7 +767,6 @@ node {
   input: "35"
   input: "36"
   output: "184"
-  output: "185"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -823,7 +805,6 @@ node {
   input: "37"
   input: "38"
   output: "190"
-  output: "191"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -873,7 +854,6 @@ node {
   input: "39"
   input: "40"
   output: "199"
-  output: "200"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -912,7 +892,6 @@ node {
   input: "41"
   input: "42"
   output: "205"
-  output: "206"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -951,7 +930,6 @@ node {
   input: "43"
   input: "44"
   output: "211"
-  output: "212"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -1001,7 +979,6 @@ node {
   input: "45"
   input: "46"
   output: "220"
-  output: "221"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -1040,7 +1017,6 @@ node {
   input: "47"
   input: "48"
   output: "226"
-  output: "227"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -1079,7 +1055,6 @@ node {
   input: "49"
   input: "50"
   output: "232"
-  output: "233"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -1143,7 +1118,6 @@ node {
   input: "51"
   input: "52"
   output: "244"
-  output: "245"
   op_type: "Conv"
   attribute {
     name: "kernels"
