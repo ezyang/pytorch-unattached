@@ -1,4 +1,22 @@
-graph(%1 : Double(100, 512, 4, 4), %2 : Double(512), %3 : Double(512), %4 : Double(512), %5 : Double(512, 256, 4, 4), %6 : Double(256), %7 : Double(256), %8 : Double(256), %9 : Double(256, 128, 4, 4), %10 : Double(128), %11 : Double(128), %12 : Double(128), %13 : Double(128, 64, 4, 4), %14 : Double(64), %15 : Double(64), %16 : Double(64), %17 : Double(64, 3, 4, 4), %18 : Double(3), %19 : Double(64, 100, 1, 1)) {
+graph(%1 : Double(100, 512, 4, 4)
+      %2 : Double(512)
+      %3 : Double(512)
+      %4 : Double(512)
+      %5 : Double(512, 256, 4, 4)
+      %6 : Double(256)
+      %7 : Double(256)
+      %8 : Double(256)
+      %9 : Double(256, 128, 4, 4)
+      %10 : Double(128)
+      %11 : Double(128)
+      %12 : Double(128)
+      %13 : Double(128, 64, 4, 4)
+      %14 : Double(64)
+      %15 : Double(64)
+      %16 : Double(64)
+      %17 : Double(64, 3, 4, 4)
+      %18 : Double(3)
+      %19 : Double(64, 100, 1, 1)) {
   %20.0 : Double(64, 512, 4, 4), %20.1 : Handle = CppOp[ConvForward](%19, %1, %2), uses = [[%23.i0], []];
   %23.0 : Double(64, 512, 4, 4), %23.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%20.0, %3, %4), uses = [[%26.i0], []];
   %26.0 : Double(64, 512, 4, 4), %26.1 : Handle = ^Threshold(0, 0, False)(%23.0), uses = [[%29.i0], []];

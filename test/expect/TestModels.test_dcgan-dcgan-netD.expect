@@ -1,4 +1,20 @@
-graph(%1 : Double(64, 3, 4, 4), %2 : Double(64), %3 : Double(128, 64, 4, 4), %4 : Double(128), %5 : Double(128), %6 : Double(128), %7 : Double(256, 128, 4, 4), %8 : Double(256), %9 : Double(256), %10 : Double(256), %11 : Double(512, 256, 4, 4), %12 : Double(512), %13 : Double(512), %14 : Double(512), %15 : Double(1, 512, 4, 4), %16 : Double(1), %17 : Double(64, 3, 64, 64)) {
+graph(%1 : Double(64, 3, 4, 4)
+      %2 : Double(64)
+      %3 : Double(128, 64, 4, 4)
+      %4 : Double(128)
+      %5 : Double(128)
+      %6 : Double(128)
+      %7 : Double(256, 128, 4, 4)
+      %8 : Double(256)
+      %9 : Double(256)
+      %10 : Double(256)
+      %11 : Double(512, 256, 4, 4)
+      %12 : Double(512)
+      %13 : Double(512)
+      %14 : Double(512)
+      %15 : Double(1, 512, 4, 4)
+      %16 : Double(1)
+      %17 : Double(64, 3, 64, 64)) {
   %18.0 : Double(64, 64, 32, 32), %18.1 : Handle = CppOp[ConvForward](%17, %1, %2), uses = [[%21.i0], []];
   %21.0 : Double(64, 64, 32, 32), %21.1 : Handle = ^LeakyReLU(0.2, False)(%18.0), uses = [[%24.i0], []];
   %24.0 : Double(64, 128, 16, 16), %24.1 : Handle = CppOp[ConvForward](%21.0, %3, %4), uses = [[%27.i0], []];
