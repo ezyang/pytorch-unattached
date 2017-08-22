@@ -14,7 +14,7 @@ from model_defs.dcgan import _netD, _netG, weights_init, bsz, imgsz, nz, ngf, nd
 from model_defs.op_test import DummyNet, ConcatNet
 
 
-class TestJit(TestCase):
+class TestModels(TestCase):
     maxDiff = None
 
     def test_ops(self):
@@ -77,7 +77,7 @@ class TestJit(TestCase):
         # VGG 19-layer model (configuration "E")
         x = Variable(torch.randn(10, 3, 224, 224).fill_(1.0),
                      requires_grad=True)
-        vgg19 = make_vgg_19(inplace=inplace)
+        vgg19 = make_vgg19(inplace=inplace)
         trace, _ = torch.jit.record_trace(vgg19, x)
         self.assertExpected(str(trace), "19")
         self.assertExpected(torch._C._jit_pass_export(trace), "19-pbtxt")
