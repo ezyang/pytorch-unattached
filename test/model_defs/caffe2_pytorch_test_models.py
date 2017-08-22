@@ -8,7 +8,7 @@ import sys
 import itertools
 
 from vgg import *
-from dcgan import *
+from dcgan import _netD, _netG, weights_init, bsz, imgsz, nz, ngf, ndf, nc
 from alexnet import AlexNet
 from resnet import Bottleneck, ResNet
 from inception import Inception3
@@ -44,12 +44,13 @@ BATCH_SIZE = 2
 
 
 class TestCaffe2Backend(unittest.TestCase):
-    def run_model_test(self, model, train, batch_size):
+    def run_model_test(self, model, train, batch_size, x=None):
         torch.manual_seed(0)
         model.train(train)
 
         # Random (deterministic) input
-        x = Variable(torch.randn(batch_size, 3, 224, 224), requires_grad=True)
+        if x is None:
+            x = Variable(torch.randn(batch_size, 3, 224, 224), requires_grad=True)
 
         # Enable tracing on the model
         trace, torch_out = torch.jit.record_trace(model, x)
@@ -119,6 +120,16 @@ class TestCaffe2Backend(unittest.TestCase):
         inception = Inception3(aux_logits=False, inplace=False)
         self.run_model_test(inception, train=False, batch_size=BATCH_SIZE)
 
+    def test_dcgan(self):
+        netD = _netD(1)
+        netD.apply(weights_init)
+        input = Variable(torch.Tensor(bsz, 3, imgsz, imgsz))
+        self.run_model_test(netD, False, BATCH_SIZE, input)
+
+        netG = _netG(1)
+        netG.apply(weights_init)
+        noise = Variable(torch.Tensor(bsz, nz, 1, 1).normal_(0, 1))
+        self.run_model_test(netG, False, BATCH_SIZE, noise)
 
 if __name__ == '__main__':
     unittest.main()

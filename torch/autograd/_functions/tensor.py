@@ -380,7 +380,15 @@ class Squeeze(InplaceFunction):
     def primspec(input, dim, inplace=False):
         if inplace:
             return None
-        return torch.toffee.op("Squeeze", input, dims=[dim])
+        if dim is None:
+            dim = []
+            for i, size in enumerate(input.size()):
+                if size == 1:
+                    dim.append(i)
+            dim = tuple(dim)
+        else:
+            dim = (dim, )
+        return torch.toffee.op("Squeeze", input, dims=dim)
 
     @staticmethod
     def forward(ctx, input, dim=None, inplace=False):
