@@ -1,4 +1,12 @@
-graph(%1 : Double(10, 1, 5, 5), %2 : Double(10), %3 : Double(20, 10, 5, 5), %4 : Double(20), %5 : Double(50, 320), %6 : Double(50), %7 : Double(10, 50), %8 : Double(10), %9 : Double(1000, 1, 28, 28)) {
+graph(%1 : Double(10, 1, 5, 5)
+      %2 : Double(10)
+      %3 : Double(20, 10, 5, 5)
+      %4 : Double(20)
+      %5 : Double(50, 320)
+      %6 : Double(50)
+      %7 : Double(10, 50)
+      %8 : Double(10)
+      %9 : Double(1000, 1, 28, 28)) {
   %10.0 : Double(1000, 10, 24, 24), %10.1 : Handle = CppOp[ConvForward](%9, %1, %2), uses = [[%13.i0], []];
   %13.0 : Double(1000, 10, 12, 12), %13.1 : Long(1000, 10, 12, 12), %13.2 : Handle = ^MaxPool2d(2, None, 0, 1, False)(%10.0), uses = [[%17.i0], [], []];
   %17.0 : Double(1000, 10, 12, 12), %17.1 : Handle = ^Threshold(0, 0, False)(%13.0), uses = [[%20.i0], []];
