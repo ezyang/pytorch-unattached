@@ -14,6 +14,7 @@ class MaxPool1d(Function):
                  ceil_mode=False):
         if ceil_mode:
             return None
+        stride = stride or kernel_size
         return torch.toffee.op("MaxPool", input,
                                kernel=kernel_size,
                                stride=stride,
@@ -369,6 +370,7 @@ class AvgPool2d(Function):
                  ceil_mode=False, count_include_pad=True):
         if ceil_mode:
             return None
+        stride = stride or kernel_size
         return torch.toffee.op("AveragePool", input,
                                kernel=kernel_size,
                                stride=stride,
