@@ -13,7 +13,7 @@ node {
   input: "2"
   input: "saved_mean_3_0"
   input: "saved_var_3_0"
-  output: "7"
+  output: "8"
   output: "saved_mean_3_0"
   output: "saved_var_3_0"
   output: "batch_norm_dead_output_30"
@@ -37,8 +37,8 @@ node {
   }
 }
 node {
-  input: "7"
-  output: "9"
+  input: "8"
+  output: "11"
   op_type: "AveragePool"
   attribute {
     name: "kernel"
@@ -54,8 +54,8 @@ node {
   }
 }
 node {
-  input: "9"
-  output: "11"
+  input: "11"
+  output: "14"
   output: "tmp0"
   op_type: "Reshape"
   attribute {
@@ -65,8 +65,8 @@ node {
   }
 }
 node {
-  input: "11"
-  output: "13"
+  input: "14"
+  output: "17"
   op_type: "Squeeze"
   attribute {
     name: "dims"

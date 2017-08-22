@@ -1,8 +1,8 @@
 graph(%1 : Double(3), %2 : Double(3), %3 : Double(10, 3, 224, 224)) {
-  %4.0 : Double(10, 3, 224, 224) = ^LeakyReLU(0.02, False)(%3), uses = [[%6.i0]];
-  %6.0 : Double(10, 3, 224, 224) = CppOp[N5torch8autograd16BatchNormForwardE](%4.0, %1, %2), uses = [[%8.i0]];
-  %8.0 : Double(10, 3, 112, 112) = ^AvgPool2d(3, 2, 1, False, True)(%6.0), uses = [[%10.i0]];
-  %10.0 : Double(376320, 1) = ^View((-1, 1))(%8.0), uses = [[%12.i0]];
-  %12.0 : Double(376320) = ^Squeeze(1)(%10.0), uses = [[]];
+  %4.0 : Double(10, 3, 224, 224), %4.1 : Handle = ^LeakyReLU(0.02, False)(%3), uses = [[%7.i0], []];
+  %7.0 : Double(10, 3, 224, 224), %7.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%4.0, %1, %2), uses = [[%10.i0], []];
+  %10.0 : Double(10, 3, 112, 112), %10.1 : Handle = ^AvgPool2d(3, 2, 1, False, True)(%7.0), uses = [[%13.i0], []];
+  %13.0 : Double(376320, 1), %13.1 : Handle = ^View((-1, 1))(%10.0), uses = [[%16.i0], []];
+  %16.0 : Double(376320), %16.1 : Handle = ^Squeeze(1)(%13.0), uses = [[], []];
   return (%3);
 }
