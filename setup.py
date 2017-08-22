@@ -430,7 +430,7 @@ if WITH_TOFFEE:
     conda_info = json.loads(subprocess.check_output(['conda', 'info', '--json']))
     conda_prefix = conda_info['default_prefix']
     toffee_lib = subprocess.check_output(['find', conda_prefix, '-name', 'toffee_cpp2py_export.so'])
-    main_link_args += [toffee_lib.strip()]
+    main_link_args += [str(toffee_lib.strip())]
     include_dirs.append(lib_path + "/ToffeeIR")
     main_sources += [
         "torch/csrc/toffee/export.cpp",
