@@ -1,4 +1,27 @@
-graph(%1 : Double(10, 5), %2 : Double(5, 5), %3 : Double(5, 5), %4 : Double(5), %5 : Double(5), %6 : Double(5, 5), %7 : Double(5, 5), %8 : Double(5), %9 : Double(5), %10 : Double(5, 5), %11 : Double(5, 5), %12 : Double(5), %13 : Double(5), %14 : Double(5, 5), %15 : Double(5, 5), %16 : Double(5), %17 : Double(5), %18 : Double(5, 5), %19 : Double(5, 5), %20 : Double(5), %21 : Double(5), %22 : Double(10, 5), %23 : Double(10), %24 : Long(10, 5)) {
+graph(%1 : Double(10, 5)
+      %2 : Double(5, 5)
+      %3 : Double(5, 5)
+      %4 : Double(5)
+      %5 : Double(5)
+      %6 : Double(5, 5)
+      %7 : Double(5, 5)
+      %8 : Double(5)
+      %9 : Double(5)
+      %10 : Double(5, 5)
+      %11 : Double(5, 5)
+      %12 : Double(5)
+      %13 : Double(5)
+      %14 : Double(5, 5)
+      %15 : Double(5, 5)
+      %16 : Double(5)
+      %17 : Double(5)
+      %18 : Double(5, 5)
+      %19 : Double(5, 5)
+      %20 : Double(5)
+      %21 : Double(5)
+      %22 : Double(10, 5)
+      %23 : Double(10)
+      %24 : Long(10, 5)) {
   %25.0 : Double(10, 5, 5), %25.1 : Handle = ^Embedding(-1, None, 2, False, False)(%24, %1), uses = [[%28.i0], []];
   %28.0 : Double(10, 5, 5), %28.1 : Handle = ^Dropout(0.2, True, False)(%25.0), uses = [[%31.i0, %53.i0, %74.i0, %95.i0, %116.i0, %137.i0, %158.i0, %179.i0, %200.i0, %221.i0], []];
   %31.0 : Double(5, 5), %31.1 : Handle = ^Index(0)(%28.0), uses = [[%37.i1], []];

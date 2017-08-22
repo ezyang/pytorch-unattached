@@ -1,4 +1,6 @@
-graph(%1 : Double(3), %2 : Double(3), %3 : Double(10, 3, 224, 224)) {
+graph(%1 : Double(3)
+      %2 : Double(3)
+      %3 : Double(10, 3, 224, 224)) {
   %4.0 : Double(10, 3, 224, 224), %4.1 : Handle = ^LeakyReLU(0.02, False)(%3), uses = [[%7.i0], []];
   %7.0 : Double(10, 3, 224, 224), %7.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%4.0, %1, %2), uses = [[%10.i0], []];
   %10.0 : Double(10, 3, 112, 112), %10.1 : Handle = ^AvgPool2d(3, 2, 1, False, True)(%7.0), uses = [[%13.i0], []];
