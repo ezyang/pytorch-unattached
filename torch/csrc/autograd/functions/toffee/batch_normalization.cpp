@@ -12,7 +12,11 @@ void BatchNormForward::primspec(PrimSpecContext* ctx, jit::node_list inputs, jit
   p_n->add_input(ctx->node(inputs[0]));
   p_n->add_output(ctx->node(outputs[0]));
   p_n->add_input(ctx->node(inputs[1]));
-  p_n->add_input(ctx->node(inputs[2]));
+  // TODO: Factor this logic into a helper, and make sure it gets applied
+  // consistently.  See also convolution.cpp
+  if (inputs[2]->kind() != jit::kConstant || inputs[2]->t(jit::kValue).defined()) {
+    p_n->add_input(ctx->node(inputs[2]));
+  }
 
   toffee::AttributeProto* attr;
 

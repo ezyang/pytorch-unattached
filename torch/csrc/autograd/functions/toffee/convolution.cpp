@@ -6,11 +6,14 @@ void ConvForward::primspec(PrimSpecContext* ctx, jit::node_list inputs, jit::nod
   toffee::NodeProto* p_n = ctx->graph->add_node();
   p_n->set_op_type("Conv");
 
-  // Basic (TODO: factor me out into helper on PrimSpecContext... maybe; this
-  // is predicated on us not making a better builder API)
-  for (auto n : inputs) {
-    p_n->add_input(ctx->node(n));
+  p_n->add_input(ctx->node(inputs[0]));
+  p_n->add_input(ctx->node(inputs[1]));
+  // TODO: Factor this logic into a helper, and make sure it gets applied
+  // consistently. See also batch_normalization.cpp
+  if (inputs[2]->kind() != jit::kConstant || inputs[2]->t(jit::kValue).defined()) {
+    p_n->add_input(ctx->node(inputs[2]));
   }
+
   for (auto n : outputs) {
     p_n->add_output(ctx->node(n));
   }
