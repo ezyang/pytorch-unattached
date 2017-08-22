@@ -1,18 +1,18 @@
 graph(%1 : Double(64, 3, 4, 4), %2 : Double(64), %3 : Double(128, 64, 4, 4), %4 : Double(128), %5 : Double(128), %6 : Double(128), %7 : Double(256, 128, 4, 4), %8 : Double(256), %9 : Double(256), %10 : Double(256), %11 : Double(512, 256, 4, 4), %12 : Double(512), %13 : Double(512), %14 : Double(512), %15 : Double(1, 512, 4, 4), %16 : Double(1), %17 : Double(64, 3, 64, 64)) {
-  %18.0 : Double(64, 64, 32, 32) = CppOp[ConvForward](%17, %1, %2), uses = [[%20.i0]];
-  %20.0 : Double(64, 64, 32, 32) = ^LeakyReLU(0.2, False)(%18.0), uses = [[%22.i0]];
-  %22.0 : Double(64, 128, 16, 16) = CppOp[ConvForward](%20.0, %3, %4), uses = [[%24.i0]];
-  %24.0 : Double(64, 128, 16, 16) = CppOp[N5torch8autograd16BatchNormForwardE](%22.0, %5, %6), uses = [[%26.i0]];
-  %26.0 : Double(64, 128, 16, 16) = ^LeakyReLU(0.2, False)(%24.0), uses = [[%28.i0]];
-  %28.0 : Double(64, 256, 8, 8) = CppOp[ConvForward](%26.0, %7, %8), uses = [[%30.i0]];
-  %30.0 : Double(64, 256, 8, 8) = CppOp[N5torch8autograd16BatchNormForwardE](%28.0, %9, %10), uses = [[%32.i0]];
-  %32.0 : Double(64, 256, 8, 8) = ^LeakyReLU(0.2, False)(%30.0), uses = [[%34.i0]];
-  %34.0 : Double(64, 512, 4, 4) = CppOp[ConvForward](%32.0, %11, %12), uses = [[%36.i0]];
-  %36.0 : Double(64, 512, 4, 4) = CppOp[N5torch8autograd16BatchNormForwardE](%34.0, %13, %14), uses = [[%38.i0]];
-  %38.0 : Double(64, 512, 4, 4) = ^LeakyReLU(0.2, False)(%36.0), uses = [[%40.i0]];
-  %40.0 : Double(64, 1, 1, 1) = CppOp[ConvForward](%38.0, %15, %16), uses = [[%42.i0]];
-  %42.0 : Double(64, 1, 1, 1) = ^Sigmoid()(%40.0), uses = [[%44.i0]];
-  %44.0 : Double(64, 1) = ^View((-1, 1))(%42.0), uses = [[%46.i0]];
-  %46.0 : Double(64) = ^Squeeze(1)(%44.0), uses = [[%0.i0]];
-  return (%46.0);
+  %18.0 : Double(64, 64, 32, 32), %18.1 : Handle = CppOp[ConvForward](%17, %1, %2), uses = [[%21.i0], []];
+  %21.0 : Double(64, 64, 32, 32), %21.1 : Handle = ^LeakyReLU(0.2, False)(%18.0), uses = [[%24.i0], []];
+  %24.0 : Double(64, 128, 16, 16), %24.1 : Handle = CppOp[ConvForward](%21.0, %3, %4), uses = [[%27.i0], []];
+  %27.0 : Double(64, 128, 16, 16), %27.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%24.0, %5, %6), uses = [[%30.i0], []];
+  %30.0 : Double(64, 128, 16, 16), %30.1 : Handle = ^LeakyReLU(0.2, False)(%27.0), uses = [[%33.i0], []];
+  %33.0 : Double(64, 256, 8, 8), %33.1 : Handle = CppOp[ConvForward](%30.0, %7, %8), uses = [[%36.i0], []];
+  %36.0 : Double(64, 256, 8, 8), %36.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%33.0, %9, %10), uses = [[%39.i0], []];
+  %39.0 : Double(64, 256, 8, 8), %39.1 : Handle = ^LeakyReLU(0.2, False)(%36.0), uses = [[%42.i0], []];
+  %42.0 : Double(64, 512, 4, 4), %42.1 : Handle = CppOp[ConvForward](%39.0, %11, %12), uses = [[%45.i0], []];
+  %45.0 : Double(64, 512, 4, 4), %45.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%42.0, %13, %14), uses = [[%48.i0], []];
+  %48.0 : Double(64, 512, 4, 4), %48.1 : Handle = ^LeakyReLU(0.2, False)(%45.0), uses = [[%51.i0], []];
+  %51.0 : Double(64, 1, 1, 1), %51.1 : Handle = CppOp[ConvForward](%48.0, %15, %16), uses = [[%54.i0], []];
+  %54.0 : Double(64, 1, 1, 1), %54.1 : Handle = ^Sigmoid()(%51.0), uses = [[%57.i0], []];
+  %57.0 : Double(64, 1), %57.1 : Handle = ^View((-1, 1))(%54.0), uses = [[%60.i0], []];
+  %60.0 : Double(64), %60.1 : Handle = ^Squeeze(1)(%57.0), uses = [[%0.i0], []];
+  return (%60.0);
 }
