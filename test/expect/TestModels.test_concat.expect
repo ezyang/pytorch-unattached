@@ -1,4 +1,4 @@
-graph(%1 : Double(10), %2 : Double(10)) {
-  %3.0 : Double(20) = ^Concat(0)(%1, %2), uses = [[%0.i0]];
+graph(%1 : Double(10, 3), %2 : Double(10, 3)) {
+  %3.0 : Double(10, 6) = ^Concat(1)(%1, %2), uses = [[%0.i0]];
   return (%3.0);
 }

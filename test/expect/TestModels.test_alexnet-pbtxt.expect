@@ -45,16 +45,16 @@ node {
     i: 3
   }
   attribute {
-    name: "stride"
-    i: 2
-  }
-  attribute {
     name: "pad"
     i: 0
   }
   attribute {
     name: "dilation"
     i: 1
+  }
+  attribute {
+    name: "stride"
+    i: 2
   }
 }
 node {
@@ -104,16 +104,16 @@ node {
     i: 3
   }
   attribute {
-    name: "stride"
-    i: 2
-  }
-  attribute {
     name: "pad"
     i: 0
   }
   attribute {
     name: "dilation"
     i: 1
+  }
+  attribute {
+    name: "stride"
+    i: 2
   }
 }
 node {
@@ -239,16 +239,16 @@ node {
     i: 3
   }
   attribute {
-    name: "stride"
-    i: 2
-  }
-  attribute {
     name: "pad"
     i: 0
   }
   attribute {
     name: "dilation"
     i: 1
+  }
+  attribute {
+    name: "stride"
+    i: 2
   }
 }
 node {
@@ -268,12 +268,12 @@ node {
   output: "tmp1"
   op_type: "Dropout"
   attribute {
-    name: "ratio"
-    f: 0.5
+    name: "is_test"
+    i: 0
   }
   attribute {
-    name: "is_test"
-    f: 0
+    name: "ratio"
+    f: 0.5
   }
 }
 node {
@@ -304,12 +304,12 @@ node {
   output: "tmp2"
   op_type: "Dropout"
   attribute {
-    name: "ratio"
-    f: 0.5
+    name: "is_test"
+    i: 0
   }
   attribute {
-    name: "is_test"
-    f: 0
+    name: "ratio"
+    f: 0.5
   }
 }
 node {

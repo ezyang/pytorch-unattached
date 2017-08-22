@@ -1,4 +1,0 @@
-graph(%1 : Double(3), %2 : Double(3), %3 : Double(10, 3, 224, 224)) {
-  %4.0 : Double(10, 3, 224, 224) = CppOp[N5torch8autograd16BatchNormForwardE](%3, %1, %2), uses = [[%0.i0]];
-  return (%4.0);
-}
