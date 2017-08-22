@@ -5,7 +5,7 @@ graph(%1 : Double(10, 5), %2 : Double(15, 5), %3 : Double(15, 5), %4 : Double(15
   %34.0 : Double(5!, 15!), %34.1 : Handle = ^Transpose(0, 1)(%2), uses = [[%37.i2], []];
   %37.0 : Double(5, 15), %37.1 : Handle = ^Addmm(1, 1, False)(%4, %31.0, %34.0), uses = [[%47.i0], []];
   %40.0 : Double(5!, 15!), %40.1 : Handle = ^Transpose(0, 1)(%3), uses = [[%44.i2], []];
-  %43 : UNKNOWN_TYPE = Constant(), uses = [%44.i1, %78.i0];
+  %43 : UNKNOWN_TYPE = Constant[Value=<Tensor>](), uses = [%44.i1, %78.i0];
   %44.0 : Double(5, 15), %44.1 : Handle = ^Addmm(1, 1, False)(%5, %43, %40.0), uses = [[%52.i0], []];
   %47.0 : Double(5!, 5), %47.1 : Double(5!, 5), %47.2 : Double(5!, 5), %47.3 : Handle = ^Chunk(3, 1)(%37.0), uses = [[%57.i0], [%63.i0], [%72.i0], []];
   %52.0 : Double(5!, 5), %52.1 : Double(5!, 5), %52.2 : Double(5!, 5), %52.3 : Handle = ^Chunk(3, 1)(%44.0), uses = [[%57.i1], [%63.i1], [%69.i1], []];
@@ -180,7 +180,7 @@ graph(%1 : Double(10, 5), %2 : Double(15, 5), %3 : Double(15, 5), %4 : Double(15
   %597.0 : Double(5!, 15!), %597.1 : Handle = ^Transpose(0, 1)(%6), uses = [[%600.i2], []];
   %600.0 : Double(5, 15), %600.1 : Handle = ^Addmm(1, 1, False)(%8, %594.0, %597.0), uses = [[%610.i0], []];
   %603.0 : Double(5!, 15!), %603.1 : Handle = ^Transpose(0, 1)(%7), uses = [[%607.i2], []];
-  %606 : UNKNOWN_TYPE = Constant(), uses = [%607.i1, %641.i0];
+  %606 : UNKNOWN_TYPE = Constant[Value=<Tensor>](), uses = [%607.i1, %641.i0];
   %607.0 : Double(5, 15), %607.1 : Handle = ^Addmm(1, 1, False)(%9, %606, %603.0), uses = [[%615.i0], []];
   %610.0 : Double(5!, 5), %610.1 : Double(5!, 5), %610.2 : Double(5!, 5), %610.3 : Handle = ^Chunk(3, 1)(%600.0), uses = [[%620.i0], [%626.i0], [%635.i0], []];
   %615.0 : Double(5!, 5), %615.1 : Double(5!, 5), %615.2 : Double(5!, 5), %615.3 : Handle = ^Chunk(3, 1)(%607.0), uses = [[%620.i1], [%626.i1], [%632.i1], []];
@@ -355,7 +355,7 @@ graph(%1 : Double(10, 5), %2 : Double(15, 5), %3 : Double(15, 5), %4 : Double(15
   %1160.0 : Double(5!, 15!), %1160.1 : Handle = ^Transpose(0, 1)(%10), uses = [[%1163.i2], []];
   %1163.0 : Double(5, 15), %1163.1 : Handle = ^Addmm(1, 1, False)(%12, %1157.0, %1160.0), uses = [[%1173.i0], []];
   %1166.0 : Double(5!, 15!), %1166.1 : Handle = ^Transpose(0, 1)(%11), uses = [[%1170.i2], []];
-  %1169 : UNKNOWN_TYPE = Constant(), uses = [%1170.i1, %1204.i0];
+  %1169 : UNKNOWN_TYPE = Constant[Value=<Tensor>](), uses = [%1170.i1, %1204.i0];
   %1170.0 : Double(5, 15), %1170.1 : Handle = ^Addmm(1, 1, False)(%13, %1169, %1166.0), uses = [[%1178.i0], []];
   %1173.0 : Double(5!, 5), %1173.1 : Double(5!, 5), %1173.2 : Double(5!, 5), %1173.3 : Handle = ^Chunk(3, 1)(%1163.0), uses = [[%1183.i0], [%1189.i0], [%1198.i0], []];
   %1178.0 : Double(5!, 5), %1178.1 : Double(5!, 5), %1178.2 : Double(5!, 5), %1178.3 : Handle = ^Chunk(3, 1)(%1170.0), uses = [[%1183.i1], [%1189.i1], [%1195.i1], []];
@@ -530,7 +530,7 @@ graph(%1 : Double(10, 5), %2 : Double(15, 5), %3 : Double(15, 5), %4 : Double(15
   %1723.0 : Double(5!, 15!), %1723.1 : Handle = ^Transpose(0, 1)(%14), uses = [[%1726.i2], []];
   %1726.0 : Double(5, 15), %1726.1 : Handle = ^Addmm(1, 1, False)(%16, %1720.0, %1723.0), uses = [[%1736.i0], []];
   %1729.0 : Double(5!, 15!), %1729.1 : Handle = ^Transpose(0, 1)(%15), uses = [[%1733.i2], []];
-  %1732 : UNKNOWN_TYPE = Constant(), uses = [%1733.i1, %1767.i0];
+  %1732 : UNKNOWN_TYPE = Constant[Value=<Tensor>](), uses = [%1733.i1, %1767.i0];
   %1733.0 : Double(5, 15), %1733.1 : Handle = ^Addmm(1, 1, False)(%17, %1732, %1729.0), uses = [[%1741.i0], []];
   %1736.0 : Double(5!, 5), %1736.1 : Double(5!, 5), %1736.2 : Double(5!, 5), %1736.3 : Handle = ^Chunk(3, 1)(%1726.0), uses = [[%1746.i0], [%1752.i0], [%1761.i0], []];
   %1741.0 : Double(5!, 5), %1741.1 : Double(5!, 5), %1741.2 : Double(5!, 5), %1741.3 : Handle = ^Chunk(3, 1)(%1733.0), uses = [[%1746.i1], [%1752.i1], [%1758.i1], []];
@@ -705,7 +705,7 @@ graph(%1 : Double(10, 5), %2 : Double(15, 5), %3 : Double(15, 5), %4 : Double(15
   %2286.0 : Double(5!, 15!), %2286.1 : Handle = ^Transpose(0, 1)(%18), uses = [[%2289.i2], []];
   %2289.0 : Double(5, 15), %2289.1 : Handle = ^Addmm(1, 1, False)(%20, %2283.0, %2286.0), uses = [[%2299.i0], []];
   %2292.0 : Double(5!, 15!), %2292.1 : Handle = ^Transpose(0, 1)(%19), uses = [[%2296.i2], []];
-  %2295 : UNKNOWN_TYPE = Constant(), uses = [%2296.i1, %2330.i0];
+  %2295 : UNKNOWN_TYPE = Constant[Value=<Tensor>](), uses = [%2296.i1, %2330.i0];
   %2296.0 : Double(5, 15), %2296.1 : Handle = ^Addmm(1, 1, False)(%21, %2295, %2292.0), uses = [[%2304.i0], []];
   %2299.0 : Double(5!, 5), %2299.1 : Double(5!, 5), %2299.2 : Double(5!, 5), %2299.3 : Handle = ^Chunk(3, 1)(%2289.0), uses = [[%2309.i0], [%2315.i0], [%2324.i0], []];
   %2304.0 : Double(5!, 5), %2304.1 : Double(5!, 5), %2304.2 : Double(5!, 5), %2304.3 : Handle = ^Chunk(3, 1)(%2296.0), uses = [[%2309.i1], [%2315.i1], [%2321.i1], []];
