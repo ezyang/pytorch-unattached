@@ -2,6 +2,7 @@ import torch
 import torch.jit
 from torch.autograd import Variable
 from common import TestCase, run_tests
+
 from model_defs.alexnet import AlexNet
 from model_defs.mnist import MNIST
 from model_defs.word_language_model import RNNModel
@@ -24,8 +25,8 @@ if torch.cuda.is_available():
 else:
     def toC(x):
         return x
+
 BATCH_SIZE = 2
-# BATCH_SIZE = 10
 
 
 class TestModels(TestCase):
