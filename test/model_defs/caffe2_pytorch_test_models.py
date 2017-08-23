@@ -6,6 +6,16 @@ from __future__ import unicode_literals
 import numpy as np
 import sys
 import itertools
+import unittest
+
+import google.protobuf.text_format
+
+import torch.jit
+from torch.autograd import Variable
+import torch.utils.model_zoo as model_zoo
+
+import toffee
+from toffee.backend import Caffe2Backend as c2
 
 from vgg import *
 from dcgan import *
@@ -28,17 +38,14 @@ except ImportError:
     print('Cannot import torch, hence caffe2-torch test will not run.')
     sys.exit(0)
 
-import torch.jit
-from torch.autograd import Variable
-import torch.utils.model_zoo as model_zoo
+torch.set_default_tensor_type('torch.FloatTensor')
 
-import toffee
-from toffee.backend import Caffe2Backend as c2
-
-import google.protobuf.text_format
-
-import unittest
-
+if torch.cuda.is_available():
+    def toC(x):
+        return x.cuda()
+else:
+    def toC(x):
+        return x
 
 BATCH_SIZE = 2
 
@@ -63,7 +70,7 @@ class TestCaffe2Backend(unittest.TestCase):
         x = Variable(torch.randn(batch_size, 3, 224, 224), requires_grad=True)
 
         # Enable tracing on the model
-        trace, torch_out = torch.jit.record_trace(model, x)
+        trace, torch_out = torch.jit.record_trace(toC(model), toC(x))
         proto = torch._C._jit_pass_export(trace)
         # print(proto)
 
