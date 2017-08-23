@@ -43,9 +43,8 @@ def torch_export(model, x):
 
 
 def caffe2_load(proto, model, x, state_dict=None):
-    graph_def = toffee.GraphProto()
-    google.protobuf.text_format.Merge(proto, graph_def)
 
+    graph_def = toffee.GraphProto.FromString(proto)
     # TODO: This is a hack; PyTorch should set it
     graph_def.version = toffee.GraphProto().version
 
@@ -63,7 +62,7 @@ def caffe2_load(proto, model, x, state_dict=None):
             s for s in state_dict.keys() if "running_" in s]
     else:
         for v in bn_running_values:
-            size = int(v.split('_')[-2])
+            size = int(v.split('_')[-3])
             if "mean" in v:
                 W[v] = torch.zeros(size).numpy()
             else:
