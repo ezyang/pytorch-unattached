@@ -96,7 +96,7 @@ class TestCaffe2Backend(unittest.TestCase):
         real_inputs = [s for s in graph_def.input if "saved" not in s]
         for v in batch_norm_running_values:
             # print(v)
-            size = int(v.split('_')[-2])
+            size = int(v.split('_')[-3])
             if "mean" in v:
                 W[v] = torch.zeros(size).numpy()
             else:
