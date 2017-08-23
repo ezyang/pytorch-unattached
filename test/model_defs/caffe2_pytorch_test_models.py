@@ -17,6 +17,7 @@ from resnet import Bottleneck, ResNet
 from inception import Inception3
 from squeezenet import SqueezeNet
 from densenet import DenseNet
+import dcgan
 from wrapper import torch_export, caffe2_load
 
 skip = unittest.skip
@@ -49,14 +50,15 @@ model_urls = {
 
 
 class TestCaffe2Backend(unittest.TestCase):
-    def run_model_test(self, model, train, batch_size, state_dict=None):
+    def run_model_test(self, model, train, batch_size, state_dict=None, input=None):
         torch.manual_seed(0)
         model.train(train)
 
         # Random (deterministic) input
-        x = Variable(torch.randn(batch_size, 3, 224, 224), requires_grad=True)
-        toffeeir, torch_out = torch_export(model, x)
-        caffe2_out = caffe2_load(toffeeir, model, x, state_dict)
+        if input is None:
+            input = Variable(torch.randn(batch_size, 3, 224, 224), requires_grad=True)
+        toffeeir, torch_out = torch_export(model, input)
+        caffe2_out = caffe2_load(toffeeir, model, input, state_dict)
         np.testing.assert_almost_equal(torch_out.data.cpu().numpy(), caffe2_out,
                                        decimal=3)
 
@@ -117,6 +119,16 @@ class TestCaffe2Backend(unittest.TestCase):
         self.run_model_test(underlying_model, train=False,
                             batch_size=BATCH_SIZE)
 
+    def test_dcgan(self):
+        netD = dcgan._netD(1)
+        netD.apply(dcgan.weights_init)
+        input = Variable(torch.Tensor(BATCH_SIZE, 3, dcgan.imgsz, dcgan.imgsz))
+        self.run_model_test(netD, train=False, batch_size=BATCH_SIZE, input=input)
+
+        netG = dcgan._netG(1)
+        netG.apply(dcgan.weights_init)
+        noise = Variable(torch.Tensor(BATCH_SIZE, dcgan.nz, 1, 1).normal_(0, 1))
+        self.run_model_test(netG, train=False, batch_size=BATCH_SIZE, input=noise)
 
 if __name__ == '__main__':
     unittest.main()
