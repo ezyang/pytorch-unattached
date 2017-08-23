@@ -44,16 +44,16 @@ BATCH_SIZE = 2
 
 
 class TestCaffe2Backend(unittest.TestCase):
-    def run_model_test(self, model, train, batch_size, x=None):
+    def run_model_test(self, model, train, batch_size, input=None):
         torch.manual_seed(0)
         model.train(train)
 
         # Random (deterministic) input
-        if x is None:
-            x = Variable(torch.randn(batch_size, 3, 224, 224), requires_grad=True)
+        if input is None:
+            input = Variable(torch.randn(batch_size, 3, 224, 224), requires_grad=True)
 
         # Enable tracing on the model
-        trace, torch_out = torch.jit.record_trace(model, x)
+        trace, torch_out = torch.jit.record_trace(model, input)
         proto = torch._C._jit_pass_export(trace)
 
         graph_def = toffee.GraphProto()
@@ -74,7 +74,7 @@ class TestCaffe2Backend(unittest.TestCase):
                 W[v] = torch.zeros(size).numpy()
             else:
                 W[v] = torch.ones(size).numpy()
-        for k, v in zip(real_inputs, itertools.chain(model.parameters(), [x])):
+        for k, v in zip(real_inputs, itertools.chain(model.parameters(), [input])):
             W[k] = v.data.numpy()
 
         caffe2_out_workspace = c2.run_graph(

@@ -41,6 +41,7 @@ void ConvForward::primspec(PrimSpecContext* ctx, jit::node_list inputs, jit::nod
       attr->add_ints(kernel);
     }
   } else {
+    // ConvTranspose in caffe2 only supports kernel.
     attr->set_name("kernel");
     JIT_ASSERT(kernel_size.size() >= 1);
     int kernel_val = kernel_size[0];
@@ -58,6 +59,7 @@ void ConvForward::primspec(PrimSpecContext* ctx, jit::node_list inputs, jit::nod
       attr->add_ints(s);
     }
   } else {
+    // ConvTranspose in caffe2 only supports stride.
     attr->set_name("stride");
     JIT_ASSERT(stride.size() >= 1);
     int stride_val = stride[0];
@@ -80,6 +82,7 @@ void ConvForward::primspec(PrimSpecContext* ctx, jit::node_list inputs, jit::nod
       attr->add_ints(p);
     }
   } else {
+    // ConvTranspose in caffe2 only supports pad.
     attr->set_name("pad");
     JIT_ASSERT(padding.size() >= 1);
     int padding_val = padding[0];
@@ -98,6 +101,7 @@ void ConvForward::primspec(PrimSpecContext* ctx, jit::node_list inputs, jit::nod
     }
   } else {
     // ConvTranspose in Caffe2 only supports dilation=1.
+    // So we have a sanity check here.
     for (int d : dilation) {
       JIT_ASSERT(d == 1);
     }
