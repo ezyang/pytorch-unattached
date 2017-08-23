@@ -10,7 +10,7 @@ class BasicConv2d(nn.Module):
         super(BasicConv2d, self).__init__()
         self.inplace = inplace
         self.conv = nn.Conv2d(
-            in_channels, out_channels, bias=True, **kwargs)
+            in_channels, out_channels, bias=False, **kwargs)
         self.bn = nn.BatchNorm2d(out_channels, eps=0.001)
 
     def forward(self, x):
