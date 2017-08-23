@@ -1,26 +1,26 @@
-graph(%1 : Double(10, 1, 5, 5)
-      %2 : Double(10)
-      %3 : Double(20, 10, 5, 5)
-      %4 : Double(20)
-      %5 : Double(50, 320)
-      %6 : Double(50)
-      %7 : Double(10, 50)
-      %8 : Double(10)
-      %9 : Double(1000, 1, 28, 28)) {
-  %10.0 : Double(1000, 10, 24, 24), %10.1 : Handle = CppOp[ConvForward](%9, %1, %2), uses = [[%13.i0], []];
-  %13.0 : Double(1000, 10, 12, 12), %13.1 : Long(1000, 10, 12, 12), %13.2 : Handle = ^MaxPool2d(2, None, 0, 1, False)(%10.0), uses = [[%17.i0], [], []];
-  %17.0 : Double(1000, 10, 12, 12), %17.1 : Handle = ^Threshold(0, 0, False)(%13.0), uses = [[%20.i0], []];
-  %20.0 : Double(1000, 20, 8, 8), %20.1 : Handle = CppOp[ConvForward](%17.0, %3, %4), uses = [[%23.i0], []];
-  %23.0 : Double(1000, 20, 8, 8), %23.1 : Handle = ^FeatureDropout(0.5, True, False)(%20.0), uses = [[%26.i0], []];
-  %26.0 : Double(1000, 20, 4, 4), %26.1 : Long(1000, 20, 4, 4), %26.2 : Handle = ^MaxPool2d(2, None, 0, 1, False)(%23.0), uses = [[%30.i0], [], []];
-  %30.0 : Double(1000, 20, 4, 4), %30.1 : Handle = ^Threshold(0, 0, False)(%26.0), uses = [[%33.i0], []];
-  %33.0 : Double(1000, 320), %33.1 : Handle = ^View((-1, 320))(%30.0), uses = [[%39.i1], []];
-  %36.0 : Double(320!, 50!), %36.1 : Handle = ^Transpose(0, 1)(%5), uses = [[%39.i2], []];
-  %39.0 : Double(1000, 50), %39.1 : Handle = ^Addmm(1, 1, False)(%6, %33.0, %36.0), uses = [[%42.i0], []];
-  %42.0 : Double(1000, 50), %42.1 : Handle = ^Threshold(0, 0, False)(%39.0), uses = [[%45.i0], []];
-  %45.0 : Double(1000, 50), %45.1 : Handle = ^Dropout(0.5, True, False)(%42.0), uses = [[%51.i1], []];
-  %48.0 : Double(50!, 10!), %48.1 : Handle = ^Transpose(0, 1)(%7), uses = [[%51.i2], []];
-  %51.0 : Double(1000, 10), %51.1 : Handle = ^Addmm(1, 1, False)(%8, %45.0, %48.0), uses = [[%54.i0], []];
-  %54.0 : Double(1000, 10), %54.1 : Handle = ^LogSoftmax()(%51.0), uses = [[%0.i0], []];
+graph(%1 : Float(10, 1, 5, 5)
+      %2 : Float(10)
+      %3 : Float(20, 10, 5, 5)
+      %4 : Float(20)
+      %5 : Float(50, 320)
+      %6 : Float(50)
+      %7 : Float(10, 50)
+      %8 : Float(10)
+      %9 : Float(2, 1, 28, 28)) {
+  %10.0 : Float(2, 10, 24, 24), %10.1 : Handle = CppOp[ConvForward](%9, %1, %2), uses = [[%13.i0], []];
+  %13.0 : Float(2, 10, 12, 12), %13.1 : Long(2, 10, 12, 12), %13.2 : Handle = ^MaxPool2d(2, None, 0, 1, False)(%10.0), uses = [[%17.i0], [], []];
+  %17.0 : Float(2, 10, 12, 12), %17.1 : Handle = ^Threshold(0, 0, False)(%13.0), uses = [[%20.i0], []];
+  %20.0 : Float(2, 20, 8, 8), %20.1 : Handle = CppOp[ConvForward](%17.0, %3, %4), uses = [[%23.i0], []];
+  %23.0 : Float(2, 20, 8, 8), %23.1 : Handle = ^FeatureDropout(0.5, True, False)(%20.0), uses = [[%26.i0], []];
+  %26.0 : Float(2, 20, 4, 4), %26.1 : Long(2, 20, 4, 4), %26.2 : Handle = ^MaxPool2d(2, None, 0, 1, False)(%23.0), uses = [[%30.i0], [], []];
+  %30.0 : Float(2, 20, 4, 4), %30.1 : Handle = ^Threshold(0, 0, False)(%26.0), uses = [[%33.i0], []];
+  %33.0 : Float(2, 320), %33.1 : Handle = ^View((-1, 320))(%30.0), uses = [[%39.i1], []];
+  %36.0 : Float(320!, 50!), %36.1 : Handle = ^Transpose(0, 1)(%5), uses = [[%39.i2], []];
+  %39.0 : Float(2, 50), %39.1 : Handle = ^Addmm(1, 1, False)(%6, %33.0, %36.0), uses = [[%42.i0], []];
+  %42.0 : Float(2, 50), %42.1 : Handle = ^Threshold(0, 0, False)(%39.0), uses = [[%45.i0], []];
+  %45.0 : Float(2, 50), %45.1 : Handle = ^Dropout(0.5, True, False)(%42.0), uses = [[%51.i1], []];
+  %48.0 : Float(50!, 10!), %48.1 : Handle = ^Transpose(0, 1)(%7), uses = [[%51.i2], []];
+  %51.0 : Float(2, 10), %51.1 : Handle = ^Addmm(1, 1, False)(%8, %45.0, %48.0), uses = [[%54.i0], []];
+  %54.0 : Float(2, 10), %54.1 : Handle = ^LogSoftmax()(%51.0), uses = [[%0.i0], []];
   return (%54.0);
 }
