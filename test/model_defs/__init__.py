@@ -5,3 +5,4 @@ from .densenet import *
 from .squeezenet import *
 from .inception import *
 from .op_test import *
+from .wrapper import *
