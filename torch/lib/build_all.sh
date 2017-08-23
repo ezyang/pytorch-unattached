@@ -81,6 +81,7 @@ function build() {
               -DTHD_SO_VERSION=1 \
               -DNO_CUDA=$((1-$WITH_CUDA)) \
               -Dnanopb_BUILD_GENERATOR=0 \
+              -DCMAKE_DEBUG_POSTFIX="" \
               -DCMAKE_BUILD_TYPE=$([ $DEBUG ] && echo Debug || echo Release) \
               $2
   make install -j$(getconf _NPROCESSORS_ONLN)
