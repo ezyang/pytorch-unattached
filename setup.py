@@ -24,7 +24,6 @@ DEBUG = check_env_flag('DEBUG')
 WITH_DISTRIBUTED = not check_env_flag('NO_DISTRIBUTED')
 WITH_DISTRIBUTED_MW = WITH_DISTRIBUTED and check_env_flag('WITH_DISTRIBUTED_MW')
 WITH_NCCL = WITH_CUDA and platform.system() != 'Darwin'
-WITH_TOFFEE = os.path.exists(os.path.join(lib_path, "ToffeeIR"))
 SYSTEM_NCCL = False
 
 
@@ -101,8 +100,6 @@ class build_deps(Command):
             build_all_cmd += ['--with-nccl']
         if WITH_DISTRIBUTED:
             build_all_cmd += ['--with-distributed']
-        if WITH_TOFFEE:
-            build_all_cmd += ['--with-toffee']
         if subprocess.call(build_all_cmd) != 0:
             sys.exit(1)
         generate_nn_wrappers()
@@ -170,10 +167,6 @@ class build_ext(setuptools.command.build_ext.build_ext):
             print('-- Building with distributed package ')
         else:
             print('-- Building without distributed package')
-        if WITH_TOFFEE:
-            print('-- Building with Toffee ')
-        else:
-            print('-- Building without Toffee')
 
         # cwrap depends on pyyaml, so we can't import it earlier
         from tools.cwrap import cwrap
@@ -238,11 +231,6 @@ class clean(distutils.command.clean.clean):
 
 include_dirs = []
 
-# TODO: This is a hack: this needs to eventually be replaced with a sustainable
-# way of getting our hands on protobuf headers
-if os.getenv('CONDA_PREFIX'):
-    include_dirs.append(os.path.join(os.getenv('CONDA_PREFIX'), "include"))
-
 library_dirs = []
 extra_link_args = []
 extra_compile_args = ['-std=c++11', '-Wno-write-strings',
@@ -297,14 +285,19 @@ if platform.system() == 'Darwin':
     THD_LIB = os.path.join(lib_path, 'libTHD.1.dylib')
     NCCL_LIB = os.path.join(lib_path, 'libnccl.1.dylib')
 
+# static library only
+NANOPB_STATIC_LIB = os.path.join(lib_path, 'libprotobuf-nanopbd.a')
+
 if WITH_NCCL and (subprocess.call('ldconfig -p | grep libnccl >/dev/null', shell=True) == 0 or
                   subprocess.call('/sbin/ldconfig -p | grep libnccl >/dev/null', shell=True) == 0):
         SYSTEM_NCCL = True
 
 main_compile_args = ['-D_THP_CORE']
 main_libraries = ['shm']
-main_link_args = [TH_LIB, THS_LIB, THPP_LIB, THNN_LIB, ATEN_LIB]
+main_link_args = [TH_LIB, THS_LIB, THPP_LIB, THNN_LIB, ATEN_LIB, NANOPB_STATIC_LIB]
 main_sources = [
+    "torch/csrc/toffee.pb.cpp",
+    "torch/csrc/toffee.cpp",
     "torch/csrc/PtrWrapper.cpp",
     "torch/csrc/Module.cpp",
     "torch/csrc/Generator.cpp",
@@ -424,18 +417,13 @@ if WITH_CUDNN:
     ]
     extra_compile_args += ['-DWITH_CUDNN']
 
-if WITH_TOFFEE:
-    include_dirs.append(tmp_install_path + "/include/toffee")
-    TOFFEE_LIB = os.path.join(lib_path, 'libtoffee.so.1')
-    if platform.system() == 'Darwin':
-        TOFFEE_LIB = os.path.join(lib_path, 'libtoffee.1.dylib')
-    main_link_args += [TOFFEE_LIB]
-    main_sources += [
-        "torch/csrc/toffee/export.cpp",
-        "torch/csrc/autograd/functions/toffee/convolution.cpp",
-        "torch/csrc/autograd/functions/toffee/batch_normalization.cpp",
-    ]
-    extra_compile_args += ['-DWITH_TOFFEE']
+# Unconditionally enabled
+main_sources += [
+    "torch/csrc/toffee/export.cpp",
+    "torch/csrc/autograd/functions/toffee/convolution.cpp",
+    "torch/csrc/autograd/functions/toffee/batch_normalization.cpp",
+]
+extra_compile_args += ['-DWITH_TOFFEE']
 
 if DEBUG:
     extra_compile_args += ['-O0', '-g']

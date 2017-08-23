@@ -12,7 +12,6 @@ set -e
 WITH_CUDA=0
 WITH_NCCL=0
 WITH_DISTRIBUTED=0
-WITH_TOFFEE=0
 for arg in "$@"; do
     if [[ "$arg" == "--with-cuda" ]]; then
         WITH_CUDA=1
@@ -20,8 +19,6 @@ for arg in "$@"; do
         WITH_NCCL=1
     elif [[ "$arg" == "--with-distributed" ]]; then
         WITH_DISTRIBUTED=1
-    elif [[ "$arg" == "--with-toffee" ]]; then
-        WITH_TOFFEE=1
     else
         echo "Unknown argument: $arg"
     fi
@@ -56,6 +53,7 @@ function build() {
   BUILD_C_FLAGS=''
   case $1 in
       THCS | THCUNN ) BUILD_C_FLAGS=$C_FLAGS;;
+      nanopb ) BUILD_C_FLAGS=$C_FLAGS" -fPIC -fexceptions";;
       *) BUILD_C_FLAGS=$C_FLAGS" -fexceptions";;
   esac
   cmake ../../$1 -DCMAKE_MODULE_PATH="$BASE_DIR/cmake/FindCUDA" \
@@ -82,6 +80,7 @@ function build() {
               -DTHCUNN_SO_VERSION=1 \
               -DTHD_SO_VERSION=1 \
               -DNO_CUDA=$((1-$WITH_CUDA)) \
+              -Dnanopb_BUILD_GENERATOR=0 \
               -DCMAKE_BUILD_TYPE=$([ $DEBUG ] && echo Debug || echo Release) \
               $2
   make install -j$(getconf _NPROCESSORS_ONLN)
@@ -143,9 +142,7 @@ build THPP
 # The shared memory manager depends on TH
 build libshm
 build ATen
-if [[ $WITH_TOFFEE -eq 1 ]]; then
-    build ToffeeIR
-fi
+build nanopb
 
 # THD, gloo have dependencies on Torch, CUDA, NCCL etc.
 if [[ $WITH_DISTRIBUTED -eq 1 ]]; then
@@ -163,7 +160,10 @@ fi
 
 # If all the builds succeed we copy the libraries, headers,
 # binaries to torch/lib
+rm -rf $INSTALL_DIR/lib/cmake
+rm -rf $INSTALL_DIR/lib/python
 cp $INSTALL_DIR/lib/* .
+cp $INSTALL_DIR/lib64/* .
 cp THNN/generic/THNN.h .
 cp THCUNN/generic/THCUNN.h .
 cp -r $INSTALL_DIR/include .
