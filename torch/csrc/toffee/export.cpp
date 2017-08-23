@@ -23,14 +23,21 @@ std::string node_name(Node* n) {
   return n->uniqueName();
 }
 
+using initializer_list = std::vector<std::pair<size_t,at::Tensor>>;
+struct ToffeeIRInfo {
+  std::shared_ptr<Graph> graph;
+  initializer_list initializers;
+};
 // transform PythonOps and Cpp Ops into Node's that match ToffeeIR
 // semantics.
 // Eventually this should just be part of init_pass but we should avoid
 // tight coupling of the JIT and Toffee IR exporter until ready.
-std::shared_ptr<Graph> ToToffeeIR(std::shared_ptr<Graph>& g) {
+ToffeeIRInfo ToToffeeIR(std::shared_ptr<Graph>& g) {
   torch::autograd::PrimSpecContext ctx;
   std::unordered_map<Node*, Node*> env;
   ctx.graph = std::make_shared<Graph>();
+  ToffeeIRInfo result;
+  result.graph = ctx.graph;
   for (auto input : g->inputs())
     env[input] = ctx.graph->addInput()->setType(input->typeOption());
   auto envFn = [&env](Node * n) {
@@ -116,25 +123,31 @@ std::shared_ptr<Graph> ToToffeeIR(std::shared_ptr<Graph>& g) {
       setOutputs(node,outputs);
     IR_ELSE()
       if(node->kind() == kConstant && node->t(kValue).defined()) {
-        throw std::runtime_error("Constant not supported yet");
-      }
-      auto n_ = ctx.graph->createClone(node, envFn);
-      if(node->hasMultipleOutputs()) {
-        int i = 0;
-        for(auto s : node->uses()) {
-          auto new_node = ctx.graph->createSelect(n_,i++);
-          new_node->setType(s.user->typeOption());
-          env[s.user] = new_node;
-        }
-      } else {
+        size_t idx = ctx.graph->inputs().size();
+        auto n_ = ctx.graph->addInput();
+        // TODO: Constant does not set type?
+        n_->inferTypeFrom(node->t(kValue));
         env[node] = n_;
+        result.initializers.emplace_back(idx, node->t(kValue));
+      } else {
+        auto n_ = ctx.graph->createClone(node, envFn);
+        if(node->hasMultipleOutputs()) {
+          int i = 0;
+          for(auto s : node->uses()) {
+            auto new_node = ctx.graph->createSelect(n_,i++);
+            new_node->setType(s.user->typeOption());
+            env[s.user] = new_node;
+          }
+        } else {
+          env[node] = n_;
+        }
       }
     IR_END()
   }
   for (auto output : g->outputs()) {
     ctx.graph->registerOutput(env.at(output));
   }
-  return std::move(ctx.graph);
+  return result;
 }
 
 static void encodeTensor(toffee::TensorProto * p, const at::Tensor & tensor) {
@@ -150,7 +163,7 @@ static void encodeTensor(toffee::TensorProto * p, const at::Tensor & tensor) {
       p->add_float_data(data[i]);
     }
 }
-static void encodeGraph(toffee::GraphProto * p_g, std::shared_ptr<Graph> & g, const std::vector<at::Tensor> & initializers);
+static void encodeGraph(toffee::GraphProto * p_g, std::shared_ptr<Graph> & g, const initializer_list & initializers);
 static void addAttribute(toffee::NodeProto * n_p, jit::Node * n, jit::Symbol name) {
   auto attr = n_p->add_attribute();
   attr->set_name(jit::symbolToString(name));
@@ -201,7 +214,7 @@ static void addAttribute(toffee::NodeProto * n_p, jit::Node * n, jit::Symbol nam
   }
 }
 
-static void encodeGraph(toffee::GraphProto * p_g, std::shared_ptr<Graph> & g, const std::vector<at::Tensor> & initializers) {
+static void encodeGraph(toffee::GraphProto * p_g, std::shared_ptr<Graph> & g, const initializer_list & initializers) {
   for (auto input : g->inputs()) {
     p_g->add_input(node_name(input));
   }
@@ -245,23 +258,22 @@ static void encodeGraph(toffee::GraphProto * p_g, std::shared_ptr<Graph> & g, co
       addAttribute(p_n, node, attr_name);
     }
   }
-  int inputs_count = 0;
-  for (auto & tensor : initializers) {
+  for (auto init : initializers) {
     // TODO: stop using positions to determine which initializers
     // match to which inputs
-    std::string name = p_g->input(inputs_count++);
+    std::string name = p_g->input(init.first);
     auto p = p_g->add_initializer();
     p->set_name(name);
-    encodeTensor(p, tensor);
+    encodeTensor(p, init.second);
   }
 }
 
 // Exports a graph to ToffeeIR
-std::string ExportGraph(std::shared_ptr<Graph>& g_, const std::vector<at::Tensor> & initializers) {
-  auto g = ToToffeeIR(g_);
+std::string ExportGraph(std::shared_ptr<Graph>& g_) {
+  auto result = ToToffeeIR(g_);
   toffee::GraphProto p_g;
   p_g.set_name("torch-jit-export");
-  encodeGraph(&p_g, g, initializers);
+  encodeGraph(&p_g, result.graph, result.initializers);
   size_t out_size;
   pb_get_encoded_size(&out_size, toffee_GraphProto_fields, &p_g.proto);
   std::string out(out_size, '\0');

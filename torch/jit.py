@@ -81,7 +81,14 @@ class Traceable(object):
     _next_trace_id = 0
     _dump_traces = os.environ.get('PYTORCH_JIT_DUMP', False)
 
-    def __init__(self, function_or_module, trace_name=None, optimize=False, verify=False, time=False, enabled=True):
+    def __init__(self,
+                 function_or_module,
+                 trace_name=None,
+                 optimize=False,
+                 verify=False,
+                 time=False,
+                 enabled=True,
+                 embed_model_parameters_as_constants=False):
         """
         time - collect cuda timing stats for perf debugging
         verify - run the original code, and check it is within threshold
@@ -91,7 +98,10 @@ class Traceable(object):
 
         if isinstance(function_or_module, Module):
             self._run = function_or_module.forward
-            self._additional_inputs = lambda: function_or_module.parameters()
+            if not embed_model_parameters_as_constants:
+                self._additional_inputs = lambda: function_or_module.parameters()
+            else:
+                self._additional_inputs = lambda: ()
         else:
             self._run = function_or_module
             self._additional_inputs = lambda: ()
