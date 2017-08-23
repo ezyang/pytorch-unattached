@@ -1175,7 +1175,7 @@ node {
   op_type: "Reshape"
   attribute {
     name: "shape"
-    ints: 10
+    ints: 2
     ints: 1000
   }
 }
