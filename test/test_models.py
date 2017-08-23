@@ -13,6 +13,17 @@ from model_defs.densenet import DenseNet
 from model_defs.dcgan import _netD, _netG, weights_init, bsz, imgsz, nz, ngf, ndf, nc
 from model_defs.op_test import DummyNet, ConcatNet
 
+torch.set_default_tensor_type('torch.FloatTensor')
+
+if torch.cuda.is_available():
+    def toC(x):
+        return x.cuda()
+else:
+    def toC(x):
+        return x
+BATCH_SIZE = 2
+# BATCH_SIZE = 10
+
 
 class TestModels(TestCase):
     maxDiff = None
@@ -21,19 +32,18 @@ class TestModels(TestCase):
 
         inplace = False
         x = Variable(
-            torch.randn(10, 3, 224, 224).fill_(1.0), requires_grad=True
+            torch.randn(BATCH_SIZE, 3, 224, 224).fill_(1.0), requires_grad=True
         )
-        trace, _ = torch.jit.record_trace(DummyNet(inplace=inplace), x)
+        trace, _ = torch.jit.record_trace(toC(DummyNet(inplace=inplace)), toC(x))
         self.assertExpected(str(trace))
         proto = torch._C._jit_pass_export(trace)
         self.assertExpected(torch._C._jit_pass_export(trace), "pbtxt")
 
     def test_concat(self):
-        input_a = Variable(torch.randn(10, 3), requires_grad=True)
-        input_b = Variable(torch.randn(10, 3), requires_grad=True)
-        inputs = [input_a, input_b]
-
-        trace, _ = torch.jit.record_trace(ConcatNet(), inputs)
+        input_a = Variable(torch.randn(BATCH_SIZE, 3), requires_grad=True)
+        input_b = Variable(torch.randn(BATCH_SIZE, 3), requires_grad=True)
+        inputs = [toC(input_a), toC(input_b)]
+        trace, _ = torch.jit.record_trace(toC(ConcatNet()), inputs)
         # print(str(trace))
         self.assertExpected(str(trace))
         self.assertExpected(torch._C._jit_pass_export(trace), "pbtxt")
@@ -42,16 +52,16 @@ class TestModels(TestCase):
 
         inplace = False
         x = Variable(
-            torch.randn(10, 3, 224, 224).fill_(1.0), requires_grad=True
+            torch.randn(BATCH_SIZE, 3, 224, 224).fill_(1.0), requires_grad=True
         )
-        trace, _ = torch.jit.record_trace(AlexNet(inplace=inplace), x)
+        trace, _ = torch.jit.record_trace(toC(AlexNet(inplace=inplace)), toC(x))
         self.assertExpected(str(trace))
         self.assertExpected(torch._C._jit_pass_export(trace), "pbtxt")
 
     def test_mnist(self):
-        x = Variable(torch.randn(1000, 1, 28, 28).fill_(1.0),
+        x = Variable(torch.randn(BATCH_SIZE, 1, 28, 28).fill_(1.0),
                      requires_grad=True)
-        trace, _ = torch.jit.record_trace(MNIST(), x)
+        trace, _ = torch.jit.record_trace(toC(MNIST()), toC(x))
         self.assertExpected(str(trace))
         # self.assertExpected(torch._C._jit_pass_export(trace), "pbtxt")
 
@@ -59,34 +69,34 @@ class TestModels(TestCase):
 
         inplace = False
         # VGG 16-layer model (configuration "D")
-        x = Variable(torch.randn(10, 3, 224, 224).fill_(1.0),
+        x = Variable(torch.randn(BATCH_SIZE, 3, 224, 224).fill_(1.0),
                      requires_grad=True)
         vgg16 = make_vgg16(inplace=inplace)
-        trace, _ = torch.jit.record_trace(vgg16, x)
+        trace, _ = torch.jit.record_trace(toC(vgg16), toC(x))
         self.assertExpected(str(trace), "16")
         self.assertExpected(torch._C._jit_pass_export(trace), "16-pbtxt")
 
         # VGG 16-layer model (configuration "D") with batch normalization
-        x = Variable(torch.randn(10, 3, 224, 224).fill_(1.0),
+        x = Variable(torch.randn(BATCH_SIZE, 3, 224, 224).fill_(1.0),
                      requires_grad=True)
         vgg16_bn = make_vgg16_bn(inplace=inplace)
-        trace, _ = torch.jit.record_trace(vgg16_bn, x)
+        trace, _ = torch.jit.record_trace(toC(vgg16_bn), toC(x))
         self.assertExpected(str(trace), "16_bn")
         # self.assertExpected(torch._C._jit_pass_export(trace), "16_bn-pbtxt")
 
         # VGG 19-layer model (configuration "E")
-        x = Variable(torch.randn(10, 3, 224, 224).fill_(1.0),
+        x = Variable(torch.randn(BATCH_SIZE, 3, 224, 224).fill_(1.0),
                      requires_grad=True)
         vgg19 = make_vgg19(inplace=inplace)
-        trace, _ = torch.jit.record_trace(vgg19, x)
+        trace, _ = torch.jit.record_trace(toC(vgg19), toC(x))
         self.assertExpected(str(trace), "19")
         self.assertExpected(torch._C._jit_pass_export(trace), "19-pbtxt")
 
         # VGG 19-layer model (configuration 'E') with batch normalization
-        x = Variable(torch.randn(10, 3, 224, 224).fill_(1.0),
+        x = Variable(torch.randn(BATCH_SIZE, 3, 224, 224).fill_(1.0),
                      requires_grad=True)
         vgg19_bn = make_vgg19_bn(inplace=inplace)
-        trace, _ = torch.jit.record_trace(vgg19_bn, x)
+        trace, _ = torch.jit.record_trace(toC(vgg19_bn), toC(x))
         self.assertExpected(str(trace), "19_bn")
         # self.assertExpected(torch._C._jit_pass_export(trace), "19_bn-pbtxt")
 
@@ -94,10 +104,10 @@ class TestModels(TestCase):
 
         inplace = False
         # ResNet50 model
-        x = Variable(torch.randn(10, 3, 224, 224).fill_(1.0),
+        x = Variable(torch.randn(BATCH_SIZE, 3, 224, 224).fill_(1.0),
                      requires_grad=True)
         resnet50 = ResNet(Bottleneck, [3, 4, 6, 3], inplace=inplace)
-        trace, _ = torch.jit.record_trace(resnet50, x)
+        trace, _ = torch.jit.record_trace(toC(resnet50), toC(x))
         self.assertExpected(str(trace), "50")
         # self.assertExpected(torch._C._jit_pass_export(trace), "50-pbtxt")
 
@@ -105,8 +115,8 @@ class TestModels(TestCase):
 
         inplace = False
         x = Variable(
-            torch.randn(10, 3, 224, 224).fill_(1.0), requires_grad=True)
-        trace, _ = torch.jit.record_trace(Inception3(inplace=inplace), x)
+            torch.randn(BATCH_SIZE, 3, 224, 224).fill_(1.0), requires_grad=True)
+        trace, _ = torch.jit.record_trace(toC(Inception3(inplace=inplace)), toC(x))
         self.assertExpected(str(trace), "3")
         # self.assertExpected(torch._C._jit_pass_export(trace), "3-pbtxt")
 
@@ -115,19 +125,19 @@ class TestModels(TestCase):
         inplace = False
         # SqueezeNet: AlexNet-level accuracy with 50x fewer parameters and
         # <0.5MB model size
-        x = Variable(torch.randn(10, 3, 224, 224).fill_(1.0),
+        x = Variable(torch.randn(BATCH_SIZE, 3, 224, 224).fill_(1.0),
                      requires_grad=True)
         sqnet_v1_0 = SqueezeNet(version=1.1, inplace=inplace)
-        trace, _ = torch.jit.record_trace(sqnet_v1_0, x)
+        trace, _ = torch.jit.record_trace(toC(sqnet_v1_0), toC(x))
         self.assertExpected(str(trace), "1_0")
         self.assertExpected(torch._C._jit_pass_export(trace), "1_0-pbtxt")
 
         # SqueezeNet 1.1 has 2.4x less computation and slightly fewer params
         # than SqueezeNet 1.0, without sacrificing accuracy.
-        x = Variable(torch.randn(10, 3, 224, 224).fill_(1.0),
+        x = Variable(torch.randn(BATCH_SIZE, 3, 224, 224).fill_(1.0),
                      requires_grad=True)
         sqnet_v1_1 = SqueezeNet(version=1.1, inplace=inplace)
-        trace, _ = torch.jit.record_trace(sqnet_v1_1, x)
+        trace, _ = torch.jit.record_trace(toC(sqnet_v1_1), toC(x))
         self.assertExpected(str(trace), "1_1")
         self.assertExpected(torch._C._jit_pass_export(trace), "1_1-pbtxt")
 
@@ -135,11 +145,11 @@ class TestModels(TestCase):
 
         inplace = False
         # Densenet-121 model
-        x = Variable(torch.randn(10, 3, 224, 224).fill_(1.0),
+        x = Variable(torch.randn(BATCH_SIZE, 3, 224, 224).fill_(1.0),
                      requires_grad=True)
         dense121 = DenseNet(num_init_features=64, growth_rate=32,
                             block_config=(6, 12, 24, 16), inplace=inplace)
-        trace, _ = torch.jit.record_trace(dense121, x)
+        trace, _ = torch.jit.record_trace(toC(dense121), toC(x))
         self.assertExpected(str(trace), "121")
         # self.assertExpected(torch._C._jit_pass_export(trace), "121-pbtxt")
 
@@ -158,13 +168,13 @@ class TestModels(TestCase):
 
         netD.zero_grad()
         inputv = Variable(input)
-        trace, _ = torch.jit.record_trace(netD, inputv)
+        trace, _ = torch.jit.record_trace(toC(netD), toC(inputv))
         self.assertExpected(str(trace), "dcgan-netD")
         # self.assertExpected(torch._C._jit_pass_export(trace), "dcgan-netD-pbtxt")
 
         noise.resize_(bsz, nz, 1, 1).normal_(0, 1)
         noisev = Variable(noise)
-        trace, _ = torch.jit.record_trace(netG, noisev)
+        trace, _ = torch.jit.record_trace(toC(netG), toC(noisev))
         self.assertExpected(str(trace), "dcgan-netG")
         # self.assertExpected(torch._C._jit_pass_export(trace), "dcgan-netG-pbtxt")
 
