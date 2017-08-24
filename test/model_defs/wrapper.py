@@ -54,7 +54,12 @@ def caffe2_load(proto, model, x, state_dict=None):
     # Translate the parameters into Caffe2 form
     W = {}
     if state_dict:
-        parameters = state_dict.values()
+        parameters = []
+        # Passed in state_dict may have a different order.  Make
+        # sure our order is consistent with the model's order.
+        # TODO: Even better: keyword arguments!
+        for k in model.state_dict():
+            parameters.append(state_dict[k])
     else:
         parameters = model.state_dict().values()
     for k, v in zip(graph_def.input, itertools.chain(parameters, [x])):
