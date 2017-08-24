@@ -40,9 +40,12 @@ auto BatchNormForward::apply(const variable_list& inputs) -> variable_list {
   auto& input = inputs[0];
   auto& weight = inputs[1];
   auto& bias = inputs[2];
-  // TODO: undodgy-fy this
   AutoGPU guard(input->data);
 
+  // At the moment, running_mean coincides with cached_running_mean.  But
+  // eventually, we will make it possible to explicitly pass in running_mean
+  // and running_var as arguments to BatchNorm (rather than use the cached
+  // value.)  At this point, this extra little bit of generality will help.
   auto& running_mean = cached_running_mean;
   auto& running_var = cached_running_var;
 
@@ -108,7 +111,7 @@ auto BatchNormForward::apply(const variable_list& inputs) -> variable_list {
     params.cached_running_mean = running_mean;
     params.cached_running_var = running_var;
     return std::make_shared<BatchNormBackward>(
-        f, params, std::move(save_mean), std::move(save_std),
+        f, std::move(params), std::move(save_mean), std::move(save_std),
         input, weight, bias);
   });
 };
