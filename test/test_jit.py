@@ -65,9 +65,8 @@ class TestJit(TestCase):
     def test_export_data(self):
         x = Variable(torch.Tensor([[1, 2], [3, 4]]), requires_grad=True)
         y = Variable(torch.Tensor([[1, 2], [3, 4]]), requires_grad=True)
-        trace, _ = torch.jit.record_trace(lambda x, y: -torch.sigmoid(torch.tanh(x * (x + y))), x, y)
-        initializers = [x.data]
-        self.assertToffeeExpected(torch._C._jit_pass_export(trace, initializers))
+        trace, _ = torch.jit.record_trace(lambda y: -torch.sigmoid(torch.tanh(x * (x + y))), y)
+        self.assertToffeeExpected(torch._C._jit_pass_export(trace))
 
     def test_lstm(self):
         # Careful: don't use fused backend (enabled with CUDA)

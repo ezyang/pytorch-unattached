@@ -37,7 +37,7 @@ else:
 
 def torch_export(model, x):
     # Enable tracing on the model
-    trace, torch_out = torch.jit.record_trace(toC(model), toC(x))
+    trace, torch_out = torch.jit.record_trace(toC(model), toC(x), embed_model_parameters_as_constants=True)
     proto = torch._C._jit_pass_export(trace)
     return proto, torch_out
 
@@ -70,7 +70,7 @@ def caffe2_load(proto, model, x, state_dict=None):
     real_inputs = [s for s in graph_def.input if "saved_" not in s]
     for (v1, v2) in zip(bn_running_values, state_dict_running_vals):
         W[v1] = state_dict[v2].cpu().numpy()
-    for k, v in zip(real_inputs, itertools.chain(model.parameters(), [x])):
+    for k, v in zip(real_inputs, [x]):
         # On C2 side, we don't run on CUDA yet so convert to CPU memory
         W[k] = v.data.cpu().numpy()
 
