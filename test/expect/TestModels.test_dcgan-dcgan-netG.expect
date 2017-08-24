@@ -2,34 +2,42 @@ graph(%1 : Float(100, 512, 4, 4)
       %2 : Float(512)
       %3 : Float(512)
       %4 : Float(512)
-      %5 : Float(512, 256, 4, 4)
-      %6 : Float(256)
-      %7 : Float(256)
+      %5 : Float(512)
+      %6 : Float(512)
+      %7 : Float(512, 256, 4, 4)
       %8 : Float(256)
-      %9 : Float(256, 128, 4, 4)
-      %10 : Float(128)
-      %11 : Float(128)
-      %12 : Float(128)
-      %13 : Float(128, 64, 4, 4)
-      %14 : Float(64)
-      %15 : Float(64)
-      %16 : Float(64)
-      %17 : Float(64, 3, 4, 4)
-      %18 : Float(3)
-      %19 : Float(64, 100, 1, 1)) {
-  %20.0 : Float(64, 512, 4, 4), %20.1 : Handle = CppOp[ConvForward](%19, %1, %2), uses = [[%23.i0], []];
-  %23.0 : Float(64, 512, 4, 4), %23.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%20.0, %3, %4), uses = [[%26.i0], []];
-  %26.0 : Float(64, 512, 4, 4), %26.1 : Handle = ^Threshold(0, 0, False)(%23.0), uses = [[%29.i0], []];
-  %29.0 : Float(64, 256, 8, 8), %29.1 : Handle = CppOp[ConvForward](%26.0, %5, %6), uses = [[%32.i0], []];
-  %32.0 : Float(64, 256, 8, 8), %32.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%29.0, %7, %8), uses = [[%35.i0], []];
-  %35.0 : Float(64, 256, 8, 8), %35.1 : Handle = ^Threshold(0, 0, False)(%32.0), uses = [[%38.i0], []];
-  %38.0 : Float(64, 128, 16, 16), %38.1 : Handle = CppOp[ConvForward](%35.0, %9, %10), uses = [[%41.i0], []];
-  %41.0 : Float(64, 128, 16, 16), %41.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%38.0, %11, %12), uses = [[%44.i0], []];
-  %44.0 : Float(64, 128, 16, 16), %44.1 : Handle = ^Threshold(0, 0, False)(%41.0), uses = [[%47.i0], []];
-  %47.0 : Float(64, 64, 32, 32), %47.1 : Handle = CppOp[ConvForward](%44.0, %13, %14), uses = [[%50.i0], []];
-  %50.0 : Float(64, 64, 32, 32), %50.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%47.0, %15, %16), uses = [[%53.i0], []];
-  %53.0 : Float(64, 64, 32, 32), %53.1 : Handle = ^Threshold(0, 0, False)(%50.0), uses = [[%56.i0], []];
-  %56.0 : Float(64, 3, 64, 64), %56.1 : Handle = CppOp[ConvForward](%53.0, %17, %18), uses = [[%59.i0], []];
-  %59.0 : Float(64, 3, 64, 64), %59.1 : Handle = ^Tanh()(%56.0), uses = [[%0.i0], []];
-  return (%59.0);
+      %9 : Float(256)
+      %10 : Float(256)
+      %11 : Float(256)
+      %12 : Float(256)
+      %13 : Float(256, 128, 4, 4)
+      %14 : Float(128)
+      %15 : Float(128)
+      %16 : Float(128)
+      %17 : Float(128)
+      %18 : Float(128)
+      %19 : Float(128, 64, 4, 4)
+      %20 : Float(64)
+      %21 : Float(64)
+      %22 : Float(64)
+      %23 : Float(64)
+      %24 : Float(64)
+      %25 : Float(64, 3, 4, 4)
+      %26 : Float(3)
+      %27 : Float(64, 100, 1, 1)) {
+  %28.0 : Float(64, 512, 4, 4), %28.1 : Handle = CppOp[ConvForward](%27, %1, %2), uses = [[%31.i0], []];
+  %31.0 : Float(64, 512, 4, 4), %31.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%28.0, %3, %4), uses = [[%34.i0], []];
+  %34.0 : Float(64, 512, 4, 4), %34.1 : Handle = ^Threshold(0, 0, False)(%31.0), uses = [[%37.i0], []];
+  %37.0 : Float(64, 256, 8, 8), %37.1 : Handle = CppOp[ConvForward](%34.0, %7, %8), uses = [[%40.i0], []];
+  %40.0 : Float(64, 256, 8, 8), %40.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%37.0, %9, %10), uses = [[%43.i0], []];
+  %43.0 : Float(64, 256, 8, 8), %43.1 : Handle = ^Threshold(0, 0, False)(%40.0), uses = [[%46.i0], []];
+  %46.0 : Float(64, 128, 16, 16), %46.1 : Handle = CppOp[ConvForward](%43.0, %13, %14), uses = [[%49.i0], []];
+  %49.0 : Float(64, 128, 16, 16), %49.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%46.0, %15, %16), uses = [[%52.i0], []];
+  %52.0 : Float(64, 128, 16, 16), %52.1 : Handle = ^Threshold(0, 0, False)(%49.0), uses = [[%55.i0], []];
+  %55.0 : Float(64, 64, 32, 32), %55.1 : Handle = CppOp[ConvForward](%52.0, %19, %20), uses = [[%58.i0], []];
+  %58.0 : Float(64, 64, 32, 32), %58.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%55.0, %21, %22), uses = [[%61.i0], []];
+  %61.0 : Float(64, 64, 32, 32), %61.1 : Handle = ^Threshold(0, 0, False)(%58.0), uses = [[%64.i0], []];
+  %64.0 : Float(64, 3, 64, 64), %64.1 : Handle = CppOp[ConvForward](%61.0, %25, %26), uses = [[%67.i0], []];
+  %67.0 : Float(64, 3, 64, 64), %67.1 : Handle = ^Tanh()(%64.0), uses = [[%0.i0], []];
+  return (%67.0);
 }

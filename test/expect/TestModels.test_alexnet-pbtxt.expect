@@ -33,12 +33,12 @@ node {
 }
 node {
   input: "18"
-  output: "20"
+  output: "19"
   op_type: "Relu"
 }
 node {
-  input: "20"
-  output: "22"
+  input: "19"
+  output: "20"
   op_type: "MaxPool"
   attribute {
     name: "kernel"
@@ -58,10 +58,10 @@ node {
   }
 }
 node {
-  input: "22"
+  input: "20"
   input: "3"
   input: "4"
-  output: "25"
+  output: "21"
   op_type: "Conv"
   attribute {
     name: "kernels"
@@ -91,148 +91,148 @@ node {
   }
 }
 node {
+  input: "21"
+  output: "22"
+  op_type: "Relu"
+}
+node {
+  input: "22"
+  output: "23"
+  op_type: "MaxPool"
+  attribute {
+    name: "kernel"
+    i: 3
+  }
+  attribute {
+    name: "pad"
+    i: 0
+  }
+  attribute {
+    name: "dilation"
+    i: 1
+  }
+  attribute {
+    name: "stride"
+    i: 2
+  }
+}
+node {
+  input: "23"
+  input: "5"
+  input: "6"
+  output: "24"
+  op_type: "Conv"
+  attribute {
+    name: "kernels"
+    ints: 3
+    ints: 3
+  }
+  attribute {
+    name: "strides"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "pads"
+    ints: 1
+    ints: 1
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "dilations"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "group"
+    i: 1
+  }
+}
+node {
+  input: "24"
+  output: "25"
+  op_type: "Relu"
+}
+node {
   input: "25"
+  input: "7"
+  input: "8"
+  output: "26"
+  op_type: "Conv"
+  attribute {
+    name: "kernels"
+    ints: 3
+    ints: 3
+  }
+  attribute {
+    name: "strides"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "pads"
+    ints: 1
+    ints: 1
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "dilations"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "group"
+    i: 1
+  }
+}
+node {
+  input: "26"
   output: "27"
   op_type: "Relu"
 }
 node {
   input: "27"
-  output: "29"
-  op_type: "MaxPool"
+  input: "9"
+  input: "10"
+  output: "28"
+  op_type: "Conv"
   attribute {
-    name: "kernel"
-    i: 3
+    name: "kernels"
+    ints: 3
+    ints: 3
   }
   attribute {
-    name: "pad"
-    i: 0
+    name: "strides"
+    ints: 1
+    ints: 1
   }
   attribute {
-    name: "dilation"
+    name: "pads"
+    ints: 1
+    ints: 1
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "dilations"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "group"
     i: 1
   }
-  attribute {
-    name: "stride"
-    i: 2
-  }
+}
+node {
+  input: "28"
+  output: "29"
+  op_type: "Relu"
 }
 node {
   input: "29"
-  input: "5"
-  input: "6"
-  output: "32"
-  op_type: "Conv"
-  attribute {
-    name: "kernels"
-    ints: 3
-    ints: 3
-  }
-  attribute {
-    name: "strides"
-    ints: 1
-    ints: 1
-  }
-  attribute {
-    name: "pads"
-    ints: 1
-    ints: 1
-    ints: 1
-    ints: 1
-  }
-  attribute {
-    name: "dilations"
-    ints: 1
-    ints: 1
-  }
-  attribute {
-    name: "group"
-    i: 1
-  }
-}
-node {
-  input: "32"
-  output: "34"
-  op_type: "Relu"
-}
-node {
-  input: "34"
-  input: "7"
-  input: "8"
-  output: "36"
-  op_type: "Conv"
-  attribute {
-    name: "kernels"
-    ints: 3
-    ints: 3
-  }
-  attribute {
-    name: "strides"
-    ints: 1
-    ints: 1
-  }
-  attribute {
-    name: "pads"
-    ints: 1
-    ints: 1
-    ints: 1
-    ints: 1
-  }
-  attribute {
-    name: "dilations"
-    ints: 1
-    ints: 1
-  }
-  attribute {
-    name: "group"
-    i: 1
-  }
-}
-node {
-  input: "36"
-  output: "38"
-  op_type: "Relu"
-}
-node {
-  input: "38"
-  input: "9"
-  input: "10"
-  output: "40"
-  op_type: "Conv"
-  attribute {
-    name: "kernels"
-    ints: 3
-    ints: 3
-  }
-  attribute {
-    name: "strides"
-    ints: 1
-    ints: 1
-  }
-  attribute {
-    name: "pads"
-    ints: 1
-    ints: 1
-    ints: 1
-    ints: 1
-  }
-  attribute {
-    name: "dilations"
-    ints: 1
-    ints: 1
-  }
-  attribute {
-    name: "group"
-    i: 1
-  }
-}
-node {
-  input: "40"
-  output: "42"
-  op_type: "Relu"
-}
-node {
-  input: "42"
-  output: "44"
+  output: "30"
   op_type: "MaxPool"
   attribute {
     name: "kernel"
@@ -252,9 +252,9 @@ node {
   }
 }
 node {
-  input: "44"
-  output: "48"
-  output: "49"
+  input: "30"
+  output: "32"
+  output: "33"
   op_type: "Reshape"
   attribute {
     name: "shape"
@@ -263,9 +263,9 @@ node {
   }
 }
 node {
-  input: "48"
-  output: "52"
-  output: "53"
+  input: "32"
+  output: "35"
+  output: "36"
   op_type: "Dropout"
   attribute {
     name: "ratio"
@@ -278,7 +278,7 @@ node {
 }
 node {
   input: "11"
-  output: "55"
+  output: "37"
   op_type: "Transpose"
   attribute {
     name: "axes"
@@ -287,21 +287,21 @@ node {
   }
 }
 node {
-  input: "52"
-  input: "55"
+  input: "35"
+  input: "37"
   input: "12"
-  output: "57"
+  output: "38"
   op_type: "FC"
 }
 node {
-  input: "57"
-  output: "59"
+  input: "38"
+  output: "39"
   op_type: "Relu"
 }
 node {
-  input: "59"
-  output: "62"
-  output: "63"
+  input: "39"
+  output: "41"
+  output: "42"
   op_type: "Dropout"
   attribute {
     name: "ratio"
@@ -314,7 +314,7 @@ node {
 }
 node {
   input: "13"
-  output: "65"
+  output: "43"
   op_type: "Transpose"
   attribute {
     name: "axes"
@@ -323,20 +323,20 @@ node {
   }
 }
 node {
-  input: "62"
-  input: "65"
+  input: "41"
+  input: "43"
   input: "14"
-  output: "67"
+  output: "44"
   op_type: "FC"
 }
 node {
-  input: "67"
-  output: "69"
+  input: "44"
+  output: "45"
   op_type: "Relu"
 }
 node {
   input: "15"
-  output: "71"
+  output: "46"
   op_type: "Transpose"
   attribute {
     name: "axes"
@@ -345,10 +345,10 @@ node {
   }
 }
 node {
-  input: "69"
-  input: "71"
+  input: "45"
+  input: "46"
   input: "16"
-  output: "73"
+  output: "47"
   op_type: "FC"
 }
 name: "torch-jit-export"
@@ -369,4 +369,4 @@ input: "14"
 input: "15"
 input: "16"
 input: "17"
-output: "73"
+output: "47"
