@@ -36,10 +36,13 @@ else:
         return x
 
 
-def torch_export(model, x):
+def torch_export(model, x, proto_init=False):
     # Enable tracing on the model
     trace, torch_out = torch.jit.record_trace(toC(model), toC(x))
-    proto = torch._C._jit_pass_export(trace)
+    if proto_init is False:
+        proto = torch._C._jit_pass_export(trace)
+    else:
+        proto = torch._C._jit_pass_export(trace, toC(model).state_dict().values())
     return proto, torch_out
 
 

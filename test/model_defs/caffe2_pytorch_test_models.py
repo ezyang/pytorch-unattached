@@ -50,14 +50,15 @@ model_urls = {
 
 
 class TestCaffe2Backend(unittest.TestCase):
-    def run_model_test(self, model, train, batch_size, state_dict=None, input=None):
+    def run_model_test(self, model, train, batch_size, state_dict=None,
+                       input=None, proto_init=False):
         torch.manual_seed(0)
         model.train(train)
 
         # Random (deterministic) input
         if input is None:
             input = Variable(torch.randn(batch_size, 3, 224, 224), requires_grad=True)
-        toffeeir, torch_out = torch_export(model, input)
+        toffeeir, torch_out = torch_export(model, input, proto_init)
         caffe2_out = caffe2_load(toffeeir, model, input, state_dict)
         np.testing.assert_almost_equal(torch_out.data.cpu().numpy(), caffe2_out,
                                        decimal=3)
@@ -67,6 +68,12 @@ class TestCaffe2Backend(unittest.TestCase):
         alexnet.load_state_dict(model_zoo.load_url(model_urls['alexnet']))
         self.run_model_test(alexnet, train=False,
                             batch_size=BATCH_SIZE)
+
+    def test_alexnet_proto_init(self):
+        alexnet = AlexNet()
+        alexnet.load_state_dict(model_zoo.load_url(model_urls['alexnet']))
+        self.run_model_test(alexnet, train=False,
+                            batch_size=BATCH_SIZE, proto_init=True)
 
     def test_densenet(self):
         densenet121 = DenseNet(num_init_features=64, growth_rate=32,
