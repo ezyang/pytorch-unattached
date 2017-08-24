@@ -79,25 +79,26 @@ class TestCaffe2Backend(unittest.TestCase):
         x = Variable(torch.randn(10, 3, 224, 224), requires_grad=True)
 
         # Enable tracing on the model
+        print("Recording trace")
         trace, torch_out = torch.jit.record_trace(underlying_model, x)
-        proto = torch._C._jit_pass_export(trace)
+        print("Exporting trace")
+        proto = torch._C._jit_pass_export(trace, underlying_model.state_dict().values())
+        print("Proto length: {}".format(len(proto)))
 
+        print("Deserializing proto")
         graph_def = toffee.GraphProto.FromString(proto)
 
         # TODO: This is a hack; PyTorch should set it
         graph_def.version = toffee.GraphProto().version
 
+        print("Checking proto")
         toffee.checker.check_graph(graph_def)
 
         # Translate the parameters into Caffe2 form
         W = {}
-        real_inputs = [s for s in graph_def.input if "saved" not in s]
-        for k, v in zip(real_inputs, itertools.chain(underlying_model.state_dict().values(), [x])):
-            if isinstance(v, Variable):
-                W[k] = v.data.numpy()
-            else:
-                W[k] = v.numpy()
+        W[graph_def.input[-1]] = x.data.numpy()
 
+        print("Running proto")
         caffe2_out_workspace = c2.run_graph(
             init_graph=None,
             predict_graph=graph_def,
