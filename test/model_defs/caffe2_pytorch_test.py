@@ -82,8 +82,7 @@ class TestCaffe2Backend(unittest.TestCase):
         trace, torch_out = torch.jit.record_trace(underlying_model, x)
         proto = torch._C._jit_pass_export(trace)
 
-        graph_def = toffee.GraphProto()
-        google.protobuf.text_format.Merge(proto, graph_def)
+        graph_def = toffee.GraphProto.FromString(proto)
 
         # TODO: This is a hack; PyTorch should set it
         graph_def.version = toffee.GraphProto().version
@@ -92,17 +91,12 @@ class TestCaffe2Backend(unittest.TestCase):
 
         # Translate the parameters into Caffe2 form
         W = {}
-        batch_norm_running_values = [s for s in graph_def.input if "saved" in s]
         real_inputs = [s for s in graph_def.input if "saved" not in s]
-        for v in batch_norm_running_values:
-            # print(v)
-            size = int(v.split('_')[-3])
-            if "mean" in v:
-                W[v] = torch.zeros(size).numpy()
+        for k, v in zip(real_inputs, itertools.chain(underlying_model.state_dict().values(), [x])):
+            if isinstance(v, Variable):
+                W[k] = v.data.numpy()
             else:
-                W[v] = torch.ones(size).numpy()
-        for k, v in zip(real_inputs, itertools.chain(underlying_model.parameters(), [x])):
-            W[k] = v.data.numpy()
+                W[k] = v.numpy()
 
         caffe2_out_workspace = c2.run_graph(
             init_graph=None,
