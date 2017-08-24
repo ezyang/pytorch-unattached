@@ -94,6 +94,8 @@ class TestCaffe2Backend(unittest.TestCase):
     def test_squeezenet(self):
         sqnet_v1_1 = SqueezeNet(version=1.1, inplace=False)
         state_dict = model_zoo.load_url(model_urls['squeezenet1_1'])
+        sqnet_v1_1.load_state_dict(state_dict)
+
         self.run_model_test(sqnet_v1_1, train=False, batch_size=BATCH_SIZE,
                             state_dict=state_dict)
 
