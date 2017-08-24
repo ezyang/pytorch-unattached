@@ -3,87 +3,87 @@ graph(%1 : Float(64, 3, 7, 7)
       %3 : Float(64)
       %4 : Float(64)
       %5 : Float(64)
-      %6 : Float(64)
-      %7 : Float(64, 64, 1, 1)
+      %6 : Float(64, 64, 1, 1)
+      %7 : Float(64)
       %8 : Float(64)
       %9 : Float(64)
       %10 : Float(64)
-      %11 : Float(64)
+      %11 : Float(64, 64, 3, 3)
       %12 : Float(64)
-      %13 : Float(64, 64, 3, 3)
+      %13 : Float(64)
       %14 : Float(64)
       %15 : Float(64)
-      %16 : Float(64)
-      %17 : Float(64)
-      %18 : Float(64)
-      %19 : Float(256, 64, 1, 1)
+      %16 : Float(256, 64, 1, 1)
+      %17 : Float(256)
+      %18 : Float(256)
+      %19 : Float(256)
       %20 : Float(256)
-      %21 : Float(256)
+      %21 : Float(256, 64, 1, 1)
       %22 : Float(256)
       %23 : Float(256)
       %24 : Float(256)
-      %25 : Float(256, 64, 1, 1)
-      %26 : Float(256)
-      %27 : Float(256)
-      %28 : Float(256)
-      %29 : Float(256)
-      %30 : Float(256)
-      %31 : Float(64, 256, 1, 1)
+      %25 : Float(256)
+      %26 : Float(64, 256, 1, 1)
+      %27 : Float(64)
+      %28 : Float(64)
+      %29 : Float(64)
+      %30 : Float(64)
+      %31 : Float(64, 64, 3, 3)
       %32 : Float(64)
       %33 : Float(64)
       %34 : Float(64)
       %35 : Float(64)
-      %36 : Float(64)
-      %37 : Float(64, 64, 3, 3)
-      %38 : Float(64)
-      %39 : Float(64)
-      %40 : Float(64)
-      %41 : Float(64)
+      %36 : Float(256, 64, 1, 1)
+      %37 : Float(256)
+      %38 : Float(256)
+      %39 : Float(256)
+      %40 : Float(256)
+      %41 : Float(64, 256, 1, 1)
       %42 : Float(64)
-      %43 : Float(256, 64, 1, 1)
-      %44 : Float(256)
-      %45 : Float(256)
-      %46 : Float(256)
-      %47 : Float(256)
-      %48 : Float(256)
-      %49 : Float(64, 256, 1, 1)
+      %43 : Float(64)
+      %44 : Float(64)
+      %45 : Float(64)
+      %46 : Float(64, 64, 3, 3)
+      %47 : Float(64)
+      %48 : Float(64)
+      %49 : Float(64)
       %50 : Float(64)
-      %51 : Float(64)
-      %52 : Float(64)
-      %53 : Float(64)
-      %54 : Float(64)
-      %55 : Float(64, 64, 3, 3)
-      %56 : Float(64)
-      %57 : Float(64)
-      %58 : Float(64)
-      %59 : Float(64)
-      %60 : Float(64)
-      %61 : Float(256, 64, 1, 1)
-      %62 : Float(256)
-      %63 : Float(256)
-      %64 : Float(256)
-      %65 : Float(256)
-      %66 : Float(256)
-      %67 : Float(128, 256, 1, 1)
-      %68 : Float(128)
-      %69 : Float(128)
-      %70 : Float(128)
-      %71 : Float(128)
-      %72 : Float(128)
-      %73 : Float(128, 128, 3, 3)
-      %74 : Float(128)
-      %75 : Float(128)
-      %76 : Float(128)
+      %51 : Float(256, 64, 1, 1)
+      %52 : Float(256)
+      %53 : Float(256)
+      %54 : Float(256)
+      %55 : Float(256)
+      %56 : Float(128, 256, 1, 1)
+      %57 : Float(128)
+      %58 : Float(128)
+      %59 : Float(128)
+      %60 : Float(128)
+      %61 : Float(128, 128, 3, 3)
+      %62 : Float(128)
+      %63 : Float(128)
+      %64 : Float(128)
+      %65 : Float(128)
+      %66 : Float(512, 128, 1, 1)
+      %67 : Float(512)
+      %68 : Float(512)
+      %69 : Float(512)
+      %70 : Float(512)
+      %71 : Float(512, 256, 1, 1)
+      %72 : Float(512)
+      %73 : Float(512)
+      %74 : Float(512)
+      %75 : Float(512)
+      %76 : Float(128, 512, 1, 1)
       %77 : Float(128)
       %78 : Float(128)
-      %79 : Float(512, 128, 1, 1)
-      %80 : Float(512)
-      %81 : Float(512)
-      %82 : Float(512)
-      %83 : Float(512)
-      %84 : Float(512)
-      %85 : Float(512, 256, 1, 1)
-      %86 : Float(512)
+      %79 : Float(128)
+      %80 : Float(128)
+      %81 : Float(128, 128, 3, 3)
+      %82 : Float(128)
+      %83 : Float(128)
+      %84 : Float(128)
+      %85 : Float(128)
+      %86 : Float(512, 128, 1, 1)
       %87 : Float(512)
       %88 : Float(512)
       %89 : Float(512)
@@ -93,87 +93,87 @@ graph(%1 : Float(64, 3, 7, 7)
       %93 : Float(128)
       %94 : Float(128)
       %95 : Float(128)
-      %96 : Float(128)
-      %97 : Float(128, 128, 3, 3)
+      %96 : Float(128, 128, 3, 3)
+      %97 : Float(128)
       %98 : Float(128)
       %99 : Float(128)
       %100 : Float(128)
-      %101 : Float(128)
-      %102 : Float(128)
-      %103 : Float(512, 128, 1, 1)
+      %101 : Float(512, 128, 1, 1)
+      %102 : Float(512)
+      %103 : Float(512)
       %104 : Float(512)
       %105 : Float(512)
-      %106 : Float(512)
-      %107 : Float(512)
-      %108 : Float(512)
-      %109 : Float(128, 512, 1, 1)
+      %106 : Float(128, 512, 1, 1)
+      %107 : Float(128)
+      %108 : Float(128)
+      %109 : Float(128)
       %110 : Float(128)
-      %111 : Float(128)
+      %111 : Float(128, 128, 3, 3)
       %112 : Float(128)
       %113 : Float(128)
       %114 : Float(128)
-      %115 : Float(128, 128, 3, 3)
-      %116 : Float(128)
-      %117 : Float(128)
-      %118 : Float(128)
-      %119 : Float(128)
-      %120 : Float(128)
-      %121 : Float(512, 128, 1, 1)
-      %122 : Float(512)
-      %123 : Float(512)
-      %124 : Float(512)
-      %125 : Float(512)
-      %126 : Float(512)
-      %127 : Float(128, 512, 1, 1)
-      %128 : Float(128)
-      %129 : Float(128)
-      %130 : Float(128)
-      %131 : Float(128)
-      %132 : Float(128)
-      %133 : Float(128, 128, 3, 3)
-      %134 : Float(128)
-      %135 : Float(128)
-      %136 : Float(128)
-      %137 : Float(128)
-      %138 : Float(128)
-      %139 : Float(512, 128, 1, 1)
-      %140 : Float(512)
-      %141 : Float(512)
-      %142 : Float(512)
-      %143 : Float(512)
-      %144 : Float(512)
-      %145 : Float(256, 512, 1, 1)
-      %146 : Float(256)
+      %115 : Float(128)
+      %116 : Float(512, 128, 1, 1)
+      %117 : Float(512)
+      %118 : Float(512)
+      %119 : Float(512)
+      %120 : Float(512)
+      %121 : Float(256, 512, 1, 1)
+      %122 : Float(256)
+      %123 : Float(256)
+      %124 : Float(256)
+      %125 : Float(256)
+      %126 : Float(256, 256, 3, 3)
+      %127 : Float(256)
+      %128 : Float(256)
+      %129 : Float(256)
+      %130 : Float(256)
+      %131 : Float(1024, 256, 1, 1)
+      %132 : Float(1024)
+      %133 : Float(1024)
+      %134 : Float(1024)
+      %135 : Float(1024)
+      %136 : Float(1024, 512, 1, 1)
+      %137 : Float(1024)
+      %138 : Float(1024)
+      %139 : Float(1024)
+      %140 : Float(1024)
+      %141 : Float(256, 1024, 1, 1)
+      %142 : Float(256)
+      %143 : Float(256)
+      %144 : Float(256)
+      %145 : Float(256)
+      %146 : Float(256, 256, 3, 3)
       %147 : Float(256)
       %148 : Float(256)
       %149 : Float(256)
       %150 : Float(256)
-      %151 : Float(256, 256, 3, 3)
-      %152 : Float(256)
-      %153 : Float(256)
-      %154 : Float(256)
-      %155 : Float(256)
-      %156 : Float(256)
-      %157 : Float(1024, 256, 1, 1)
-      %158 : Float(1024)
-      %159 : Float(1024)
-      %160 : Float(1024)
-      %161 : Float(1024)
-      %162 : Float(1024)
-      %163 : Float(1024, 512, 1, 1)
-      %164 : Float(1024)
-      %165 : Float(1024)
-      %166 : Float(1024)
+      %151 : Float(1024, 256, 1, 1)
+      %152 : Float(1024)
+      %153 : Float(1024)
+      %154 : Float(1024)
+      %155 : Float(1024)
+      %156 : Float(256, 1024, 1, 1)
+      %157 : Float(256)
+      %158 : Float(256)
+      %159 : Float(256)
+      %160 : Float(256)
+      %161 : Float(256, 256, 3, 3)
+      %162 : Float(256)
+      %163 : Float(256)
+      %164 : Float(256)
+      %165 : Float(256)
+      %166 : Float(1024, 256, 1, 1)
       %167 : Float(1024)
       %168 : Float(1024)
-      %169 : Float(256, 1024, 1, 1)
-      %170 : Float(256)
-      %171 : Float(256)
+      %169 : Float(1024)
+      %170 : Float(1024)
+      %171 : Float(256, 1024, 1, 1)
       %172 : Float(256)
       %173 : Float(256)
       %174 : Float(256)
-      %175 : Float(256, 256, 3, 3)
-      %176 : Float(256)
+      %175 : Float(256)
+      %176 : Float(256, 256, 3, 3)
       %177 : Float(256)
       %178 : Float(256)
       %179 : Float(256)
@@ -183,317 +183,317 @@ graph(%1 : Float(64, 3, 7, 7)
       %183 : Float(1024)
       %184 : Float(1024)
       %185 : Float(1024)
-      %186 : Float(1024)
-      %187 : Float(256, 1024, 1, 1)
+      %186 : Float(256, 1024, 1, 1)
+      %187 : Float(256)
       %188 : Float(256)
       %189 : Float(256)
       %190 : Float(256)
-      %191 : Float(256)
+      %191 : Float(256, 256, 3, 3)
       %192 : Float(256)
-      %193 : Float(256, 256, 3, 3)
+      %193 : Float(256)
       %194 : Float(256)
       %195 : Float(256)
-      %196 : Float(256)
-      %197 : Float(256)
-      %198 : Float(256)
-      %199 : Float(1024, 256, 1, 1)
+      %196 : Float(1024, 256, 1, 1)
+      %197 : Float(1024)
+      %198 : Float(1024)
+      %199 : Float(1024)
       %200 : Float(1024)
-      %201 : Float(1024)
-      %202 : Float(1024)
-      %203 : Float(1024)
-      %204 : Float(1024)
-      %205 : Float(256, 1024, 1, 1)
-      %206 : Float(256)
+      %201 : Float(256, 1024, 1, 1)
+      %202 : Float(256)
+      %203 : Float(256)
+      %204 : Float(256)
+      %205 : Float(256)
+      %206 : Float(256, 256, 3, 3)
       %207 : Float(256)
       %208 : Float(256)
       %209 : Float(256)
       %210 : Float(256)
-      %211 : Float(256, 256, 3, 3)
-      %212 : Float(256)
-      %213 : Float(256)
-      %214 : Float(256)
-      %215 : Float(256)
-      %216 : Float(256)
-      %217 : Float(1024, 256, 1, 1)
-      %218 : Float(1024)
-      %219 : Float(1024)
-      %220 : Float(1024)
-      %221 : Float(1024)
-      %222 : Float(1024)
-      %223 : Float(256, 1024, 1, 1)
-      %224 : Float(256)
-      %225 : Float(256)
-      %226 : Float(256)
-      %227 : Float(256)
-      %228 : Float(256)
-      %229 : Float(256, 256, 3, 3)
-      %230 : Float(256)
-      %231 : Float(256)
-      %232 : Float(256)
-      %233 : Float(256)
-      %234 : Float(256)
-      %235 : Float(1024, 256, 1, 1)
-      %236 : Float(1024)
-      %237 : Float(1024)
-      %238 : Float(1024)
-      %239 : Float(1024)
-      %240 : Float(1024)
-      %241 : Float(256, 1024, 1, 1)
-      %242 : Float(256)
-      %243 : Float(256)
-      %244 : Float(256)
-      %245 : Float(256)
-      %246 : Float(256)
-      %247 : Float(256, 256, 3, 3)
-      %248 : Float(256)
-      %249 : Float(256)
-      %250 : Float(256)
-      %251 : Float(256)
-      %252 : Float(256)
-      %253 : Float(1024, 256, 1, 1)
-      %254 : Float(1024)
-      %255 : Float(1024)
-      %256 : Float(1024)
-      %257 : Float(1024)
-      %258 : Float(1024)
-      %259 : Float(512, 1024, 1, 1)
+      %211 : Float(1024, 256, 1, 1)
+      %212 : Float(1024)
+      %213 : Float(1024)
+      %214 : Float(1024)
+      %215 : Float(1024)
+      %216 : Float(512, 1024, 1, 1)
+      %217 : Float(512)
+      %218 : Float(512)
+      %219 : Float(512)
+      %220 : Float(512)
+      %221 : Float(512, 512, 3, 3)
+      %222 : Float(512)
+      %223 : Float(512)
+      %224 : Float(512)
+      %225 : Float(512)
+      %226 : Float(2048, 512, 1, 1)
+      %227 : Float(2048)
+      %228 : Float(2048)
+      %229 : Float(2048)
+      %230 : Float(2048)
+      %231 : Float(2048, 1024, 1, 1)
+      %232 : Float(2048)
+      %233 : Float(2048)
+      %234 : Float(2048)
+      %235 : Float(2048)
+      %236 : Float(512, 2048, 1, 1)
+      %237 : Float(512)
+      %238 : Float(512)
+      %239 : Float(512)
+      %240 : Float(512)
+      %241 : Float(512, 512, 3, 3)
+      %242 : Float(512)
+      %243 : Float(512)
+      %244 : Float(512)
+      %245 : Float(512)
+      %246 : Float(2048, 512, 1, 1)
+      %247 : Float(2048)
+      %248 : Float(2048)
+      %249 : Float(2048)
+      %250 : Float(2048)
+      %251 : Float(512, 2048, 1, 1)
+      %252 : Float(512)
+      %253 : Float(512)
+      %254 : Float(512)
+      %255 : Float(512)
+      %256 : Float(512, 512, 3, 3)
+      %257 : Float(512)
+      %258 : Float(512)
+      %259 : Float(512)
       %260 : Float(512)
-      %261 : Float(512)
-      %262 : Float(512)
-      %263 : Float(512)
-      %264 : Float(512)
-      %265 : Float(512, 512, 3, 3)
-      %266 : Float(512)
-      %267 : Float(512)
-      %268 : Float(512)
-      %269 : Float(512)
-      %270 : Float(512)
-      %271 : Float(2048, 512, 1, 1)
-      %272 : Float(2048)
-      %273 : Float(2048)
-      %274 : Float(2048)
-      %275 : Float(2048)
-      %276 : Float(2048)
-      %277 : Float(2048, 1024, 1, 1)
-      %278 : Float(2048)
-      %279 : Float(2048)
-      %280 : Float(2048)
-      %281 : Float(2048)
-      %282 : Float(2048)
-      %283 : Float(512, 2048, 1, 1)
-      %284 : Float(512)
-      %285 : Float(512)
-      %286 : Float(512)
-      %287 : Float(512)
-      %288 : Float(512)
-      %289 : Float(512, 512, 3, 3)
-      %290 : Float(512)
-      %291 : Float(512)
-      %292 : Float(512)
-      %293 : Float(512)
-      %294 : Float(512)
-      %295 : Float(2048, 512, 1, 1)
-      %296 : Float(2048)
-      %297 : Float(2048)
-      %298 : Float(2048)
-      %299 : Float(2048)
-      %300 : Float(2048)
-      %301 : Float(512, 2048, 1, 1)
-      %302 : Float(512)
-      %303 : Float(512)
-      %304 : Float(512)
-      %305 : Float(512)
-      %306 : Float(512)
-      %307 : Float(512, 512, 3, 3)
-      %308 : Float(512)
-      %309 : Float(512)
-      %310 : Float(512)
-      %311 : Float(512)
-      %312 : Float(512)
-      %313 : Float(2048, 512, 1, 1)
-      %314 : Float(2048)
-      %315 : Float(2048)
-      %316 : Float(2048)
-      %317 : Float(2048)
-      %318 : Float(2048)
-      %319 : Float(1000, 2048)
-      %320 : Float(1000)
-      %321 : Float(2, 3, 224, 224)) {
-  %322.0 : Float(2, 64, 112, 112), %322.1 : Handle = CppOp[ConvForward](%321, %1, %2), uses = [[%325.i0], []];
-  %325.0 : Float(2, 64, 112, 112), %325.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%322.0, %3, %4), uses = [[%328.i0], []];
-  %328.0 : Float(2, 64, 112, 112), %328.1 : Handle = ^Threshold(0, 0, False)(%325.0), uses = [[%331.i0], []];
-  %331.0 : Float(2, 64, 56, 56), %331.1 : Long(2, 64, 56, 56), %331.2 : Handle = ^MaxPool2d(3, 2, 1, 1, False)(%328.0), uses = [[%335.i0, %359.i0], [], []];
-  %335.0 : Float(2, 64, 56, 56), %335.1 : Handle = CppOp[ConvForward](%331.0, %7, %8), uses = [[%338.i0], []];
-  %338.0 : Float(2, 64, 56, 56), %338.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%335.0, %9, %10), uses = [[%341.i0], []];
-  %341.0 : Float(2, 64, 56, 56), %341.1 : Handle = ^Threshold(0, 0, False)(%338.0), uses = [[%344.i0], []];
-  %344.0 : Float(2, 64, 56, 56), %344.1 : Handle = CppOp[ConvForward](%341.0, %13, %14), uses = [[%347.i0], []];
-  %347.0 : Float(2, 64, 56, 56), %347.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%344.0, %15, %16), uses = [[%350.i0], []];
-  %350.0 : Float(2, 64, 56, 56), %350.1 : Handle = ^Threshold(0, 0, False)(%347.0), uses = [[%353.i0], []];
-  %353.0 : Float(2, 256, 56, 56), %353.1 : Handle = CppOp[ConvForward](%350.0, %19, %20), uses = [[%356.i0], []];
-  %356.0 : Float(2, 256, 56, 56), %356.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%353.0, %21, %22), uses = [[%365.i0], []];
-  %359.0 : Float(2, 256, 56, 56), %359.1 : Handle = CppOp[ConvForward](%331.0, %25, %26), uses = [[%362.i0], []];
-  %362.0 : Float(2, 256, 56, 56), %362.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%359.0, %27, %28), uses = [[%365.i1], []];
-  %365.0 : Float(2, 256, 56, 56), %365.1 : Handle = ^Add(False)(%356.0, %362.0), uses = [[%368.i0], []];
-  %368.0 : Float(2, 256, 56, 56), %368.1 : Handle = ^Threshold(0, 0, False)(%365.0), uses = [[%371.i0, %395.i1], []];
-  %371.0 : Float(2, 64, 56, 56), %371.1 : Handle = CppOp[ConvForward](%368.0, %31, %32), uses = [[%374.i0], []];
-  %374.0 : Float(2, 64, 56, 56), %374.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%371.0, %33, %34), uses = [[%377.i0], []];
-  %377.0 : Float(2, 64, 56, 56), %377.1 : Handle = ^Threshold(0, 0, False)(%374.0), uses = [[%380.i0], []];
-  %380.0 : Float(2, 64, 56, 56), %380.1 : Handle = CppOp[ConvForward](%377.0, %37, %38), uses = [[%383.i0], []];
-  %383.0 : Float(2, 64, 56, 56), %383.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%380.0, %39, %40), uses = [[%386.i0], []];
-  %386.0 : Float(2, 64, 56, 56), %386.1 : Handle = ^Threshold(0, 0, False)(%383.0), uses = [[%389.i0], []];
-  %389.0 : Float(2, 256, 56, 56), %389.1 : Handle = CppOp[ConvForward](%386.0, %43, %44), uses = [[%392.i0], []];
-  %392.0 : Float(2, 256, 56, 56), %392.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%389.0, %45, %46), uses = [[%395.i0], []];
-  %395.0 : Float(2, 256, 56, 56), %395.1 : Handle = ^Add(False)(%392.0, %368.0), uses = [[%398.i0], []];
-  %398.0 : Float(2, 256, 56, 56), %398.1 : Handle = ^Threshold(0, 0, False)(%395.0), uses = [[%401.i0, %425.i1], []];
-  %401.0 : Float(2, 64, 56, 56), %401.1 : Handle = CppOp[ConvForward](%398.0, %49, %50), uses = [[%404.i0], []];
-  %404.0 : Float(2, 64, 56, 56), %404.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%401.0, %51, %52), uses = [[%407.i0], []];
-  %407.0 : Float(2, 64, 56, 56), %407.1 : Handle = ^Threshold(0, 0, False)(%404.0), uses = [[%410.i0], []];
-  %410.0 : Float(2, 64, 56, 56), %410.1 : Handle = CppOp[ConvForward](%407.0, %55, %56), uses = [[%413.i0], []];
-  %413.0 : Float(2, 64, 56, 56), %413.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%410.0, %57, %58), uses = [[%416.i0], []];
-  %416.0 : Float(2, 64, 56, 56), %416.1 : Handle = ^Threshold(0, 0, False)(%413.0), uses = [[%419.i0], []];
-  %419.0 : Float(2, 256, 56, 56), %419.1 : Handle = CppOp[ConvForward](%416.0, %61, %62), uses = [[%422.i0], []];
-  %422.0 : Float(2, 256, 56, 56), %422.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%419.0, %63, %64), uses = [[%425.i0], []];
-  %425.0 : Float(2, 256, 56, 56), %425.1 : Handle = ^Add(False)(%422.0, %398.0), uses = [[%428.i0], []];
-  %428.0 : Float(2, 256, 56, 56), %428.1 : Handle = ^Threshold(0, 0, False)(%425.0), uses = [[%431.i0, %455.i0], []];
-  %431.0 : Float(2, 128, 56, 56), %431.1 : Handle = CppOp[ConvForward](%428.0, %67, %68), uses = [[%434.i0], []];
-  %434.0 : Float(2, 128, 56, 56), %434.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%431.0, %69, %70), uses = [[%437.i0], []];
-  %437.0 : Float(2, 128, 56, 56), %437.1 : Handle = ^Threshold(0, 0, False)(%434.0), uses = [[%440.i0], []];
-  %440.0 : Float(2, 128, 28, 28), %440.1 : Handle = CppOp[ConvForward](%437.0, %73, %74), uses = [[%443.i0], []];
-  %443.0 : Float(2, 128, 28, 28), %443.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%440.0, %75, %76), uses = [[%446.i0], []];
+      %261 : Float(2048, 512, 1, 1)
+      %262 : Float(2048)
+      %263 : Float(2048)
+      %264 : Float(2048)
+      %265 : Float(2048)
+      %266 : Float(1000, 2048)
+      %267 : Float(1000)
+      %268 : Float(2, 3, 224, 224)) {
+  %270 : UNKNOWN_TYPE = Undefined(), uses = [%269.i2];
+  %269.0 : Float(2, 64, 112, 112), %269.1 : Handle = CppOp[ConvForward](%268, %1, %270), uses = [[%273.i0], []];
+  %273.0 : Float(2, 64, 112, 112), %273.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%269.0, %2, %3), uses = [[%276.i0], []];
+  %276.0 : Float(2, 64, 112, 112), %276.1 : Handle = ^Threshold(0, 0, False)(%273.0), uses = [[%279.i0], []];
+  %279.0 : Float(2, 64, 56, 56), %279.1 : Long(2, 64, 56, 56), %279.2 : Handle = ^MaxPool2d(3, 2, 1, 1, False)(%276.0), uses = [[%283.i0, %310.i0], [], []];
+  %284 : UNKNOWN_TYPE = Undefined(), uses = [%283.i2];
+  %283.0 : Float(2, 64, 56, 56), %283.1 : Handle = CppOp[ConvForward](%279.0, %6, %284), uses = [[%287.i0], []];
+  %287.0 : Float(2, 64, 56, 56), %287.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%283.0, %7, %8), uses = [[%290.i0], []];
+  %290.0 : Float(2, 64, 56, 56), %290.1 : Handle = ^Threshold(0, 0, False)(%287.0), uses = [[%293.i0], []];
+  %294 : UNKNOWN_TYPE = Undefined(), uses = [%293.i2];
+  %293.0 : Float(2, 64, 56, 56), %293.1 : Handle = CppOp[ConvForward](%290.0, %11, %294), uses = [[%297.i0], []];
+  %297.0 : Float(2, 64, 56, 56), %297.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%293.0, %12, %13), uses = [[%300.i0], []];
+  %300.0 : Float(2, 64, 56, 56), %300.1 : Handle = ^Threshold(0, 0, False)(%297.0), uses = [[%303.i0], []];
+  %304 : UNKNOWN_TYPE = Undefined(), uses = [%303.i2];
+  %303.0 : Float(2, 256, 56, 56), %303.1 : Handle = CppOp[ConvForward](%300.0, %16, %304), uses = [[%307.i0], []];
+  %307.0 : Float(2, 256, 56, 56), %307.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%303.0, %17, %18), uses = [[%317.i0], []];
+  %311 : UNKNOWN_TYPE = Undefined(), uses = [%310.i2];
+  %310.0 : Float(2, 256, 56, 56), %310.1 : Handle = CppOp[ConvForward](%279.0, %21, %311), uses = [[%314.i0], []];
+  %314.0 : Float(2, 256, 56, 56), %314.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%310.0, %22, %23), uses = [[%317.i1], []];
+  %317.0 : Float(2, 256, 56, 56), %317.1 : Handle = ^Add(False)(%307.0, %314.0), uses = [[%320.i0], []];
+  %320.0 : Float(2, 256, 56, 56), %320.1 : Handle = ^Threshold(0, 0, False)(%317.0), uses = [[%323.i0, %350.i1], []];
+  %324 : UNKNOWN_TYPE = Undefined(), uses = [%323.i2];
+  %323.0 : Float(2, 64, 56, 56), %323.1 : Handle = CppOp[ConvForward](%320.0, %26, %324), uses = [[%327.i0], []];
+  %327.0 : Float(2, 64, 56, 56), %327.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%323.0, %27, %28), uses = [[%330.i0], []];
+  %330.0 : Float(2, 64, 56, 56), %330.1 : Handle = ^Threshold(0, 0, False)(%327.0), uses = [[%333.i0], []];
+  %334 : UNKNOWN_TYPE = Undefined(), uses = [%333.i2];
+  %333.0 : Float(2, 64, 56, 56), %333.1 : Handle = CppOp[ConvForward](%330.0, %31, %334), uses = [[%337.i0], []];
+  %337.0 : Float(2, 64, 56, 56), %337.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%333.0, %32, %33), uses = [[%340.i0], []];
+  %340.0 : Float(2, 64, 56, 56), %340.1 : Handle = ^Threshold(0, 0, False)(%337.0), uses = [[%343.i0], []];
+  %344 : UNKNOWN_TYPE = Undefined(), uses = [%343.i2];
+  %343.0 : Float(2, 256, 56, 56), %343.1 : Handle = CppOp[ConvForward](%340.0, %36, %344), uses = [[%347.i0], []];
+  %347.0 : Float(2, 256, 56, 56), %347.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%343.0, %37, %38), uses = [[%350.i0], []];
+  %350.0 : Float(2, 256, 56, 56), %350.1 : Handle = ^Add(False)(%347.0, %320.0), uses = [[%353.i0], []];
+  %353.0 : Float(2, 256, 56, 56), %353.1 : Handle = ^Threshold(0, 0, False)(%350.0), uses = [[%356.i0, %383.i1], []];
+  %357 : UNKNOWN_TYPE = Undefined(), uses = [%356.i2];
+  %356.0 : Float(2, 64, 56, 56), %356.1 : Handle = CppOp[ConvForward](%353.0, %41, %357), uses = [[%360.i0], []];
+  %360.0 : Float(2, 64, 56, 56), %360.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%356.0, %42, %43), uses = [[%363.i0], []];
+  %363.0 : Float(2, 64, 56, 56), %363.1 : Handle = ^Threshold(0, 0, False)(%360.0), uses = [[%366.i0], []];
+  %367 : UNKNOWN_TYPE = Undefined(), uses = [%366.i2];
+  %366.0 : Float(2, 64, 56, 56), %366.1 : Handle = CppOp[ConvForward](%363.0, %46, %367), uses = [[%370.i0], []];
+  %370.0 : Float(2, 64, 56, 56), %370.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%366.0, %47, %48), uses = [[%373.i0], []];
+  %373.0 : Float(2, 64, 56, 56), %373.1 : Handle = ^Threshold(0, 0, False)(%370.0), uses = [[%376.i0], []];
+  %377 : UNKNOWN_TYPE = Undefined(), uses = [%376.i2];
+  %376.0 : Float(2, 256, 56, 56), %376.1 : Handle = CppOp[ConvForward](%373.0, %51, %377), uses = [[%380.i0], []];
+  %380.0 : Float(2, 256, 56, 56), %380.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%376.0, %52, %53), uses = [[%383.i0], []];
+  %383.0 : Float(2, 256, 56, 56), %383.1 : Handle = ^Add(False)(%380.0, %353.0), uses = [[%386.i0], []];
+  %386.0 : Float(2, 256, 56, 56), %386.1 : Handle = ^Threshold(0, 0, False)(%383.0), uses = [[%389.i0, %416.i0], []];
+  %390 : UNKNOWN_TYPE = Undefined(), uses = [%389.i2];
+  %389.0 : Float(2, 128, 56, 56), %389.1 : Handle = CppOp[ConvForward](%386.0, %56, %390), uses = [[%393.i0], []];
+  %393.0 : Float(2, 128, 56, 56), %393.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%389.0, %57, %58), uses = [[%396.i0], []];
+  %396.0 : Float(2, 128, 56, 56), %396.1 : Handle = ^Threshold(0, 0, False)(%393.0), uses = [[%399.i0], []];
+  %400 : UNKNOWN_TYPE = Undefined(), uses = [%399.i2];
+  %399.0 : Float(2, 128, 28, 28), %399.1 : Handle = CppOp[ConvForward](%396.0, %61, %400), uses = [[%403.i0], []];
+  %403.0 : Float(2, 128, 28, 28), %403.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%399.0, %62, %63), uses = [[%406.i0], []];
+  %406.0 : Float(2, 128, 28, 28), %406.1 : Handle = ^Threshold(0, 0, False)(%403.0), uses = [[%409.i0], []];
+  %410 : UNKNOWN_TYPE = Undefined(), uses = [%409.i2];
+  %409.0 : Float(2, 512, 28, 28), %409.1 : Handle = CppOp[ConvForward](%406.0, %66, %410), uses = [[%413.i0], []];
+  %413.0 : Float(2, 512, 28, 28), %413.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%409.0, %67, %68), uses = [[%423.i0], []];
+  %417 : UNKNOWN_TYPE = Undefined(), uses = [%416.i2];
+  %416.0 : Float(2, 512, 28, 28), %416.1 : Handle = CppOp[ConvForward](%386.0, %71, %417), uses = [[%420.i0], []];
+  %420.0 : Float(2, 512, 28, 28), %420.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%416.0, %72, %73), uses = [[%423.i1], []];
+  %423.0 : Float(2, 512, 28, 28), %423.1 : Handle = ^Add(False)(%413.0, %420.0), uses = [[%426.i0], []];
+  %426.0 : Float(2, 512, 28, 28), %426.1 : Handle = ^Threshold(0, 0, False)(%423.0), uses = [[%429.i0, %456.i1], []];
+  %430 : UNKNOWN_TYPE = Undefined(), uses = [%429.i2];
+  %429.0 : Float(2, 128, 28, 28), %429.1 : Handle = CppOp[ConvForward](%426.0, %76, %430), uses = [[%433.i0], []];
+  %433.0 : Float(2, 128, 28, 28), %433.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%429.0, %77, %78), uses = [[%436.i0], []];
+  %436.0 : Float(2, 128, 28, 28), %436.1 : Handle = ^Threshold(0, 0, False)(%433.0), uses = [[%439.i0], []];
+  %440 : UNKNOWN_TYPE = Undefined(), uses = [%439.i2];
+  %439.0 : Float(2, 128, 28, 28), %439.1 : Handle = CppOp[ConvForward](%436.0, %81, %440), uses = [[%443.i0], []];
+  %443.0 : Float(2, 128, 28, 28), %443.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%439.0, %82, %83), uses = [[%446.i0], []];
   %446.0 : Float(2, 128, 28, 28), %446.1 : Handle = ^Threshold(0, 0, False)(%443.0), uses = [[%449.i0], []];
-  %449.0 : Float(2, 512, 28, 28), %449.1 : Handle = CppOp[ConvForward](%446.0, %79, %80), uses = [[%452.i0], []];
-  %452.0 : Float(2, 512, 28, 28), %452.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%449.0, %81, %82), uses = [[%461.i0], []];
-  %455.0 : Float(2, 512, 28, 28), %455.1 : Handle = CppOp[ConvForward](%428.0, %85, %86), uses = [[%458.i0], []];
-  %458.0 : Float(2, 512, 28, 28), %458.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%455.0, %87, %88), uses = [[%461.i1], []];
-  %461.0 : Float(2, 512, 28, 28), %461.1 : Handle = ^Add(False)(%452.0, %458.0), uses = [[%464.i0], []];
-  %464.0 : Float(2, 512, 28, 28), %464.1 : Handle = ^Threshold(0, 0, False)(%461.0), uses = [[%467.i0, %491.i1], []];
-  %467.0 : Float(2, 128, 28, 28), %467.1 : Handle = CppOp[ConvForward](%464.0, %91, %92), uses = [[%470.i0], []];
-  %470.0 : Float(2, 128, 28, 28), %470.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%467.0, %93, %94), uses = [[%473.i0], []];
-  %473.0 : Float(2, 128, 28, 28), %473.1 : Handle = ^Threshold(0, 0, False)(%470.0), uses = [[%476.i0], []];
-  %476.0 : Float(2, 128, 28, 28), %476.1 : Handle = CppOp[ConvForward](%473.0, %97, %98), uses = [[%479.i0], []];
-  %479.0 : Float(2, 128, 28, 28), %479.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%476.0, %99, %100), uses = [[%482.i0], []];
-  %482.0 : Float(2, 128, 28, 28), %482.1 : Handle = ^Threshold(0, 0, False)(%479.0), uses = [[%485.i0], []];
-  %485.0 : Float(2, 512, 28, 28), %485.1 : Handle = CppOp[ConvForward](%482.0, %103, %104), uses = [[%488.i0], []];
-  %488.0 : Float(2, 512, 28, 28), %488.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%485.0, %105, %106), uses = [[%491.i0], []];
-  %491.0 : Float(2, 512, 28, 28), %491.1 : Handle = ^Add(False)(%488.0, %464.0), uses = [[%494.i0], []];
-  %494.0 : Float(2, 512, 28, 28), %494.1 : Handle = ^Threshold(0, 0, False)(%491.0), uses = [[%497.i0, %521.i1], []];
-  %497.0 : Float(2, 128, 28, 28), %497.1 : Handle = CppOp[ConvForward](%494.0, %109, %110), uses = [[%500.i0], []];
-  %500.0 : Float(2, 128, 28, 28), %500.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%497.0, %111, %112), uses = [[%503.i0], []];
-  %503.0 : Float(2, 128, 28, 28), %503.1 : Handle = ^Threshold(0, 0, False)(%500.0), uses = [[%506.i0], []];
-  %506.0 : Float(2, 128, 28, 28), %506.1 : Handle = CppOp[ConvForward](%503.0, %115, %116), uses = [[%509.i0], []];
-  %509.0 : Float(2, 128, 28, 28), %509.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%506.0, %117, %118), uses = [[%512.i0], []];
+  %450 : UNKNOWN_TYPE = Undefined(), uses = [%449.i2];
+  %449.0 : Float(2, 512, 28, 28), %449.1 : Handle = CppOp[ConvForward](%446.0, %86, %450), uses = [[%453.i0], []];
+  %453.0 : Float(2, 512, 28, 28), %453.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%449.0, %87, %88), uses = [[%456.i0], []];
+  %456.0 : Float(2, 512, 28, 28), %456.1 : Handle = ^Add(False)(%453.0, %426.0), uses = [[%459.i0], []];
+  %459.0 : Float(2, 512, 28, 28), %459.1 : Handle = ^Threshold(0, 0, False)(%456.0), uses = [[%462.i0, %489.i1], []];
+  %463 : UNKNOWN_TYPE = Undefined(), uses = [%462.i2];
+  %462.0 : Float(2, 128, 28, 28), %462.1 : Handle = CppOp[ConvForward](%459.0, %91, %463), uses = [[%466.i0], []];
+  %466.0 : Float(2, 128, 28, 28), %466.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%462.0, %92, %93), uses = [[%469.i0], []];
+  %469.0 : Float(2, 128, 28, 28), %469.1 : Handle = ^Threshold(0, 0, False)(%466.0), uses = [[%472.i0], []];
+  %473 : UNKNOWN_TYPE = Undefined(), uses = [%472.i2];
+  %472.0 : Float(2, 128, 28, 28), %472.1 : Handle = CppOp[ConvForward](%469.0, %96, %473), uses = [[%476.i0], []];
+  %476.0 : Float(2, 128, 28, 28), %476.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%472.0, %97, %98), uses = [[%479.i0], []];
+  %479.0 : Float(2, 128, 28, 28), %479.1 : Handle = ^Threshold(0, 0, False)(%476.0), uses = [[%482.i0], []];
+  %483 : UNKNOWN_TYPE = Undefined(), uses = [%482.i2];
+  %482.0 : Float(2, 512, 28, 28), %482.1 : Handle = CppOp[ConvForward](%479.0, %101, %483), uses = [[%486.i0], []];
+  %486.0 : Float(2, 512, 28, 28), %486.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%482.0, %102, %103), uses = [[%489.i0], []];
+  %489.0 : Float(2, 512, 28, 28), %489.1 : Handle = ^Add(False)(%486.0, %459.0), uses = [[%492.i0], []];
+  %492.0 : Float(2, 512, 28, 28), %492.1 : Handle = ^Threshold(0, 0, False)(%489.0), uses = [[%495.i0, %522.i1], []];
+  %496 : UNKNOWN_TYPE = Undefined(), uses = [%495.i2];
+  %495.0 : Float(2, 128, 28, 28), %495.1 : Handle = CppOp[ConvForward](%492.0, %106, %496), uses = [[%499.i0], []];
+  %499.0 : Float(2, 128, 28, 28), %499.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%495.0, %107, %108), uses = [[%502.i0], []];
+  %502.0 : Float(2, 128, 28, 28), %502.1 : Handle = ^Threshold(0, 0, False)(%499.0), uses = [[%505.i0], []];
+  %506 : UNKNOWN_TYPE = Undefined(), uses = [%505.i2];
+  %505.0 : Float(2, 128, 28, 28), %505.1 : Handle = CppOp[ConvForward](%502.0, %111, %506), uses = [[%509.i0], []];
+  %509.0 : Float(2, 128, 28, 28), %509.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%505.0, %112, %113), uses = [[%512.i0], []];
   %512.0 : Float(2, 128, 28, 28), %512.1 : Handle = ^Threshold(0, 0, False)(%509.0), uses = [[%515.i0], []];
-  %515.0 : Float(2, 512, 28, 28), %515.1 : Handle = CppOp[ConvForward](%512.0, %121, %122), uses = [[%518.i0], []];
-  %518.0 : Float(2, 512, 28, 28), %518.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%515.0, %123, %124), uses = [[%521.i0], []];
-  %521.0 : Float(2, 512, 28, 28), %521.1 : Handle = ^Add(False)(%518.0, %494.0), uses = [[%524.i0], []];
-  %524.0 : Float(2, 512, 28, 28), %524.1 : Handle = ^Threshold(0, 0, False)(%521.0), uses = [[%527.i0, %551.i1], []];
-  %527.0 : Float(2, 128, 28, 28), %527.1 : Handle = CppOp[ConvForward](%524.0, %127, %128), uses = [[%530.i0], []];
-  %530.0 : Float(2, 128, 28, 28), %530.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%527.0, %129, %130), uses = [[%533.i0], []];
-  %533.0 : Float(2, 128, 28, 28), %533.1 : Handle = ^Threshold(0, 0, False)(%530.0), uses = [[%536.i0], []];
-  %536.0 : Float(2, 128, 28, 28), %536.1 : Handle = CppOp[ConvForward](%533.0, %133, %134), uses = [[%539.i0], []];
-  %539.0 : Float(2, 128, 28, 28), %539.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%536.0, %135, %136), uses = [[%542.i0], []];
-  %542.0 : Float(2, 128, 28, 28), %542.1 : Handle = ^Threshold(0, 0, False)(%539.0), uses = [[%545.i0], []];
-  %545.0 : Float(2, 512, 28, 28), %545.1 : Handle = CppOp[ConvForward](%542.0, %139, %140), uses = [[%548.i0], []];
-  %548.0 : Float(2, 512, 28, 28), %548.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%545.0, %141, %142), uses = [[%551.i0], []];
-  %551.0 : Float(2, 512, 28, 28), %551.1 : Handle = ^Add(False)(%548.0, %524.0), uses = [[%554.i0], []];
-  %554.0 : Float(2, 512, 28, 28), %554.1 : Handle = ^Threshold(0, 0, False)(%551.0), uses = [[%557.i0, %581.i0], []];
-  %557.0 : Float(2, 256, 28, 28), %557.1 : Handle = CppOp[ConvForward](%554.0, %145, %146), uses = [[%560.i0], []];
-  %560.0 : Float(2, 256, 28, 28), %560.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%557.0, %147, %148), uses = [[%563.i0], []];
-  %563.0 : Float(2, 256, 28, 28), %563.1 : Handle = ^Threshold(0, 0, False)(%560.0), uses = [[%566.i0], []];
-  %566.0 : Float(2, 256, 14, 14), %566.1 : Handle = CppOp[ConvForward](%563.0, %151, %152), uses = [[%569.i0], []];
-  %569.0 : Float(2, 256, 14, 14), %569.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%566.0, %153, %154), uses = [[%572.i0], []];
-  %572.0 : Float(2, 256, 14, 14), %572.1 : Handle = ^Threshold(0, 0, False)(%569.0), uses = [[%575.i0], []];
-  %575.0 : Float(2, 1024, 14, 14), %575.1 : Handle = CppOp[ConvForward](%572.0, %157, %158), uses = [[%578.i0], []];
-  %578.0 : Float(2, 1024, 14, 14), %578.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%575.0, %159, %160), uses = [[%587.i0], []];
-  %581.0 : Float(2, 1024, 14, 14), %581.1 : Handle = CppOp[ConvForward](%554.0, %163, %164), uses = [[%584.i0], []];
-  %584.0 : Float(2, 1024, 14, 14), %584.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%581.0, %165, %166), uses = [[%587.i1], []];
-  %587.0 : Float(2, 1024, 14, 14), %587.1 : Handle = ^Add(False)(%578.0, %584.0), uses = [[%590.i0], []];
-  %590.0 : Float(2, 1024, 14, 14), %590.1 : Handle = ^Threshold(0, 0, False)(%587.0), uses = [[%593.i0, %617.i1], []];
-  %593.0 : Float(2, 256, 14, 14), %593.1 : Handle = CppOp[ConvForward](%590.0, %169, %170), uses = [[%596.i0], []];
-  %596.0 : Float(2, 256, 14, 14), %596.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%593.0, %171, %172), uses = [[%599.i0], []];
-  %599.0 : Float(2, 256, 14, 14), %599.1 : Handle = ^Threshold(0, 0, False)(%596.0), uses = [[%602.i0], []];
-  %602.0 : Float(2, 256, 14, 14), %602.1 : Handle = CppOp[ConvForward](%599.0, %175, %176), uses = [[%605.i0], []];
-  %605.0 : Float(2, 256, 14, 14), %605.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%602.0, %177, %178), uses = [[%608.i0], []];
+  %516 : UNKNOWN_TYPE = Undefined(), uses = [%515.i2];
+  %515.0 : Float(2, 512, 28, 28), %515.1 : Handle = CppOp[ConvForward](%512.0, %116, %516), uses = [[%519.i0], []];
+  %519.0 : Float(2, 512, 28, 28), %519.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%515.0, %117, %118), uses = [[%522.i0], []];
+  %522.0 : Float(2, 512, 28, 28), %522.1 : Handle = ^Add(False)(%519.0, %492.0), uses = [[%525.i0], []];
+  %525.0 : Float(2, 512, 28, 28), %525.1 : Handle = ^Threshold(0, 0, False)(%522.0), uses = [[%528.i0, %555.i0], []];
+  %529 : UNKNOWN_TYPE = Undefined(), uses = [%528.i2];
+  %528.0 : Float(2, 256, 28, 28), %528.1 : Handle = CppOp[ConvForward](%525.0, %121, %529), uses = [[%532.i0], []];
+  %532.0 : Float(2, 256, 28, 28), %532.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%528.0, %122, %123), uses = [[%535.i0], []];
+  %535.0 : Float(2, 256, 28, 28), %535.1 : Handle = ^Threshold(0, 0, False)(%532.0), uses = [[%538.i0], []];
+  %539 : UNKNOWN_TYPE = Undefined(), uses = [%538.i2];
+  %538.0 : Float(2, 256, 14, 14), %538.1 : Handle = CppOp[ConvForward](%535.0, %126, %539), uses = [[%542.i0], []];
+  %542.0 : Float(2, 256, 14, 14), %542.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%538.0, %127, %128), uses = [[%545.i0], []];
+  %545.0 : Float(2, 256, 14, 14), %545.1 : Handle = ^Threshold(0, 0, False)(%542.0), uses = [[%548.i0], []];
+  %549 : UNKNOWN_TYPE = Undefined(), uses = [%548.i2];
+  %548.0 : Float(2, 1024, 14, 14), %548.1 : Handle = CppOp[ConvForward](%545.0, %131, %549), uses = [[%552.i0], []];
+  %552.0 : Float(2, 1024, 14, 14), %552.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%548.0, %132, %133), uses = [[%562.i0], []];
+  %556 : UNKNOWN_TYPE = Undefined(), uses = [%555.i2];
+  %555.0 : Float(2, 1024, 14, 14), %555.1 : Handle = CppOp[ConvForward](%525.0, %136, %556), uses = [[%559.i0], []];
+  %559.0 : Float(2, 1024, 14, 14), %559.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%555.0, %137, %138), uses = [[%562.i1], []];
+  %562.0 : Float(2, 1024, 14, 14), %562.1 : Handle = ^Add(False)(%552.0, %559.0), uses = [[%565.i0], []];
+  %565.0 : Float(2, 1024, 14, 14), %565.1 : Handle = ^Threshold(0, 0, False)(%562.0), uses = [[%568.i0, %595.i1], []];
+  %569 : UNKNOWN_TYPE = Undefined(), uses = [%568.i2];
+  %568.0 : Float(2, 256, 14, 14), %568.1 : Handle = CppOp[ConvForward](%565.0, %141, %569), uses = [[%572.i0], []];
+  %572.0 : Float(2, 256, 14, 14), %572.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%568.0, %142, %143), uses = [[%575.i0], []];
+  %575.0 : Float(2, 256, 14, 14), %575.1 : Handle = ^Threshold(0, 0, False)(%572.0), uses = [[%578.i0], []];
+  %579 : UNKNOWN_TYPE = Undefined(), uses = [%578.i2];
+  %578.0 : Float(2, 256, 14, 14), %578.1 : Handle = CppOp[ConvForward](%575.0, %146, %579), uses = [[%582.i0], []];
+  %582.0 : Float(2, 256, 14, 14), %582.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%578.0, %147, %148), uses = [[%585.i0], []];
+  %585.0 : Float(2, 256, 14, 14), %585.1 : Handle = ^Threshold(0, 0, False)(%582.0), uses = [[%588.i0], []];
+  %589 : UNKNOWN_TYPE = Undefined(), uses = [%588.i2];
+  %588.0 : Float(2, 1024, 14, 14), %588.1 : Handle = CppOp[ConvForward](%585.0, %151, %589), uses = [[%592.i0], []];
+  %592.0 : Float(2, 1024, 14, 14), %592.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%588.0, %152, %153), uses = [[%595.i0], []];
+  %595.0 : Float(2, 1024, 14, 14), %595.1 : Handle = ^Add(False)(%592.0, %565.0), uses = [[%598.i0], []];
+  %598.0 : Float(2, 1024, 14, 14), %598.1 : Handle = ^Threshold(0, 0, False)(%595.0), uses = [[%601.i0, %628.i1], []];
+  %602 : UNKNOWN_TYPE = Undefined(), uses = [%601.i2];
+  %601.0 : Float(2, 256, 14, 14), %601.1 : Handle = CppOp[ConvForward](%598.0, %156, %602), uses = [[%605.i0], []];
+  %605.0 : Float(2, 256, 14, 14), %605.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%601.0, %157, %158), uses = [[%608.i0], []];
   %608.0 : Float(2, 256, 14, 14), %608.1 : Handle = ^Threshold(0, 0, False)(%605.0), uses = [[%611.i0], []];
-  %611.0 : Float(2, 1024, 14, 14), %611.1 : Handle = CppOp[ConvForward](%608.0, %181, %182), uses = [[%614.i0], []];
-  %614.0 : Float(2, 1024, 14, 14), %614.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%611.0, %183, %184), uses = [[%617.i0], []];
-  %617.0 : Float(2, 1024, 14, 14), %617.1 : Handle = ^Add(False)(%614.0, %590.0), uses = [[%620.i0], []];
-  %620.0 : Float(2, 1024, 14, 14), %620.1 : Handle = ^Threshold(0, 0, False)(%617.0), uses = [[%623.i0, %647.i1], []];
-  %623.0 : Float(2, 256, 14, 14), %623.1 : Handle = CppOp[ConvForward](%620.0, %187, %188), uses = [[%626.i0], []];
-  %626.0 : Float(2, 256, 14, 14), %626.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%623.0, %189, %190), uses = [[%629.i0], []];
-  %629.0 : Float(2, 256, 14, 14), %629.1 : Handle = ^Threshold(0, 0, False)(%626.0), uses = [[%632.i0], []];
-  %632.0 : Float(2, 256, 14, 14), %632.1 : Handle = CppOp[ConvForward](%629.0, %193, %194), uses = [[%635.i0], []];
-  %635.0 : Float(2, 256, 14, 14), %635.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%632.0, %195, %196), uses = [[%638.i0], []];
-  %638.0 : Float(2, 256, 14, 14), %638.1 : Handle = ^Threshold(0, 0, False)(%635.0), uses = [[%641.i0], []];
-  %641.0 : Float(2, 1024, 14, 14), %641.1 : Handle = CppOp[ConvForward](%638.0, %199, %200), uses = [[%644.i0], []];
-  %644.0 : Float(2, 1024, 14, 14), %644.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%641.0, %201, %202), uses = [[%647.i0], []];
-  %647.0 : Float(2, 1024, 14, 14), %647.1 : Handle = ^Add(False)(%644.0, %620.0), uses = [[%650.i0], []];
-  %650.0 : Float(2, 1024, 14, 14), %650.1 : Handle = ^Threshold(0, 0, False)(%647.0), uses = [[%653.i0, %677.i1], []];
-  %653.0 : Float(2, 256, 14, 14), %653.1 : Handle = CppOp[ConvForward](%650.0, %205, %206), uses = [[%656.i0], []];
-  %656.0 : Float(2, 256, 14, 14), %656.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%653.0, %207, %208), uses = [[%659.i0], []];
-  %659.0 : Float(2, 256, 14, 14), %659.1 : Handle = ^Threshold(0, 0, False)(%656.0), uses = [[%662.i0], []];
-  %662.0 : Float(2, 256, 14, 14), %662.1 : Handle = CppOp[ConvForward](%659.0, %211, %212), uses = [[%665.i0], []];
-  %665.0 : Float(2, 256, 14, 14), %665.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%662.0, %213, %214), uses = [[%668.i0], []];
-  %668.0 : Float(2, 256, 14, 14), %668.1 : Handle = ^Threshold(0, 0, False)(%665.0), uses = [[%671.i0], []];
-  %671.0 : Float(2, 1024, 14, 14), %671.1 : Handle = CppOp[ConvForward](%668.0, %217, %218), uses = [[%674.i0], []];
-  %674.0 : Float(2, 1024, 14, 14), %674.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%671.0, %219, %220), uses = [[%677.i0], []];
-  %677.0 : Float(2, 1024, 14, 14), %677.1 : Handle = ^Add(False)(%674.0, %650.0), uses = [[%680.i0], []];
-  %680.0 : Float(2, 1024, 14, 14), %680.1 : Handle = ^Threshold(0, 0, False)(%677.0), uses = [[%683.i0, %707.i1], []];
-  %683.0 : Float(2, 256, 14, 14), %683.1 : Handle = CppOp[ConvForward](%680.0, %223, %224), uses = [[%686.i0], []];
-  %686.0 : Float(2, 256, 14, 14), %686.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%683.0, %225, %226), uses = [[%689.i0], []];
-  %689.0 : Float(2, 256, 14, 14), %689.1 : Handle = ^Threshold(0, 0, False)(%686.0), uses = [[%692.i0], []];
-  %692.0 : Float(2, 256, 14, 14), %692.1 : Handle = CppOp[ConvForward](%689.0, %229, %230), uses = [[%695.i0], []];
-  %695.0 : Float(2, 256, 14, 14), %695.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%692.0, %231, %232), uses = [[%698.i0], []];
-  %698.0 : Float(2, 256, 14, 14), %698.1 : Handle = ^Threshold(0, 0, False)(%695.0), uses = [[%701.i0], []];
-  %701.0 : Float(2, 1024, 14, 14), %701.1 : Handle = CppOp[ConvForward](%698.0, %235, %236), uses = [[%704.i0], []];
-  %704.0 : Float(2, 1024, 14, 14), %704.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%701.0, %237, %238), uses = [[%707.i0], []];
-  %707.0 : Float(2, 1024, 14, 14), %707.1 : Handle = ^Add(False)(%704.0, %680.0), uses = [[%710.i0], []];
-  %710.0 : Float(2, 1024, 14, 14), %710.1 : Handle = ^Threshold(0, 0, False)(%707.0), uses = [[%713.i0, %737.i1], []];
-  %713.0 : Float(2, 256, 14, 14), %713.1 : Handle = CppOp[ConvForward](%710.0, %241, %242), uses = [[%716.i0], []];
-  %716.0 : Float(2, 256, 14, 14), %716.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%713.0, %243, %244), uses = [[%719.i0], []];
-  %719.0 : Float(2, 256, 14, 14), %719.1 : Handle = ^Threshold(0, 0, False)(%716.0), uses = [[%722.i0], []];
-  %722.0 : Float(2, 256, 14, 14), %722.1 : Handle = CppOp[ConvForward](%719.0, %247, %248), uses = [[%725.i0], []];
-  %725.0 : Float(2, 256, 14, 14), %725.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%722.0, %249, %250), uses = [[%728.i0], []];
-  %728.0 : Float(2, 256, 14, 14), %728.1 : Handle = ^Threshold(0, 0, False)(%725.0), uses = [[%731.i0], []];
-  %731.0 : Float(2, 1024, 14, 14), %731.1 : Handle = CppOp[ConvForward](%728.0, %253, %254), uses = [[%734.i0], []];
-  %734.0 : Float(2, 1024, 14, 14), %734.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%731.0, %255, %256), uses = [[%737.i0], []];
-  %737.0 : Float(2, 1024, 14, 14), %737.1 : Handle = ^Add(False)(%734.0, %710.0), uses = [[%740.i0], []];
-  %740.0 : Float(2, 1024, 14, 14), %740.1 : Handle = ^Threshold(0, 0, False)(%737.0), uses = [[%743.i0, %767.i0], []];
-  %743.0 : Float(2, 512, 14, 14), %743.1 : Handle = CppOp[ConvForward](%740.0, %259, %260), uses = [[%746.i0], []];
-  %746.0 : Float(2, 512, 14, 14), %746.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%743.0, %261, %262), uses = [[%749.i0], []];
-  %749.0 : Float(2, 512, 14, 14), %749.1 : Handle = ^Threshold(0, 0, False)(%746.0), uses = [[%752.i0], []];
-  %752.0 : Float(2, 512, 7, 7), %752.1 : Handle = CppOp[ConvForward](%749.0, %265, %266), uses = [[%755.i0], []];
-  %755.0 : Float(2, 512, 7, 7), %755.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%752.0, %267, %268), uses = [[%758.i0], []];
-  %758.0 : Float(2, 512, 7, 7), %758.1 : Handle = ^Threshold(0, 0, False)(%755.0), uses = [[%761.i0], []];
-  %761.0 : Float(2, 2048, 7, 7), %761.1 : Handle = CppOp[ConvForward](%758.0, %271, %272), uses = [[%764.i0], []];
-  %764.0 : Float(2, 2048, 7, 7), %764.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%761.0, %273, %274), uses = [[%773.i0], []];
-  %767.0 : Float(2, 2048, 7, 7), %767.1 : Handle = CppOp[ConvForward](%740.0, %277, %278), uses = [[%770.i0], []];
-  %770.0 : Float(2, 2048, 7, 7), %770.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%767.0, %279, %280), uses = [[%773.i1], []];
-  %773.0 : Float(2, 2048, 7, 7), %773.1 : Handle = ^Add(False)(%764.0, %770.0), uses = [[%776.i0], []];
-  %776.0 : Float(2, 2048, 7, 7), %776.1 : Handle = ^Threshold(0, 0, False)(%773.0), uses = [[%779.i0, %803.i1], []];
-  %779.0 : Float(2, 512, 7, 7), %779.1 : Handle = CppOp[ConvForward](%776.0, %283, %284), uses = [[%782.i0], []];
-  %782.0 : Float(2, 512, 7, 7), %782.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%779.0, %285, %286), uses = [[%785.i0], []];
-  %785.0 : Float(2, 512, 7, 7), %785.1 : Handle = ^Threshold(0, 0, False)(%782.0), uses = [[%788.i0], []];
-  %788.0 : Float(2, 512, 7, 7), %788.1 : Handle = CppOp[ConvForward](%785.0, %289, %290), uses = [[%791.i0], []];
-  %791.0 : Float(2, 512, 7, 7), %791.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%788.0, %291, %292), uses = [[%794.i0], []];
-  %794.0 : Float(2, 512, 7, 7), %794.1 : Handle = ^Threshold(0, 0, False)(%791.0), uses = [[%797.i0], []];
-  %797.0 : Float(2, 2048, 7, 7), %797.1 : Handle = CppOp[ConvForward](%794.0, %295, %296), uses = [[%800.i0], []];
-  %800.0 : Float(2, 2048, 7, 7), %800.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%797.0, %297, %298), uses = [[%803.i0], []];
-  %803.0 : Float(2, 2048, 7, 7), %803.1 : Handle = ^Add(False)(%800.0, %776.0), uses = [[%806.i0], []];
-  %806.0 : Float(2, 2048, 7, 7), %806.1 : Handle = ^Threshold(0, 0, False)(%803.0), uses = [[%809.i0, %833.i1], []];
-  %809.0 : Float(2, 512, 7, 7), %809.1 : Handle = CppOp[ConvForward](%806.0, %301, %302), uses = [[%812.i0], []];
-  %812.0 : Float(2, 512, 7, 7), %812.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%809.0, %303, %304), uses = [[%815.i0], []];
-  %815.0 : Float(2, 512, 7, 7), %815.1 : Handle = ^Threshold(0, 0, False)(%812.0), uses = [[%818.i0], []];
-  %818.0 : Float(2, 512, 7, 7), %818.1 : Handle = CppOp[ConvForward](%815.0, %307, %308), uses = [[%821.i0], []];
-  %821.0 : Float(2, 512, 7, 7), %821.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%818.0, %309, %310), uses = [[%824.i0], []];
-  %824.0 : Float(2, 512, 7, 7), %824.1 : Handle = ^Threshold(0, 0, False)(%821.0), uses = [[%827.i0], []];
-  %827.0 : Float(2, 2048, 7, 7), %827.1 : Handle = CppOp[ConvForward](%824.0, %313, %314), uses = [[%830.i0], []];
-  %830.0 : Float(2, 2048, 7, 7), %830.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%827.0, %315, %316), uses = [[%833.i0], []];
-  %833.0 : Float(2, 2048, 7, 7), %833.1 : Handle = ^Add(False)(%830.0, %806.0), uses = [[%836.i0], []];
+  %612 : UNKNOWN_TYPE = Undefined(), uses = [%611.i2];
+  %611.0 : Float(2, 256, 14, 14), %611.1 : Handle = CppOp[ConvForward](%608.0, %161, %612), uses = [[%615.i0], []];
+  %615.0 : Float(2, 256, 14, 14), %615.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%611.0, %162, %163), uses = [[%618.i0], []];
+  %618.0 : Float(2, 256, 14, 14), %618.1 : Handle = ^Threshold(0, 0, False)(%615.0), uses = [[%621.i0], []];
+  %622 : UNKNOWN_TYPE = Undefined(), uses = [%621.i2];
+  %621.0 : Float(2, 1024, 14, 14), %621.1 : Handle = CppOp[ConvForward](%618.0, %166, %622), uses = [[%625.i0], []];
+  %625.0 : Float(2, 1024, 14, 14), %625.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%621.0, %167, %168), uses = [[%628.i0], []];
+  %628.0 : Float(2, 1024, 14, 14), %628.1 : Handle = ^Add(False)(%625.0, %598.0), uses = [[%631.i0], []];
+  %631.0 : Float(2, 1024, 14, 14), %631.1 : Handle = ^Threshold(0, 0, False)(%628.0), uses = [[%634.i0, %661.i1], []];
+  %635 : UNKNOWN_TYPE = Undefined(), uses = [%634.i2];
+  %634.0 : Float(2, 256, 14, 14), %634.1 : Handle = CppOp[ConvForward](%631.0, %171, %635), uses = [[%638.i0], []];
+  %638.0 : Float(2, 256, 14, 14), %638.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%634.0, %172, %173), uses = [[%641.i0], []];
+  %641.0 : Float(2, 256, 14, 14), %641.1 : Handle = ^Threshold(0, 0, False)(%638.0), uses = [[%644.i0], []];
+  %645 : UNKNOWN_TYPE = Undefined(), uses = [%644.i2];
+  %644.0 : Float(2, 256, 14, 14), %644.1 : Handle = CppOp[ConvForward](%641.0, %176, %645), uses = [[%648.i0], []];
+  %648.0 : Float(2, 256, 14, 14), %648.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%644.0, %177, %178), uses = [[%651.i0], []];
+  %651.0 : Float(2, 256, 14, 14), %651.1 : Handle = ^Threshold(0, 0, False)(%648.0), uses = [[%654.i0], []];
+  %655 : UNKNOWN_TYPE = Undefined(), uses = [%654.i2];
+  %654.0 : Float(2, 1024, 14, 14), %654.1 : Handle = CppOp[ConvForward](%651.0, %181, %655), uses = [[%658.i0], []];
+  %658.0 : Float(2, 1024, 14, 14), %658.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%654.0, %182, %183), uses = [[%661.i0], []];
+  %661.0 : Float(2, 1024, 14, 14), %661.1 : Handle = ^Add(False)(%658.0, %631.0), uses = [[%664.i0], []];
+  %664.0 : Float(2, 1024, 14, 14), %664.1 : Handle = ^Threshold(0, 0, False)(%661.0), uses = [[%667.i0, %694.i1], []];
+  %668 : UNKNOWN_TYPE = Undefined(), uses = [%667.i2];
+  %667.0 : Float(2, 256, 14, 14), %667.1 : Handle = CppOp[ConvForward](%664.0, %186, %668), uses = [[%671.i0], []];
+  %671.0 : Float(2, 256, 14, 14), %671.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%667.0, %187, %188), uses = [[%674.i0], []];
+  %674.0 : Float(2, 256, 14, 14), %674.1 : Handle = ^Threshold(0, 0, False)(%671.0), uses = [[%677.i0], []];
+  %678 : UNKNOWN_TYPE = Undefined(), uses = [%677.i2];
+  %677.0 : Float(2, 256, 14, 14), %677.1 : Handle = CppOp[ConvForward](%674.0, %191, %678), uses = [[%681.i0], []];
+  %681.0 : Float(2, 256, 14, 14), %681.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%677.0, %192, %193), uses = [[%684.i0], []];
+  %684.0 : Float(2, 256, 14, 14), %684.1 : Handle = ^Threshold(0, 0, False)(%681.0), uses = [[%687.i0], []];
+  %688 : UNKNOWN_TYPE = Undefined(), uses = [%687.i2];
+  %687.0 : Float(2, 1024, 14, 14), %687.1 : Handle = CppOp[ConvForward](%684.0, %196, %688), uses = [[%691.i0], []];
+  %691.0 : Float(2, 1024, 14, 14), %691.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%687.0, %197, %198), uses = [[%694.i0], []];
+  %694.0 : Float(2, 1024, 14, 14), %694.1 : Handle = ^Add(False)(%691.0, %664.0), uses = [[%697.i0], []];
+  %697.0 : Float(2, 1024, 14, 14), %697.1 : Handle = ^Threshold(0, 0, False)(%694.0), uses = [[%700.i0, %727.i1], []];
+  %701 : UNKNOWN_TYPE = Undefined(), uses = [%700.i2];
+  %700.0 : Float(2, 256, 14, 14), %700.1 : Handle = CppOp[ConvForward](%697.0, %201, %701), uses = [[%704.i0], []];
+  %704.0 : Float(2, 256, 14, 14), %704.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%700.0, %202, %203), uses = [[%707.i0], []];
+  %707.0 : Float(2, 256, 14, 14), %707.1 : Handle = ^Threshold(0, 0, False)(%704.0), uses = [[%710.i0], []];
+  %711 : UNKNOWN_TYPE = Undefined(), uses = [%710.i2];
+  %710.0 : Float(2, 256, 14, 14), %710.1 : Handle = CppOp[ConvForward](%707.0, %206, %711), uses = [[%714.i0], []];
+  %714.0 : Float(2, 256, 14, 14), %714.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%710.0, %207, %208), uses = [[%717.i0], []];
+  %717.0 : Float(2, 256, 14, 14), %717.1 : Handle = ^Threshold(0, 0, False)(%714.0), uses = [[%720.i0], []];
+  %721 : UNKNOWN_TYPE = Undefined(), uses = [%720.i2];
+  %720.0 : Float(2, 1024, 14, 14), %720.1 : Handle = CppOp[ConvForward](%717.0, %211, %721), uses = [[%724.i0], []];
+  %724.0 : Float(2, 1024, 14, 14), %724.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%720.0, %212, %213), uses = [[%727.i0], []];
+  %727.0 : Float(2, 1024, 14, 14), %727.1 : Handle = ^Add(False)(%724.0, %697.0), uses = [[%730.i0], []];
+  %730.0 : Float(2, 1024, 14, 14), %730.1 : Handle = ^Threshold(0, 0, False)(%727.0), uses = [[%733.i0, %760.i0], []];
+  %734 : UNKNOWN_TYPE = Undefined(), uses = [%733.i2];
+  %733.0 : Float(2, 512, 14, 14), %733.1 : Handle = CppOp[ConvForward](%730.0, %216, %734), uses = [[%737.i0], []];
+  %737.0 : Float(2, 512, 14, 14), %737.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%733.0, %217, %218), uses = [[%740.i0], []];
+  %740.0 : Float(2, 512, 14, 14), %740.1 : Handle = ^Threshold(0, 0, False)(%737.0), uses = [[%743.i0], []];
+  %744 : UNKNOWN_TYPE = Undefined(), uses = [%743.i2];
+  %743.0 : Float(2, 512, 7, 7), %743.1 : Handle = CppOp[ConvForward](%740.0, %221, %744), uses = [[%747.i0], []];
+  %747.0 : Float(2, 512, 7, 7), %747.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%743.0, %222, %223), uses = [[%750.i0], []];
+  %750.0 : Float(2, 512, 7, 7), %750.1 : Handle = ^Threshold(0, 0, False)(%747.0), uses = [[%753.i0], []];
+  %754 : UNKNOWN_TYPE = Undefined(), uses = [%753.i2];
+  %753.0 : Float(2, 2048, 7, 7), %753.1 : Handle = CppOp[ConvForward](%750.0, %226, %754), uses = [[%757.i0], []];
+  %757.0 : Float(2, 2048, 7, 7), %757.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%753.0, %227, %228), uses = [[%767.i0], []];
+  %761 : UNKNOWN_TYPE = Undefined(), uses = [%760.i2];
+  %760.0 : Float(2, 2048, 7, 7), %760.1 : Handle = CppOp[ConvForward](%730.0, %231, %761), uses = [[%764.i0], []];
+  %764.0 : Float(2, 2048, 7, 7), %764.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%760.0, %232, %233), uses = [[%767.i1], []];
+  %767.0 : Float(2, 2048, 7, 7), %767.1 : Handle = ^Add(False)(%757.0, %764.0), uses = [[%770.i0], []];
+  %770.0 : Float(2, 2048, 7, 7), %770.1 : Handle = ^Threshold(0, 0, False)(%767.0), uses = [[%773.i0, %800.i1], []];
+  %774 : UNKNOWN_TYPE = Undefined(), uses = [%773.i2];
+  %773.0 : Float(2, 512, 7, 7), %773.1 : Handle = CppOp[ConvForward](%770.0, %236, %774), uses = [[%777.i0], []];
+  %777.0 : Float(2, 512, 7, 7), %777.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%773.0, %237, %238), uses = [[%780.i0], []];
+  %780.0 : Float(2, 512, 7, 7), %780.1 : Handle = ^Threshold(0, 0, False)(%777.0), uses = [[%783.i0], []];
+  %784 : UNKNOWN_TYPE = Undefined(), uses = [%783.i2];
+  %783.0 : Float(2, 512, 7, 7), %783.1 : Handle = CppOp[ConvForward](%780.0, %241, %784), uses = [[%787.i0], []];
+  %787.0 : Float(2, 512, 7, 7), %787.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%783.0, %242, %243), uses = [[%790.i0], []];
+  %790.0 : Float(2, 512, 7, 7), %790.1 : Handle = ^Threshold(0, 0, False)(%787.0), uses = [[%793.i0], []];
+  %794 : UNKNOWN_TYPE = Undefined(), uses = [%793.i2];
+  %793.0 : Float(2, 2048, 7, 7), %793.1 : Handle = CppOp[ConvForward](%790.0, %246, %794), uses = [[%797.i0], []];
+  %797.0 : Float(2, 2048, 7, 7), %797.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%793.0, %247, %248), uses = [[%800.i0], []];
+  %800.0 : Float(2, 2048, 7, 7), %800.1 : Handle = ^Add(False)(%797.0, %770.0), uses = [[%803.i0], []];
+  %803.0 : Float(2, 2048, 7, 7), %803.1 : Handle = ^Threshold(0, 0, False)(%800.0), uses = [[%806.i0, %833.i1], []];
+  %807 : UNKNOWN_TYPE = Undefined(), uses = [%806.i2];
+  %806.0 : Float(2, 512, 7, 7), %806.1 : Handle = CppOp[ConvForward](%803.0, %251, %807), uses = [[%810.i0], []];
+  %810.0 : Float(2, 512, 7, 7), %810.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%806.0, %252, %253), uses = [[%813.i0], []];
+  %813.0 : Float(2, 512, 7, 7), %813.1 : Handle = ^Threshold(0, 0, False)(%810.0), uses = [[%816.i0], []];
+  %817 : UNKNOWN_TYPE = Undefined(), uses = [%816.i2];
+  %816.0 : Float(2, 512, 7, 7), %816.1 : Handle = CppOp[ConvForward](%813.0, %256, %817), uses = [[%820.i0], []];
+  %820.0 : Float(2, 512, 7, 7), %820.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%816.0, %257, %258), uses = [[%823.i0], []];
+  %823.0 : Float(2, 512, 7, 7), %823.1 : Handle = ^Threshold(0, 0, False)(%820.0), uses = [[%826.i0], []];
+  %827 : UNKNOWN_TYPE = Undefined(), uses = [%826.i2];
+  %826.0 : Float(2, 2048, 7, 7), %826.1 : Handle = CppOp[ConvForward](%823.0, %261, %827), uses = [[%830.i0], []];
+  %830.0 : Float(2, 2048, 7, 7), %830.1 : Handle = CppOp[N5torch8autograd16BatchNormForwardE](%826.0, %262, %263), uses = [[%833.i0], []];
+  %833.0 : Float(2, 2048, 7, 7), %833.1 : Handle = ^Add(False)(%830.0, %803.0), uses = [[%836.i0], []];
   %836.0 : Float(2, 2048, 7, 7), %836.1 : Handle = ^Threshold(0, 0, False)(%833.0), uses = [[%839.i0], []];
   %839.0 : Float(2, 2048, 1, 1), %839.1 : Handle = ^AvgPool2d(7, 7, 0, False, True)(%836.0), uses = [[%842.i0], []];
   %842.0 : Float(2, 2048), %842.1 : Handle = ^View((2, -1))(%839.0), uses = [[%848.i1], []];
-  %845.0 : Float(2048!, 1000!), %845.1 : Handle = ^Transpose(0, 1)(%319), uses = [[%848.i2], []];
-  %848.0 : Float(2, 1000), %848.1 : Handle = ^Addmm(1, 1, False)(%320, %842.0, %845.0), uses = [[%0.i0], []];
+  %845.0 : Float(2048!, 1000!), %845.1 : Handle = ^Transpose(0, 1)(%266), uses = [[%848.i2], []];
+  %848.0 : Float(2, 1000), %848.1 : Handle = ^Addmm(1, 1, False)(%267, %842.0, %845.0), uses = [[%0.i0], []];
   return (%848.0);
 }
