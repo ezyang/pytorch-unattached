@@ -9,6 +9,7 @@ import itertools
 import google.protobuf.text_format
 
 import torch.jit
+from torch.autograd import Variable
 
 import toffee
 from toffee.backend import Caffe2Backend as c2
@@ -52,27 +53,16 @@ def caffe2_load(proto, model, x, state_dict=None):
 
     # Translate the parameters into Caffe2 form
     W = {}
-    state_dict_running_vals = []
-    bn_running_values = [
-        s for s in graph_def.input if "saved_" in s]
-    if state_dict is not None:
-        # if we have the pre-trained model, use the running mean/var values
-        # from it otherwise use the dummy values
-        state_dict_running_vals = [
-            s for s in state_dict.keys() if "running_" in s]
+    if state_dict:
+        parameters = state_dict.values()
     else:
-        for v in bn_running_values:
-            size = int(v.split('_')[-3])
-            if "mean" in v:
-                W[v] = torch.zeros(size).numpy()
-            else:
-                W[v] = torch.ones(size).numpy()
-    real_inputs = [s for s in graph_def.input if "saved_" not in s]
-    for (v1, v2) in zip(bn_running_values, state_dict_running_vals):
-        W[v1] = state_dict[v2].cpu().numpy()
-    for k, v in zip(real_inputs, itertools.chain(model.parameters(), [x])):
+        parameters = model.state_dict().values()
+    for k, v in zip(graph_def.input, itertools.chain(parameters, [x])):
         # On C2 side, we don't run on CUDA yet so convert to CPU memory
-        W[k] = v.data.cpu().numpy()
+        if isinstance(v, Variable):
+            W[k] = v.data.cpu().numpy()
+        else:
+            W[k] = v.cpu().numpy()
 
     caffe2_out_workspace = c2.run_graph(
         init_graph=None,
