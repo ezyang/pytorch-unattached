@@ -36,17 +36,15 @@ else:
     def toC(x):
         return x
 
-proto_init = False
 
-
-def torch_export(model, x):
+def torch_export(model, x, embed_params=False):
 
     # Enable tracing on the model
     ts1 = timeit.default_timer()
     trace, torch_out = torch.jit.record_trace(toC(model), toC(x))
     ts2 = timeit.default_timer()
     print('\n[time] {} spent {:.2f} seconds.'.format('pytorch_execution', ts2 - ts1))
-    if proto_init is False:
+    if embed_params is False:
         proto = torch._C._jit_pass_export(trace)
     else:
         proto = torch._C._jit_pass_export(trace, model.state_dict().values())
@@ -58,7 +56,7 @@ def torch_export(model, x):
     return proto, torch_out
 
 
-def caffe2_load(proto, model, x, state_dict=None, use_gpu=True):
+def caffe2_load(proto, model, x, state_dict=None, use_gpu=True, embed_params=False):
     if not torch.cuda.is_available():
         use_gpu = False
 
@@ -77,7 +75,7 @@ def caffe2_load(proto, model, x, state_dict=None, use_gpu=True):
 
     # Translate the parameters into Caffe2 form
     W = {}
-    if proto_init is False:
+    if embed_params is False:
         if state_dict:
             parameters = []
             # Passed in state_dict may have a different order.  Make
