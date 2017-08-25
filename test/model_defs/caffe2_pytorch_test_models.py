@@ -86,6 +86,8 @@ class TestCaffe2Backend(unittest.TestCase):
         self.run_model_test(netG, train=False, batch_size=BATCH_SIZE,
                             input=noise, state_dict=None)
 
+    @unittest.skipIf(not torch.cuda.is_available(),
+                     "model on net has cuda in it, awaiting fix")
     def test_densenet(self):
         densenet121 = DenseNet(num_init_features=64, growth_rate=32,
                                block_config=(6, 12, 24, 16), inplace=False)
