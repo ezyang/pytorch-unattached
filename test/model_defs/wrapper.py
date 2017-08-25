@@ -43,7 +43,7 @@ def torch_export(model, x):
     return proto, torch_out
 
 
-def caffe2_load(proto, model, x, state_dict=None):
+def caffe2_load(proto, model, x, state_dict=None, use_gpu=False):
 
     graph_def = toffee.GraphProto.FromString(proto)
     # TODO: This is a hack; PyTorch should set it
@@ -72,6 +72,7 @@ def caffe2_load(proto, model, x, state_dict=None):
     caffe2_out_workspace = c2.run_graph(
         init_graph=None,
         predict_graph=graph_def,
-        inputs=W)
+        inputs=W,
+        use_gpu=use_gpu)
     caffe2_out = list(caffe2_out_workspace.values())[0]
     return caffe2_out
