@@ -92,7 +92,7 @@ class TestCaffe2Backend(unittest.TestCase):
     def test_densenet(self):
         densenet121 = DenseNet(num_init_features=64, growth_rate=32,
                                block_config=(6, 12, 24, 16), inplace=False)
-        state_dict = model_zoo.load_url(model_urls['densenet121'])
+        state_dict = model_zoo.load_url(model_urls['densenet121'], map_location=lambda storage, loc: storage)
         self.run_model_test(densenet121, train=False, batch_size=BATCH_SIZE,
                             state_dict=state_dict)
 
