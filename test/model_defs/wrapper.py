@@ -36,9 +36,10 @@ else:
     def toC(x):
         return x
 
-proto_init=False
+proto_init = False
 
 def torch_export(model, x):
+
     # Enable tracing on the model
     ts1 = timeit.default_timer()
     trace, torch_out = torch.jit.record_trace(toC(model), toC(x))
