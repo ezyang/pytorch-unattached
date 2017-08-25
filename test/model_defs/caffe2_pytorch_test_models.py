@@ -50,6 +50,7 @@ model_urls = {
 
 
 class TestCaffe2Backend(unittest.TestCase):
+    embed_params = False
     def run_model_test(self, model, train, batch_size, state_dict=None,
                        input=None):
         torch.manual_seed(0)
@@ -62,8 +63,8 @@ class TestCaffe2Backend(unittest.TestCase):
         if input is None:
             input = Variable(torch.randn(batch_size, 3, 224, 224),
                              requires_grad=True)
-        toffeeir, torch_out = torch_export(model, input)
-        caffe2_out = caffe2_load(toffeeir, model, input, state_dict)
+        toffeeir, torch_out = torch_export(model, input, self.embed_params)
+        caffe2_out = caffe2_load(toffeeir, model, input, state_dict, self.embed_params)
         np.testing.assert_almost_equal(torch_out.data.cpu().numpy(),
                                        caffe2_out, decimal=3)
 
@@ -138,6 +139,11 @@ class TestCaffe2Backend(unittest.TestCase):
         self.run_model_test(underlying_model, train=False,
                             batch_size=BATCH_SIZE)
 
+# add the same test suite as above, but switch embed_params=False
+# to embed_params=True
+TestCaffe2BackendEmbed = type(str("TestCaffe2BackendEmbed"),
+                              (unittest.TestCase,),
+                              dict(TestCaffe2Backend.__dict__, embed_params=True))
 
 if __name__ == '__main__':
     unittest.main()
