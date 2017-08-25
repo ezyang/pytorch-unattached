@@ -50,8 +50,7 @@ model_urls = {
 
 
 class TestCaffe2Backend(unittest.TestCase):
-    def run_model_test(self, model, train, batch_size, state_dict=None,
-                       input=None):
+    def run_model_test(self, model, train, batch_size, state_dict=None, input=None):
         torch.manual_seed(0)
         model.train(train)
 
@@ -88,6 +87,7 @@ class TestCaffe2Backend(unittest.TestCase):
         resnet50 = ResNet(Bottleneck, [3, 4, 6, 3], inplace=False)
         state_dict = model_zoo.load_url(model_urls['resnet50'])
         resnet50.load_state_dict(model_zoo.load_url(model_urls['resnet50']))
+
         self.run_model_test(resnet50, train=False, batch_size=BATCH_SIZE,
                             state_dict=state_dict)
 
@@ -95,6 +95,7 @@ class TestCaffe2Backend(unittest.TestCase):
         sqnet_v1_1 = SqueezeNet(version=1.1, inplace=False)
         state_dict = model_zoo.load_url(model_urls['squeezenet1_1'])
         sqnet_v1_1.load_state_dict(state_dict)
+
         self.run_model_test(sqnet_v1_1, train=False, batch_size=BATCH_SIZE,
                             state_dict=state_dict)
 
