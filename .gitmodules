@@ -7,3 +7,7 @@
 [submodule "torch/lib/nanopb"]
 	path = torch/lib/nanopb
 	url = https://github.com/nanopb/nanopb.git
+[submodule "torch/lib/ToffeeIR"]
+	path = torch/lib/ToffeeIR
+	url = git@github.com:ProjectToffee/ToffeeIR.git
+	branch = jit
