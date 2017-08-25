@@ -38,6 +38,7 @@ else:
 
 proto_init = False
 
+
 def torch_export(model, x):
 
     # Enable tracing on the model
