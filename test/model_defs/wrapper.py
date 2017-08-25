@@ -58,7 +58,9 @@ def torch_export(model, x):
     return proto, torch_out
 
 
-def caffe2_load(proto, model, x, state_dict=None, use_gpu=False):
+def caffe2_load(proto, model, x, state_dict=None, use_gpu=True):
+    if not torch.cuda.is_available():
+        use_gpu = False
 
     ts4 = timeit.default_timer()
     graph_def = toffee.GraphProto.FromString(proto)

@@ -44,7 +44,6 @@ class TestModels(TestCase):
         )
         trace, _ = torch.jit.record_trace(toC(DummyNet(inplace=inplace)), toC(x))
         self.assertExpected(str(trace))
-        proto = torch._C._jit_pass_export(trace)
         self.assertToffeeExpected(torch._C._jit_pass_export(trace), "pbtxt")
 
     def test_concat(self):

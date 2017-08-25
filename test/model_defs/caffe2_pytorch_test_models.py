@@ -119,17 +119,20 @@ class TestCaffe2Backend(unittest.TestCase):
         self.run_model_test(vgg16, train=False, batch_size=BATCH_SIZE,
                             state_dict=state_dict)
 
+    @skip("disable to run tests faster...")
     def test_vgg16_bn(self):
         underlying_model = make_vgg16_bn()
         self.run_model_test(underlying_model, train=False,
                             batch_size=BATCH_SIZE)
 
+    @skip("disable to run tests faster...")
     def test_vgg19(self):
         vgg19 = make_vgg19()
         state_dict = model_zoo.load_url(model_urls['vgg19'])
         self.run_model_test(vgg19, train=False, batch_size=BATCH_SIZE,
                             state_dict=state_dict)
 
+    @skip("disable to run tests faster...")
     def test_vgg19_bn(self):
         underlying_model = make_vgg19_bn()
         self.run_model_test(underlying_model, train=False,
