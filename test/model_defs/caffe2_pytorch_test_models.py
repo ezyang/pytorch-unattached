@@ -39,7 +39,7 @@ BATCH_SIZE = 2
 
 model_urls = {
     'alexnet': 'https://download.pytorch.org/models/alexnet-owt-4df8aa71.pth',
-    'densenet121': 'https://download.pytorch.org/models/densenet121-241335ed.pth',
+    'densenet121': 'https://download.pytorch.org/models/densenet121-d66d3027.pth',
     'inception_v3_google': 'https://download.pytorch.org/models/inception_v3_google-1a9a5a14.pth',
     'resnet50': 'https://download.pytorch.org/models/resnet50-19c8e357.pth',
     'squeezenet1_0': 'https://download.pytorch.org/models/squeezenet1_0-a815701f.pth',
@@ -89,7 +89,7 @@ class TestCaffe2Backend(unittest.TestCase):
     def test_densenet(self):
         densenet121 = DenseNet(num_init_features=64, growth_rate=32,
                                block_config=(6, 12, 24, 16), inplace=False)
-        state_dict = model_zoo.load_url(model_urls['densenet121'], map_location=lambda storage, loc: storage)
+        state_dict = model_zoo.load_url(model_urls['densenet121'])
         self.run_model_test(densenet121, train=False, batch_size=BATCH_SIZE,
                             state_dict=state_dict)
 
