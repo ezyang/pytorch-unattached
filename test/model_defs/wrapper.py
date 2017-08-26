@@ -43,7 +43,7 @@ def torch_export(model, x, embed_params=False):
     ts1 = timeit.default_timer()
     trace, torch_out = torch.jit.record_trace(toC(model), toC(x))
     ts2 = timeit.default_timer()
-    print('\n[time] {} spent {:.2f} seconds.'.format('pytorch_execution', ts2 - ts1))
+    print('\n[time] {} spent {:.2f} secs.'.format('pytorch_execution', ts2 - ts1))
     if embed_params is False:
         proto = trace.export()
     else:
@@ -56,10 +56,11 @@ def torch_export(model, x, embed_params=False):
     return proto, torch_out
 
 
-def caffe2_load(proto, model, x, state_dict=None, use_gpu=True, embed_params=False):
+def caffe2_load(proto, model, x, state_dict=None, embed_params=False,
+                use_gpu=True):
+    # Force set cuda false if not available
     if not torch.cuda.is_available():
         use_gpu = False
-
     ts4 = timeit.default_timer()
     graph_def = toffee.GraphProto.FromString(proto)
     # TODO: This is a hack; PyTorch should set it
