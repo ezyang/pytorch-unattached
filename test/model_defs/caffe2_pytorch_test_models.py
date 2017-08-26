@@ -68,6 +68,7 @@ class TestCaffe2Backend(unittest.TestCase):
         np.testing.assert_almost_equal(torch_out.data.cpu().numpy(),
                                        caffe2_out, decimal=3)
 
+
     def test_alexnet(self):
         alexnet = AlexNet()
         state_dict = model_zoo.load_url(model_urls['alexnet'])
@@ -96,13 +97,16 @@ class TestCaffe2Backend(unittest.TestCase):
         self.run_model_test(densenet121, train=False, batch_size=BATCH_SIZE,
                             state_dict=state_dict)
 
-    @skip("doesn't match exactly, pytorch impl. is incorrect...")
+    # @skip("doesn't match exactly...")
     def test_inception(self):
-        inception = Inception3(aux_logits=True)
+        torch.manual_seed(0)
+        inception = Inception3(aux_logits=True, transform_input=False)
         # state_dict = model_zoo.load_url(model_urls['inception_v3_google'])
         state_dict = None
+        input = Variable(torch.randn(BATCH_SIZE, 3, 299, 299),
+                         requires_grad=True)
         self.run_model_test(inception, train=False, batch_size=BATCH_SIZE,
-                            state_dict=state_dict)
+                            state_dict=state_dict, input=input)
 
     def test_resnet(self):
         resnet50 = ResNet(Bottleneck, [3, 4, 6, 3], inplace=False)
@@ -143,9 +147,11 @@ class TestCaffe2Backend(unittest.TestCase):
 
 # add the same test suite as above, but switch embed_params=False
 # to embed_params=True
+embed_params = False
+
 TestCaffe2BackendEmbed = type(str("TestCaffe2BackendEmbed"),
                               (unittest.TestCase,),
-                              dict(TestCaffe2Backend.__dict__, embed_params=True))
+                              dict(TestCaffe2Backend.__dict__, embed_params=embed_params))
 
 if __name__ == '__main__':
     unittest.main()

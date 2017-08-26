@@ -12,7 +12,7 @@ from model_defs.inception import Inception3
 from model_defs.squeezenet import SqueezeNet
 from model_defs.densenet import DenseNet
 from model_defs.dcgan import _netD, _netG, weights_init, bsz, imgsz, nz, ngf, ndf, nc
-from model_defs.op_test import DummyNet, ConcatNet
+from model_defs.op_test import DummyNet, ConcatNet, CloneNet
 
 import toffee
 import google.protobuf.text_format
@@ -52,6 +52,14 @@ class TestModels(TestCase):
         inputs = [toC(input_a), toC(input_b)]
         trace, _ = torch.jit.record_trace(toC(ConcatNet()), inputs)
         # print(str(trace))
+        self.assertExpected(str(trace))
+        self.assertToffeeExpected(torch._C._jit_pass_export(trace), "pbtxt")
+
+    def test_clone(self):
+        input_a = Variable(torch.randn(BATCH_SIZE, 3), requires_grad=True)
+        x = toC(input_a)
+        trace, _ = torch.jit.record_trace(toC(CloneNet()), x)
+        print(str(trace))
         self.assertExpected(str(trace))
         self.assertToffeeExpected(torch._C._jit_pass_export(trace), "pbtxt")
 

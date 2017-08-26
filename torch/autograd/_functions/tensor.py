@@ -375,6 +375,11 @@ class Resize(Function):
 class Clone(Function):
 
     @staticmethod
+    def primspec(g, input):
+        print('defining primspec')
+        return g.appendNode(g.create("Copy", [input]))
+
+    @staticmethod
     def forward(ctx, input):
         return input.clone()
 

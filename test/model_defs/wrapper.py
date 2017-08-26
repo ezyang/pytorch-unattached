@@ -42,6 +42,7 @@ def torch_export(model, x, embed_params=False):
     # Enable tracing on the model
     ts1 = timeit.default_timer()
     trace, torch_out = torch.jit.record_trace(toC(model), toC(x))
+    # print(str(trace))
     ts2 = timeit.default_timer()
     print('\n[time] {} spent {:.2f} seconds.'.format('pytorch_execution', ts2 - ts1))
     if embed_params is False:
@@ -78,19 +79,26 @@ def caffe2_load(proto, model, x, state_dict=None, use_gpu=True, embed_params=Fal
     if embed_params is False:
         if state_dict:
             parameters = []
+            # params_keys = []
             # Passed in state_dict may have a different order.  Make
             # sure our order is consistent with the model's order.
             # TODO: Even better: keyword arguments!
             for k in model.state_dict():
                 parameters.append(state_dict[k])
+                # params_keys.append(k)
         else:
+            # params_keys = model.state_dict().keys()
             parameters = model.state_dict().values()
+        # idx = 0
         for k, v in zip(graph_def.input, itertools.chain(parameters, [x])):
             # On C2 side, we don't run on CUDA yet so convert to CPU memory
+            # print('state: {} graph: {}'.format(params_keys[idx], k))
             if isinstance(v, Variable):
                 W[k] = v.data.cpu().numpy()
             else:
                 W[k] = v.cpu().numpy()
+        # import pdb
+        # pdb.set_trace()
     else:
         W[graph_def.input[-1]] = x.data.cpu().numpy()
 

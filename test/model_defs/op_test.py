@@ -25,3 +25,12 @@ class ConcatNet(nn.Module):
 
     def forward(self, inputs):
         return torch.cat(inputs, 1)
+
+
+class CloneNet(nn.Module):
+
+    def __init__(self):
+        super(CloneNet, self).__init__()
+
+    def forward(self, x):
+        return x.clone()
