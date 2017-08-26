@@ -68,6 +68,7 @@ class TestCaffe2Backend(unittest.TestCase):
         np.testing.assert_almost_equal(torch_out.data.cpu().numpy(),
                                        caffe2_out, decimal=3)
 
+
     def test_alexnet(self):
         alexnet = AlexNet()
         state_dict = model_zoo.load_url(model_urls['alexnet'])
@@ -146,9 +147,11 @@ class TestCaffe2Backend(unittest.TestCase):
 
 # add the same test suite as above, but switch embed_params=False
 # to embed_params=True
+embed_params = False
+
 TestCaffe2BackendEmbed = type(str("TestCaffe2BackendEmbed"),
                               (unittest.TestCase,),
-                              dict(TestCaffe2Backend.__dict__, embed_params=True))
+                              dict(TestCaffe2Backend.__dict__, embed_params=embed_params))
 
 if __name__ == '__main__':
     unittest.main()

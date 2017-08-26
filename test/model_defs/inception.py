@@ -2,6 +2,7 @@ import torch
 import torch.jit
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy as np
 
 
 class Inception3(nn.Module):
@@ -35,8 +36,10 @@ class Inception3(nn.Module):
                 import scipy.stats as stats
                 stddev = m.stddev if hasattr(m, 'stddev') else 0.1
                 X = stats.truncnorm(-2, 2, scale=stddev)
-                values = torch.Tensor(X.rvs(m.weight.data.numel()))
+                values = torch.Tensor(X.rvs(m.weight.data.numel())).view_as(m.weight.data)
                 m.weight.data.copy_(values)
+                # # the below weight init succeeds but above one fails
+                # m.weight.data.normal_(0.0, 0.02)
             if isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
