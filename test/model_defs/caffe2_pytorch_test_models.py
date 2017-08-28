@@ -51,6 +51,7 @@ model_urls = {
 
 class TestCaffe2Backend(unittest.TestCase):
     embed_params = False
+
     def run_model_test(self, model, train, batch_size, state_dict=None,
                        input=None):
         torch.manual_seed(0)
