@@ -45,9 +45,9 @@ def torch_export(model, x, embed_params=False):
     ts2 = timeit.default_timer()
     print('\n[time] {} spent {:.2f} seconds.'.format('pytorch_execution', ts2 - ts1))
     if embed_params is False:
-        proto = torch._C._jit_pass_export(trace)
+        proto = trace.export()
     else:
-        proto = torch._C._jit_pass_export(trace, model.state_dict().values())
+        proto = trace.export(model.state_dict().values())
     ts3 = timeit.default_timer()
     print('[time] {} spent {:.2f} seconds.'.format('export_proto', ts3 - ts2))
     print('[size] proto is {} bytes ({:.2f} MB), and speed is {:.2f} MB/s.'.format(
