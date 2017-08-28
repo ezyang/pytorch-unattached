@@ -66,18 +66,19 @@ struct InputPlaceholder : public Placeholder {};
 // Instead of actually inserting an "Eval" node, we instead insert an
 // EvalPlaceholder, which doesn't know anything about evaluating a closure.
 // Then, at the time when we want to partially apply the actual closure
-// (computed from the forwards pass), we stick a pre hook on the EvalPlaceholder
+// (computed from the forwards pass), we stick a pre-callback on the EvalPlaceholder
 // that takes the inputs, does the actual Eval, and then passes on the outputs
 // (which the EvalPlaceholder subsequently passes through.)
 //
-// Remember that hooks are NOT stored on a Function object itself: they are
-// registered on a per graph basis.  So we can't do something like mutate a
+// Remember that callbacks are NOT stored on a Function object itself: they are
+// registered on a per AutogradClosure (for which there may be multiple per
+// graph).  So we can't do something like mutate a
 // Eval Function to give it the autograd closure to run inside its main body:
 // that violates the invariant that autograd graphs are immutable!  (In other
 // words, the same EvalPlaceholder may be participating in multiple engine
 // executions) You truly must somehow associate these closures with the graph as
 // a whole, and there must be a mechanism to ferry this data to the Function
-// itself.  A hook is just the ticket.
+// itself.  A callback is just the ticket.
 struct EvalPlaceholder : public Placeholder {};
 
 // Used for the graph output. Execution should be stopped by a callback before apply().
@@ -308,8 +309,8 @@ private:
 //    ]
 struct CrossStageStateDesc {
   CrossStageStateDesc(Graph* graph)
-    // FYI: graph->stage() == the number of stages we have traced
-    // (e.g., forwards+backwards = 2)
+    // FYI: graph->stage() == the last stage we have traced
+    // (e.g., forwards+backwards = 1)
     : stage_inputs(graph->stage() + 1)
     , stage_outputs(graph->stage() + 1)
     , prev_stage_inputs(graph->stage() + 1)
@@ -559,7 +560,7 @@ struct StageClosure {
         auto info = prev_stage_input_map.emplace(input_node, nullptr);
         auto & input_fn_ptr = info.first->second;
         // Create a node if insertion took place
-        if (info.second) input_fn_ptr.reset(new PrevStageInput()); // constructor is private!
+        if (info.second) input_fn_ptr.reset(new PrevStageInput());
         input_fn_ptr->next_functions.emplace_back(fn, i);
       }
     }
