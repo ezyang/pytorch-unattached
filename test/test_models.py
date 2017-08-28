@@ -53,14 +53,14 @@ class TestModels(TestCase):
         inputs = [toC(input_a), toC(input_b)]
         trace, _ = torch.jit.record_trace(toC(ConcatNet()), inputs)
         self.assertExpected(str(trace))
-        self.assertToffeeExpected(torch._C._jit_pass_export(trace), "pbtxt")
+        self.assertToffeeExpected(trace.export(), "pbtxt")
 
     def test_permute(self):
         x = Variable(torch.randn(BATCH_SIZE, 3, 10, 12), requires_grad=True)
         trace, _ = torch.jit.record_trace(PermuteNet(), x)
         print(str(trace))
         self.assertExpected(str(trace))
-        self.assertToffeeExpected(torch._C._jit_pass_export(trace), "pbtxt")
+        self.assertToffeeExpected(trace.export(), "pbtxt")
 
     def test_super_resolution(self):
         x = Variable(
