@@ -25,3 +25,12 @@ class ConcatNet(nn.Module):
 
     def forward(self, inputs):
         return torch.cat(inputs, 1)
+
+
+class PermuteNet(nn.Module):
+
+    def __init__(self):
+        super(PermuteNet, self).__init__()
+
+    def forward(self, input):
+        return input.permute(2, 3, 0, 1)

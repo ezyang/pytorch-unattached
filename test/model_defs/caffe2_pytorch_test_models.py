@@ -17,6 +17,7 @@ from resnet import Bottleneck, ResNet
 from inception import Inception3
 from squeezenet import SqueezeNet
 from densenet import DenseNet
+from super_resolution import SuperResolutionNet
 import dcgan
 from wrapper import torch_export, caffe2_load
 
@@ -59,7 +60,7 @@ class TestCaffe2Backend(unittest.TestCase):
         np.random.seed(seed=0)
 
     def run_model_test(self, model, train, batch_size, state_dict=None,
-                       input=None):
+                       input=None, use_gpu=True):
         model.train(train)
 
         if state_dict is not None:
@@ -70,7 +71,8 @@ class TestCaffe2Backend(unittest.TestCase):
             input = Variable(torch.randn(batch_size, 3, 224, 224),
                              requires_grad=True)
         toffeeir, torch_out = torch_export(model, input, self.embed_params)
-        caffe2_out = caffe2_load(toffeeir, model, input, state_dict, self.embed_params)
+        caffe2_out = caffe2_load(toffeeir, model, input, state_dict,
+                                 self.embed_params, use_gpu=use_gpu)
         np.testing.assert_almost_equal(torch_out.data.cpu().numpy(),
                                        caffe2_out, decimal=3)
 
@@ -80,6 +82,7 @@ class TestCaffe2Backend(unittest.TestCase):
         self.run_model_test(alexnet, train=False, batch_size=BATCH_SIZE,
                             state_dict=state_dict)
 
+    # TODO: run with a pre-trained model
     def test_dcgan(self):
         # dcgan is flaky on some seeds, see:
         # https://github.com/ProjectToffee/ToffeeIR/pull/70
@@ -95,7 +98,8 @@ class TestCaffe2Backend(unittest.TestCase):
 
         netG = dcgan._netG(1)
         netG.apply(dcgan.weights_init)
-        noise = Variable(torch.Tensor(BATCH_SIZE, dcgan.nz, 1, 1).normal_(0, 1))
+        noise = Variable(
+            torch.Tensor(BATCH_SIZE, dcgan.nz, 1, 1).normal_(0, 1))
         self.run_model_test(netG, train=False, batch_size=BATCH_SIZE,
                             input=noise, state_dict=None)
 
@@ -108,13 +112,16 @@ class TestCaffe2Backend(unittest.TestCase):
         self.run_model_test(densenet121, train=False, batch_size=BATCH_SIZE,
                             state_dict=state_dict)
 
-    @skip("doesn't match exactly, pytorch impl. is incorrect...")
+    @skip("doesn't match exactly...")
+    # TODO: figure out the numerical instabilities
     def test_inception(self):
+        x = Variable(
+            torch.randn(BATCH_SIZE, 3, 299, 299), requires_grad=True)
         inception = Inception3(aux_logits=True)
         # state_dict = model_zoo.load_url(model_urls['inception_v3_google'])
         state_dict = None
         self.run_model_test(inception, train=False, batch_size=BATCH_SIZE,
-                            state_dict=state_dict)
+                            state_dict=state_dict, input=x)
 
     def test_resnet(self):
         resnet50 = ResNet(Bottleneck, [3, 4, 6, 3], inplace=False)
@@ -127,6 +134,16 @@ class TestCaffe2Backend(unittest.TestCase):
         state_dict = model_zoo.load_url(model_urls['squeezenet1_1'])
         self.run_model_test(sqnet_v1_1, train=False, batch_size=BATCH_SIZE,
                             state_dict=state_dict)
+
+    # TODO: 1. Run with a pre-trained model
+    #       2. CUDA side on C2 supports maximum 5 dim
+    def test_super_resolution(self):
+        super_resolution_net = SuperResolutionNet(upscale_factor=3)
+        x = Variable(
+            torch.randn(BATCH_SIZE, 1, 224, 224), requires_grad=True)
+        self.run_model_test(super_resolution_net, train=False,
+                            batch_size=BATCH_SIZE, state_dict=None, input=x,
+                            use_gpu=False)
 
     def test_vgg16(self):
         vgg16 = make_vgg16()
@@ -152,6 +169,7 @@ class TestCaffe2Backend(unittest.TestCase):
         underlying_model = make_vgg19_bn()
         self.run_model_test(underlying_model, train=False,
                             batch_size=BATCH_SIZE)
+
 
 # add the same test suite as above, but switch embed_params=False
 # to embed_params=True
