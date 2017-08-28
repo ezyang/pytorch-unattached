@@ -122,6 +122,28 @@ auto Engine::thread_init(int device) -> void {
   thread_main(nullptr);
 }
 
+// Note [Reentrant graph execution]
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// What happens if a FunctionTask executing inside an engine itself attempts
+// to call into the engine reentrantly?  If we had green threads, we would
+// queue up the computation to be done, block our current thread of execution,
+// and then kick back to the thread loop so our worker thread can do some
+// more work.  But we don't have green threads, so it's not convenient to
+// get back to the parent scheduler loop so that we can continue making
+// progress.  But it is VERY important to not block, because our particular
+// worker thread is the only one that can make progress on tasks associated
+// with the worker thread's allocated device.
+//
+// Previously, we tried moving the scheduler loop onto another worker thread
+// when this occurred, but this caused severe CPU thrashing whenever we
+// entered and exited reentrant regions.  So our new strategy, to keep things
+// on the same OS thread, is to *recursively call into* the scheduling loop when
+// a reentrant execution takes place.  This loop handles both outstanding tasks
+// from the parent graph computation, as well as newly queued tasks from the
+// recursive engine call, and exits only when we've finished the recursive
+// engine call (so that the original "blocking" computation is unblocked.) When
+// we make a recursive scheduling loop call, we set graph_task
+//
 // NOTE: graph_tasks do not necessarily form a stack. Imagine this
 // case:
 //
@@ -134,13 +156,29 @@ auto Engine::thread_init(int device) -> void {
 // Then, it pops the next task from the queue, but at this point it is Eval2.
 // It enters thread_main once again, but now with graph_task of Eval2, which is
 // completely unrelated to that of Eval1 (it's not a recursive call).
-// It's all ok and is handled right now, but it should be accounted for
+// It's all OK and is handled right now, but it should be accounted for
 // in case this code is to be changed.
+//
+// This can lead to the following weird performance problem: you have
+// what should be a concurrent thread of execution in autograd involving
+// a recursive autograd call, but for some reason it is not making progress.
+// The reason would be because: for Eval1 to finish, Eval2 must finish first,
+// even though there is no logical dependency between the two.
+//
+// TODO: It should be possible to detect if this situation occurred, which
+// might help someone out if they ever run into this.
 auto Engine::thread_main(GraphTask *graph_task) -> void {
   auto queue = ready_queues[worker_device + 1];
+  // The root scheduling loop never exits; a child scheduling loop
+  // exits when the recursive GraphTask has finished all of its
+  // tasks (in which case we should unblock the caller.)
+  // See Note [Reentrant graph execution]
   while (!graph_task || graph_task->outstanding_tasks > 0) {
     FunctionTask task = queue->pop_back();
-    if (!task.fn) continue; // A graph_task notification from another thread
+    // A graph_task notification from another thread.
+    // It's possible graph_task->outstanding_tasks == 0 now, so
+    // kick back to the loop condition before sleeping again.
+    if (!task.fn) continue;
     if (!task.base->has_error.load()) {
       try {
         evaluate_function(task);
