@@ -75,6 +75,7 @@ struct GraphTask {
   std::unordered_map<Function*, InputBuffer> not_ready;
   std::unordered_map<Function*, int> dependencies;
 
+  // Worker ID (device number) of the GraphTask owner
   int owner;
 
   GraphTask(bool keep_graph, const Engine::pre_callback_map& pre_callbacks, const Engine::post_callback_map& post_callbacks)
