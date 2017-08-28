@@ -207,6 +207,9 @@ def record_trace(traceable, *args, **kwargs):
 
 
 def traced(traceable, **traced_kwargs):
+    """
+    Swiss army.
+    """
     parameters = traced_kwargs.pop('parameters', ())
     t = Traceable(traceable, **traced_kwargs)
     if isinstance(traceable, Module):
