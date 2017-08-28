@@ -22,6 +22,7 @@ from squeezenet import SqueezeNet
 from densenet import DenseNet
 from super_resolution import SuperResolutionNet
 import dcgan
+import torch.nn as nn
 
 skip = unittest.skip
 
@@ -234,6 +235,10 @@ class TestCaffe2Backend(unittest.TestCase):
                 return input + c.type_as(input)
 
         self.run_model_test(MyModel(), train=False, batch_size=BATCH_SIZE)
+
+    def test_consumed_bn(self):
+        underlying = nn.BatchNorm2d(3)
+        self.run_model_test(underlying, train=True, batch_size=BATCH_SIZE)
 
 
 # add the same test suite as above, but switch embed_params=False
