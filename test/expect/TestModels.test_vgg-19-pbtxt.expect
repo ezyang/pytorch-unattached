@@ -79,20 +79,26 @@ node {
   output: "44"
   op_type: "MaxPool"
   attribute {
-    name: "kernel"
-    i: 2
+    name: "kernels"
+    ints: 2
+    ints: 2
   }
   attribute {
-    name: "pad"
-    i: 0
+    name: "pads"
+    ints: 0
+    ints: 0
+    ints: 0
+    ints: 0
   }
   attribute {
-    name: "dilation"
-    i: 1
+    name: "dilations"
+    ints: 1
+    ints: 1
   }
   attribute {
-    name: "stride"
-    i: 2
+    name: "strides"
+    ints: 2
+    ints: 2
   }
 }
 node {
@@ -176,20 +182,26 @@ node {
   output: "49"
   op_type: "MaxPool"
   attribute {
-    name: "kernel"
-    i: 2
+    name: "kernels"
+    ints: 2
+    ints: 2
   }
   attribute {
-    name: "pad"
-    i: 0
+    name: "pads"
+    ints: 0
+    ints: 0
+    ints: 0
+    ints: 0
   }
   attribute {
-    name: "dilation"
-    i: 1
+    name: "dilations"
+    ints: 1
+    ints: 1
   }
   attribute {
-    name: "stride"
-    i: 2
+    name: "strides"
+    ints: 2
+    ints: 2
   }
 }
 node {
@@ -349,20 +361,26 @@ node {
   output: "58"
   op_type: "MaxPool"
   attribute {
-    name: "kernel"
-    i: 2
+    name: "kernels"
+    ints: 2
+    ints: 2
   }
   attribute {
-    name: "pad"
-    i: 0
+    name: "pads"
+    ints: 0
+    ints: 0
+    ints: 0
+    ints: 0
   }
   attribute {
-    name: "dilation"
-    i: 1
+    name: "dilations"
+    ints: 1
+    ints: 1
   }
   attribute {
-    name: "stride"
-    i: 2
+    name: "strides"
+    ints: 2
+    ints: 2
   }
 }
 node {
@@ -522,20 +540,26 @@ node {
   output: "67"
   op_type: "MaxPool"
   attribute {
-    name: "kernel"
-    i: 2
+    name: "kernels"
+    ints: 2
+    ints: 2
   }
   attribute {
-    name: "pad"
-    i: 0
+    name: "pads"
+    ints: 0
+    ints: 0
+    ints: 0
+    ints: 0
   }
   attribute {
-    name: "dilation"
-    i: 1
+    name: "dilations"
+    ints: 1
+    ints: 1
   }
   attribute {
-    name: "stride"
-    i: 2
+    name: "strides"
+    ints: 2
+    ints: 2
   }
 }
 node {
@@ -695,20 +719,26 @@ node {
   output: "76"
   op_type: "MaxPool"
   attribute {
-    name: "kernel"
-    i: 2
+    name: "kernels"
+    ints: 2
+    ints: 2
   }
   attribute {
-    name: "pad"
-    i: 0
+    name: "pads"
+    ints: 0
+    ints: 0
+    ints: 0
+    ints: 0
   }
   attribute {
-    name: "dilation"
-    i: 1
+    name: "dilations"
+    ints: 1
+    ints: 1
   }
   attribute {
-    name: "stride"
-    i: 2
+    name: "strides"
+    ints: 2
+    ints: 2
   }
 }
 node {

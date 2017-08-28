@@ -41,16 +41,21 @@ node {
   output: "13"
   op_type: "AveragePool"
   attribute {
-    name: "kernel"
-    i: 3
+    name: "kernels"
+    ints: 3
+    ints: 3
   }
   attribute {
-    name: "stride"
-    i: 2
+    name: "strides"
+    ints: 2
+    ints: 2
   }
   attribute {
-    name: "pad"
-    i: 1
+    name: "pads"
+    ints: 1
+    ints: 1
+    ints: 1
+    ints: 1
   }
 }
 node {
