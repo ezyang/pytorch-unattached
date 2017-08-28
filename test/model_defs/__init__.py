@@ -6,4 +6,4 @@ from .squeezenet import *
 from .super_resolution import *
 from .inception import *
 from .op_test import *
-from .wrapper import *
+from .debug_embed_params import *
