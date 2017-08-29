@@ -170,6 +170,19 @@ class TestCaffe2Backend(unittest.TestCase):
         self.run_model_test(underlying_model, train=False,
                             batch_size=BATCH_SIZE)
 
+    def test_constant(self):
+        c = Variable(torch.randn(BATCH_SIZE, 3, 224, 224))
+
+        class MyModel(torch.nn.Module):
+            def __init__(self):
+                super(MyModel, self).__init__()
+
+            def forward(self, input):
+                return input + c.type_as(input)
+
+        self.run_model_test(MyModel(), train=False, batch_size=BATCH_SIZE)
+
+
 
 # add the same test suite as above, but switch embed_params=False
 # to embed_params=True
