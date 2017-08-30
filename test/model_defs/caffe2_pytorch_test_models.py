@@ -9,6 +9,7 @@ import sys
 import unittest
 
 import torch.toffee
+from torch import nn
 from torch.for_toffee.toffee import import_model
 from torch.autograd import Variable
 import torch.utils.model_zoo as model_zoo
@@ -141,6 +142,15 @@ class TestCaffe2Backend(unittest.TestCase):
         else:
             self.run_debug_test(model, train, batch_size, state_dict, input,
                                 use_gpu=use_gpu_)
+
+    def test_linear(self):
+        model = nn.Linear(1, 1)
+        input = Variable(torch.randn(1, 1), requires_grad=True)
+        toffeeir, torch_out = torch.toffee.export(model, input, False)
+        caffe2_out = test_embed_params(toffeeir, model, input)
+        np.testing.assert_almost_equal(torch_out.data.cpu().numpy(),
+                                       caffe2_out, decimal=3)
+
 
     def test_alexnet(self):
         alexnet = AlexNet()
