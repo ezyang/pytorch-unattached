@@ -11,6 +11,27 @@ from .utils import maybe_unexpand
 class Index(Function):
 
     @staticmethod
+    def primspec(g, i, index):
+        # We should only expect index as an integer in this case.
+        # We use "Slice" to get the index-th element in i,
+        # Then we reduce the dimension using "Reshape".
+        assert isinstance(index, int)
+        starts = [0] * len(i.type().sizes())
+        starts[0] = index
+        starts_tensor = torch.IntTensor(starts)
+        starts_node = g.appendNode(g.create("Constant").t_("Value", starts_tensor))
+        ends = list(i.type().sizes())
+        ends_tensor = torch.IntTensor(ends)
+        ends_node = g.appendNode(g.create("Constant").t_("Value", ends_tensor))
+        sizes = list(i.type().sizes())
+        sizes.pop(0)
+        slice_output = g.appendNode(g.create("Slice", [i, starts_node, ends_node]))
+        reshape_output = g.appendNode(g.create("Reshape", [n]).is_("shape", sizes))
+        real_output = g.appendNode(g.createSelect(reshape_output, 0))
+        nouse_output = g.appendNode(g.createSelect(reshape_output, 1))
+        return real_output
+
+    @staticmethod
     def forward(ctx, i, index):
         ctx.input_size = i.size()
         ctx.index = index
@@ -575,6 +596,21 @@ class Topk(_MultiSelectionFunction):
 
 
 class Chunk(Function):
+
+    @staticmethod
+    def primspec(g, i, num_chunks, dim=0):
+        dim_size = i.type().sizes()[dim]
+        split_size = (dim_size + num_chunks - 1) / num_chunks
+        lengths = []
+        while (dim_size > 0):
+            this_split_size = split_size if dim_size >= split_size else dim_size
+            lengths.append(this_split_size)
+            dim_size = dim_size - split_size
+        result = []
+        n = g.appendNode(g.create("Split", [i]).is_("split", lengths).i_("axis", dim))
+        for i in range(num_chunks):
+            result.append(g.appendNode(g.createSelect(n, i)))
+        return tuple(result)
 
     @staticmethod
     def forward(ctx, i, num_chunks, dim=0):

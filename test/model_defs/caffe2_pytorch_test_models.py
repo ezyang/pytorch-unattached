@@ -23,6 +23,7 @@ from densenet import DenseNet
 from super_resolution import SuperResolutionNet
 import dcgan
 import torch.nn as nn
+import word_language_model
 
 skip = unittest.skip
 
@@ -223,6 +224,22 @@ class TestCaffe2Backend(unittest.TestCase):
         underlying_model = make_vgg19_bn()
         self.run_model_test(underlying_model, train=False,
                             batch_size=BATCH_SIZE)
+
+    def test_word_language_model_RNN_TANH(self):
+        model_name = 'RNN_TANH'
+        ntokens = 10
+        emsize = 5
+        nhid = 5
+        nlayers = 5
+        dropout = 0.2
+        tied = False
+        batchsize = 5
+        model = word_language_model.RNNModel(model_name, ntokens, emsize,
+                         nhid, nlayers, dropout,
+                         tied, batchsize)
+        x = Variable(torch.LongTensor(10, batchsize).fill_(1),
+                     requires_grad=False)
+        self.run_model_test(model, train=False, input=x, batch_size=batchsize)
 
     def test_constant(self):
         c = Variable(torch.randn(BATCH_SIZE, 3, 224, 224))
