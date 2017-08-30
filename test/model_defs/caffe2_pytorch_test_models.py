@@ -234,7 +234,6 @@ class TestCaffe2Backend(unittest.TestCase):
         self.run_model_test(MyModel(), train=False, batch_size=BATCH_SIZE)
 
 
-
 # add the same test suite as above, but switch embed_params=False
 # to embed_params=True
 TestCaffe2BackendEmbed = type(str("TestCaffe2BackendEmbed"),
