@@ -37,6 +37,8 @@ BATCH_SIZE = 2
 
 model_urls = {
     'alexnet': 'https://download.pytorch.org/models/alexnet-owt-4df8aa71.pth',
+    'dcgan_b': '/home/soumith/local/checkpoints/bedroom_checkpoints/netG_epoch_1.pth',
+    'dcgan_f': '/home/soumith/local/checkpoints/faces_checkpoints/netG_epoch_49.pth',
     'densenet121': 'https://download.pytorch.org/models/densenet121-d66d3027.pth',
     'inception_v3_google': 'https://download.pytorch.org/models/inception_v3_google-1a9a5a14.pth',
     'resnet50': 'https://download.pytorch.org/models/resnet50-19c8e357.pth',
@@ -151,10 +153,12 @@ class TestCaffe2Backend(unittest.TestCase):
 
         netG = dcgan._netG(1)
         netG.apply(dcgan.weights_init)
+        state_dict = torch.load(model_urls['dcgan_b'])      # bedroom_checkpoints
+        # state_dict = torch.load(model_urls['dcgan_f'])    # faces_checkpoints
         noise = Variable(
             torch.Tensor(BATCH_SIZE, dcgan.nz, 1, 1).normal_(0, 1))
         self.run_model_test(netG, train=False, batch_size=BATCH_SIZE,
-                            input=noise, state_dict=None)
+                            input=noise, state_dict=state_dict)
 
     @unittest.skipIf(not torch.cuda.is_available(),
                      "model on net has cuda in it, awaiting fix")

@@ -353,6 +353,7 @@ void Node::lint() {
 void Graph::lint() {
   // Graph invariants
 
+  // Incomment the following to see the graph
   // std::cout << *this << std::endl;
 
   // nodes
