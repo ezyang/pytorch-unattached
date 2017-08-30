@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from functools import wraps
 import numpy as np
 import sys
 import unittest
@@ -25,6 +26,18 @@ import dcgan
 import torch.nn as nn
 
 skip = unittest.skip
+
+def skipIfNoLapack(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        try:
+            fn(*args, **kwargs)
+        except Exception as e:
+            if 'Lapack library not found' in e.args[0]:
+                raise unittest.SkipTest('Compiled without Lapack')
+            raise
+    return wrapper
+
 
 torch.set_default_tensor_type('torch.FloatTensor')
 try:
@@ -190,6 +203,7 @@ class TestCaffe2Backend(unittest.TestCase):
                             state_dict=state_dict)
 
     # TODO: CUDA side on C2 supports maximum 5 dim
+    @skipIfNoLapack
     def test_super_resolution(self):
         super_resolution_net = SuperResolutionNet(upscale_factor=3)
         state_dict = model_zoo.load_url(model_urls['super_resolution'])
