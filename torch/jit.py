@@ -195,12 +195,23 @@ class Traceable(object):
 
 
 def record_trace(traceable, *args, **kwargs):
+    """
+    Record a trace for a traceable object (either a function or a Module),
+    returning a tuple (trace, output).  Positional arguments are passed
+    as arguments to the model, while keyword arguments are used to control
+    how we go about performing the trace.
+
+    TODO: document kwargs
+    """
     parameters = kwargs.pop('parameters', ())
     return Traceable(traceable, **kwargs).record_trace(
         args, parameters)
 
 
 def traced(traceable, **traced_kwargs):
+    """
+    Swiss army knife.
+    """
     parameters = traced_kwargs.pop('parameters', ())
     t = Traceable(traceable, **traced_kwargs)
     if isinstance(traceable, Module):
