@@ -49,7 +49,6 @@ model_urls = {
 
 class TestCaffe2Backend(unittest.TestCase):
     embed_params = False
-    use_cuda = True
 
     def setUp(self):
         torch.manual_seed(0)
@@ -57,19 +56,13 @@ class TestCaffe2Backend(unittest.TestCase):
             torch.cuda.manual_seed_all(0)
         np.random.seed(seed=0)
 
-    def setup_cuda(self, use_gpu):
-        if not torch.cuda.is_available() or not use_gpu:
-            self.use_cuda = False
-        else:
-            self.use_cuda = True
-
     def convert_cuda(self, model, input):
         cuda_model = model.cuda()
         cuda_input = input.cuda()
         return cuda_model, cuda_input
 
     def run_debug_test(self, model, train, batch_size, state_dict=None,
-                       input=None):
+                       input=None, use_gpu=True):
         """
         # TODO: remove this from the final release version
         This test is for our debugging only for the case where
@@ -83,15 +76,18 @@ class TestCaffe2Backend(unittest.TestCase):
         if input is None:
             input = Variable(torch.randn(batch_size, 3, 224, 224),
                              requires_grad=True)
+        if use_gpu:
+            model, input = self.convert_cuda(model, input)
+
         toffeeir, torch_out = torch.toffee.export(model, input,
                                                   self.embed_params)
         caffe2_out = test_embed_params(toffeeir, model, input, state_dict,
-                                       use_gpu=self.use_cuda)
+                                       use_gpu=use_gpu)
         np.testing.assert_almost_equal(torch_out.data.cpu().numpy(),
                                        caffe2_out, decimal=3)
 
     def run_actual_test(self, model, train, batch_size, state_dict=None,
-                        input=None):
+                        input=None, use_gpu=True):
         """
         This is what the user facing version will look like
         """
@@ -106,14 +102,15 @@ class TestCaffe2Backend(unittest.TestCase):
             input = Variable(torch.randn(batch_size, 3, 224, 224),
                              requires_grad=True)
         # Convert the model to ToffeeIR and run model in pytorch
-        if self.use_cuda:
+        if use_gpu:
             model, input = self.convert_cuda(model, input)
+
         toffeeir, torch_out = torch.toffee.export(model, input,
                                                   self.embed_params)
 
         input = input.data.cpu().numpy()
         # Pass the ToffeeIR and input to load and run in caffe2
-        caffe2_out = import_model(toffeeir, input, use_gpu=self.use_cuda)
+        caffe2_out = import_model(toffeeir, input, use_gpu=use_gpu)
 
         # Verify Pytorch and Caffe2 produce almost same outputs upto
         # certain decimal places
@@ -122,12 +119,13 @@ class TestCaffe2Backend(unittest.TestCase):
 
     def run_model_test(self, model, train, batch_size, state_dict=None,
                        input=None, use_gpu=True):
-        # we setup the cuda usage first
-        self.setup_cuda(use_gpu)
+        use_gpu_ = torch.cuda.is_available() and use_gpu
         if self.embed_params:
-            self.run_actual_test(model, train, batch_size, state_dict, input)
+            self.run_actual_test(model, train, batch_size, state_dict, input,
+                                 use_gpu=use_gpu_)
         else:
-            self.run_debug_test(model, train, batch_size, state_dict, input)
+            self.run_debug_test(model, train, batch_size, state_dict, input,
+                                use_gpu=use_gpu_)
 
     def test_alexnet(self):
         alexnet = AlexNet()
