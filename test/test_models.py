@@ -12,7 +12,7 @@ from model_defs.inception import Inception3
 from model_defs.squeezenet import SqueezeNet
 from model_defs.super_resolution import SuperResolutionNet
 from model_defs.densenet import DenseNet
-from model_defs.dcgan import _netD, _netG, weights_init, bsz, imgsz, nz, ngf, ndf, nc
+from model_defs.dcgan import _netD, _netG, weights_init, bsz, imgsz, nz
 from model_defs.op_test import DummyNet, ConcatNet, PermuteNet
 
 import toffee
@@ -58,7 +58,6 @@ class TestModels(TestCase):
     def test_permute(self):
         x = Variable(torch.randn(BATCH_SIZE, 3, 10, 12), requires_grad=True)
         trace, _ = torch.jit.record_trace(PermuteNet(), x)
-        print(str(trace))
         self.assertExpected(str(trace))
         self.assertToffeeExpected(trace.export(), "pbtxt")
 

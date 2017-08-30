@@ -37,11 +37,12 @@ BATCH_SIZE = 2
 
 model_urls = {
     'alexnet': 'https://download.pytorch.org/models/alexnet-owt-4df8aa71.pth',
-    'dcgan_b': '/home/soumith/local/checkpoints/bedroom_checkpoints/netG_epoch_1.pth',
-    'dcgan_f': '/home/soumith/local/checkpoints/faces_checkpoints/netG_epoch_49.pth',
+    'dcgan_b': 'https://s3.amazonaws.com/pytorch/test_data/export/netG_bedroom_epoch_1-0649e76b.pth',
+    'dcgan_f': 'https://s3.amazonaws.com/pytorch/test_data/export/netG_faces_epoch_49-d86035a6.pth',
     'densenet121': 'https://download.pytorch.org/models/densenet121-d66d3027.pth',
     'inception_v3_google': 'https://download.pytorch.org/models/inception_v3_google-1a9a5a14.pth',
     'resnet50': 'https://download.pytorch.org/models/resnet50-19c8e357.pth',
+    'super_resolution': 'https://s3.amazonaws.com/pytorch/test_data/export/superres_epoch100-44c6958e.pth',
     'squeezenet1_0': 'https://download.pytorch.org/models/squeezenet1_0-a815701f.pth',
     'squeezenet1_1': 'https://download.pytorch.org/models/squeezenet1_1-f364aa15.pth',
     'vgg16': 'https://download.pytorch.org/models/vgg16-397923af.pth',
@@ -81,8 +82,7 @@ class TestCaffe2Backend(unittest.TestCase):
         if use_gpu:
             model, input = self.convert_cuda(model, input)
 
-        toffeeir, torch_out = torch.toffee.export(model, input,
-                                                  self.embed_params)
+        toffeeir, torch_out = torch.toffee.export(model, input, self.embed_params)
         caffe2_out = test_embed_params(toffeeir, model, input, state_dict,
                                        use_gpu=use_gpu)
         np.testing.assert_almost_equal(torch_out.data.cpu().numpy(),
@@ -107,8 +107,7 @@ class TestCaffe2Backend(unittest.TestCase):
         if use_gpu:
             model, input = self.convert_cuda(model, input)
 
-        toffeeir, torch_out = torch.toffee.export(model, input,
-                                                  self.embed_params)
+        toffeeir, torch_out = torch.toffee.export(model, input, self.embed_params)
 
         input = input.data.cpu().numpy()
         # Pass the ToffeeIR and input to load and run in caffe2
@@ -135,7 +134,6 @@ class TestCaffe2Backend(unittest.TestCase):
         self.run_model_test(alexnet, train=False, batch_size=BATCH_SIZE,
                             state_dict=state_dict)
 
-    # TODO: run with a pre-trained model
     def test_dcgan(self):
         # dcgan is flaky on some seeds, see:
         # https://github.com/ProjectToffee/ToffeeIR/pull/70
@@ -151,8 +149,8 @@ class TestCaffe2Backend(unittest.TestCase):
 
         netG = dcgan._netG(1)
         netG.apply(dcgan.weights_init)
-        state_dict = torch.load(model_urls['dcgan_b'])      # bedroom_checkpoints
-        # state_dict = torch.load(model_urls['dcgan_f'])    # faces_checkpoints
+        state_dict = model_zoo.load_url(model_urls['dcgan_b'])
+        # state_dict = model_zoo.load_url(model_urls['dcgan_f'])
         noise = Variable(
             torch.Tensor(BATCH_SIZE, dcgan.nz, 1, 1).normal_(0, 1))
         self.run_model_test(netG, train=False, batch_size=BATCH_SIZE,
@@ -190,15 +188,15 @@ class TestCaffe2Backend(unittest.TestCase):
         self.run_model_test(sqnet_v1_1, train=False, batch_size=BATCH_SIZE,
                             state_dict=state_dict)
 
-    # TODO: 1. Run with a pre-trained model
-    #       2. CUDA side on C2 supports maximum 5 dim
+    # TODO: CUDA side on C2 supports maximum 5 dim
     def test_super_resolution(self):
         super_resolution_net = SuperResolutionNet(upscale_factor=3)
+        state_dict = model_zoo.load_url(model_urls['super_resolution'])
         x = Variable(
             torch.randn(BATCH_SIZE, 1, 224, 224), requires_grad=True)
         self.run_model_test(super_resolution_net, train=False,
-                            batch_size=BATCH_SIZE, state_dict=None, input=x,
-                            use_gpu=False)
+                            batch_size=BATCH_SIZE, state_dict=state_dict,
+                            input=x, use_gpu=False)
 
     def test_vgg16(self):
         vgg16 = make_vgg16()
