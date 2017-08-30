@@ -1,3 +1,4 @@
+version: 1
 node {
   input: "9"
   input: "1"
