@@ -1,7 +1,7 @@
 import torch
 import torch.jit
 from torch.autograd import Variable
-from common import TestCase, run_tests
+from common import TestCase, run_tests, skipIfNoLapack
 
 from model_defs.alexnet import AlexNet
 from model_defs.mnist import MNIST
@@ -61,6 +61,7 @@ class TestModels(TestCase):
         self.assertExpected(str(trace))
         self.assertToffeeExpected(trace.export(), "pbtxt")
 
+    @skipIfNoLapack
     def test_super_resolution(self):
         x = Variable(
             torch.randn(BATCH_SIZE, 1, 224, 224).fill_(1.0), requires_grad=True
