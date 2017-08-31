@@ -14,6 +14,7 @@ from torch.for_toffee.toffee import import_model
 from torch.autograd import Variable
 import torch.utils.model_zoo as model_zoo
 from debug_embed_params import test_embed_params
+import io
 
 # Import various models for testing
 from vgg import make_vgg16, make_vgg19, make_vgg16_bn, make_vgg19_bn
@@ -26,6 +27,12 @@ from super_resolution import SuperResolutionNet
 import dcgan
 
 skip = unittest.skip
+
+
+def do_export(model, inputs, *args, **kwargs):
+    f = io.BytesIO()
+    out = torch.toffee._export(model, inputs, f, *args, **kwargs)
+    return f.getvalue(), out
 
 
 def skipIfNoLapack(fn):
@@ -97,7 +104,7 @@ class TestCaffe2Backend(unittest.TestCase):
         if use_gpu:
             model, input = self.convert_cuda(model, input)
 
-        toffeeir, torch_out = torch.toffee.export(model, input, self.embed_params)
+        toffeeir, torch_out = do_export(model, input, export_params=self.embed_params)
         caffe2_out = test_embed_params(toffeeir, model, input, state_dict,
                                        use_gpu=use_gpu)
         np.testing.assert_almost_equal(torch_out.data.cpu().numpy(),
@@ -122,7 +129,7 @@ class TestCaffe2Backend(unittest.TestCase):
         if use_gpu:
             model, input = self.convert_cuda(model, input)
 
-        toffeeir, torch_out = torch.toffee.export(model, input, self.embed_params)
+        toffeeir, torch_out = do_export(model, input, export_params=self.embed_params)
 
         input = input.data.cpu().numpy()
         # Pass the ToffeeIR and input to load and run in caffe2
@@ -146,7 +153,7 @@ class TestCaffe2Backend(unittest.TestCase):
     def test_linear(self):
         model = nn.Linear(1, 1)
         input = Variable(torch.randn(1, 1), requires_grad=True)
-        toffeeir, torch_out = torch.toffee.export(model, input, False)
+        toffeeir, torch_out = do_export(model, input, export_params=False)
         caffe2_out = test_embed_params(toffeeir, model, input)
         np.testing.assert_almost_equal(torch_out.data.cpu().numpy(),
                                        caffe2_out, decimal=3)
