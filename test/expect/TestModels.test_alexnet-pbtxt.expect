@@ -296,21 +296,36 @@ node {
   }
 }
 node {
-  input: "35"
   input: "11"
-  input: "12"
   output: "37"
-  op_type: "FC"
+  op_type: "Transpose"
+  attribute {
+    name: "axes"
+    ints: 1
+    ints: 0
+  }
 }
 node {
   input: "37"
   output: "38"
+  op_type: "Transpose"
+}
+node {
+  input: "35"
+  input: "38"
+  input: "12"
+  output: "39"
+  op_type: "FC"
+}
+node {
+  input: "39"
+  output: "40"
   op_type: "Relu"
 }
 node {
-  input: "38"
-  output: "40"
-  output: "41"
+  input: "40"
+  output: "42"
+  output: "43"
   op_type: "Dropout"
   attribute {
     name: "ratio"
@@ -322,22 +337,52 @@ node {
   }
 }
 node {
-  input: "40"
   input: "13"
-  input: "14"
-  output: "42"
-  op_type: "FC"
+  output: "44"
+  op_type: "Transpose"
+  attribute {
+    name: "axes"
+    ints: 1
+    ints: 0
+  }
+}
+node {
+  input: "44"
+  output: "45"
+  op_type: "Transpose"
 }
 node {
   input: "42"
-  output: "43"
+  input: "45"
+  input: "14"
+  output: "46"
+  op_type: "FC"
+}
+node {
+  input: "46"
+  output: "47"
   op_type: "Relu"
 }
 node {
-  input: "43"
   input: "15"
+  output: "48"
+  op_type: "Transpose"
+  attribute {
+    name: "axes"
+    ints: 1
+    ints: 0
+  }
+}
+node {
+  input: "48"
+  output: "49"
+  op_type: "Transpose"
+}
+node {
+  input: "47"
+  input: "49"
   input: "16"
-  output: "44"
+  output: "50"
   op_type: "FC"
 }
 name: "torch-jit-export"
@@ -358,4 +403,4 @@ input: "14"
 input: "15"
 input: "16"
 input: "17"
-output: "44"
+output: "50"
