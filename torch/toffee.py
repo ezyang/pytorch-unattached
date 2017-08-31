@@ -15,7 +15,7 @@ def op(op_name, *args, **kwargs):
 def export(model, input, embed_params):
 
     # Enable tracing on the model
-    trace, torch_out = torch.jit.record_trace(model, input)
+    trace, torch_out = torch.jit.record_trace(model, input, model.hidden)
     if embed_params is False:
         proto = trace.export()
     else:

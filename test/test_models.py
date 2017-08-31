@@ -13,12 +13,13 @@ from model_defs.squeezenet import SqueezeNet
 from model_defs.super_resolution import SuperResolutionNet
 from model_defs.densenet import DenseNet
 from model_defs.dcgan import _netD, _netG, weights_init, bsz, imgsz, nz
-from model_defs.op_test import DummyNet, ConcatNet, PermuteNet
+from model_defs.op_test import DummyNet, ConcatNet, PermuteNet, IndexNet
 
 import toffee
 import google.protobuf.text_format
 
 torch.set_default_tensor_type('torch.FloatTensor')
+
 
 if torch.cuda.is_available():
     def toC(x):
@@ -59,6 +60,13 @@ class TestModels(TestCase):
         x = Variable(torch.randn(BATCH_SIZE, 3, 10, 12), requires_grad=True)
         trace, _ = torch.jit.record_trace(PermuteNet(), x)
         self.assertExpected(str(trace))
+        self.assertToffeeExpected(trace.export(), "pbtxt")
+
+    def test_index(self):
+        x = Variable(torch.randn(5, 5, 5), requires_grad=False)
+        trace, _ = torch.jit.record_trace(IndexNet(), x)
+        self.assertExpected(str(trace))
+        print(str(trace))
         self.assertToffeeExpected(trace.export(), "pbtxt")
 
     def test_super_resolution(self):

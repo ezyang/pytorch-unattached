@@ -85,7 +85,7 @@ class TestCaffe2Backend(unittest.TestCase):
             model, input = self.convert_cuda(model, input)
 
         toffeeir, torch_out = torch.toffee.export(model, input, self.embed_params)
-        caffe2_out = test_embed_params(toffeeir, model, input, state_dict,
+        caffe2_out = test_embed_params(toffeeir, model, input, model.hidden, state_dict,
                                        use_gpu=use_gpu)
         np.testing.assert_almost_equal(torch_out.data.cpu().numpy(),
                                        caffe2_out, decimal=3)
@@ -239,7 +239,8 @@ class TestCaffe2Backend(unittest.TestCase):
                          tied, batchsize)
         x = Variable(torch.LongTensor(10, batchsize).fill_(1),
                      requires_grad=False)
-        self.run_model_test(model, train=False, input=x, batch_size=batchsize)
+        self.run_model_test(model, train=False, input=x,
+                            batch_size=batchsize, use_gpu=False)
 
     def test_constant(self):
         c = Variable(torch.randn(BATCH_SIZE, 3, 224, 224))

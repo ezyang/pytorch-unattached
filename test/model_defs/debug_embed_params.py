@@ -21,13 +21,14 @@ except ImportError:
     sys.exit(0)
 
 
-def test_embed_params(proto, model, input, state_dict=None, use_gpu=True):
+def test_embed_params(proto, model, input, input2, state_dict=None, use_gpu=True):
     """
     This is only a helper debug function so we can test embed_params=False
     case as well on pytorch front
     This should likely be removed from the release version of the code
     """
     graph_def = toffee.GraphProto.FromString(proto)
+    #print(graph_def)
     toffee.checker.check_graph(graph_def)
 
     # Translate the parameters into Caffe2 form
@@ -41,7 +42,7 @@ def test_embed_params(proto, model, input, state_dict=None, use_gpu=True):
             parameters.append(state_dict[k])
     else:
         parameters = model.state_dict().values()
-    for k, v in zip(graph_def.input, itertools.chain(parameters, [input])):
+    for k, v in zip(graph_def.input, itertools.chain(parameters, [input, input2])):
         if isinstance(v, Variable):
             W[k] = v.data.cpu().numpy()
         else:

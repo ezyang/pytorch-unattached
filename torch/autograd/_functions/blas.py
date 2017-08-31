@@ -21,7 +21,8 @@ class Addmm(InplaceFunction):
         # Toffee does have caffe2
         if alpha != 1 or beta != 1:
             return None
-        return g.appendNode(g.create("FC", [matrix1, matrix2, add_matrix]))
+        matrix2_t = g.appendNode(g.create("Transpose", [matrix2]))
+        return g.appendNode(g.create("FC", [matrix1, matrix2_t, add_matrix]))
 
     @staticmethod
     def forward(ctx, add_matrix, matrix1, matrix2, alpha=1, beta=1, inplace=False):

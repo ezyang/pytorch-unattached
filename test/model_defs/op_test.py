@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from torch.autograd import Variable
 
 
 class DummyNet(nn.Module):
@@ -34,3 +35,12 @@ class PermuteNet(nn.Module):
 
     def forward(self, input):
         return input.permute(2, 3, 0, 1)
+
+class IndexNet(nn.Module):
+
+    def __init__(self):
+        super(IndexNet, self).__init__()
+
+    def forward(self, input):
+        input.data = input.data.index(0)
+        return input

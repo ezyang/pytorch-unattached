@@ -21,12 +21,13 @@ class Index(Function):
         starts_tensor = torch.IntTensor(starts)
         starts_node = g.appendNode(g.create("Constant").t_("Value", starts_tensor))
         ends = list(i.type().sizes())
+        ends[0] = index + 1
         ends_tensor = torch.IntTensor(ends)
         ends_node = g.appendNode(g.create("Constant").t_("Value", ends_tensor))
         sizes = list(i.type().sizes())
         sizes.pop(0)
         slice_output = g.appendNode(g.create("Slice", [i, starts_node, ends_node]))
-        reshape_output = g.appendNode(g.create("Reshape", [n]).is_("shape", sizes))
+        reshape_output = g.appendNode(g.create("Reshape", [slice_output]).is_("shape", sizes))
         real_output = g.appendNode(g.createSelect(reshape_output, 0))
         nouse_output = g.appendNode(g.createSelect(reshape_output, 1))
         return real_output
@@ -99,8 +100,11 @@ class Transpose(Function):
 
     @staticmethod
     def primspec(g, i, dim1, dim2):
-        return (g.appendNode(g.create("Transpose", [i]))
-                .is_("axes", (dim1, dim2)))
+        if dim1 == dim2:
+            return i
+        axes = list(range(len(i.type().sizes())))
+        axes[dim1], axes[dim2] = axes[dim2], axes[dim1]
+        return g.appendNode(g.create("Transpose", [i])).is_("axes", axes)
 
     @staticmethod
     def forward(ctx, i, dim1, dim2):
