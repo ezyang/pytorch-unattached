@@ -24,9 +24,9 @@ from squeezenet import SqueezeNet
 from densenet import DenseNet
 from super_resolution import SuperResolutionNet
 import dcgan
-import torch.nn as nn
 
 skip = unittest.skip
+
 
 def skipIfNoLapack(fn):
     @wraps(fn)
@@ -150,7 +150,6 @@ class TestCaffe2Backend(unittest.TestCase):
         caffe2_out = test_embed_params(toffeeir, model, input)
         np.testing.assert_almost_equal(torch_out.data.cpu().numpy(),
                                        caffe2_out, decimal=3)
-
 
     def test_alexnet(self):
         alexnet = AlexNet()

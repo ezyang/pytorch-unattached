@@ -79,7 +79,7 @@ class Transpose(Function):
     @staticmethod
     def primspec(g, i, dim1, dim2):
         if dim1 == 0 and dim2 == 1:
-          return i
+            return i
         return (g.appendNode(g.create("Transpose", [i]))
                 .is_("axes", (dim1, dim2)))
 
