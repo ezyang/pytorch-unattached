@@ -74,7 +74,6 @@ class TestModels(TestCase):
         trace, _ = torch.jit.record_trace(
             toC(SRResNet(rescale_factor=4, n_filters=64, n_blocks=8)), toC(x))
         self.assertExpected(str(trace))
-        # print(str(trace))
         self.assertToffeeExpected(trace.export(False), "pbtxt")
 
     @skipIfNoLapack
