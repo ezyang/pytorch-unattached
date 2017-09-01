@@ -24,6 +24,7 @@ from inception import Inception3
 from squeezenet import SqueezeNet
 from densenet import DenseNet
 from super_resolution import SuperResolutionNet
+from srresnet import SRResNet
 import dcgan
 
 skip = unittest.skip
@@ -64,6 +65,7 @@ model_urls = {
     'densenet121': 'https://download.pytorch.org/models/densenet121-d66d3027.pth',
     'inception_v3_google': 'https://download.pytorch.org/models/inception_v3_google-1a9a5a14.pth',
     'resnet50': 'https://download.pytorch.org/models/resnet50-19c8e357.pth',
+    'srresNet': 'https://s3.amazonaws.com/pytorch/demos/srresnet-e10b2039.pth',
     'super_resolution': 'https://s3.amazonaws.com/pytorch/test_data/export/superres_epoch100-44c6958e.pth',
     'squeezenet1_0': 'https://download.pytorch.org/models/squeezenet1_0-a815701f.pth',
     'squeezenet1_1': 'https://download.pytorch.org/models/squeezenet1_1-f364aa15.pth',
@@ -135,14 +137,15 @@ class TestCaffe2Backend(unittest.TestCase):
         # Pass the ToffeeIR and input to load and run in caffe2
         caffe2_out = import_model(toffeeir, input, use_gpu=use_gpu)
 
-        # Verify Pytorch and Caffe2 produce almost same outputs upto
-        # certain decimal places
+        # Verify Pytorch and Caffe2 produce almost same outputs upto certain
+        # decimal places
         np.testing.assert_almost_equal(torch_out.data.cpu().numpy(),
                                        caffe2_out, decimal=3)
 
     def run_model_test(self, model, train, batch_size, state_dict=None,
                        input=None, use_gpu=True):
         use_gpu_ = torch.cuda.is_available() and use_gpu
+        self.embed_params = True
         if self.embed_params:
             self.run_actual_test(model, train, batch_size, state_dict, input,
                                  use_gpu=use_gpu_)
@@ -218,6 +221,16 @@ class TestCaffe2Backend(unittest.TestCase):
         # state_dict = model_zoo.load_url(model_urls['squeezenet1_0'])
         self.run_model_test(sqnet_v1_1, train=False, batch_size=BATCH_SIZE,
                             state_dict=state_dict)
+
+    # @skip('takes long to run')
+    def test_srresnet(self):
+        super_resolution_net = SRResNet(
+            rescale_factor=4, n_filters=64, n_blocks=8)
+        state_dict = model_zoo.load_url(model_urls['srresNet'])
+        x = Variable(torch.randn(1, 3, 224, 224), requires_grad=True)
+        self.run_model_test(super_resolution_net, train=False,
+                            batch_size=1, state_dict=state_dict,
+                            input=x, use_gpu=False)
 
     @skipIfNoLapack
     def test_super_resolution(self):
