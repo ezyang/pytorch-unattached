@@ -23,8 +23,7 @@ class Index(Function):
         ends = list(i.type().sizes())
         ends_tensor = torch.IntTensor(ends)
         ends_node = g.appendNode(g.create("Constant").t_("Value", ends_tensor))
-        sizes = list(i.type().sizes())
-        sizes.pop(0)
+        sizes = i.type().sizes()[1:]
         slice_output = g.appendNode(g.create("Slice", [i, starts_node, ends_node]))
         reshape_output = g.appendNode(g.create("Reshape", [slice_output]).is_("shape", sizes))
         real_output = g.appendNode(g.createSelect(reshape_output, 0))
