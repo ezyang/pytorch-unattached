@@ -4,7 +4,7 @@ node {
   output: "20"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 4
     ints: 4
   }
@@ -45,7 +45,7 @@ node {
   output: "23"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 4
     ints: 4
   }
@@ -92,10 +92,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -123,7 +119,7 @@ node {
   output: "32"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 4
     ints: 4
   }
@@ -170,10 +166,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -201,7 +193,7 @@ node {
   output: "41"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 4
     ints: 4
   }
@@ -248,10 +240,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -279,7 +267,7 @@ node {
   output: "50"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 4
     ints: 4
   }
@@ -340,4 +328,6 @@ input: "16"
 input: "17"
 input: "18"
 output: "52"
-producer_version: 1
+ir_version: 1
+producer_version: 20000
+producer_tag: "pytorch"

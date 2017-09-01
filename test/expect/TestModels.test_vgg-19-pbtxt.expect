@@ -4,7 +4,7 @@ node {
   output: "41"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -55,7 +55,7 @@ node {
   output: "45"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -105,7 +105,7 @@ node {
   output: "48"
   op_type: "MaxPool"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 2
     ints: 2
   }
@@ -133,7 +133,7 @@ node {
   output: "50"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -184,7 +184,7 @@ node {
   output: "54"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -234,7 +234,7 @@ node {
   output: "57"
   op_type: "MaxPool"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 2
     ints: 2
   }
@@ -262,7 +262,7 @@ node {
   output: "59"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -313,7 +313,7 @@ node {
   output: "63"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -364,7 +364,7 @@ node {
   output: "67"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -415,7 +415,7 @@ node {
   output: "71"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -465,7 +465,7 @@ node {
   output: "74"
   op_type: "MaxPool"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 2
     ints: 2
   }
@@ -493,7 +493,7 @@ node {
   output: "76"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -544,7 +544,7 @@ node {
   output: "80"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -595,7 +595,7 @@ node {
   output: "84"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -646,7 +646,7 @@ node {
   output: "88"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -696,7 +696,7 @@ node {
   output: "91"
   op_type: "MaxPool"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 2
     ints: 2
   }
@@ -724,7 +724,7 @@ node {
   output: "93"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -775,7 +775,7 @@ node {
   output: "97"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -826,7 +826,7 @@ node {
   output: "101"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -877,7 +877,7 @@ node {
   output: "105"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -927,7 +927,7 @@ node {
   output: "108"
   op_type: "MaxPool"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 2
     ints: 2
   }
@@ -1104,4 +1104,6 @@ input: "37"
 input: "38"
 input: "39"
 output: "126"
-producer_version: 1
+ir_version: 1
+producer_version: 20000
+producer_tag: "pytorch"

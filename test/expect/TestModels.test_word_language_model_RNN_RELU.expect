@@ -28,7 +28,7 @@ graph(%1 : Float(10, 5)
   %35 : Float(5!, 5!), %36 : Handle = ^Transpose(0, 1)(%2), uses = [[%37.i2], []];
   %38 : Float(5, 5), %39 : Handle = ^Addmm(1, 1, False)(%4, %32, %35), uses = [[%47.i0], []];
   %41 : Float(5!, 5!), %42 : Handle = ^Transpose(0, 1)(%3), uses = [[%44.i2], []];
-  %43 : Float(5, 5) = Constant[Value=<Tensor>](), uses = [%44.i1];
+  %43 : Float(5, 5) = Constant[value=<Tensor>](), uses = [%44.i1];
   %45 : Float(5, 5), %46 : Handle = ^Addmm(1, 1, False)(%5, %43, %41), uses = [[%47.i1], []];
   %48 : Float(5, 5), %49 : Handle = ^Add(False)(%38, %45), uses = [[%50.i0], []];
   %51 : Float(5, 5), %52 : Handle = ^Threshold(0, 0, False)(%48), uses = [[%65.i1, %242.i0], []];
@@ -103,7 +103,7 @@ graph(%1 : Float(10, 5)
   %258 : Float(5!, 5!), %259 : Handle = ^Transpose(0, 1)(%6), uses = [[%260.i2], []];
   %261 : Float(5, 5), %262 : Handle = ^Addmm(1, 1, False)(%8, %255, %258), uses = [[%270.i0], []];
   %264 : Float(5!, 5!), %265 : Handle = ^Transpose(0, 1)(%7), uses = [[%267.i2], []];
-  %266 : Float(5, 5) = Constant[Value=<Tensor>](), uses = [%267.i1];
+  %266 : Float(5, 5) = Constant[value=<Tensor>](), uses = [%267.i1];
   %268 : Float(5, 5), %269 : Handle = ^Addmm(1, 1, False)(%9, %266, %264), uses = [[%270.i1], []];
   %271 : Float(5, 5), %272 : Handle = ^Add(False)(%261, %268), uses = [[%273.i0], []];
   %274 : Float(5, 5), %275 : Handle = ^Threshold(0, 0, False)(%271), uses = [[%288.i1, %465.i0], []];
@@ -178,7 +178,7 @@ graph(%1 : Float(10, 5)
   %481 : Float(5!, 5!), %482 : Handle = ^Transpose(0, 1)(%10), uses = [[%483.i2], []];
   %484 : Float(5, 5), %485 : Handle = ^Addmm(1, 1, False)(%12, %478, %481), uses = [[%493.i0], []];
   %487 : Float(5!, 5!), %488 : Handle = ^Transpose(0, 1)(%11), uses = [[%490.i2], []];
-  %489 : Float(5, 5) = Constant[Value=<Tensor>](), uses = [%490.i1];
+  %489 : Float(5, 5) = Constant[value=<Tensor>](), uses = [%490.i1];
   %491 : Float(5, 5), %492 : Handle = ^Addmm(1, 1, False)(%13, %489, %487), uses = [[%493.i1], []];
   %494 : Float(5, 5), %495 : Handle = ^Add(False)(%484, %491), uses = [[%496.i0], []];
   %497 : Float(5, 5), %498 : Handle = ^Threshold(0, 0, False)(%494), uses = [[%511.i1, %688.i0], []];
@@ -253,7 +253,7 @@ graph(%1 : Float(10, 5)
   %704 : Float(5!, 5!), %705 : Handle = ^Transpose(0, 1)(%14), uses = [[%706.i2], []];
   %707 : Float(5, 5), %708 : Handle = ^Addmm(1, 1, False)(%16, %701, %704), uses = [[%716.i0], []];
   %710 : Float(5!, 5!), %711 : Handle = ^Transpose(0, 1)(%15), uses = [[%713.i2], []];
-  %712 : Float(5, 5) = Constant[Value=<Tensor>](), uses = [%713.i1];
+  %712 : Float(5, 5) = Constant[value=<Tensor>](), uses = [%713.i1];
   %714 : Float(5, 5), %715 : Handle = ^Addmm(1, 1, False)(%17, %712, %710), uses = [[%716.i1], []];
   %717 : Float(5, 5), %718 : Handle = ^Add(False)(%707, %714), uses = [[%719.i0], []];
   %720 : Float(5, 5), %721 : Handle = ^Threshold(0, 0, False)(%717), uses = [[%734.i1, %911.i0], []];
@@ -328,7 +328,7 @@ graph(%1 : Float(10, 5)
   %927 : Float(5!, 5!), %928 : Handle = ^Transpose(0, 1)(%18), uses = [[%929.i2], []];
   %930 : Float(5, 5), %931 : Handle = ^Addmm(1, 1, False)(%20, %924, %927), uses = [[%939.i0], []];
   %933 : Float(5!, 5!), %934 : Handle = ^Transpose(0, 1)(%19), uses = [[%936.i2], []];
-  %935 : Float(5, 5) = Constant[Value=<Tensor>](), uses = [%936.i1];
+  %935 : Float(5, 5) = Constant[value=<Tensor>](), uses = [%936.i1];
   %937 : Float(5, 5), %938 : Handle = ^Addmm(1, 1, False)(%21, %935, %933), uses = [[%939.i1], []];
   %940 : Float(5, 5), %941 : Handle = ^Add(False)(%930, %937), uses = [[%942.i0], []];
   %943 : Float(5, 5), %944 : Handle = ^Threshold(0, 0, False)(%940), uses = [[%957.i1, %1134.i0], []];

@@ -28,7 +28,7 @@ graph(%1 : Float(10, 5)
   %35 : Float(5!, 15!), %36 : Handle = ^Transpose(0, 1)(%2), uses = [[%37.i2], []];
   %38 : Float(5, 15), %39 : Handle = ^Addmm(1, 1, False)(%4, %32, %35), uses = [[%47.i0], []];
   %41 : Float(5!, 15!), %42 : Handle = ^Transpose(0, 1)(%3), uses = [[%44.i2], []];
-  %43 : Float(5, 5) = Constant[Value=<Tensor>](), uses = [%44.i1, %78.i0];
+  %43 : Float(5, 5) = Constant[value=<Tensor>](), uses = [%44.i1, %78.i0];
   %45 : Float(5, 15), %46 : Handle = ^Addmm(1, 1, False)(%5, %43, %41), uses = [[%52.i0], []];
   %48 : Float(5!, 5), %49 : Float(5!, 5), %50 : Float(5!, 5), %51 : Handle = ^Chunk(3, 1)(%38), uses = [[%57.i0], [%63.i0], [%72.i0], []];
   %53 : Float(5!, 5), %54 : Float(5!, 5), %55 : Float(5!, 5), %56 : Handle = ^Chunk(3, 1)(%45), uses = [[%57.i1], [%63.i1], [%69.i1], []];
@@ -203,7 +203,7 @@ graph(%1 : Float(10, 5)
   %598 : Float(5!, 15!), %599 : Handle = ^Transpose(0, 1)(%6), uses = [[%600.i2], []];
   %601 : Float(5, 15), %602 : Handle = ^Addmm(1, 1, False)(%8, %595, %598), uses = [[%610.i0], []];
   %604 : Float(5!, 15!), %605 : Handle = ^Transpose(0, 1)(%7), uses = [[%607.i2], []];
-  %606 : Float(5, 5) = Constant[Value=<Tensor>](), uses = [%607.i1, %641.i0];
+  %606 : Float(5, 5) = Constant[value=<Tensor>](), uses = [%607.i1, %641.i0];
   %608 : Float(5, 15), %609 : Handle = ^Addmm(1, 1, False)(%9, %606, %604), uses = [[%615.i0], []];
   %611 : Float(5!, 5), %612 : Float(5!, 5), %613 : Float(5!, 5), %614 : Handle = ^Chunk(3, 1)(%601), uses = [[%620.i0], [%626.i0], [%635.i0], []];
   %616 : Float(5!, 5), %617 : Float(5!, 5), %618 : Float(5!, 5), %619 : Handle = ^Chunk(3, 1)(%608), uses = [[%620.i1], [%626.i1], [%632.i1], []];
@@ -378,7 +378,7 @@ graph(%1 : Float(10, 5)
   %1161 : Float(5!, 15!), %1162 : Handle = ^Transpose(0, 1)(%10), uses = [[%1163.i2], []];
   %1164 : Float(5, 15), %1165 : Handle = ^Addmm(1, 1, False)(%12, %1158, %1161), uses = [[%1173.i0], []];
   %1167 : Float(5!, 15!), %1168 : Handle = ^Transpose(0, 1)(%11), uses = [[%1170.i2], []];
-  %1169 : Float(5, 5) = Constant[Value=<Tensor>](), uses = [%1170.i1, %1204.i0];
+  %1169 : Float(5, 5) = Constant[value=<Tensor>](), uses = [%1170.i1, %1204.i0];
   %1171 : Float(5, 15), %1172 : Handle = ^Addmm(1, 1, False)(%13, %1169, %1167), uses = [[%1178.i0], []];
   %1174 : Float(5!, 5), %1175 : Float(5!, 5), %1176 : Float(5!, 5), %1177 : Handle = ^Chunk(3, 1)(%1164), uses = [[%1183.i0], [%1189.i0], [%1198.i0], []];
   %1179 : Float(5!, 5), %1180 : Float(5!, 5), %1181 : Float(5!, 5), %1182 : Handle = ^Chunk(3, 1)(%1171), uses = [[%1183.i1], [%1189.i1], [%1195.i1], []];
@@ -553,7 +553,7 @@ graph(%1 : Float(10, 5)
   %1724 : Float(5!, 15!), %1725 : Handle = ^Transpose(0, 1)(%14), uses = [[%1726.i2], []];
   %1727 : Float(5, 15), %1728 : Handle = ^Addmm(1, 1, False)(%16, %1721, %1724), uses = [[%1736.i0], []];
   %1730 : Float(5!, 15!), %1731 : Handle = ^Transpose(0, 1)(%15), uses = [[%1733.i2], []];
-  %1732 : Float(5, 5) = Constant[Value=<Tensor>](), uses = [%1733.i1, %1767.i0];
+  %1732 : Float(5, 5) = Constant[value=<Tensor>](), uses = [%1733.i1, %1767.i0];
   %1734 : Float(5, 15), %1735 : Handle = ^Addmm(1, 1, False)(%17, %1732, %1730), uses = [[%1741.i0], []];
   %1737 : Float(5!, 5), %1738 : Float(5!, 5), %1739 : Float(5!, 5), %1740 : Handle = ^Chunk(3, 1)(%1727), uses = [[%1746.i0], [%1752.i0], [%1761.i0], []];
   %1742 : Float(5!, 5), %1743 : Float(5!, 5), %1744 : Float(5!, 5), %1745 : Handle = ^Chunk(3, 1)(%1734), uses = [[%1746.i1], [%1752.i1], [%1758.i1], []];
@@ -728,7 +728,7 @@ graph(%1 : Float(10, 5)
   %2287 : Float(5!, 15!), %2288 : Handle = ^Transpose(0, 1)(%18), uses = [[%2289.i2], []];
   %2290 : Float(5, 15), %2291 : Handle = ^Addmm(1, 1, False)(%20, %2284, %2287), uses = [[%2299.i0], []];
   %2293 : Float(5!, 15!), %2294 : Handle = ^Transpose(0, 1)(%19), uses = [[%2296.i2], []];
-  %2295 : Float(5, 5) = Constant[Value=<Tensor>](), uses = [%2296.i1, %2330.i0];
+  %2295 : Float(5, 5) = Constant[value=<Tensor>](), uses = [%2296.i1, %2330.i0];
   %2297 : Float(5, 15), %2298 : Handle = ^Addmm(1, 1, False)(%21, %2295, %2293), uses = [[%2304.i0], []];
   %2300 : Float(5!, 5), %2301 : Float(5!, 5), %2302 : Float(5!, 5), %2303 : Handle = ^Chunk(3, 1)(%2290), uses = [[%2309.i0], [%2315.i0], [%2324.i0], []];
   %2305 : Float(5!, 5), %2306 : Float(5!, 5), %2307 : Float(5!, 5), %2308 : Handle = ^Chunk(3, 1)(%2297), uses = [[%2309.i1], [%2315.i1], [%2321.i1], []];

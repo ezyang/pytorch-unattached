@@ -28,7 +28,7 @@ graph(%1 : Float(10, 5)
   %35 : Float(5!, 20!), %36 : Handle = ^Transpose(0, 1)(%2), uses = [[%37.i2], []];
   %38 : Float(5, 20), %39 : Handle = ^Addmm(1, 1, False)(%4, %32, %35), uses = [[%47.i0], []];
   %41 : Float(5!, 20!), %42 : Handle = ^Transpose(0, 1)(%3), uses = [[%44.i2], []];
-  %43 : Float(5, 5) = Constant[Value=<Tensor>](), uses = [%44.i1];
+  %43 : Float(5, 5) = Constant[value=<Tensor>](), uses = [%44.i1];
   %45 : Float(5, 20), %46 : Handle = ^Addmm(1, 1, False)(%5, %43, %41), uses = [[%47.i1], []];
   %48 : Float(5, 20), %49 : Handle = ^Add(False)(%38, %45), uses = [[%50.i0], []];
   %51 : Float(5!, 5), %52 : Float(5!, 5), %53 : Float(5!, 5), %54 : Float(5!, 5), %55 : Handle = ^Chunk(4, 1)(%48), uses = [[%56.i0], [%59.i0], [%62.i0], [%65.i0], []];
@@ -36,7 +36,7 @@ graph(%1 : Float(10, 5)
   %60 : Float(5, 5), %61 : Handle = ^Sigmoid()(%52), uses = [[%69.i0], []];
   %63 : Float(5, 5), %64 : Handle = ^Tanh()(%53), uses = [[%72.i1], []];
   %66 : Float(5, 5), %67 : Handle = ^Sigmoid()(%54), uses = [[%81.i0], []];
-  %68 : Float(5, 5) = Constant[Value=<Tensor>](), uses = [%69.i1];
+  %68 : Float(5, 5) = Constant[value=<Tensor>](), uses = [%69.i1];
   %70 : Float(5, 5), %71 : Handle = ^Mul()(%60, %68), uses = [[%75.i0], []];
   %73 : Float(5, 5), %74 : Handle = ^Mul()(%57, %63), uses = [[%75.i1], []];
   %76 : Float(5, 5), %77 : Handle = ^Add(False)(%70, %73), uses = [[%78.i0, %120.i1], []];
@@ -194,7 +194,7 @@ graph(%1 : Float(10, 5)
   %559 : Float(5!, 20!), %560 : Handle = ^Transpose(0, 1)(%6), uses = [[%561.i2], []];
   %562 : Float(5, 20), %563 : Handle = ^Addmm(1, 1, False)(%8, %556, %559), uses = [[%571.i0], []];
   %565 : Float(5!, 20!), %566 : Handle = ^Transpose(0, 1)(%7), uses = [[%568.i2], []];
-  %567 : Float(5, 5) = Constant[Value=<Tensor>](), uses = [%568.i1];
+  %567 : Float(5, 5) = Constant[value=<Tensor>](), uses = [%568.i1];
   %569 : Float(5, 20), %570 : Handle = ^Addmm(1, 1, False)(%9, %567, %565), uses = [[%571.i1], []];
   %572 : Float(5, 20), %573 : Handle = ^Add(False)(%562, %569), uses = [[%574.i0], []];
   %575 : Float(5!, 5), %576 : Float(5!, 5), %577 : Float(5!, 5), %578 : Float(5!, 5), %579 : Handle = ^Chunk(4, 1)(%572), uses = [[%580.i0], [%583.i0], [%586.i0], [%589.i0], []];
@@ -202,7 +202,7 @@ graph(%1 : Float(10, 5)
   %584 : Float(5, 5), %585 : Handle = ^Sigmoid()(%576), uses = [[%593.i0], []];
   %587 : Float(5, 5), %588 : Handle = ^Tanh()(%577), uses = [[%596.i1], []];
   %590 : Float(5, 5), %591 : Handle = ^Sigmoid()(%578), uses = [[%605.i0], []];
-  %592 : Float(5, 5) = Constant[Value=<Tensor>](), uses = [%593.i1];
+  %592 : Float(5, 5) = Constant[value=<Tensor>](), uses = [%593.i1];
   %594 : Float(5, 5), %595 : Handle = ^Mul()(%584, %592), uses = [[%599.i0], []];
   %597 : Float(5, 5), %598 : Handle = ^Mul()(%581, %587), uses = [[%599.i1], []];
   %600 : Float(5, 5), %601 : Handle = ^Add(False)(%594, %597), uses = [[%602.i0, %644.i1], []];
@@ -360,7 +360,7 @@ graph(%1 : Float(10, 5)
   %1083 : Float(5!, 20!), %1084 : Handle = ^Transpose(0, 1)(%10), uses = [[%1085.i2], []];
   %1086 : Float(5, 20), %1087 : Handle = ^Addmm(1, 1, False)(%12, %1080, %1083), uses = [[%1095.i0], []];
   %1089 : Float(5!, 20!), %1090 : Handle = ^Transpose(0, 1)(%11), uses = [[%1092.i2], []];
-  %1091 : Float(5, 5) = Constant[Value=<Tensor>](), uses = [%1092.i1];
+  %1091 : Float(5, 5) = Constant[value=<Tensor>](), uses = [%1092.i1];
   %1093 : Float(5, 20), %1094 : Handle = ^Addmm(1, 1, False)(%13, %1091, %1089), uses = [[%1095.i1], []];
   %1096 : Float(5, 20), %1097 : Handle = ^Add(False)(%1086, %1093), uses = [[%1098.i0], []];
   %1099 : Float(5!, 5), %1100 : Float(5!, 5), %1101 : Float(5!, 5), %1102 : Float(5!, 5), %1103 : Handle = ^Chunk(4, 1)(%1096), uses = [[%1104.i0], [%1107.i0], [%1110.i0], [%1113.i0], []];
@@ -368,7 +368,7 @@ graph(%1 : Float(10, 5)
   %1108 : Float(5, 5), %1109 : Handle = ^Sigmoid()(%1100), uses = [[%1117.i0], []];
   %1111 : Float(5, 5), %1112 : Handle = ^Tanh()(%1101), uses = [[%1120.i1], []];
   %1114 : Float(5, 5), %1115 : Handle = ^Sigmoid()(%1102), uses = [[%1129.i0], []];
-  %1116 : Float(5, 5) = Constant[Value=<Tensor>](), uses = [%1117.i1];
+  %1116 : Float(5, 5) = Constant[value=<Tensor>](), uses = [%1117.i1];
   %1118 : Float(5, 5), %1119 : Handle = ^Mul()(%1108, %1116), uses = [[%1123.i0], []];
   %1121 : Float(5, 5), %1122 : Handle = ^Mul()(%1105, %1111), uses = [[%1123.i1], []];
   %1124 : Float(5, 5), %1125 : Handle = ^Add(False)(%1118, %1121), uses = [[%1126.i0, %1168.i1], []];
@@ -526,7 +526,7 @@ graph(%1 : Float(10, 5)
   %1607 : Float(5!, 20!), %1608 : Handle = ^Transpose(0, 1)(%14), uses = [[%1609.i2], []];
   %1610 : Float(5, 20), %1611 : Handle = ^Addmm(1, 1, False)(%16, %1604, %1607), uses = [[%1619.i0], []];
   %1613 : Float(5!, 20!), %1614 : Handle = ^Transpose(0, 1)(%15), uses = [[%1616.i2], []];
-  %1615 : Float(5, 5) = Constant[Value=<Tensor>](), uses = [%1616.i1];
+  %1615 : Float(5, 5) = Constant[value=<Tensor>](), uses = [%1616.i1];
   %1617 : Float(5, 20), %1618 : Handle = ^Addmm(1, 1, False)(%17, %1615, %1613), uses = [[%1619.i1], []];
   %1620 : Float(5, 20), %1621 : Handle = ^Add(False)(%1610, %1617), uses = [[%1622.i0], []];
   %1623 : Float(5!, 5), %1624 : Float(5!, 5), %1625 : Float(5!, 5), %1626 : Float(5!, 5), %1627 : Handle = ^Chunk(4, 1)(%1620), uses = [[%1628.i0], [%1631.i0], [%1634.i0], [%1637.i0], []];
@@ -534,7 +534,7 @@ graph(%1 : Float(10, 5)
   %1632 : Float(5, 5), %1633 : Handle = ^Sigmoid()(%1624), uses = [[%1641.i0], []];
   %1635 : Float(5, 5), %1636 : Handle = ^Tanh()(%1625), uses = [[%1644.i1], []];
   %1638 : Float(5, 5), %1639 : Handle = ^Sigmoid()(%1626), uses = [[%1653.i0], []];
-  %1640 : Float(5, 5) = Constant[Value=<Tensor>](), uses = [%1641.i1];
+  %1640 : Float(5, 5) = Constant[value=<Tensor>](), uses = [%1641.i1];
   %1642 : Float(5, 5), %1643 : Handle = ^Mul()(%1632, %1640), uses = [[%1647.i0], []];
   %1645 : Float(5, 5), %1646 : Handle = ^Mul()(%1629, %1635), uses = [[%1647.i1], []];
   %1648 : Float(5, 5), %1649 : Handle = ^Add(False)(%1642, %1645), uses = [[%1650.i0, %1692.i1], []];
@@ -692,7 +692,7 @@ graph(%1 : Float(10, 5)
   %2131 : Float(5!, 20!), %2132 : Handle = ^Transpose(0, 1)(%18), uses = [[%2133.i2], []];
   %2134 : Float(5, 20), %2135 : Handle = ^Addmm(1, 1, False)(%20, %2128, %2131), uses = [[%2143.i0], []];
   %2137 : Float(5!, 20!), %2138 : Handle = ^Transpose(0, 1)(%19), uses = [[%2140.i2], []];
-  %2139 : Float(5, 5) = Constant[Value=<Tensor>](), uses = [%2140.i1];
+  %2139 : Float(5, 5) = Constant[value=<Tensor>](), uses = [%2140.i1];
   %2141 : Float(5, 20), %2142 : Handle = ^Addmm(1, 1, False)(%21, %2139, %2137), uses = [[%2143.i1], []];
   %2144 : Float(5, 20), %2145 : Handle = ^Add(False)(%2134, %2141), uses = [[%2146.i0], []];
   %2147 : Float(5!, 5), %2148 : Float(5!, 5), %2149 : Float(5!, 5), %2150 : Float(5!, 5), %2151 : Handle = ^Chunk(4, 1)(%2144), uses = [[%2152.i0], [%2155.i0], [%2158.i0], [%2161.i0], []];
@@ -700,7 +700,7 @@ graph(%1 : Float(10, 5)
   %2156 : Float(5, 5), %2157 : Handle = ^Sigmoid()(%2148), uses = [[%2165.i0], []];
   %2159 : Float(5, 5), %2160 : Handle = ^Tanh()(%2149), uses = [[%2168.i1], []];
   %2162 : Float(5, 5), %2163 : Handle = ^Sigmoid()(%2150), uses = [[%2177.i0], []];
-  %2164 : Float(5, 5) = Constant[Value=<Tensor>](), uses = [%2165.i1];
+  %2164 : Float(5, 5) = Constant[value=<Tensor>](), uses = [%2165.i1];
   %2166 : Float(5, 5), %2167 : Handle = ^Mul()(%2156, %2164), uses = [[%2171.i0], []];
   %2169 : Float(5, 5), %2170 : Handle = ^Mul()(%2153, %2159), uses = [[%2171.i1], []];
   %2172 : Float(5, 5), %2173 : Handle = ^Add(False)(%2166, %2169), uses = [[%2174.i0, %2216.i1], []];

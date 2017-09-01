@@ -4,7 +4,7 @@ node {
   output: "19"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 11
     ints: 11
   }
@@ -54,7 +54,7 @@ node {
   output: "22"
   op_type: "MaxPool"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -82,7 +82,7 @@ node {
   output: "24"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 5
     ints: 5
   }
@@ -132,7 +132,7 @@ node {
   output: "27"
   op_type: "MaxPool"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -160,7 +160,7 @@ node {
   output: "29"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -211,7 +211,7 @@ node {
   output: "33"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -262,7 +262,7 @@ node {
   output: "37"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -312,7 +312,7 @@ node {
   output: "40"
   op_type: "MaxPool"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -467,4 +467,6 @@ input: "15"
 input: "16"
 input: "17"
 output: "58"
-producer_version: 1
+ir_version: 1
+producer_version: 20000
+producer_tag: "pytorch"

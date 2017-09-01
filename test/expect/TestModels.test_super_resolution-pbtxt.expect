@@ -4,7 +4,7 @@ node {
   output: "11"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 5
     ints: 5
   }
@@ -55,7 +55,7 @@ node {
   output: "15"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -106,7 +106,7 @@ node {
   output: "19"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -157,7 +157,7 @@ node {
   output: "23"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -248,4 +248,6 @@ input: "7"
 input: "8"
 input: "9"
 output: "27"
-producer_version: 1
+ir_version: 1
+producer_version: 20000
+producer_tag: "pytorch"
