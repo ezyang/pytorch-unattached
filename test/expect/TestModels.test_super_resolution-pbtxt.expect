@@ -1,4 +1,3 @@
-version: 1
 node {
   input: "9"
   input: "1"
@@ -199,3 +198,4 @@ input: "7"
 input: "8"
 input: "9"
 output: "22"
+producer_version: 1
