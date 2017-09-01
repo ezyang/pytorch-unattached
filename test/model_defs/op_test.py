@@ -34,3 +34,16 @@ class PermuteNet(nn.Module):
 
     def forward(self, input):
         return input.permute(2, 3, 0, 1)
+
+
+class PReluNet(nn.Module):
+
+    def __init__(self):
+        super(PReluNet, self).__init__()
+        self.features = nn.Sequential(
+            nn.PReLU(3),
+        )
+
+    def forward(self, x):
+        output = self.features(x)
+        return output
