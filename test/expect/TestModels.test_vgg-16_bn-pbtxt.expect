@@ -1,0 +1,1313 @@
+version: 1
+node {
+  input: "85"
+  input: "1"
+  input: "2"
+  output: "86"
+  op_type: "Conv"
+  attribute {
+    name: "kernels"
+    ints: 3
+    ints: 3
+  }
+  attribute {
+    name: "strides"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "pads"
+    ints: 1
+    ints: 1
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "dilations"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "group"
+    i: 1
+  }
+}
+node {
+  input: "86"
+  input: "3"
+  input: "4"
+  input: "5"
+  input: "6"
+  output: "88"
+  output: "89"
+  output: "90"
+  output: "batch_norm_dead_output_91"
+  output: "batch_norm_dead_output_92"
+  op_type: "SpatialBN"
+  attribute {
+    name: "is_test"
+    i: 0
+  }
+  attribute {
+    name: "epsilon"
+    f: 9.99999974737875e-06
+  }
+  attribute {
+    name: "order"
+    s: "NCHW"
+  }
+  attribute {
+    name: "momentum"
+    f: 0.899999976158142
+  }
+  attribute {
+    name: "consumed_inputs"
+    ints: 0
+    ints: 0
+    ints: 0
+    ints: 1
+    ints: 1
+  }
+}
+node {
+  input: "88"
+  output: "93"
+  op_type: "Relu"
+}
+node {
+  input: "93"
+  input: "7"
+  input: "8"
+  output: "94"
+  op_type: "Conv"
+  attribute {
+    name: "kernels"
+    ints: 3
+    ints: 3
+  }
+  attribute {
+    name: "strides"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "pads"
+    ints: 1
+    ints: 1
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "dilations"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "group"
+    i: 1
+  }
+}
+node {
+  input: "94"
+  input: "9"
+  input: "10"
+  input: "11"
+  input: "12"
+  output: "96"
+  output: "97"
+  output: "98"
+  output: "batch_norm_dead_output_99"
+  output: "batch_norm_dead_output_100"
+  op_type: "SpatialBN"
+  attribute {
+    name: "is_test"
+    i: 0
+  }
+  attribute {
+    name: "epsilon"
+    f: 9.99999974737875e-06
+  }
+  attribute {
+    name: "order"
+    s: "NCHW"
+  }
+  attribute {
+    name: "momentum"
+    f: 0.899999976158142
+  }
+  attribute {
+    name: "consumed_inputs"
+    ints: 0
+    ints: 0
+    ints: 0
+    ints: 1
+    ints: 1
+  }
+}
+node {
+  input: "96"
+  output: "101"
+  op_type: "Relu"
+}
+node {
+  input: "101"
+  output: "102"
+  op_type: "MaxPool"
+  attribute {
+    name: "kernels"
+    ints: 2
+    ints: 2
+  }
+  attribute {
+    name: "pads"
+    ints: 0
+    ints: 0
+    ints: 0
+    ints: 0
+  }
+  attribute {
+    name: "dilations"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "strides"
+    ints: 2
+    ints: 2
+  }
+}
+node {
+  input: "102"
+  input: "13"
+  input: "14"
+  output: "103"
+  op_type: "Conv"
+  attribute {
+    name: "kernels"
+    ints: 3
+    ints: 3
+  }
+  attribute {
+    name: "strides"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "pads"
+    ints: 1
+    ints: 1
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "dilations"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "group"
+    i: 1
+  }
+}
+node {
+  input: "103"
+  input: "15"
+  input: "16"
+  input: "17"
+  input: "18"
+  output: "105"
+  output: "106"
+  output: "107"
+  output: "batch_norm_dead_output_108"
+  output: "batch_norm_dead_output_109"
+  op_type: "SpatialBN"
+  attribute {
+    name: "is_test"
+    i: 0
+  }
+  attribute {
+    name: "epsilon"
+    f: 9.99999974737875e-06
+  }
+  attribute {
+    name: "order"
+    s: "NCHW"
+  }
+  attribute {
+    name: "momentum"
+    f: 0.899999976158142
+  }
+  attribute {
+    name: "consumed_inputs"
+    ints: 0
+    ints: 0
+    ints: 0
+    ints: 1
+    ints: 1
+  }
+}
+node {
+  input: "105"
+  output: "110"
+  op_type: "Relu"
+}
+node {
+  input: "110"
+  input: "19"
+  input: "20"
+  output: "111"
+  op_type: "Conv"
+  attribute {
+    name: "kernels"
+    ints: 3
+    ints: 3
+  }
+  attribute {
+    name: "strides"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "pads"
+    ints: 1
+    ints: 1
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "dilations"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "group"
+    i: 1
+  }
+}
+node {
+  input: "111"
+  input: "21"
+  input: "22"
+  input: "23"
+  input: "24"
+  output: "113"
+  output: "114"
+  output: "115"
+  output: "batch_norm_dead_output_116"
+  output: "batch_norm_dead_output_117"
+  op_type: "SpatialBN"
+  attribute {
+    name: "is_test"
+    i: 0
+  }
+  attribute {
+    name: "epsilon"
+    f: 9.99999974737875e-06
+  }
+  attribute {
+    name: "order"
+    s: "NCHW"
+  }
+  attribute {
+    name: "momentum"
+    f: 0.899999976158142
+  }
+  attribute {
+    name: "consumed_inputs"
+    ints: 0
+    ints: 0
+    ints: 0
+    ints: 1
+    ints: 1
+  }
+}
+node {
+  input: "113"
+  output: "118"
+  op_type: "Relu"
+}
+node {
+  input: "118"
+  output: "119"
+  op_type: "MaxPool"
+  attribute {
+    name: "kernels"
+    ints: 2
+    ints: 2
+  }
+  attribute {
+    name: "pads"
+    ints: 0
+    ints: 0
+    ints: 0
+    ints: 0
+  }
+  attribute {
+    name: "dilations"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "strides"
+    ints: 2
+    ints: 2
+  }
+}
+node {
+  input: "119"
+  input: "25"
+  input: "26"
+  output: "120"
+  op_type: "Conv"
+  attribute {
+    name: "kernels"
+    ints: 3
+    ints: 3
+  }
+  attribute {
+    name: "strides"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "pads"
+    ints: 1
+    ints: 1
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "dilations"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "group"
+    i: 1
+  }
+}
+node {
+  input: "120"
+  input: "27"
+  input: "28"
+  input: "29"
+  input: "30"
+  output: "122"
+  output: "123"
+  output: "124"
+  output: "batch_norm_dead_output_125"
+  output: "batch_norm_dead_output_126"
+  op_type: "SpatialBN"
+  attribute {
+    name: "is_test"
+    i: 0
+  }
+  attribute {
+    name: "epsilon"
+    f: 9.99999974737875e-06
+  }
+  attribute {
+    name: "order"
+    s: "NCHW"
+  }
+  attribute {
+    name: "momentum"
+    f: 0.899999976158142
+  }
+  attribute {
+    name: "consumed_inputs"
+    ints: 0
+    ints: 0
+    ints: 0
+    ints: 1
+    ints: 1
+  }
+}
+node {
+  input: "122"
+  output: "127"
+  op_type: "Relu"
+}
+node {
+  input: "127"
+  input: "31"
+  input: "32"
+  output: "128"
+  op_type: "Conv"
+  attribute {
+    name: "kernels"
+    ints: 3
+    ints: 3
+  }
+  attribute {
+    name: "strides"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "pads"
+    ints: 1
+    ints: 1
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "dilations"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "group"
+    i: 1
+  }
+}
+node {
+  input: "128"
+  input: "33"
+  input: "34"
+  input: "35"
+  input: "36"
+  output: "130"
+  output: "131"
+  output: "132"
+  output: "batch_norm_dead_output_133"
+  output: "batch_norm_dead_output_134"
+  op_type: "SpatialBN"
+  attribute {
+    name: "is_test"
+    i: 0
+  }
+  attribute {
+    name: "epsilon"
+    f: 9.99999974737875e-06
+  }
+  attribute {
+    name: "order"
+    s: "NCHW"
+  }
+  attribute {
+    name: "momentum"
+    f: 0.899999976158142
+  }
+  attribute {
+    name: "consumed_inputs"
+    ints: 0
+    ints: 0
+    ints: 0
+    ints: 1
+    ints: 1
+  }
+}
+node {
+  input: "130"
+  output: "135"
+  op_type: "Relu"
+}
+node {
+  input: "135"
+  input: "37"
+  input: "38"
+  output: "136"
+  op_type: "Conv"
+  attribute {
+    name: "kernels"
+    ints: 3
+    ints: 3
+  }
+  attribute {
+    name: "strides"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "pads"
+    ints: 1
+    ints: 1
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "dilations"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "group"
+    i: 1
+  }
+}
+node {
+  input: "136"
+  input: "39"
+  input: "40"
+  input: "41"
+  input: "42"
+  output: "138"
+  output: "139"
+  output: "140"
+  output: "batch_norm_dead_output_141"
+  output: "batch_norm_dead_output_142"
+  op_type: "SpatialBN"
+  attribute {
+    name: "is_test"
+    i: 0
+  }
+  attribute {
+    name: "epsilon"
+    f: 9.99999974737875e-06
+  }
+  attribute {
+    name: "order"
+    s: "NCHW"
+  }
+  attribute {
+    name: "momentum"
+    f: 0.899999976158142
+  }
+  attribute {
+    name: "consumed_inputs"
+    ints: 0
+    ints: 0
+    ints: 0
+    ints: 1
+    ints: 1
+  }
+}
+node {
+  input: "138"
+  output: "143"
+  op_type: "Relu"
+}
+node {
+  input: "143"
+  output: "144"
+  op_type: "MaxPool"
+  attribute {
+    name: "kernels"
+    ints: 2
+    ints: 2
+  }
+  attribute {
+    name: "pads"
+    ints: 0
+    ints: 0
+    ints: 0
+    ints: 0
+  }
+  attribute {
+    name: "dilations"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "strides"
+    ints: 2
+    ints: 2
+  }
+}
+node {
+  input: "144"
+  input: "43"
+  input: "44"
+  output: "145"
+  op_type: "Conv"
+  attribute {
+    name: "kernels"
+    ints: 3
+    ints: 3
+  }
+  attribute {
+    name: "strides"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "pads"
+    ints: 1
+    ints: 1
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "dilations"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "group"
+    i: 1
+  }
+}
+node {
+  input: "145"
+  input: "45"
+  input: "46"
+  input: "47"
+  input: "48"
+  output: "147"
+  output: "148"
+  output: "149"
+  output: "batch_norm_dead_output_150"
+  output: "batch_norm_dead_output_151"
+  op_type: "SpatialBN"
+  attribute {
+    name: "is_test"
+    i: 0
+  }
+  attribute {
+    name: "epsilon"
+    f: 9.99999974737875e-06
+  }
+  attribute {
+    name: "order"
+    s: "NCHW"
+  }
+  attribute {
+    name: "momentum"
+    f: 0.899999976158142
+  }
+  attribute {
+    name: "consumed_inputs"
+    ints: 0
+    ints: 0
+    ints: 0
+    ints: 1
+    ints: 1
+  }
+}
+node {
+  input: "147"
+  output: "152"
+  op_type: "Relu"
+}
+node {
+  input: "152"
+  input: "49"
+  input: "50"
+  output: "153"
+  op_type: "Conv"
+  attribute {
+    name: "kernels"
+    ints: 3
+    ints: 3
+  }
+  attribute {
+    name: "strides"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "pads"
+    ints: 1
+    ints: 1
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "dilations"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "group"
+    i: 1
+  }
+}
+node {
+  input: "153"
+  input: "51"
+  input: "52"
+  input: "53"
+  input: "54"
+  output: "155"
+  output: "156"
+  output: "157"
+  output: "batch_norm_dead_output_158"
+  output: "batch_norm_dead_output_159"
+  op_type: "SpatialBN"
+  attribute {
+    name: "is_test"
+    i: 0
+  }
+  attribute {
+    name: "epsilon"
+    f: 9.99999974737875e-06
+  }
+  attribute {
+    name: "order"
+    s: "NCHW"
+  }
+  attribute {
+    name: "momentum"
+    f: 0.899999976158142
+  }
+  attribute {
+    name: "consumed_inputs"
+    ints: 0
+    ints: 0
+    ints: 0
+    ints: 1
+    ints: 1
+  }
+}
+node {
+  input: "155"
+  output: "160"
+  op_type: "Relu"
+}
+node {
+  input: "160"
+  input: "55"
+  input: "56"
+  output: "161"
+  op_type: "Conv"
+  attribute {
+    name: "kernels"
+    ints: 3
+    ints: 3
+  }
+  attribute {
+    name: "strides"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "pads"
+    ints: 1
+    ints: 1
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "dilations"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "group"
+    i: 1
+  }
+}
+node {
+  input: "161"
+  input: "57"
+  input: "58"
+  input: "59"
+  input: "60"
+  output: "163"
+  output: "164"
+  output: "165"
+  output: "batch_norm_dead_output_166"
+  output: "batch_norm_dead_output_167"
+  op_type: "SpatialBN"
+  attribute {
+    name: "is_test"
+    i: 0
+  }
+  attribute {
+    name: "epsilon"
+    f: 9.99999974737875e-06
+  }
+  attribute {
+    name: "order"
+    s: "NCHW"
+  }
+  attribute {
+    name: "momentum"
+    f: 0.899999976158142
+  }
+  attribute {
+    name: "consumed_inputs"
+    ints: 0
+    ints: 0
+    ints: 0
+    ints: 1
+    ints: 1
+  }
+}
+node {
+  input: "163"
+  output: "168"
+  op_type: "Relu"
+}
+node {
+  input: "168"
+  output: "169"
+  op_type: "MaxPool"
+  attribute {
+    name: "kernels"
+    ints: 2
+    ints: 2
+  }
+  attribute {
+    name: "pads"
+    ints: 0
+    ints: 0
+    ints: 0
+    ints: 0
+  }
+  attribute {
+    name: "dilations"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "strides"
+    ints: 2
+    ints: 2
+  }
+}
+node {
+  input: "169"
+  input: "61"
+  input: "62"
+  output: "170"
+  op_type: "Conv"
+  attribute {
+    name: "kernels"
+    ints: 3
+    ints: 3
+  }
+  attribute {
+    name: "strides"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "pads"
+    ints: 1
+    ints: 1
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "dilations"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "group"
+    i: 1
+  }
+}
+node {
+  input: "170"
+  input: "63"
+  input: "64"
+  input: "65"
+  input: "66"
+  output: "172"
+  output: "173"
+  output: "174"
+  output: "batch_norm_dead_output_175"
+  output: "batch_norm_dead_output_176"
+  op_type: "SpatialBN"
+  attribute {
+    name: "is_test"
+    i: 0
+  }
+  attribute {
+    name: "epsilon"
+    f: 9.99999974737875e-06
+  }
+  attribute {
+    name: "order"
+    s: "NCHW"
+  }
+  attribute {
+    name: "momentum"
+    f: 0.899999976158142
+  }
+  attribute {
+    name: "consumed_inputs"
+    ints: 0
+    ints: 0
+    ints: 0
+    ints: 1
+    ints: 1
+  }
+}
+node {
+  input: "172"
+  output: "177"
+  op_type: "Relu"
+}
+node {
+  input: "177"
+  input: "67"
+  input: "68"
+  output: "178"
+  op_type: "Conv"
+  attribute {
+    name: "kernels"
+    ints: 3
+    ints: 3
+  }
+  attribute {
+    name: "strides"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "pads"
+    ints: 1
+    ints: 1
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "dilations"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "group"
+    i: 1
+  }
+}
+node {
+  input: "178"
+  input: "69"
+  input: "70"
+  input: "71"
+  input: "72"
+  output: "180"
+  output: "181"
+  output: "182"
+  output: "batch_norm_dead_output_183"
+  output: "batch_norm_dead_output_184"
+  op_type: "SpatialBN"
+  attribute {
+    name: "is_test"
+    i: 0
+  }
+  attribute {
+    name: "epsilon"
+    f: 9.99999974737875e-06
+  }
+  attribute {
+    name: "order"
+    s: "NCHW"
+  }
+  attribute {
+    name: "momentum"
+    f: 0.899999976158142
+  }
+  attribute {
+    name: "consumed_inputs"
+    ints: 0
+    ints: 0
+    ints: 0
+    ints: 1
+    ints: 1
+  }
+}
+node {
+  input: "180"
+  output: "185"
+  op_type: "Relu"
+}
+node {
+  input: "185"
+  input: "73"
+  input: "74"
+  output: "186"
+  op_type: "Conv"
+  attribute {
+    name: "kernels"
+    ints: 3
+    ints: 3
+  }
+  attribute {
+    name: "strides"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "pads"
+    ints: 1
+    ints: 1
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "dilations"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "group"
+    i: 1
+  }
+}
+node {
+  input: "186"
+  input: "75"
+  input: "76"
+  input: "77"
+  input: "78"
+  output: "188"
+  output: "189"
+  output: "190"
+  output: "batch_norm_dead_output_191"
+  output: "batch_norm_dead_output_192"
+  op_type: "SpatialBN"
+  attribute {
+    name: "is_test"
+    i: 0
+  }
+  attribute {
+    name: "epsilon"
+    f: 9.99999974737875e-06
+  }
+  attribute {
+    name: "order"
+    s: "NCHW"
+  }
+  attribute {
+    name: "momentum"
+    f: 0.899999976158142
+  }
+  attribute {
+    name: "consumed_inputs"
+    ints: 0
+    ints: 0
+    ints: 0
+    ints: 1
+    ints: 1
+  }
+}
+node {
+  input: "188"
+  output: "193"
+  op_type: "Relu"
+}
+node {
+  input: "193"
+  output: "194"
+  op_type: "MaxPool"
+  attribute {
+    name: "kernels"
+    ints: 2
+    ints: 2
+  }
+  attribute {
+    name: "pads"
+    ints: 0
+    ints: 0
+    ints: 0
+    ints: 0
+  }
+  attribute {
+    name: "dilations"
+    ints: 1
+    ints: 1
+  }
+  attribute {
+    name: "strides"
+    ints: 2
+    ints: 2
+  }
+}
+node {
+  input: "194"
+  output: "196"
+  output: "197"
+  op_type: "Reshape"
+  attribute {
+    name: "shape"
+    ints: 2
+    ints: -1
+  }
+}
+node {
+  input: "79"
+  output: "198"
+  op_type: "Transpose"
+  attribute {
+    name: "axes"
+    ints: 1
+    ints: 0
+  }
+}
+node {
+  input: "198"
+  output: "199"
+  op_type: "Transpose"
+}
+node {
+  input: "196"
+  input: "199"
+  input: "80"
+  output: "200"
+  op_type: "FC"
+}
+node {
+  input: "200"
+  output: "201"
+  op_type: "Relu"
+}
+node {
+  input: "201"
+  output: "203"
+  output: "204"
+  op_type: "Dropout"
+  attribute {
+    name: "ratio"
+    f: 0.5
+  }
+  attribute {
+    name: "is_test"
+    i: 0
+  }
+}
+node {
+  input: "81"
+  output: "205"
+  op_type: "Transpose"
+  attribute {
+    name: "axes"
+    ints: 1
+    ints: 0
+  }
+}
+node {
+  input: "205"
+  output: "206"
+  op_type: "Transpose"
+}
+node {
+  input: "203"
+  input: "206"
+  input: "82"
+  output: "207"
+  op_type: "FC"
+}
+node {
+  input: "207"
+  output: "208"
+  op_type: "Relu"
+}
+node {
+  input: "208"
+  output: "210"
+  output: "211"
+  op_type: "Dropout"
+  attribute {
+    name: "ratio"
+    f: 0.5
+  }
+  attribute {
+    name: "is_test"
+    i: 0
+  }
+}
+node {
+  input: "83"
+  output: "212"
+  op_type: "Transpose"
+  attribute {
+    name: "axes"
+    ints: 1
+    ints: 0
+  }
+}
+node {
+  input: "212"
+  output: "213"
+  op_type: "Transpose"
+}
+node {
+  input: "210"
+  input: "213"
+  input: "84"
+  output: "214"
+  op_type: "FC"
+}
+name: "torch-jit-export"
+input: "1"
+input: "2"
+input: "3"
+input: "4"
+input: "5"
+input: "6"
+input: "7"
+input: "8"
+input: "9"
+input: "10"
+input: "11"
+input: "12"
+input: "13"
+input: "14"
+input: "15"
+input: "16"
+input: "17"
+input: "18"
+input: "19"
+input: "20"
+input: "21"
+input: "22"
+input: "23"
+input: "24"
+input: "25"
+input: "26"
+input: "27"
+input: "28"
+input: "29"
+input: "30"
+input: "31"
+input: "32"
+input: "33"
+input: "34"
+input: "35"
+input: "36"
+input: "37"
+input: "38"
+input: "39"
+input: "40"
+input: "41"
+input: "42"
+input: "43"
+input: "44"
+input: "45"
+input: "46"
+input: "47"
+input: "48"
+input: "49"
+input: "50"
+input: "51"
+input: "52"
+input: "53"
+input: "54"
+input: "55"
+input: "56"
+input: "57"
+input: "58"
+input: "59"
+input: "60"
+input: "61"
+input: "62"
+input: "63"
+input: "64"
+input: "65"
+input: "66"
+input: "67"
+input: "68"
+input: "69"
+input: "70"
+input: "71"
+input: "72"
+input: "73"
+input: "74"
+input: "75"
+input: "76"
+input: "77"
+input: "78"
+input: "79"
+input: "80"
+input: "81"
+input: "82"
+input: "83"
+input: "84"
+input: "85"
+output: "214"
