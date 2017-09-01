@@ -1,4 +1,3 @@
-version: 1
 node {
   output: "25"
   op_type: "Constant"
@@ -16,7 +15,7 @@ node {
   input: "1"
   input: "25"
   output: "24"
-  op_type: "ConvTranspose"
+  op_type: "Caffe2ConvTranspose"
   attribute {
     name: "kernels"
     ints: 4
@@ -94,7 +93,7 @@ node {
   input: "6"
   input: "35"
   output: "34"
-  op_type: "ConvTranspose"
+  op_type: "Caffe2ConvTranspose"
   attribute {
     name: "kernels"
     ints: 4
@@ -172,7 +171,7 @@ node {
   input: "11"
   input: "45"
   output: "44"
-  op_type: "ConvTranspose"
+  op_type: "Caffe2ConvTranspose"
   attribute {
     name: "kernels"
     ints: 4
@@ -250,7 +249,7 @@ node {
   input: "16"
   input: "55"
   output: "54"
-  op_type: "ConvTranspose"
+  op_type: "Caffe2ConvTranspose"
   attribute {
     name: "kernels"
     ints: 4
@@ -328,7 +327,7 @@ node {
   input: "21"
   input: "65"
   output: "64"
-  op_type: "ConvTranspose"
+  op_type: "Caffe2ConvTranspose"
   attribute {
     name: "kernels"
     ints: 4
@@ -376,3 +375,4 @@ input: "20"
 input: "21"
 input: "22"
 output: "66"
+producer_version: 1
