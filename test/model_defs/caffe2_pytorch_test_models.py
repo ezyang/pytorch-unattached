@@ -190,7 +190,7 @@ class TestCaffe2Backend(unittest.TestCase):
                      "model on net has cuda in it, awaiting fix")
     def test_densenet(self):
         densenet121 = DenseNet(num_init_features=64, growth_rate=32,
-                               block_config=(6, 12, 24, 16), inplace=False)
+                               block_config=(6, 12, 24, 16))
         state_dict = model_zoo.load_url(model_urls['densenet121'])
         self.run_model_test(densenet121, train=False, batch_size=BATCH_SIZE,
                             state_dict=state_dict)
@@ -207,24 +207,23 @@ class TestCaffe2Backend(unittest.TestCase):
                             state_dict=state_dict, input=x)
 
     def test_resnet(self):
-        resnet50 = ResNet(Bottleneck, [3, 4, 6, 3], inplace=False)
+        resnet50 = ResNet(Bottleneck, [3, 4, 6, 3])
         state_dict = model_zoo.load_url(model_urls['resnet50'])
         self.run_model_test(resnet50, train=False, batch_size=BATCH_SIZE,
                             state_dict=state_dict)
 
     def test_squeezenet(self):
-        sqnet_v1_1 = SqueezeNet(version=1.1, inplace=False)
+        sqnet_v1_1 = SqueezeNet(version=1.1)
         state_dict = model_zoo.load_url(model_urls['squeezenet1_1'])
+        # state_dict = model_zoo.load_url(model_urls['squeezenet1_0'])
         self.run_model_test(sqnet_v1_1, train=False, batch_size=BATCH_SIZE,
                             state_dict=state_dict)
 
-    # TODO: CUDA side on C2 supports maximum 5 dim
     @skipIfNoLapack
     def test_super_resolution(self):
         super_resolution_net = SuperResolutionNet(upscale_factor=3)
         state_dict = model_zoo.load_url(model_urls['super_resolution'])
-        x = Variable(
-            torch.randn(BATCH_SIZE, 1, 224, 224), requires_grad=True)
+        x = Variable(torch.randn(1, 1, 224, 224), requires_grad=True)
         self.run_model_test(super_resolution_net, train=False,
                             batch_size=BATCH_SIZE, state_dict=state_dict,
                             input=x, use_gpu=False)
