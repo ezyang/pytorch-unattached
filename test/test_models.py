@@ -40,7 +40,7 @@ class TestModels(TestCase):
 
     def test_ops(self):
         x = Variable(
-            torch.randn(BATCH_SIZE, 3, 224, 224).fill_(1.0), requires_grad=True
+            torch.randn(BATCH_SIZE, 3, 224, 224).fill_(1.0), volatile=True
         )
         trace, _ = torch.jit.record_trace(toC(DummyNet()), toC(x))
         self.assertExpected(str(trace))
@@ -48,29 +48,29 @@ class TestModels(TestCase):
 
     def test_prelu(self):
         x = Variable(
-            torch.randn(BATCH_SIZE, 3, 224, 224).fill_(1.0), requires_grad=True
+            torch.randn(BATCH_SIZE, 3, 224, 224).fill_(1.0), volatile=True
         )
         trace, _ = torch.jit.record_trace(PReluNet(), x)
         self.assertExpected(str(trace))
         self.assertONNXExpected(trace.export(False), "pbtxt")
 
     def test_concat(self):
-        input_a = Variable(torch.randn(BATCH_SIZE, 3), requires_grad=True)
-        input_b = Variable(torch.randn(BATCH_SIZE, 3), requires_grad=True)
+        input_a = Variable(torch.randn(BATCH_SIZE, 3), volatile=True)
+        input_b = Variable(torch.randn(BATCH_SIZE, 3), volatile=True)
         inputs = [toC(input_a), toC(input_b)]
         trace, _ = torch.jit.record_trace(toC(ConcatNet()), inputs)
         self.assertExpected(str(trace))
         self.assertONNXExpected(trace.export(False), "pbtxt")
 
     def test_permute(self):
-        x = Variable(torch.randn(BATCH_SIZE, 3, 10, 12), requires_grad=True)
+        x = Variable(torch.randn(BATCH_SIZE, 3, 10, 12), volatile=True)
         trace, _ = torch.jit.record_trace(PermuteNet(), x)
         self.assertExpected(str(trace))
         self.assertONNXExpected(trace.export(False), "pbtxt")
 
     def test_srresnet(self):
         x = Variable(torch.randn(1, 3, 224, 224).fill_(1.0),
-                     requires_grad=True)
+                     volatile=True)
         trace, _ = torch.jit.record_trace(
             toC(SRResNet(rescale_factor=4, n_filters=64, n_blocks=8)), toC(x))
         self.assertExpected(str(trace))
@@ -79,7 +79,7 @@ class TestModels(TestCase):
     @skipIfNoLapack
     def test_super_resolution(self):
         x = Variable(
-            torch.randn(BATCH_SIZE, 1, 224, 224).fill_(1.0), requires_grad=True
+            torch.randn(BATCH_SIZE, 1, 224, 224).fill_(1.0), volatile=True
         )
         trace, _ = torch.jit.record_trace(
             toC(SuperResolutionNet(upscale_factor=3)), toC(x))
@@ -88,7 +88,7 @@ class TestModels(TestCase):
 
     def test_alexnet(self):
         x = Variable(
-            torch.randn(BATCH_SIZE, 3, 224, 224).fill_(1.0), requires_grad=True
+            torch.randn(BATCH_SIZE, 3, 224, 224).fill_(1.0), volatile=True
         )
         trace, _ = torch.jit.record_trace(toC(AlexNet()), toC(x))
         self.assertExpected(str(trace))
@@ -96,7 +96,7 @@ class TestModels(TestCase):
 
     def test_mnist(self):
         x = Variable(torch.randn(BATCH_SIZE, 1, 28, 28).fill_(1.0),
-                     requires_grad=True)
+                     volatile=True)
         trace, _ = torch.jit.record_trace(toC(MNIST()), toC(x))
         self.assertExpected(str(trace))
         # FeatureDropout primspec is not implemented yet
@@ -105,7 +105,7 @@ class TestModels(TestCase):
     def test_vgg(self):
         # VGG 16-layer model (configuration "D")
         x = Variable(torch.randn(BATCH_SIZE, 3, 224, 224).fill_(1.0),
-                     requires_grad=True)
+                     volatile=True)
         vgg16 = make_vgg16()
         trace, _ = torch.jit.record_trace(toC(vgg16), toC(x))
         self.assertExpected(str(trace), "16")
@@ -113,7 +113,7 @@ class TestModels(TestCase):
 
         # VGG 16-layer model (configuration "D") with batch normalization
         x = Variable(torch.randn(BATCH_SIZE, 3, 224, 224).fill_(1.0),
-                     requires_grad=True)
+                     volatile=True)
         vgg16_bn = make_vgg16_bn()
         trace, _ = torch.jit.record_trace(toC(vgg16_bn), toC(x))
         self.assertExpected(str(trace), "16_bn")
@@ -121,7 +121,7 @@ class TestModels(TestCase):
 
         # VGG 19-layer model (configuration "E")
         x = Variable(torch.randn(BATCH_SIZE, 3, 224, 224).fill_(1.0),
-                     requires_grad=True)
+                     volatile=True)
         vgg19 = make_vgg19()
         trace, _ = torch.jit.record_trace(toC(vgg19), toC(x))
         self.assertExpected(str(trace), "19")
@@ -129,7 +129,7 @@ class TestModels(TestCase):
 
         # VGG 19-layer model (configuration 'E') with batch normalization
         x = Variable(torch.randn(BATCH_SIZE, 3, 224, 224).fill_(1.0),
-                     requires_grad=True)
+                     volatile=True)
         vgg19_bn = make_vgg19_bn()
         trace, _ = torch.jit.record_trace(toC(vgg19_bn), toC(x))
         self.assertExpected(str(trace), "19_bn")
@@ -138,7 +138,7 @@ class TestModels(TestCase):
     def test_resnet(self):
         # ResNet50 model
         x = Variable(torch.randn(BATCH_SIZE, 3, 224, 224).fill_(1.0),
-                     requires_grad=True)
+                     volatile=True)
         resnet50 = ResNet(Bottleneck, [3, 4, 6, 3])
         trace, _ = torch.jit.record_trace(toC(resnet50), toC(x))
         self.assertExpected(str(trace), "50")
@@ -146,7 +146,7 @@ class TestModels(TestCase):
 
     def test_inception(self):
         x = Variable(
-            torch.randn(BATCH_SIZE, 3, 299, 299).fill_(1.0), requires_grad=True)
+            torch.randn(BATCH_SIZE, 3, 299, 299).fill_(1.0), volatile=True)
         trace, _ = torch.jit.record_trace(toC(Inception3()), toC(x))
         self.assertExpected(str(trace), "3")
         self.assertONNXExpected(trace.export(False), "3-pbtxt")
@@ -155,7 +155,7 @@ class TestModels(TestCase):
         # SqueezeNet: AlexNet-level accuracy with 50x fewer parameters and
         # <0.5MB model size
         x = Variable(torch.randn(BATCH_SIZE, 3, 224, 224).fill_(1.0),
-                     requires_grad=True)
+                     volatile=True)
         sqnet_v1_0 = SqueezeNet(version=1.1)
         trace, _ = torch.jit.record_trace(toC(sqnet_v1_0), toC(x))
         self.assertExpected(str(trace), "1_0")
@@ -164,7 +164,7 @@ class TestModels(TestCase):
         # SqueezeNet 1.1 has 2.4x less computation and slightly fewer params
         # than SqueezeNet 1.0, without sacrificing accuracy.
         x = Variable(torch.randn(BATCH_SIZE, 3, 224, 224).fill_(1.0),
-                     requires_grad=True)
+                     volatile=True)
         sqnet_v1_1 = SqueezeNet(version=1.1)
         trace, _ = torch.jit.record_trace(toC(sqnet_v1_1), toC(x))
         self.assertExpected(str(trace), "1_1")
@@ -173,7 +173,7 @@ class TestModels(TestCase):
     def test_densenet(self):
         # Densenet-121 model
         x = Variable(torch.randn(BATCH_SIZE, 3, 224, 224).fill_(1.0),
-                     requires_grad=True)
+                     volatile=True)
         dense121 = DenseNet(num_init_features=64, growth_rate=32,
                             block_config=(6, 12, 24, 16))
         trace, _ = torch.jit.record_trace(toC(dense121), toC(x))
@@ -226,7 +226,7 @@ class TestModels(TestCase):
                          nhid, nlayers, dropout,
                          tied, batchsize)
         x = Variable(torch.LongTensor(10, batchsize).fill_(1),
-                     requires_grad=False)
+                     volatile=False)
         trace, _ = torch.jit.record_trace(model, x)
         self.assertExpected(str(trace))
         # self.assertONNXExpected(trace.export(False), "pbtxt")
