@@ -12,8 +12,9 @@ from model_defs.inception import Inception3
 from model_defs.squeezenet import SqueezeNet
 from model_defs.super_resolution import SuperResolutionNet
 from model_defs.densenet import DenseNet
+from model_defs.srresnet import SRResNet
 from model_defs.dcgan import _netD, _netG, weights_init, bsz, imgsz, nz
-from model_defs.op_test import DummyNet, ConcatNet, PermuteNet
+from model_defs.op_test import DummyNet, ConcatNet, PermuteNet, PReluNet
 
 import toffee
 import google.protobuf.text_format
@@ -45,6 +46,14 @@ class TestModels(TestCase):
         self.assertExpected(str(trace))
         self.assertToffeeExpected(trace.export(False), "pbtxt")
 
+    def test_prelu(self):
+        x = Variable(
+            torch.randn(BATCH_SIZE, 3, 224, 224).fill_(1.0), requires_grad=True
+        )
+        trace, _ = torch.jit.record_trace(PReluNet(), x)
+        self.assertExpected(str(trace))
+        self.assertToffeeExpected(trace.export(False), "pbtxt")
+
     def test_concat(self):
         input_a = Variable(torch.randn(BATCH_SIZE, 3), requires_grad=True)
         input_b = Variable(torch.randn(BATCH_SIZE, 3), requires_grad=True)
@@ -57,6 +66,15 @@ class TestModels(TestCase):
         x = Variable(torch.randn(BATCH_SIZE, 3, 10, 12), requires_grad=True)
         trace, _ = torch.jit.record_trace(PermuteNet(), x)
         self.assertExpected(str(trace))
+        self.assertToffeeExpected(trace.export(False), "pbtxt")
+
+    def test_srresnet(self):
+        x = Variable(torch.randn(1, 3, 224, 224).fill_(1.0),
+                     requires_grad=True)
+        trace, _ = torch.jit.record_trace(
+            toC(SRResNet(rescale_factor=4, n_filters=64, n_blocks=8)), toC(x))
+        self.assertExpected(str(trace))
+        # print(str(trace))
         self.assertToffeeExpected(trace.export(False), "pbtxt")
 
     @skipIfNoLapack
