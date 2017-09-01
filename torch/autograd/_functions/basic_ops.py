@@ -30,7 +30,7 @@ class Sub(InplaceFunction):
 
     @staticmethod
     def primspec(g, a, b, inplace=False):
-        #TODO: [Export inplace]
+        # TODO: [Export inplace]
         return g.appendNode(g.create("Sub", [a, b]))
 
     @staticmethod
