@@ -1,10 +1,9 @@
-version: 1
 node {
   input: "1"
   output: "2"
   op_type: "Transpose"
   attribute {
-    name: "axes"
+    name: "perm"
     ints: 2
     ints: 3
     ints: 0
@@ -14,3 +13,4 @@ node {
 name: "torch-jit-export"
 input: "1"
 output: "2"
+producer_version: 1
