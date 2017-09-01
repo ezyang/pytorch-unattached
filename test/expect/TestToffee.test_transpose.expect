@@ -3,7 +3,7 @@ node {
   output: "2"
   op_type: "Transpose"
   attribute {
-    name: "axes"
+    name: "perm"
     ints: 1
     ints: 0
   }
@@ -13,7 +13,7 @@ node {
   output: "3"
   op_type: "Transpose"
   attribute {
-    name: "axes"
+    name: "perm"
     ints: 1
     ints: 0
   }
