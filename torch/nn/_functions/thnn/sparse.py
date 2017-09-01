@@ -9,6 +9,12 @@ from . import _all_functions
 class Embedding(Function):
 
     @staticmethod
+    def primspec(g, indices, weight, padding_idx, max_norm, norm_type, scale_grad_by_freq,
+                 sparse=False):
+        # TODO More checks on the parameters.
+        return g.appendNode(g.create("Gather", [weight, indices]))
+
+    @staticmethod
     def _renorm(ctx, indices, weight, max_norm, norm_type):
         # clone indices since LookupTable_renorm modifies it in-place
         ctx._backend.LookupTable_renorm(
