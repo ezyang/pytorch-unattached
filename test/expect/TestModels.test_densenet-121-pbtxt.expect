@@ -4,7 +4,7 @@ node {
   output: "609"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 7
     ints: 7
   }
@@ -51,10 +51,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -77,7 +73,7 @@ node {
   output: "617"
   op_type: "MaxPool"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -120,10 +116,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -147,7 +139,7 @@ node {
   output: "626"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -194,10 +186,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -221,7 +209,7 @@ node {
   output: "635"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -279,10 +267,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -306,7 +290,7 @@ node {
   output: "647"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -353,10 +337,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -380,7 +360,7 @@ node {
   output: "656"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -438,10 +418,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -465,7 +441,7 @@ node {
   output: "668"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -512,10 +488,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -539,7 +511,7 @@ node {
   output: "677"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -597,10 +569,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -624,7 +592,7 @@ node {
   output: "689"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -671,10 +639,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -698,7 +662,7 @@ node {
   output: "698"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -756,10 +720,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -783,7 +743,7 @@ node {
   output: "710"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -830,10 +790,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -857,7 +813,7 @@ node {
   output: "719"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -915,10 +871,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -942,7 +894,7 @@ node {
   output: "731"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -989,10 +941,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -1016,7 +964,7 @@ node {
   output: "740"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -1074,10 +1022,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -1101,7 +1045,7 @@ node {
   output: "752"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -1132,7 +1076,7 @@ node {
   output: "753"
   op_type: "AveragePool"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 2
     ints: 2
   }
@@ -1170,10 +1114,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -1197,7 +1137,7 @@ node {
   output: "762"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -1244,10 +1184,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -1271,7 +1207,7 @@ node {
   output: "771"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -1329,10 +1265,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -1356,7 +1288,7 @@ node {
   output: "783"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -1403,10 +1335,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -1430,7 +1358,7 @@ node {
   output: "792"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -1488,10 +1416,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -1515,7 +1439,7 @@ node {
   output: "804"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -1562,10 +1486,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -1589,7 +1509,7 @@ node {
   output: "813"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -1647,10 +1567,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -1674,7 +1590,7 @@ node {
   output: "825"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -1721,10 +1637,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -1748,7 +1660,7 @@ node {
   output: "834"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -1806,10 +1718,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -1833,7 +1741,7 @@ node {
   output: "846"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -1880,10 +1788,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -1907,7 +1811,7 @@ node {
   output: "855"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -1965,10 +1869,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -1992,7 +1892,7 @@ node {
   output: "867"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -2039,10 +1939,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -2066,7 +1962,7 @@ node {
   output: "876"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -2124,10 +2020,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -2151,7 +2043,7 @@ node {
   output: "888"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -2198,10 +2090,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -2225,7 +2113,7 @@ node {
   output: "897"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -2283,10 +2171,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -2310,7 +2194,7 @@ node {
   output: "909"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -2357,10 +2241,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -2384,7 +2264,7 @@ node {
   output: "918"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -2442,10 +2322,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -2469,7 +2345,7 @@ node {
   output: "930"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -2516,10 +2392,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -2543,7 +2415,7 @@ node {
   output: "939"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -2601,10 +2473,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -2628,7 +2496,7 @@ node {
   output: "951"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -2675,10 +2543,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -2702,7 +2566,7 @@ node {
   output: "960"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -2760,10 +2624,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -2787,7 +2647,7 @@ node {
   output: "972"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -2834,10 +2694,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -2861,7 +2717,7 @@ node {
   output: "981"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -2919,10 +2775,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -2946,7 +2798,7 @@ node {
   output: "993"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -2993,10 +2845,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -3020,7 +2868,7 @@ node {
   output: "1002"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -3078,10 +2926,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -3105,7 +2949,7 @@ node {
   output: "1014"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -3136,7 +2980,7 @@ node {
   output: "1015"
   op_type: "AveragePool"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 2
     ints: 2
   }
@@ -3174,10 +3018,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -3201,7 +3041,7 @@ node {
   output: "1024"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -3248,10 +3088,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -3275,7 +3111,7 @@ node {
   output: "1033"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -3333,10 +3169,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -3360,7 +3192,7 @@ node {
   output: "1045"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -3407,10 +3239,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -3434,7 +3262,7 @@ node {
   output: "1054"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -3492,10 +3320,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -3519,7 +3343,7 @@ node {
   output: "1066"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -3566,10 +3390,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -3593,7 +3413,7 @@ node {
   output: "1075"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -3651,10 +3471,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -3678,7 +3494,7 @@ node {
   output: "1087"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -3725,10 +3541,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -3752,7 +3564,7 @@ node {
   output: "1096"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -3810,10 +3622,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -3837,7 +3645,7 @@ node {
   output: "1108"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -3884,10 +3692,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -3911,7 +3715,7 @@ node {
   output: "1117"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -3969,10 +3773,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -3996,7 +3796,7 @@ node {
   output: "1129"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -4043,10 +3843,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -4070,7 +3866,7 @@ node {
   output: "1138"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -4128,10 +3924,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -4155,7 +3947,7 @@ node {
   output: "1150"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -4202,10 +3994,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -4229,7 +4017,7 @@ node {
   output: "1159"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -4287,10 +4075,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -4314,7 +4098,7 @@ node {
   output: "1171"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -4361,10 +4145,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -4388,7 +4168,7 @@ node {
   output: "1180"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -4446,10 +4226,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -4473,7 +4249,7 @@ node {
   output: "1192"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -4520,10 +4296,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -4547,7 +4319,7 @@ node {
   output: "1201"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -4605,10 +4377,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -4632,7 +4400,7 @@ node {
   output: "1213"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -4679,10 +4447,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -4706,7 +4470,7 @@ node {
   output: "1222"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -4764,10 +4528,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -4791,7 +4551,7 @@ node {
   output: "1234"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -4838,10 +4598,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -4865,7 +4621,7 @@ node {
   output: "1243"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -4923,10 +4679,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -4950,7 +4702,7 @@ node {
   output: "1255"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -4997,10 +4749,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -5024,7 +4772,7 @@ node {
   output: "1264"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -5082,10 +4830,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -5109,7 +4853,7 @@ node {
   output: "1276"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -5156,10 +4900,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -5183,7 +4923,7 @@ node {
   output: "1285"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -5241,10 +4981,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -5268,7 +5004,7 @@ node {
   output: "1297"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -5315,10 +5051,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -5342,7 +5074,7 @@ node {
   output: "1306"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -5400,10 +5132,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -5427,7 +5155,7 @@ node {
   output: "1318"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -5474,10 +5202,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -5501,7 +5225,7 @@ node {
   output: "1327"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -5559,10 +5283,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -5586,7 +5306,7 @@ node {
   output: "1339"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -5633,10 +5353,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -5660,7 +5376,7 @@ node {
   output: "1348"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -5718,10 +5434,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -5745,7 +5457,7 @@ node {
   output: "1360"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -5792,10 +5504,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -5819,7 +5527,7 @@ node {
   output: "1369"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -5877,10 +5585,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -5904,7 +5608,7 @@ node {
   output: "1381"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -5951,10 +5655,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -5978,7 +5678,7 @@ node {
   output: "1390"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -6036,10 +5736,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -6063,7 +5759,7 @@ node {
   output: "1402"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -6110,10 +5806,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -6137,7 +5829,7 @@ node {
   output: "1411"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -6195,10 +5887,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -6222,7 +5910,7 @@ node {
   output: "1423"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -6269,10 +5957,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -6296,7 +5980,7 @@ node {
   output: "1432"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -6354,10 +6038,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -6381,7 +6061,7 @@ node {
   output: "1444"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -6428,10 +6108,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -6455,7 +6131,7 @@ node {
   output: "1453"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -6513,10 +6189,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -6540,7 +6212,7 @@ node {
   output: "1465"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -6587,10 +6259,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -6614,7 +6282,7 @@ node {
   output: "1474"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -6672,10 +6340,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -6699,7 +6363,7 @@ node {
   output: "1486"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -6746,10 +6410,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -6773,7 +6433,7 @@ node {
   output: "1495"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -6831,10 +6491,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -6858,7 +6514,7 @@ node {
   output: "1507"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -6905,10 +6561,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -6932,7 +6584,7 @@ node {
   output: "1516"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -6990,10 +6642,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -7017,7 +6665,7 @@ node {
   output: "1528"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -7048,7 +6696,7 @@ node {
   output: "1529"
   op_type: "AveragePool"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 2
     ints: 2
   }
@@ -7086,10 +6734,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -7113,7 +6757,7 @@ node {
   output: "1538"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -7160,10 +6804,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -7187,7 +6827,7 @@ node {
   output: "1547"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -7245,10 +6885,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -7272,7 +6908,7 @@ node {
   output: "1559"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -7319,10 +6955,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -7346,7 +6978,7 @@ node {
   output: "1568"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -7404,10 +7036,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -7431,7 +7059,7 @@ node {
   output: "1580"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -7478,10 +7106,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -7505,7 +7129,7 @@ node {
   output: "1589"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -7563,10 +7187,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -7590,7 +7210,7 @@ node {
   output: "1601"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -7637,10 +7257,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -7664,7 +7280,7 @@ node {
   output: "1610"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -7722,10 +7338,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -7749,7 +7361,7 @@ node {
   output: "1622"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -7796,10 +7408,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -7823,7 +7431,7 @@ node {
   output: "1631"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -7881,10 +7489,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -7908,7 +7512,7 @@ node {
   output: "1643"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -7955,10 +7559,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -7982,7 +7582,7 @@ node {
   output: "1652"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -8040,10 +7640,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -8067,7 +7663,7 @@ node {
   output: "1664"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -8114,10 +7710,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -8141,7 +7733,7 @@ node {
   output: "1673"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -8199,10 +7791,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -8226,7 +7814,7 @@ node {
   output: "1685"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -8273,10 +7861,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -8300,7 +7884,7 @@ node {
   output: "1694"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -8358,10 +7942,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -8385,7 +7965,7 @@ node {
   output: "1706"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -8432,10 +8012,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -8459,7 +8035,7 @@ node {
   output: "1715"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -8517,10 +8093,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -8544,7 +8116,7 @@ node {
   output: "1727"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -8591,10 +8163,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -8618,7 +8186,7 @@ node {
   output: "1736"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -8676,10 +8244,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -8703,7 +8267,7 @@ node {
   output: "1748"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -8750,10 +8314,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -8777,7 +8337,7 @@ node {
   output: "1757"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -8835,10 +8395,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -8862,7 +8418,7 @@ node {
   output: "1769"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -8909,10 +8465,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -8936,7 +8488,7 @@ node {
   output: "1778"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -8994,10 +8546,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -9021,7 +8569,7 @@ node {
   output: "1790"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -9068,10 +8616,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -9095,7 +8639,7 @@ node {
   output: "1799"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -9153,10 +8697,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -9180,7 +8720,7 @@ node {
   output: "1811"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -9227,10 +8767,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -9254,7 +8790,7 @@ node {
   output: "1820"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -9312,10 +8848,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -9339,7 +8871,7 @@ node {
   output: "1832"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -9386,10 +8918,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -9413,7 +8941,7 @@ node {
   output: "1841"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -9471,10 +8999,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -9498,7 +9022,7 @@ node {
   output: "1853"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 1
     ints: 1
   }
@@ -9545,10 +9069,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -9572,7 +9092,7 @@ node {
   output: "1862"
   op_type: "Conv"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 3
     ints: 3
   }
@@ -9630,10 +9150,6 @@ node {
     f: 9.99999974737875e-06
   }
   attribute {
-    name: "order"
-    s: "NCHW"
-  }
-  attribute {
     name: "momentum"
     f: 0.899999976158142
   }
@@ -9656,7 +9172,7 @@ node {
   output: "1873"
   op_type: "AveragePool"
   attribute {
-    name: "kernels"
+    name: "kernel_shape"
     ints: 7
     ints: 7
   }
@@ -10314,4 +9830,6 @@ input: "605"
 input: "606"
 input: "607"
 output: "1877"
-producer_version: 1
+ir_version: 1
+producer_version: 20000
+producer_tag: "pytorch"
