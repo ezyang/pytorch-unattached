@@ -52,5 +52,5 @@ def test_embed_params(proto, model, input, state_dict=None, use_gpu=True):
         predict_graph=graph_def,
         inputs=W,
         use_gpu=use_gpu)
-    caffe2_out = list(caffe2_out_workspace.values())[0]
+    caffe2_out = caffe2_out_workspace[0]
     return caffe2_out
