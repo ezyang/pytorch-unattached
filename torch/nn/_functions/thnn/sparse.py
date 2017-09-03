@@ -9,6 +9,27 @@ from . import _all_functions
 class Embedding(Function):
 
     @staticmethod
+    def primspec(g, indices, weight, padding_idx, max_norm, norm_type, scale_grad_by_freq,
+                 sparse=False):
+        if max_norm is not None:
+            raise ValueError('Right now, re-norm is not supported.')
+
+        # To support padding_idx, we set the corresponding element to 0 in weight.
+        if padding_idx is not None:
+            if padding_idx < 0:
+                padding_idx = padding_idx + len(weight.type().sizes())
+            shape = list(weight.type().sizes())
+            mask = torch.FloatTensor(*shape)
+            mask.fill_(1.0)
+            index = torch.LongTensor([padding_idx])
+            mask.index_fill_(0, index, 0.0)
+            mask_node = g.appendNode(g.create("Constant").t_("Value", mask))
+            weight = g.appendNode(g.create("Mul", [weight, mask_node]))
+
+        output = g.appendNode(g.create("Gather", [weight, indices]))
+        return output
+
+    @staticmethod
     def _renorm(ctx, indices, weight, max_norm, norm_type):
         # clone indices since LookupTable_renorm modifies it in-place
         ctx._backend.LookupTable_renorm(
