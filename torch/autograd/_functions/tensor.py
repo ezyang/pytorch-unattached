@@ -19,16 +19,13 @@ class Index(Function):
         starts = [0] * len(i.type().sizes())
         starts[0] = index
         starts_tensor = torch.IntTensor(starts)
-        starts_node = g.appendNode(g.create("Constant").t_("Value", starts_tensor))
+        starts_node = g.appendNode(g.create("Constant").t_("value", starts_tensor))
         ends = list(i.type().sizes())
         ends_tensor = torch.IntTensor(ends)
-        ends_node = g.appendNode(g.create("Constant").t_("Value", ends_tensor))
+        ends_node = g.appendNode(g.create("Constant").t_("value", ends_tensor))
         sizes = i.type().sizes()[1:]
         slice_output = g.appendNode(g.create("Slice", [i, starts_node, ends_node]))
-        reshape_output = g.appendNode(g.create("Reshape", [slice_output]).is_("shape", sizes))
-        real_output = g.appendNode(g.createSelect(reshape_output, 0))
-        nouse_output = g.appendNode(g.createSelect(reshape_output, 1))
-        return real_output
+        return g.appendNode(g.create("Reshape", [slice_output]).is_("shape", sizes))
 
     @staticmethod
     def forward(ctx, i, index):
