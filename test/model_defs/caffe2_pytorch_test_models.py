@@ -106,7 +106,7 @@ class TestCaffe2Backend(unittest.TestCase):
         if use_gpu:
             model, input = self.convert_cuda(model, input)
 
-        toffeeir, torch_out = do_export(model, input, export_params=self.embed_params)
+        toffeeir, torch_out = do_export(model, input, export_params=self.embed_params, verbose=True)
         caffe2_out = test_embed_params(toffeeir, model, input, state_dict,
                                        use_gpu=use_gpu)
         np.testing.assert_almost_equal(torch_out.data.cpu().numpy(),
@@ -280,6 +280,32 @@ class TestCaffe2Backend(unittest.TestCase):
     def test_consumed_bn(self):
         underlying = nn.BatchNorm2d(3)
         self.run_model_test(underlying, train=True, batch_size=BATCH_SIZE)
+
+    def test_index(self):
+        class MyModel(torch.nn.Module):
+            def __init__(self):
+                super(MyModel, self).__init__()
+
+            def forward(self, input):
+                return input[1]
+        self.run_model_test(MyModel(), train=False, batch_size=BATCH_SIZE)
+
+    def test_chunk(self):
+        class MyModel(torch.nn.Module):
+            def __init__(self):
+                super(MyModel, self).__init__()
+
+            def forward(self, input):
+                # TODO: Test with 20 as well, this is buggy!
+                # TODO: Why index? This returns a tuple and test runner doesn't
+                # support tuple comparison.
+                return input.chunk(10, dim=2)[-1]
+        self.run_model_test(MyModel(), train=False, batch_size=BATCH_SIZE)
+
+    def test_embedding(self):
+        model = nn.Embedding(10, 3)
+        input = Variable(torch.LongTensor([1]))
+        self.run_model_test(model, train=False, input=input, batch_size=BATCH_SIZE)
 
 
 # add the same test suite as above, but switch embed_params=False
