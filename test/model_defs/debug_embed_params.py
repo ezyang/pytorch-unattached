@@ -9,8 +9,8 @@ import itertools
 import torch.jit
 from torch.autograd import Variable
 
-import toffee
-from toffee.backend import Caffe2Backend as c2
+import onnx
+from onnx.backend import Caffe2Backend as c2
 
 
 torch.set_default_tensor_type('torch.FloatTensor')
@@ -27,8 +27,8 @@ def test_embed_params(proto, model, input, state_dict=None, use_gpu=True):
     case as well on pytorch front
     This should likely be removed from the release version of the code
     """
-    graph_def = toffee.GraphProto.FromString(proto)
-    toffee.checker.check_graph(graph_def)
+    graph_def = onnx.GraphProto.FromString(proto)
+    onnx.checker.check_graph(graph_def)
 
     # Translate the parameters into Caffe2 form
     W = {}

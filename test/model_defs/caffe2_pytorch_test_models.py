@@ -8,9 +8,9 @@ import numpy as np
 import sys
 import unittest
 
-import torch.toffee
+import torch.onnx
 from torch import nn
-from torch.for_toffee.toffee import import_model
+from torch.for_onnx.onnx import import_model
 from torch.autograd import Variable
 import torch.utils.model_zoo as model_zoo
 from debug_embed_params import test_embed_params
@@ -32,7 +32,7 @@ skip = unittest.skip
 
 def do_export(model, inputs, *args, **kwargs):
     f = io.BytesIO()
-    out = torch.toffee.export(model, inputs, f, *args, **kwargs)
+    out = torch.onnx.export(model, inputs, f, *args, **kwargs)
     return f.getvalue(), out
 
 
@@ -106,8 +106,8 @@ class TestCaffe2Backend(unittest.TestCase):
         if use_gpu:
             model, input = self.convert_cuda(model, input)
 
-        toffeeir, torch_out = do_export(model, input, export_params=self.embed_params, verbose=False)
-        caffe2_out = test_embed_params(toffeeir, model, input, state_dict,
+        onnxir, torch_out = do_export(model, input, export_params=self.embed_params, verbose=False)
+        caffe2_out = test_embed_params(onnxir, model, input, state_dict,
                                        use_gpu=use_gpu)
         np.testing.assert_almost_equal(torch_out.data.cpu().numpy(),
                                        caffe2_out, decimal=3)
@@ -127,15 +127,15 @@ class TestCaffe2Backend(unittest.TestCase):
         if input is None:
             input = Variable(torch.randn(batch_size, 3, 224, 224),
                              requires_grad=True)
-        # Convert the model to ToffeeIR and run model in pytorch
+        # Convert the model to ONNXIR and run model in pytorch
         if use_gpu:
             model, input = self.convert_cuda(model, input)
 
-        toffeeir, torch_out = do_export(model, input, export_params=self.embed_params)
+        onnxir, torch_out = do_export(model, input, export_params=self.embed_params)
 
         input = input.data.cpu().numpy()
-        # Pass the ToffeeIR and input to load and run in caffe2
-        caffe2_out = import_model(toffeeir, input, use_gpu=use_gpu)
+        # Pass the ONNXIR and input to load and run in caffe2
+        caffe2_out = import_model(onnxir, input, use_gpu=use_gpu)
 
         # Verify Pytorch and Caffe2 produce almost same outputs upto certain
         # decimal places
@@ -155,8 +155,8 @@ class TestCaffe2Backend(unittest.TestCase):
     def test_linear(self):
         model = nn.Linear(1, 1)
         input = Variable(torch.randn(1, 1), requires_grad=True)
-        toffeeir, torch_out = do_export(model, input, export_params=False)
-        caffe2_out = test_embed_params(toffeeir, model, input)
+        onnxir, torch_out = do_export(model, input, export_params=False)
+        caffe2_out = test_embed_params(onnxir, model, input)
         np.testing.assert_almost_equal(torch_out.data.cpu().numpy(),
                                        caffe2_out, decimal=3)
 
@@ -168,7 +168,7 @@ class TestCaffe2Backend(unittest.TestCase):
 
     def test_dcgan(self):
         # dcgan is flaky on some seeds, see:
-        # https://github.com/ProjectToffee/ToffeeIR/pull/70
+        # https://github.com/ProjectONNX/ONNXIR/pull/70
         torch.manual_seed(1)
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(1)
