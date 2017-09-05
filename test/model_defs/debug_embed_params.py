@@ -41,7 +41,14 @@ def test_embed_params(proto, model, input, state_dict=None, use_gpu=True):
             parameters.append(state_dict[k])
     else:
         parameters = model.state_dict().values()
-    for k, v in zip(graph_def.input, itertools.chain(parameters, [input])):
+
+    # Turn input into a parameter list.
+    if isinstance(input, tuple):
+        input = list(input)
+    else:
+        input = [input]
+
+    for k, v in zip(graph_def.input, itertools.chain(parameters, input)):
         if isinstance(v, Variable):
             W[k] = v.data.cpu().numpy()
         else:
