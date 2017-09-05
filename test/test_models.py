@@ -16,7 +16,7 @@ from model_defs.srresnet import SRResNet
 from model_defs.dcgan import _netD, _netG, weights_init, bsz, imgsz, nz
 from model_defs.op_test import DummyNet, ConcatNet, PermuteNet, PReluNet
 
-import onnx
+import toffee as onnx
 import google.protobuf.text_format
 
 torch.set_default_tensor_type('torch.FloatTensor')
