@@ -180,7 +180,7 @@ class TestCaffe2Backend(unittest.TestCase):
 
         netD = dcgan._netD(1)
         netD.apply(dcgan.weights_init)
-        input = Variable(torch.Tensor(BATCH_SIZE, 3, dcgan.imgsz, dcgan.imgsz))
+        input = Variable(torch.randn(BATCH_SIZE, 3, dcgan.imgsz, dcgan.imgsz))
         self.run_model_test(netD, train=False, batch_size=BATCH_SIZE,
                             input=input)
 
@@ -189,7 +189,7 @@ class TestCaffe2Backend(unittest.TestCase):
         state_dict = model_zoo.load_url(model_urls['dcgan_b'])
         # state_dict = model_zoo.load_url(model_urls['dcgan_f'])
         noise = Variable(
-            torch.Tensor(BATCH_SIZE, dcgan.nz, 1, 1).normal_(0, 1))
+            torch.randn(BATCH_SIZE, dcgan.nz, 1, 1).normal_(0, 1))
         self.run_model_test(netG, train=False, batch_size=BATCH_SIZE,
                             input=noise, state_dict=state_dict)
 
