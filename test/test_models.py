@@ -227,9 +227,9 @@ class TestModels(TestCase):
                          tied, batchsize)
         x = Variable(torch.LongTensor(10, batchsize).fill_(1),
                      requires_grad=False)
-        trace, _ = torch.jit.record_trace(model, x)
+        trace, _ = torch.jit.record_trace(model, x, model.hidden)
         self.assertExpected(str(trace))
-        # self.assertONNXExpected(trace.export(False), "pbtxt")
+        self.assertONNXExpected(trace.export(False), "pbtxt")
 
     def test_word_language_model_RNN_TANH(self):
         model_name = 'RNN_TANH'
