@@ -57,8 +57,8 @@ class TestModels(TestCase):
     def test_concat(self):
         input_a = Variable(torch.randn(BATCH_SIZE, 3), volatile=True)
         input_b = Variable(torch.randn(BATCH_SIZE, 3), volatile=True)
-        inputs = [toC(input_a), toC(input_b)]
-        trace, _ = torch.jit.record_trace(toC(ConcatNet()), inputs)
+        inputs = (toC(input_a), toC(input_b))
+        trace, _ = torch.jit.record_trace(toC(ConcatNet()), inputs, num_derivatives=0)
         self.assertExpected(str(trace))
         self.assertONNXExpected(trace.export(False), "pbtxt")
 
