@@ -12,7 +12,11 @@ def import_model(proto, input, workspace=None, use_gpu=True):
 
     if workspace is None:
         workspace = {}
-    workspace[graph_def.input[-1]] = input
+    if isinstance(input, tuple):
+        for i in range(len(input)):
+            workspace[graph_def.input[-len(input) + i]] = input[i]
+    else:
+        workspace[graph_def.input[-1]] = input
 
     caffe2_out_workspace = c2.run_graph(
         init_graph=None,
