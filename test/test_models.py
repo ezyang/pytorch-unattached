@@ -99,7 +99,7 @@ class TestModels(TestCase):
                      requires_grad=True)
         trace, _ = torch.jit.record_trace(toC(MNIST()), toC(x))
         self.assertExpected(str(trace))
-        # FeatureDropout primspec is not implemented yet
+        # FeatureDropout symbolic is not implemented yet
         # self.assertONNXExpected(trace.export(False), "pbtxt")
 
     def test_vgg(self):
