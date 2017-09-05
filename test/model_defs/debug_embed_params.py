@@ -20,6 +20,7 @@ except ImportError:
     print('Cannot import torch, hence caffe2-torch test will not run.')
     sys.exit(0)
 
+
 def tuple_to_list(input):
     if input is None:
         return None
@@ -30,6 +31,7 @@ def tuple_to_list(input):
     else:
         result.append(input)
     return result
+
 
 def test_embed_params(proto, model, input, state_dict=None, use_gpu=True):
     """
