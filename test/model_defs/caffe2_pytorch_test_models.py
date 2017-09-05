@@ -127,14 +127,14 @@ class TestCaffe2Backend(unittest.TestCase):
         if input is None:
             input = Variable(torch.randn(batch_size, 3, 224, 224),
                              requires_grad=True)
-        # Convert the model to ONNXIR and run model in pytorch
+        # Convert the model to ONNX IR and run model in pytorch
         if use_gpu:
             model, input = self.convert_cuda(model, input)
 
         onnxir, torch_out = do_export(model, input, export_params=self.embed_params)
 
         input = input.data.cpu().numpy()
-        # Pass the ONNXIR and input to load and run in caffe2
+        # Pass the ONNX IR and input to load and run in caffe2
         caffe2_out = import_model(onnxir, input, use_gpu=use_gpu)
 
         # Verify Pytorch and Caffe2 produce almost same outputs upto certain
@@ -168,7 +168,7 @@ class TestCaffe2Backend(unittest.TestCase):
 
     def test_dcgan(self):
         # dcgan is flaky on some seeds, see:
-        # https://github.com/ProjectONNX/ONNXIR/pull/70
+        # https://github.com/ProjectToffee/onnx/pull/70
         torch.manual_seed(1)
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(1)
