@@ -302,8 +302,8 @@ class TestCaffe2Backend(unittest.TestCase):
         self.run_model_test(MyModel(), train=False, batch_size=BATCH_SIZE)
 
     def test_embedding(self):
-        model = nn.Embedding(10, 3)
-        input = Variable(torch.LongTensor([1]))
+        model = nn.Embedding(10, 3, padding_idx=-1)
+        input = Variable(torch.LongTensor(list(range(10))[::-1]))
         self.run_model_test(model, train=False, input=input, batch_size=BATCH_SIZE)
 
 
