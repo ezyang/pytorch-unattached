@@ -282,16 +282,8 @@ class TestCaffe2Backend(unittest.TestCase):
         model = word_language_model.RNNModel(model_name, ntokens, emsize,
                                              nhid, nlayers, dropout, tied,
                                              batchsize)
-        x = Variable(torch.LongTensor([list(range(5)),
-                                       list(range(5, 10)),
-                                       list(range(10, 15)),
-                                       list(range(15, 20)),
-                                       list(range(20, 25)),
-                                       list(range(25, 30)),
-                                       list(range(30, 35)),
-                                       list(range(35, 40)),
-                                       list(range(40, 45)),
-                                       list(range(45, 50))]), requires_grad=False)
+        x = Variable(torch.arange(0, ntokens).long().view(-1, batchsize),
+                     requires_grad=False)
         # Only support CPU version, since tracer is not working in GPU RNN.
         self.run_model_test(model, train=False, input=(x, model.hidden),
                             batch_size=batchsize, use_gpu=False)
