@@ -33,7 +33,7 @@ skip = unittest.skip
 
 def do_export(model, inputs, *args, **kwargs):
     f = io.BytesIO()
-    out = torch.onnx.export(model, inputs, f, *args, **kwargs)
+    out = torch.onnx._export(model, inputs, f, *args, **kwargs)
     return f.getvalue(), out
 
 
