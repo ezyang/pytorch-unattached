@@ -2,8 +2,8 @@
 # onnx, so we do an absolute_import to avoid conflicts that might arise
 from __future__ import absolute_import
 
-import toffee as onnx
-from toffee.backend import Caffe2Backend as c2
+import onnx
+from onnx.backend import c2
 
 
 def import_model(proto, input, workspace=None, use_gpu=True):
