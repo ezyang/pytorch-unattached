@@ -21,6 +21,7 @@ class Index(Function):
         starts_tensor = torch.IntTensor(starts)
         starts_node = g.appendNode(g.create("Constant").t_("value", starts_tensor))
         ends = list(i.type().sizes())
+        ends[0] = index + 1
         ends_tensor = torch.IntTensor(ends)
         ends_node = g.appendNode(g.create("Constant").t_("value", ends_tensor))
         sizes = i.type().sizes()[1:]
