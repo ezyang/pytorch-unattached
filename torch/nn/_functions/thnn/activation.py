@@ -10,7 +10,7 @@ from .auto_double_backwards import softmax_double_backwards
 class PReLU(Function):
 
     @staticmethod
-    def primspec(g, input, weight):
+    def symbolic(g, input, weight):
         return g.appendNode(g.create("PRelu", [input, weight]))
 
     @staticmethod
