@@ -26,6 +26,7 @@ from densenet import DenseNet
 from super_resolution import SuperResolutionNet
 from srresnet import SRResNet
 import dcgan
+import word_language_model
 
 skip = unittest.skip
 
@@ -265,6 +266,43 @@ class TestCaffe2Backend(unittest.TestCase):
         underlying_model = make_vgg19_bn()
         self.run_model_test(underlying_model, train=False,
                             batch_size=BATCH_SIZE)
+
+    def run_word_language_model(self, model_name):
+        ntokens = 50
+        emsize = 5
+        nhid = 5
+        nlayers = 5
+        dropout = 0.2
+        tied = False
+        batchsize = 5
+        model = word_language_model.RNNModel(model_name, ntokens, emsize,
+                                             nhid, nlayers, dropout, tied,
+                                             batchsize)
+        x = Variable(torch.LongTensor([list(range(5)),
+                                       list(range(5, 10)),
+                                       list(range(10, 15)),
+                                       list(range(15, 20)),
+                                       list(range(20, 25)),
+                                       list(range(25, 30)),
+                                       list(range(30, 35)),
+                                       list(range(35, 40)),
+                                       list(range(40, 45)),
+                                       list(range(45, 50))]), requires_grad=False)
+        # Only support CPU version, since tracer is not working in GPU RNN.
+        self.run_model_test(model, train=False, input=(x, model.hidden),
+                            batch_size=batchsize, use_gpu=False)
+
+    def test_word_language_model_RNN_TANH(self):
+        self.run_word_language_model("RNN_TANH")
+
+    def test_word_language_model_RNN_RELU(self):
+        self.run_word_language_model("RNN_RELU")
+
+    def test_word_language_model_LSTM(self):
+        self.run_word_language_model("LSTM")
+
+    def test_word_language_model_GRU(self):
+        self.run_word_language_model("GRU")
 
     def test_constant(self):
         c = Variable(torch.randn(BATCH_SIZE, 3, 224, 224))

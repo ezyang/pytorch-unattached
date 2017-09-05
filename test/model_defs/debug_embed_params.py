@@ -20,6 +20,16 @@ except ImportError:
     print('Cannot import torch, hence caffe2-torch test will not run.')
     sys.exit(0)
 
+def tuple_to_list(input):
+    if input is None:
+        return None
+    result = []
+    if isinstance(input, tuple):
+        for i in input:
+            result = result + tuple_to_list(i)
+    else:
+        result.append(input)
+    return result
 
 def test_embed_params(proto, model, input, state_dict=None, use_gpu=True):
     """
@@ -43,10 +53,7 @@ def test_embed_params(proto, model, input, state_dict=None, use_gpu=True):
         parameters = model.state_dict().values()
 
     # Turn input into a parameter list.
-    if isinstance(input, tuple):
-        input = list(input)
-    else:
-        input = [input]
+    input = tuple_to_list(input)
 
     for k, v in zip(graph_def.input, itertools.chain(parameters, input)):
         if isinstance(v, Variable):
