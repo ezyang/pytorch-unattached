@@ -14,7 +14,6 @@ from torch.for_onnx.onnx import import_model
 from torch.autograd import Variable
 import torch.utils.model_zoo as model_zoo
 from debug_embed_params import test_embed_params
-from debug_embed_params import tuple_to_list
 import io
 
 # Import various models for testing
@@ -136,11 +135,8 @@ class TestCaffe2Backend(unittest.TestCase):
         onnxir, torch_out = do_export(model, input, export_params=self.embed_params)
 
         if isinstance(input, tuple):
-            l = tuple_to_list(input)
-            input = []
-            for t in l:
-                input.append(t.data.cpu().numpy())
-            input = tuple(input)
+            flatten_input = torch.jit.flatten(input)
+            input = tuple([t.data.cpu().numpy() for t in flatten_input])
         else:
             input = input.data.cpu().numpy()
         # Pass the ONNX IR and input to load and run in caffe2
