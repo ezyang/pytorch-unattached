@@ -296,10 +296,9 @@ class TestCaffe2Backend(unittest.TestCase):
                 super(MyModel, self).__init__()
 
             def forward(self, input):
-                # TODO: Test with 20 as well, this is buggy!
                 # TODO: Why index? This returns a tuple and test runner doesn't
                 # support tuple comparison.
-                return input.chunk(10, dim=2)[-1]
+                return input.chunk(20, dim=2)[-1]
         self.run_model_test(MyModel(), train=False, batch_size=BATCH_SIZE)
 
     def test_embedding(self):
