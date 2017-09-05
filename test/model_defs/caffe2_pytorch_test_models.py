@@ -106,7 +106,7 @@ class TestCaffe2Backend(unittest.TestCase):
         if use_gpu:
             model, input = self.convert_cuda(model, input)
 
-        toffeeir, torch_out = do_export(model, input, export_params=self.embed_params, verbose=True)
+        toffeeir, torch_out = do_export(model, input, export_params=self.embed_params, verbose=False)
         caffe2_out = test_embed_params(toffeeir, model, input, state_dict,
                                        use_gpu=use_gpu)
         np.testing.assert_almost_equal(torch_out.data.cpu().numpy(),
@@ -222,6 +222,7 @@ class TestCaffe2Backend(unittest.TestCase):
                             state_dict=state_dict)
 
     # @skip('takes long to run, LAPACK needed for gpu')
+    @skipIfNoLapack
     def test_srresnet(self):
         super_resolution_net = SRResNet(
             rescale_factor=4, n_filters=64, n_blocks=8)
