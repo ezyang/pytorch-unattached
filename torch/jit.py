@@ -72,6 +72,8 @@ def _varify(args):
 
 
 def _clone_inputs(all_args):
+    # TODO: This seems questionable, because we seem to use flatten in other
+    # cases, and a plain iteration isn't going to be good enough
     for a in all_args:
         if isinstance(a, Variable):
             yield Variable(a.data.clone(), requires_grad=a.requires_grad, volatile=a.volatile)
