@@ -13,6 +13,7 @@ AccumulateGrad::AccumulateGrad(std::shared_ptr<Variable> _variable)
     , variable_grad(_variable->grad) {
   is_executable = _variable->requires_grad;
   num_inputs = 1;
+  input_sizes.emplace_back(_variable);
 }
 
 auto AccumulateGrad::acc_inplace(std::shared_ptr<Variable>& grad,
