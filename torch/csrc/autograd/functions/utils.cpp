@@ -1,4 +1,6 @@
 #include "torch/csrc/autograd/functions/utils.h"
+#include "torch/csrc/utils/functional.h"
+#include "torch/csrc/jit/tracer.h"
 
 #include <sstream>
 
@@ -23,6 +25,7 @@ variable_list wrap_outputs(const variable_list& inputs, tensor_list&& outputs,
         result.emplace_back(nullptr);
       }
     }
+    grad_fn->input_sizes = fmap<TensorMeta>(result);
   }
   return result;
 }
