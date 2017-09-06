@@ -10,7 +10,7 @@ import torch.jit
 from torch.autograd import Variable
 
 import onnx
-from onnx.backend import c2
+import onnx.backend.caffe2 as c2
 
 
 torch.set_default_tensor_type('torch.FloatTensor')
