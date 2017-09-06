@@ -53,11 +53,13 @@ struct Eval : Function {
     Boundary boundary;
   };
 
+  virtual ~Eval() {}
+
   virtual inline bool is_traceable() final { return traceable; }
 
   virtual variable_list apply(const variable_list& inputs) override;
 
-  void replaceSubgraph(
+  bool replaceSubgraph(
       const variable_list& inputs,
       const variable_list& outputs,
       const placeholder_list& inherited_placeholders = placeholder_list());
@@ -70,6 +72,10 @@ struct Eval : Function {
     if (relevant_outputs.size() == 0)
       return nullptr;
     return std::dynamic_pointer_cast<Eval>(relevant_outputs[0]->grad_fn);
+  }
+
+  virtual std::shared_ptr<Eval> newEval() {
+    return std::make_shared<Eval>();
   }
 
   function_list roots;
