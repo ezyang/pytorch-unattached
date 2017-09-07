@@ -3,7 +3,7 @@
 from __future__ import absolute_import
 
 import onnx
-import onnx.backend.caffe2 as c2
+import onnx_caffe2.backend as c2
 
 
 def import_model(proto, input, workspace=None, use_gpu=True):
