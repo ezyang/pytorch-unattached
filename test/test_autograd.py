@@ -601,6 +601,7 @@ class TestAutograd(TestCase):
         check_index(x, y, ([[2, 3], slice(None)]))
 
         # advanced indexing, with less dim, or ellipsis
+        check_index(x, y, ([0]))
         check_index(x, y, ([0], ))
 
         x = torch.arange(1, 49).view(4, 3, 4)
@@ -980,7 +981,7 @@ class TestAutograd(TestCase):
     def test_unused_output_gpu(self):
         from torch.nn.parallel._functions import Broadcast
         x = Variable(torch.randn(5, 5).float().cuda(), requires_grad=True)
-        outputs = Broadcast(list(range(torch.cuda.device_count())))(x)
+        outputs = Broadcast.apply(list(range(torch.cuda.device_count())), x)
         y = outputs[-1] * 2
         y.sum().backward()
         self.assertEqual(x.grad.data, torch.ones(5, 5) * 2)
@@ -1536,6 +1537,11 @@ def prod_single_zero(dim_size):
     return Variable(result, requires_grad=True)
 
 
+def _make_cov(S):
+    L = torch.tril(torch.rand(S, S))
+    return torch.mm(L, L.t())
+
+
 class dont_convert(tuple):
     pass
 
@@ -2015,6 +2021,7 @@ method_tests = [
     ('cross', (S, 3, S), ((S, 3, S), 1), 'dim'),
     ('inverse', (S, S), (), '', (), [skipIfNoLapack]),
     ('gesv', (S, S), ((S, S),), '', (), [skipIfNoLapack]),
+    ('potrf', _make_cov(S), (True,), '', (), [skipIfNoLapack]),
     ('clone', (S, M, S), ()),
     ('eq', (S, S, S), ((S, S, S),)),
     ('eq', (S, S, S), ((1,),), 'broadcast_rhs'),
