@@ -10,8 +10,8 @@ jit::node_list BatchNormForward::symbolic(SymbolicContext* ctx, jit::node_list i
   auto & g = ctx->graph;
   // X, Scale, Bias
   auto bn = g->appendNode(g->create(jit::kSpatialBN,{inputs.at(0),inputs.at(1),inputs.at(2)}));
-  bn->addInput(jit::tracer::getBufferTrace(*ctx->buffer_map, cached_running_mean));
-  bn->addInput(jit::tracer::getBufferTrace(*ctx->buffer_map, cached_running_var));
+  bn->addInput(jit::tracer::getBufferTrace(*ctx->buffer_map, running_mean));
+  bn->addInput(jit::tracer::getBufferTrace(*ctx->buffer_map, running_var));
   bn->i_(jit::kis_test, !this->training);
   bn->f_(jit::kepsilon, eps);
   //bn->s_(jit::korder, "NCHW");

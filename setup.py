@@ -17,9 +17,6 @@ from tools.setup_helpers.cuda import WITH_CUDA, CUDA_HOME
 from tools.setup_helpers.cudnn import WITH_CUDNN, CUDNN_LIB_DIR, CUDNN_INCLUDE_DIR
 from tools.setup_helpers.split_types import split_types
 
-cwd = os.path.dirname(os.path.abspath(__file__))
-lib_path = os.path.join(cwd, "torch", "lib")
-
 DEBUG = check_env_flag('DEBUG')
 WITH_DISTRIBUTED = not check_env_flag('NO_DISTRIBUTED')
 WITH_DISTRIBUTED_MW = WITH_DISTRIBUTED and check_env_flag('WITH_DISTRIBUTED_MW')
@@ -81,6 +78,21 @@ distutils.unixccompiler.UnixCCompiler.link = patched_link
 # Custom build commands
 ################################################################################
 
+dep_libs = [
+    'TH', 'THS', 'THNN', 'THC', 'THCS', 'THCUNN', 'nccl', 'THPP', 'libshm',
+    'ATen', 'gloo', 'THD', 'nanopb',
+]
+
+
+def build_libs(libs):
+    for lib in libs:
+        assert lib in dep_libs, 'invalid lib: {}'.format(lib)
+    build_libs_cmd = ['bash', 'torch/lib/build_libs.sh']
+    if WITH_CUDA:
+        build_libs_cmd += ['--with-cuda']
+    if subprocess.call(build_libs_cmd + libs) != 0:
+        sys.exit(1)
+
 
 class build_deps(Command):
     user_options = []
@@ -92,17 +104,33 @@ class build_deps(Command):
         pass
 
     def run(self):
-        from tools.nnwrap import generate_wrappers as generate_nn_wrappers
-        build_all_cmd = ['bash', 'torch/lib/build_all.sh']
+        libs = ['TH', 'THS', 'THNN']
         if WITH_CUDA:
-            build_all_cmd += ['--with-cuda']
+            libs += ['THC', 'THCS', 'THCUNN']
         if WITH_NCCL and not SYSTEM_NCCL:
-            build_all_cmd += ['--with-nccl']
+            libs += ['nccl']
+        libs += ['THPP', 'libshm', 'ATen', 'nanopb']
         if WITH_DISTRIBUTED:
-            build_all_cmd += ['--with-distributed']
-        if subprocess.call(build_all_cmd) != 0:
-            sys.exit(1)
+            if sys.platform.startswith('linux'):
+                libs += ['gloo']
+            libs += ['THD']
+        build_libs(libs)
+
+        from tools.nnwrap import generate_wrappers as generate_nn_wrappers
         generate_nn_wrappers()
+
+
+build_dep_cmds = {}
+
+for lib in dep_libs:
+    # wrap in function to capture lib
+    class build_dep(build_deps):
+        description = 'Build {} external library'.format(lib)
+
+        def run(self):
+            build_libs([self.lib])
+    build_dep.lib = lib
+    build_dep_cmds['build_' + lib.lower()] = build_dep
 
 
 class build_module(Command):
@@ -246,6 +274,16 @@ if os.getenv('PYTORCH_BINARY_BUILD') and platform.system() == 'Linux':
     if type(path) != str:  # python 3
         path = path.decode(sys.stdout.encoding)
     extra_link_args += [path]
+
+cwd = os.path.dirname(os.path.abspath(__file__))
+lib_path = os.path.join(cwd, "torch", "lib")
+
+# Check if you remembered to check out submodules
+gloo_cmake = os.path.join(lib_path, "gloo", "CMakeLists.txt")
+if not os.path.exists(gloo_cmake):
+    print("Could not find {}".format(gloo_cmake))
+    print("Did you run 'git submodule update --init'?")
+    sys.exit(1)
 
 tmp_install_path = lib_path + "/tmp_install"
 include_dirs += [
@@ -494,26 +532,30 @@ else:
     except subprocess.CalledProcessError:
         pass
 
+cmdclass = {
+    'build': build,
+    'build_py': build_py,
+    'build_ext': build_ext,
+    'build_deps': build_deps,
+    'build_module': build_module,
+    'develop': develop,
+    'install': install,
+    'clean': clean,
+}
+cmdclass.update(build_dep_cmds)
 
 setup(name="torch", version=version,
       description="Tensors and Dynamic neural networks in Python with strong GPU acceleration",
       ext_modules=extensions,
-      cmdclass={
-          'build': build,
-          'build_py': build_py,
-          'build_ext': build_ext,
-          'build_deps': build_deps,
-          'build_module': build_module,
-          'develop': develop,
-          'install': install,
-          'clean': clean,
-      },
+      cmdclass=cmdclass,
       packages=packages,
       package_data={'torch': [
           'lib/*.so*', 'lib/*.dylib*',
           'lib/torch_shm_manager',
           'lib/*.h',
           'lib/include/TH/*.h', 'lib/include/TH/generic/*.h',
-          'lib/include/THC/*.h', 'lib/include/THC/generic/*.h']},
+          'lib/include/THC/*.h', 'lib/include/THC/generic/*.h',
+          'lib/include/ATen/*.h',
+      ]},
       install_requires=['pyyaml', 'numpy'],
       )

@@ -42,13 +42,6 @@ auto BatchNormForward::apply(const variable_list& inputs) -> variable_list {
   auto& bias = inputs[2];
   AutoGPU guard(input->data);
 
-  // At the moment, running_mean coincides with cached_running_mean.  But
-  // eventually, we will make it possible to explicitly pass in running_mean
-  // and running_var as arguments to BatchNorm (rather than use the cached
-  // value.)  At this point, this extra little bit of generality will help.
-  auto& running_mean = cached_running_mean;
-  auto& running_var = cached_running_var;
-
   auto num_features = input->data.sizes()[1];
   check_dims_match_num_input_features("running_mean", num_features, running_mean.numel());
   check_dims_match_num_input_features("running_var", num_features, running_var.numel());
@@ -107,11 +100,8 @@ auto BatchNormForward::apply(const variable_list& inputs) -> variable_list {
 
   auto outputs = as_tensor_list(std::move(output));
   return wrap_outputs(inputs, std::move(outputs), [&](FunctionFlags f) {
-    BatchNormParams params = *this;
-    params.cached_running_mean = running_mean;
-    params.cached_running_var = running_var;
     return std::make_shared<BatchNormBackward>(
-        f, std::move(params), std::move(save_mean), std::move(save_std),
+        f, *this, std::move(save_mean), std::move(save_std),
         input, weight, bias);
   });
 };
@@ -125,9 +115,6 @@ auto BatchNormBackward::apply(const variable_list& grad_outputs) -> variable_lis
   auto input = input_var->data;
   auto weight = weight_var ? weight_var->data : at::Tensor();
   auto bias = bias_var ? bias_var->data : at::Tensor();
-
-  auto& running_mean = cached_running_mean;
-  auto& running_var = cached_running_var;
 
   AutoGPU guard(input);
 
@@ -236,11 +223,8 @@ auto BatchNormBackwardBackward::apply(const variable_list& grad_grad_inputs) -> 
   auto weight_var = weight.unpack();
   auto gO_var = grad_output.unpack();
 
-  AutoGPU guard(input_var->data);
-
-  auto& running_mean = cached_running_mean;
-  auto& running_var = cached_running_var;
-
+  auto input = input_var->data;
+  AutoGPU guard(input);
   AutoGIL gil;
 
   THPObjectPtr input_pvar(THPVariable_Wrap(input_var));

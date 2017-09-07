@@ -1,5 +1,6 @@
 import torch
 from torch.nn.parameter import Parameter
+from torch.autograd import Variable
 
 from .module import Module
 
@@ -160,17 +161,17 @@ class EmbeddingBag(Module):
 
     Examples:
 
-    >>> # an Embedding module containing 10 tensors of size 3
-    >>> embedding_sum = nn.EmbeddingBag(10, 3, mode='sum')
-    >>> # a batch of 2 samples of 4 indices each
-    >>> input = Variable(torch.LongTensor([1,2,4,5,4,3,2,9]))
-    >>> offsets = Variable(torch.LongTensor([0,4]))
-    >>> embedding_sum(input, offsets)
+        >>> # an Embedding module containing 10 tensors of size 3
+        >>> embedding_sum = nn.EmbeddingBag(10, 3, mode='sum')
+        >>> # a batch of 2 samples of 4 indices each
+        >>> input = Variable(torch.LongTensor([1,2,4,5,4,3,2,9]))
+        >>> offsets = Variable(torch.LongTensor([0,4]))
+        >>> embedding_sum(input, offsets)
 
-    Variable containing:
-    -0.7296 -4.6926  0.3295
-    -0.5186 -0.5631 -0.2792
-    [torch.FloatTensor of size 2x3]
+        Variable containing:
+        -0.7296 -4.6926  0.3295
+        -0.5186 -0.5631 -0.2792
+        [torch.FloatTensor of size 2x3]
     """
 
     def __init__(self, num_embeddings, embedding_dim,
@@ -198,7 +199,9 @@ class EmbeddingBag(Module):
                                  " fixed length sequences. However, found "
                                  "offsets of type {}".format(type(offsets)))
             else:
-                offsets = input.data.new(input.size(0)).fill_(input.size(1))
+                offsets = Variable(torch.arange(0, input.numel(), input.size(1),
+                                   out=input.data.new().long()))
+                input = input.view(-1)
         elif input.dim() != 1:
             raise ValueError("input has to be 1D or 2D Tensor,"
                              " but got Tensor of dimension {}".format(input.dim()))

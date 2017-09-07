@@ -62,8 +62,7 @@ std::shared_ptr<Graph> ToONNX(std::shared_ptr<Graph>& g,
     JIT_ASSERTM(outputs.size() <= old_outputs.size(), "symbolic produced too many outputs");
     size_t i = 0;
     for(auto & old : old_outputs) {
-      // TODO: what if there are multiple trailing handle outputs?  That is
-      // a serious invariant violation...
+      // NB: There is at most one handle, and if it exists, it is the last input
       if(i >= outputs.size()) {
         // symbolics do not deal with Handles at the moment, so we just
         // assert the handle isn't actually used.
