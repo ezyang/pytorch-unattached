@@ -7,6 +7,9 @@
 [submodule "torch/lib/nanopb"]
 	path = torch/lib/nanopb
 	url = https://github.com/nanopb/nanopb.git
-[submodule "torch/lib/ToffeeIR"]
-	path = torch/lib/ToffeeIR
-	url = https://github.com/ProjectToffee/ToffeeIR.git
+[submodule "torch/lib/onnx"]
+	path = torch/lib/onnx
+	url = https://github.com/onnx/onnx.git
+[submodule "torch/lib/onnx-caffe2"]
+	path = torch/lib/onnx-caffe2
+	url = https://github.com/onnx/onnx-caffe2.git

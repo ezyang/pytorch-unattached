@@ -68,14 +68,14 @@ To run the exported script with Caffe2, you will need to install
 the backend for Caffe2::
 
     # ...continuing from above
-    import onnx.backend.caffe2 as backend
+    import onnx_caffe2.backend as backend
     import numpy as np
 
     rep = backend.prepare(graph, device="CUDA:0") # or "CPU"
     # For the Caffe2 backend:
     #     rep.predict_net is the Caffe2 protobuf for the network
     #     rep.workspace is the Caffe2 workspace for the network
-    #       (see the class onnx.backend.c2.Workspace)
+    #       (see the class onnx_caffe2.backend.Workspace)
     outputs = rep.run(np.random.randn(10, 3, 224, 224).astype(np.float32))
     # To run networks with more than one input, pass a tuple
     # rather than a single numpy ndarray.
