@@ -58,9 +58,13 @@ def set_training(model, mode):
     to 'mode', resetting it when we exit the with-block.
     """
     old_mode = model.training
-    if old_mode != mode: model.train(mode)
-    yield
-    if old_mode != mode: model.train(old_mode)
+    if old_mode != mode:
+        model.train(mode)
+    try:
+        yield
+    finally:
+        if old_mode != mode:
+            model.train(old_mode)
 
 
 def _export(model, args, f, export_params=True, verbose=False, training=False):
@@ -118,11 +122,15 @@ def verify(model, args, backend, verbose=False, training=False, decimal=3, test_
             the moment, ONNX is oriented towards exporting models for inference
             only, so you will generally not need to set this to True.
         decimal (int, default 3): how many decimal places to test precision
-        test_args (int or iterable of args): either an integer specifying the number
+        test_args (int or iterable of args, default 2):
+            either an integer specifying the number
             of random arguments to generate, or an iterable producing arguments
             to test under.
     """
-    import onnx
+    try:
+        import onnx
+    except ImportError:
+        raise ImportError("To use torch.onnx.verify, you must install the 'onnx' library.")
     import numpy as np
     import difflib
 
@@ -136,13 +144,17 @@ def verify(model, args, backend, verbose=False, training=False, decimal=3, test_
             self.msg = msg
             self.errors = []
             self.context = []
+
             class ShortCircuit(Exception):
                 pass
             self.exc_class = ShortCircuit
-        def assertAlmostEqual(self, x, y, msg=None):
+
+        def requireAlmostEqual(self, x, y, msg=None):
             self.almostEqualAndThen(x, y, msg, self.failWith)
+
         def checkAlmostEqual(self, x, y, msg=None):
             self.almostEqualAndThen(x, y, msg, self.addErr)
+
         def almostEqualAndThen(self, x, y, msg, k):
             if isinstance(x, np.ndarray) and isinstance(y, np.ndarray):
                 try:
@@ -156,22 +168,24 @@ def verify(model, args, backend, verbose=False, training=False, decimal=3, test_
             else:
                 raise RuntimeError("Unsupported almost equal test")
 
-        # Bit-for-bit accuracy test
-        def assertEqual(self, x, y, msg=None):
+        def requireEqual(self, x, y, msg=None):
             self.equalAndThen(x, y, msg, self.failWith)
+
         def checkEqual(self, x, y, msg=None):
             self.equalAndThen(x, y, msg, self.addErr)
+
+        # Bit-for-bit accuracy test
         def equalAndThen(self, x, y, msg, k):
             if isinstance(x, onnx.TensorProto) and isinstance(y, onnx.TensorProto):
+                self.equalAndThen(x.name, y.name, msg, k)
                 # Use numpy for the comparison
-                self.assertEqual(x.name, y.name)
                 t1 = onnx.numpy_helper.to_array(x)
                 t2 = onnx.numpy_helper.to_array(y)
                 if msg:
                     new_msg = "{}, in embedded parameter '{}'".format(msg, x.name)
                 else:
                     new_msg = "In embedded parameter '{}'".format(x.name)
-                self.assertEqual(t1, t2, new_msg)
+                self.equalAndThen(t1, t2, new_msg, k)
             elif isinstance(x, np.ndarray) and isinstance(y, np.ndarray):
                 try:
                     np.testing.assert_equal(t1, t2)
@@ -192,51 +206,65 @@ def verify(model, args, backend, verbose=False, training=False, decimal=3, test_
                         if len(sx) > 40 or len(sy) > 40 or '\n' in sx or '\n' in sy:
                             # long form
                             l = "=" * 50
-                            k("\nThe value\n{}\n{}\n{}\n\ndoes not equal\n\n{}\n{}\n{}".format(l, sx, l, l, sy, l))
+                            k("\nThe value\n{}\n{}\n{}\n\ndoes not equal\n\n{}\n{}\n{}"
+                                .format(l, sx, l, l, sy, l))
                         else:
                             k("{} != {}".format(sx, sy))
-        def assertMultiLineEqual(self, x, y, msg=None):
+
+        def requireMultiLineEqual(self, x, y, msg=None):
             self.multiLineEqualAndThen(x, y, msg, self.failWith)
+
         def multiLineEqualAndThen(self, x, y, msg, k):
             if msg is None:
                 msg = "Strings are not equal:"
             if x != y:
                 diff = difflib.ndiff(x.splitlines(True), y.splitlines(True))
                 k("{}\n\n{}".format(msg, "".join(diff)))
+
         def addErr(self, msg):
             # TODO: instead of putting in strings, delay context
             msg_w_ctx = msg
             for c in reversed(self.context):
                 msg += "\n\n  * " + "\n    ".join(c.splitlines())
             self.errors.append(msg)
+
         def fail(self):
             raise self.exc_class()
+
         def failWith(self, msg):
             self.addErr(msg)
             self.fail()
+
         def failIfErrs(self):
             if self.errors:
                 self.fail()
+
         def recover(parent_self):
             class Recover(object):
                 def __enter__(self):
                     pass
+
                 def __exit__(self, exc_type, exc_value, traceback):
                     if exc_type == parent_self.exc_class:
                         return True
             return Recover()
+
         def addErrCtxt(parent_self, msg):
             class AddContext(object):
                 def __enter__(self):
                     parent_self.context.append(msg)
+
                 def __exit__(self, exc_type, exc_value, traceback):
                     parent_self.context.pop()
             return AddContext()
+
         def __enter__(self):
             return self
+
         def __exit__(self, exc_type, exc_value, traceback):
             if self.errors:
-                final_msg = "{}\n{}\n{}".format(self.msg, '-' * 70, "\n\n".join(map(lambda x: "ERROR: " + x, self.errors)))
+                errors_msg = "\n\n".join(map(lambda x: "ERROR: " + x, self.errors))
+                final_msg = "{}\n{}\n{}".format(self.msg, '-' * 70, errors_msg)
                 raise AssertionError(final_msg)
             if exc_type == self.exc_class:
                 raise RuntimeError("ShortCircuit was raised, but no errors were recorded")
@@ -245,7 +273,6 @@ def verify(model, args, backend, verbose=False, training=False, decimal=3, test_
         return isinstance(o, torch.autograd.Variable)
 
     def randomize_arg(arg):
-        # assert is_variable(arg)
         new_data = arg.data.clone()
         # For now, don't try randomizing non-float tensors; these
         # are likely to be things like indices, where just randomly
@@ -279,7 +306,7 @@ def verify(model, args, backend, verbose=False, training=False, decimal=3, test_
         def run(args):
             alt_proto_bytes = io.BytesIO()
             torch_out = _export(model, args, alt_proto_bytes, verbose=verbose, training=training)
-            if False and proto_bytes.getvalue() != alt_proto_bytes.getvalue():
+            if proto_bytes.getvalue() != alt_proto_bytes.getvalue():
                 # OK, let's try to figure out what happened.
                 msg = "When I exported your model with different inputs, the result was different."
                 if not verbose:
@@ -293,7 +320,9 @@ def verify(model, args, backend, verbose=False, training=False, decimal=3, test_
                                         "your model is updating parameters/buffers even in inference\n"
                                         "mode.  Look for a buggy nn.Module which isn't respecting train().\n")
                     with errs.recover(), errs.addErrCtxt(initializer_hint):
-                        errs.assertEqual(list(map(lambda x: x.name, proto.initializer)),
+                        # If the initializer order is jumbled up, we have bigger
+                        # problems.
+                        errs.requireEqual(list(map(lambda x: x.name, proto.initializer)),
                                          list(map(lambda x: x.name, alt_proto.initializer)))
                         for x, y in zip(proto.initializer, alt_proto.initializer):
                             errs.checkEqual(x, y)
@@ -305,8 +334,8 @@ def verify(model, args, backend, verbose=False, training=False, decimal=3, test_
                     with errs.recover(), errs.addErrCtxt(structure_hint):
                         # TODO: This currently relies on the graph exporter not
                         # actually printing the initializers
-                        errs.assertMultiLineEqual(onnx.helper.printable_graph(proto),
-                                                  onnx.helper.printable_graph(alt_proto))
+                        errs.requireMultiLineEqual(onnx.helper.printable_graph(proto),
+                                                   onnx.helper.printable_graph(alt_proto))
                         # Not very user friendly. Last resort!
                         # NB: Delete initializers since we already tested them
                         stripped_proto = onnx.GraphProto()
@@ -315,16 +344,19 @@ def verify(model, args, backend, verbose=False, training=False, decimal=3, test_
                         stripped_alt_proto.CopyFrom(alt_proto)
                         del stripped_proto.initializer[:]
                         del stripped_alt_proto.initializer[:]
-                        errs.assertMultiLineEqual(str(stripped_proto), str(stripped_alt_proto))
-                        errs.assertEqual(stripped_proto, stripped_alt_proto)
+                        errs.requireMultiLineEqual(str(stripped_proto), str(stripped_alt_proto))
+                        errs.requireEqual(stripped_proto, stripped_alt_proto)
 
                     errs.failIfErrs()
 
-                    # This shouldn't happen
-                    errs.assertEqual(proto, alt_proto)
-                    # And this *really* shouldn't happen
-                    errs.assertEqual(proto_bytes.getvalue(), alt_proto_bytes.getvalue())
-                    # And this is impossible
+                    # At this point, we should have figured out why the binary
+                    # protobufs differed, and short-circuited out of this code
+                    # with a helpful error message.  But what if we didn't?
+                    # We better still try to give a good error message in this
+                    # case.  We EXPECT these requires to fail.  If they don't,
+                    # that is a bug in verify
+                    errs.requireEqual(proto, alt_proto)
+                    errs.requireEqual(proto_bytes.getvalue(), alt_proto_bytes.getvalue())
                     assert False
 
             # TODO: test that the traced model also returns the same thing...
@@ -352,9 +384,6 @@ def verify(model, args, backend, verbose=False, training=False, decimal=3, test_
         else:
             for test_arg in test_args:
                 run(test_arg)
-
-# The code below monkey-patches a utility function used in the body of
-# symbolic() methods in Python.
 
 
 attr_pattern = re.compile("^(.+)_([ifstg])$")
