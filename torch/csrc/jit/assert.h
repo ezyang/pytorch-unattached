@@ -34,3 +34,16 @@ void barf(const char *fmt, ...);
   if (__builtin_expect(!(cond), 0)) { \
     ::torch::jit::barf("%s:%u: %s: Assertion `%s` failed: " msg , __FILE__, __LINE__, __func__, #cond,##__VA_ARGS__); \
   }
+
+#define JIT_EXPECT(cond) \
+  if (__builtin_expect(!(cond), 0)) { \
+    ::torch::jit::barf("%s:%u: %s: Invalid user input failed the check `%s`.", __FILE__, __LINE__, __func__, #cond); \
+  }
+
+//note: msg must be a string literal
+//node: In, ##__VA_ARGS '##' supresses the comma if __VA_ARGS__ is empty
+#define JIT_EXPECTM(cond, msg, ...) \
+  if (__builtin_expect(!(cond), 0)) { \
+    ::torch::jit::barf("%s:%u: %s: Invalid user input failed the check `%s`: " msg , __FILE__, __LINE__, __func__, \
+                       #cond,##__VA_ARGS__); \
+  }

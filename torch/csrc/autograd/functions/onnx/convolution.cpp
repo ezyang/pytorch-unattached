@@ -4,10 +4,10 @@ namespace torch { namespace autograd {
 
 template<typename T>
 static T all_equal(at::ArrayRef<T> ts, const char * name) {
-  JIT_ASSERT(ts.size() > 0);
+  JIT_EXPECT(ts.size() > 0);
   auto v = ts[0];
   for(auto t : ts) {
-    JIT_ASSERTM(v == t, "all elements of %s must be the same for transposed", name);
+    JIT_EXPECTM(v == t, "all elements of %s must be the same for transposed", name);
   }
   return v;
 }
@@ -66,7 +66,7 @@ jit::node_list ConvForward::symbolic(SymbolicContext* ctx, jit::node_list inputs
 
   // Not in ONNX?
   for (int p : output_padding) {
-    JIT_ASSERT(p == 0);
+    JIT_EXPECT(p == 0);
   }
 
   // ignore benchmark/cudnn_enabled
