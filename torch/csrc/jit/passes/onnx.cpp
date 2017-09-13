@@ -117,10 +117,10 @@ void ToONNX(std::shared_ptr<tracer::TracingState>& state) {
     for (auto arg_type : op->cconv) {
       py::object obj;
       if (arg_type == 's') {
-        JIT_EXPECTM(scalar_it != op->scalar_args.end(), "expected too many scalar args");
+        JIT_ASSERTM(scalar_it != op->scalar_args.end(), "expected too many scalar args");
         obj = py::reinterpret_borrow<py::object>(py::handle((scalar_it++)->get()));
       } else if (arg_type == 't') {
-        JIT_EXPECTM(node_it != op->inputs().end(), "expected too many inputs");
+        JIT_ASSERTM(node_it != op->inputs().end(), "expected too many inputs");
         obj = py::cast(envFn(*node_it++));
       } else {
         throw std::runtime_error("unexpected calling convention");
@@ -154,7 +154,7 @@ void ToONNX(std::shared_ptr<tracer::TracingState>& state) {
     }
     IR_IF(node, Select)
       // Selects are translated by multi-return nodes.
-      JIT_EXPECT(env.count(value) > 0);
+      JIT_ASSERT(env.count(value) > 0);
     IR_ELSEIFM(CppOp)
       if (auto fn = std::dynamic_pointer_cast<autograd::HasSymbolic>(value->fn)) {
         auto outputs = fn->symbolic(&ctx, fmap(node->inputs(), envFn));
