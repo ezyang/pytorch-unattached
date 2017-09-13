@@ -30,6 +30,7 @@ void barf(const char *fmt, ...);
 
 #define JIT_ASSERTM(...) _JIT_ASSERTM(__VA_ARGS__, ' ')
 
+// Note: msg must be a string literal
 #define _JIT_ASSERTM(cond, msg, ...) \
   if (__builtin_expect(!(cond), 0)) { \
     ::torch::jit::barf("%s:%u: %s: Assertion `%s` failed: " msg, __FILE__, __LINE__, __func__, #cond, __VA_ARGS__); \
@@ -37,6 +38,7 @@ void barf(const char *fmt, ...);
 
 #define JIT_EXPECTM(...) _JIT_EXPECTM(__VA_ARGS__, ' ')
 
+// Note: msg must be a string literal
 #define _JIT_EXPECTM(cond, msg, ...) \
   if (__builtin_expect(!(cond), 0)) { \
     ::torch::jit::barf("%s:%u: %s: " msg, __FILE__, __LINE__, __func__, __VA_ARGS__); \
