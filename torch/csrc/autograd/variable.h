@@ -62,9 +62,6 @@ struct Variable : public at::Tensor {
 
   inline Variable & operator=(Variable && rhs) &;
   inline Variable & operator=(const Variable & rhs) &;
-
-  // implicit conversion to Tensor
-  operator Tensor() const { return Tensor(pImpl, true); }
 };
 
 struct VariableImpl : public at::TensorImpl {
