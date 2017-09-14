@@ -471,7 +471,8 @@ private:
   // as a Use object
   // also used as the beginning/end of the circular node list to avoid
   // having corner cases where the list is empty.
-  Node * output_;
+  // NB: initialized in constructor, and then never touched again
+  Node * output_ = nullptr;
 
   // only used to keep track of allocated nodes
   // actual representation of Graph is done with
@@ -486,10 +487,7 @@ public:
   Graph()
   : next_unique_(0)
   , new_node_stage_(0) {
-    output_ = create(kReturn);
-    output_->next() = output_;
-    output_->prev() = output_;
-    output_->stage_ = -1; // >= than all stages
+    initOutput(create(kReturn));
   }
 
   const param_list & inputs() {
@@ -509,9 +507,12 @@ public:
   }
 
   Node * addInput() {
-    Node* p = create(kParam);
-    inputs_.push_back(p);
-    return p;
+    return addInput(create(kParam));
+  }
+
+  Node * addInput(Node* n) {
+    inputs_.push_back(n);
+    return n;
   }
 
   void advanceStage() {
@@ -543,7 +544,8 @@ public:
   }
 
   Node * create(NodeKind kind) {
-    return new Node(this,kind);
+    // NB: Node constructor adds node to all_nodes
+    return new Node(this, kind);
   }
 
   Node * create(NodeKind kind, ArrayRef<Node*> inputs) {
@@ -625,6 +627,14 @@ public:
   friend std::ostream& operator<<(std::ostream & out, Graph & g);
 
 private:
+
+  void initOutput(Node* p) {
+    JIT_ASSERT(!output_);
+    output_ = p;
+    output_->next() = output_;
+    output_->prev() = output_;
+    output_->stage_ = -1; // >= than all stages
+  }
 
   void freeNode(Node * n) {
     auto it = all_nodes.find(n);
