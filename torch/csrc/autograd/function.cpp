@@ -63,14 +63,12 @@ variable_list Function::tracedApply(variable_list inputs) {
   int num_outputs = outputs.size();
   for (int i = 0; i < num_outputs; ++i) {
     auto& output = outputs[i];
-    if (!output.defined()) {
-      auto & edge = next_functions[i];
-      auto & meta = edge.first->input_sizes.at(edge.second);
-      output = meta.recreate();
-    }
     Node* sel = graph->appendNode(graph->createSelect(this_node, i));
-    sel->inferTypeFrom(output.data());
-    tracer::setValueTrace(state, output, sel);
+    // TODO: This causes a bug in word_language_model
+    if (output.defined()) {
+      sel->inferTypeFrom(output.data());
+      tracer::setValueTrace(state, output, sel);
+    }
   }
 
   if (!passes_state_transparently()) {
