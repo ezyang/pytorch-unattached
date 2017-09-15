@@ -32,6 +32,7 @@ using saved_variable_list = std::vector<SavedVariable>;
 struct TensorMeta {
   TensorMeta(const Variable& var) {
     if (var.defined()) {
+      defined = true;
       sizes = var.data().sizes();
       device = var.data().type().isCuda() ? var.data().get_device() : -1;
       type = &var.data().type();
@@ -39,16 +40,16 @@ struct TensorMeta {
   }
 
   Variable recreate() {
-    AutoGPU gpu_guard(device);
     if (!defined)
       throw std::logic_error("Recreating undefined TensorMeta");
+    AutoGPU gpu_guard(device);
     return Variable(new VariableImpl(type->zeros(sizes), false, false), false);
   }
 
   std::vector<int64_t> sizes;
   int device;
   at::Type* type;
-  bool defined;
+  bool defined = false;
 };
 using tensor_meta_list = std::vector<TensorMeta>;
 
