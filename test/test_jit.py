@@ -476,6 +476,34 @@ class TestJit(TestCase):
         trace, _ = torch.jit.record_trace(nn.Conv2d(16, 13, 3, bias=False), x)
         self.assertExpected(str(trace))
 
+    def test_input_no_grad(self):
+        class MyFn(Function):
+            @staticmethod
+            def forward(ctx, x, y):
+                return x * x
+
+            @staticmethod
+            def backward(ctx, grad_output):
+                return 2 * grad_output, None
+
+        x = Variable(torch.randn(1), requires_grad=True)
+        y = Variable(torch.randn(1))
+
+        @torch.jit.trace(enabled=True, verify=True)
+        def fn(x, y):
+            return MyFn.apply(x, y)
+
+        z = fn(x, y)
+        z.backward()
+
+    def test_embedding(self):
+        emb = torch.jit.traced(nn.Embedding(2, 2), enabled=True, verify=True)
+        x = Variable(torch.LongTensor([[0,1], [1,0]]))
+        z = emb(x)
+        z.sum().backward()
+        z2 = emb(x)
+        self.assertEqual(z, z2)
+
     @skipIfNoTorchVision
     def test_alexnet(self):
         x = Variable(torch.randn(10, 3, 224, 224).fill_(1.0), requires_grad=True)
