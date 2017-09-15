@@ -208,6 +208,8 @@ class Traceable(object):
         out = self._run(*args)
         torch._C._tracer_exit(flatten(out))
 
+        _dump_trace(self.trace_name, 'trace', 'initial', trace)
+
         return trace, out
 
     def has_trace_for(self, *args):
