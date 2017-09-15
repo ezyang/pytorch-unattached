@@ -486,15 +486,15 @@ class TestJit(TestCase):
             def backward(ctx, grad_output):
                 return 2 * grad_output, None
 
-        x = Variable(torch.randn(1), requires_grad=True)
-        y = Variable(torch.randn(1))
-
         @torch.jit.trace(enabled=True, verify=True)
         def fn(x, y):
             return MyFn.apply(x, y)
 
+        x = Variable(torch.randn(1), requires_grad=True)
+        y = Variable(torch.randn(1))
+
         z = fn(x, y)
-        z.backward()
+        z.sum().backward()
 
     def test_embedding(self):
         emb = torch.jit.traced(nn.Embedding(2, 2), enabled=True, verify=True)
@@ -502,7 +502,31 @@ class TestJit(TestCase):
         z = emb(x)
         z.sum().backward()
         z2 = emb(x)
+        z.sum().backward()
         self.assertEqual(z, z2)
+
+    def test_mini_wlm(self):
+
+        class MyModel(nn.Module):
+            def __init__(self):
+                super(MyModel, self).__init__()
+                self.encoder = nn.Embedding(2, 2)
+            def forward(self, input, hidden):
+                emb = self.encoder(input)
+                hidden = hidden.clone() # simulate some RNN operation
+                # skip decoding
+                return emb, hidden
+
+        model = torch.jit.traced(MyModel(), enabled=True, verify=True)
+
+        x = Variable(torch.LongTensor([[0,1], [1,0]]))
+        y = Variable(torch.FloatTensor([0]))
+
+        z, _ = model(x, y)
+        z.sum().backward()
+
+        z, _ = model(x, y)
+        z.sum().backward()
 
     @skipIfNoTorchVision
     def test_alexnet(self):
