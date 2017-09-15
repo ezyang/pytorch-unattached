@@ -472,13 +472,6 @@ friend struct Node;
 private:
   param_list inputs_;
 
-  // holds outputs in a way that can be reflected
-  // as a Use object
-  // also used as the beginning/end of the circular node list to avoid
-  // having corner cases where the list is empty.
-  // NB: initialized in constructor, and then never touched again
-  Node * output_ = nullptr;
-
   // only used to keep track of allocated nodes
   // actual representation of Graph is done with
   // inputs, outputs, nodes
@@ -488,12 +481,17 @@ private:
 
   size_t new_node_stage_;
 
+  // holds outputs in a way that can be reflected
+  // as a Use object
+  // also used as the beginning/end of the circular node list to avoid
+  // having corner cases where the list is empty.
+  Node * const output_;
+
 public:
   Graph()
   : next_unique_(0)
-  , new_node_stage_(0) {
-    initOutput(create(kReturn));
-  }
+  , new_node_stage_(0)
+  , output_(initOutput(create(kReturn))) {}
 
   const param_list & inputs() {
     return inputs_;
@@ -633,12 +631,12 @@ public:
 
 private:
 
-  void initOutput(Node* p) {
-    JIT_ASSERT(!output_);
-    output_ = p;
-    output_->next() = output_;
-    output_->prev() = output_;
-    output_->stage_ = -1; // >= than all stages
+  // should only be called in the constructor
+  Node* initOutput(Node* p) {
+    p->next() = p;
+    p->prev() = p;
+    p->stage_ = -1; // >= than all stages
+    return p;
   }
 
   void freeNode(Node * n) {
