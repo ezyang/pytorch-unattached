@@ -224,7 +224,11 @@ std::ostream& printNode(std::ostream & out, Node * n, std::vector<Node*> * group
     for (auto& scalar : value->scalar_args) {
       if (i++ > 0)
         out << ", ";
-      out << scalar;
+      {
+        // TODO: make this less error prone
+        AutoGIL gil;
+        out << scalar;
+      }
     }
     out << ")";
   IR_ELSEIF(FusionGroup)
