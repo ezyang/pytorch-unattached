@@ -22,6 +22,12 @@ SEED_SET = 0
 ACCEPT = False
 
 
+if sys.version_info[0] == 2:
+    string_classes = (str, unicode)
+else:
+    string_classes = (str, bytes)
+
+
 # TODO rename me
 def parse_set_seed_once():
     global SEED
@@ -212,7 +218,7 @@ class TestCase(unittest.TestCase):
                 assertTensorsEqual(x._values(), y._values())
             else:
                 assertTensorsEqual(x, y)
-        elif type(x) == str and type(y) == str:
+        elif isinstance(x, string_classes) and isinstance(y, string_classes):
             super(TestCase, self).assertEqual(x, y)
         elif type(x) == set and type(y) == set:
             super(TestCase, self).assertEqual(x, y)
