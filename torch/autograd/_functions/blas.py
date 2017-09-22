@@ -17,11 +17,11 @@ class Addmm(InplaceFunction):
 
     @staticmethod
     def symbolic(g, add_matrix, matrix1, matrix2, alpha=1, beta=1, inplace=False):
-        # TODO: manually insert the necessary scaling, since ONNX doesn't
-        # natively support it
-        if alpha != 1 or beta != 1:
-            return None
         # TODO: Talk to ONNX about why their FC involves a transpose
+        if alpha != 1:
+            matrix1 = g.op("Scale", matrix1, scale_f=alpha)
+        if beta != 1:
+            add_matrix = g.op("Scale", add_matrix, scale_f=beta)
         matrix2_t = g.op("Transpose", matrix2)
         return g.op("FC", matrix1, matrix2_t, add_matrix)
 
