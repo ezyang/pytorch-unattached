@@ -573,7 +573,7 @@
   grad_output: log_sigmoid_backward(grad, input, buffer)
   input: log_sigmoid_double_backward(grad * grad_output, input)
 
-- name: log_softmax_backward(Tensor grad_output, Tensor input, int dim, Tensor output)
+- name: log_softmax_backward(Tensor grad_output, Tensor input, int64_t dim, Tensor output)
   grad_output: grad - (grad * output.exp()).sum(dim, true)
   input: log_softmax_double_backward(grad, grad_output, dim, output)
 
@@ -615,7 +615,7 @@
   grad_output: softplus_backward(grad, input, beta, threshold, output)
   input: softplus_double_backward(grad * grad_output, input, beta, threshold)
 
-- name: softmax_backward(Tensor grad_output, Tensor input, int dim, Tensor output)
+- name: softmax_backward(Tensor grad_output, Tensor input, int64_t dim, Tensor output)
   grad_output: softmax_backward(grad, input, dim, output)
   input: softmax_double_backward(grad, grad_output, dim, output)
 
