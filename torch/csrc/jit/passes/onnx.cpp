@@ -134,11 +134,18 @@ void ToONNX(std::shared_ptr<tracer::TracingState>& state) {
 
     py::object raw_output = onnx.attr("run_symbolic_function")(ctx.graph, n, py_inputs);
 
-    // Cast the outputs back to C++ and put them in the new graph
-    if (py::isinstance<Node>(raw_output)) {
-      return node_list{py::cast<Node*>(raw_output)};
+    if (raw_output.ptr() == Py_None) {
+      cloneNode(n);
     } else {
-      return py::cast<std::vector<Node*>>(raw_output);
+      // Cast the outputs back to C++ and put them in the new graph
+      node_list outputs;
+      if (py::isinstance<Node>(raw_output)) {
+        outputs = node_list{py::cast<Node*>(raw_output)};
+      } else {
+        outputs = py::cast<std::vector<Node*>>(raw_output);
+      }
+
+      setOutputs(symbolToString(n->kind()), n, outputs);
     }
   };
 
@@ -209,12 +216,7 @@ void ToONNX(std::shared_ptr<tracer::TracingState>& state) {
         cloneNode(node);
       }
     IR_ELSE()
-      if (py::hasattr(onnx_symbolic, symbolToString(node->kind()))) {
-        auto outputs = callPySymbolicFunction(node);
-        setOutputs(symbolToString(node->kind()), node, outputs);
-      } else {
-        cloneNode(node);
-      }
+      callPySymbolicFunction(node);
     IR_END()
   }
   for (auto output : state->graph->outputs()) {

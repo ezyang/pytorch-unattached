@@ -15,6 +15,7 @@ import json
 import math
 import contextlib
 import numbers
+import warnings
 from torch._utils import _range
 from torch._six import string_classes
 
@@ -151,6 +152,8 @@ def _newNode(self, opname, *args, **kwargs):
 
 def _op(self, opname, *raw_args, **kwargs):
     outputs = kwargs.pop('outputs', 1)
+    # Filter out None attributes, this can be convenient client side
+    kwargs = dict((k, v) for k, v in kwargs.iteritems() if v is not None)
     def const_if_tensor(arg):
         if isinstance(arg, torch._C.Node):
             return arg
@@ -190,7 +193,10 @@ def run_symbolic_function(g, n, inputs):
             op_name = n.kind()[:-1]
         else:
             op_name = n.kind()
-        fn = getattr(torch.onnx.symbolic, op_name)  # checked C++ side
+        if not hasattr(torch.onnx.symbolic, op_name):
+            warnings.warn("ONNX conversion of {} not supported".format(op_name))
+            return None
+        fn = getattr(torch.onnx.symbolic, op_name)
         attrs = { k: get_node_attr(n, k) for k in n.attributeNames() }
         r = fn(*inputs, **attrs)
         if r is None:

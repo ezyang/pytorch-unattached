@@ -123,8 +123,8 @@ def glu(input, dim):
     return op('Mul', first, op('Sigmoid', second))
 
 
-def softmax(input):
-    return op('Softmax', input)
+def softmax(input, dim=None):
+    return op('Softmax', input, axis_i=dim)
 
 
 def max_pool2d(input, kernel_size, stride, padding, dilation, ceil_mode):
@@ -152,5 +152,5 @@ def avg_pool2d(input, kernel_size, stride, padding, ceil_mode, count_include_pad
               pads_i=_pair(padding))
 
 
-def logsoftmax(input):
-    return op("Log", op('Softmax', input).typeAs(input))
+def log_softmax(input, dim=None):
+    return op("Log", op('Softmax', input, axis_i=dim).typeAs(input))
