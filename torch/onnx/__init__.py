@@ -15,7 +15,7 @@ import json
 import math
 import contextlib
 import numbers
-from ._utils import _range
+from torch._utils import _range
 from torch._six import string_classes
 
 
@@ -115,7 +115,7 @@ def _export(model, args, f, export_params=True, verbose=False, training=False):
 attr_pattern = re.compile("^(.+)_([ifstgz])$")
 
 
-def run_symbolic(op_name, symbolic_fn, args):
+def run_symbolic_method(op_name, symbolic_fn, args):
     """
     This trampoline function gets invoked for every symbolic call.
     """
@@ -149,19 +149,72 @@ def _newNode(self, opname, *args, **kwargs):
     return n
 
 
-def _op(self, opname, *args, **kwargs):
+def _op(self, opname, *raw_args, **kwargs):
+    outputs = kwargs.pop('outputs', 1)
+    def const_if_tensor(arg):
+        if isinstance(arg, torch._C.Node):
+            return arg
+        else:
+            return self.op("Constant", value_z=arg)
+    args = list(const_if_tensor(arg) for arg in raw_args)
+    n = self.appendNode(_newNode(self, opname, *args, **kwargs))
+    if outputs == 1:
+        return n
+    return tuple(self.appendNode(self.createSelect(n, i)) for i in _range(outputs))
+
+
+# Note [Export inplace]
+# ~~~~~~~~~~~~~~~~~~~~~
+# In abstract, it would be better for us to export inplace annotations,
+# than to not export them, since it is useful information that can
+# help the target of an ONNX export export more efficiently.  However,
+# ONNX doesn't currently formalize inplace.  Fortunately, it's sound to drop
+# inplace annotations, but we are losing information this way.
+
+
+_current_graph = None
+
+
+def run_symbolic_function(g, n, inputs):
+    import torch.onnx.symbolic
+    global _current_graph
+    assert not _current_graph
+    _current_graph = g
+    # TODO: Monkeypatch this on Node or implement it directly in the bindings
+    def get_node_attr(n, k):
+        sel = n.kindOf(k)
+        return getattr(n, sel)(k)
+    try:
+        # See Note [Export inplace]
+        if n.kind().endswith('_'):
+            op_name = n.kind()[:-1]
+        else:
+            op_name = n.kind()
+        fn = getattr(torch.onnx.symbolic, op_name)  # checked C++ side
+        attrs = { k: get_node_attr(n, k) for k in n.attributeNames() }
+        r = fn(*inputs, **attrs)
+        if r is None:
+            raise NotImplementedError("torch.onnx.symbolic.{} returned None, "
+                                      "indicating ONNX translation not supported".format(op_name))
+        return r
+
+    except TypeError as e:
+        # Handle the specific case where we didn't successfully dispatch.
+        # Otherwise, the backtrace will have the clues you need.
+        e.args = ("{} (occurred when translating {})".format(e.args[0], op_name), )
+        raise
+    finally:
+        _current_graph = None
+
+
+def op(opname, *args, **kwargs):
     """
-    Create an ONNX operator 'opname', taking 'args' as inputs
-    and attributes 'kwargs' and add it to the current graph,
-    returning the node representing the single output of this
-    operator (see the `outputs` keyword argument for multi-return
-    nodes).
+    Create an ONNX operator 'opname', taking 'args' as inputs and attributes
+    'kwargs'; returning the node representing the single output of this operator
+    (see the `outputs` keyword argument for multi-return nodes).
 
     The set of operators and the inputs/attributes they take
     is documented at https://github.com/onnx/onnx/blob/master/docs/Operators.md
-
-    This op is monkey-patched to be available on the 'Graph' object
-    passed in as the first argument.
 
     Arguments:
         opname (string): The ONNX operator name, e.g., `Abs` or `Add`.
@@ -180,11 +233,9 @@ def _op(self, opname, *args, **kwargs):
             of output `Node`, representing each output of the ONNX operator
             in positional.
     """
-    outputs = kwargs.pop('outputs', 1)
-    n = self.appendNode(_newNode(self, opname, *args, **kwargs))
-    if outputs == 1:
-        return n
-    return tuple(self.appendNode(self.createSelect(n, i)) for i in _range(outputs))
+    global _current_graph
+    # TODO: stop using monkey-patch, maybe
+    return _current_graph.op(opname, *args, **kwargs)
 
 
 def _at(self, opname, *args, **kwargs):
