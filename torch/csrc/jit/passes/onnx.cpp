@@ -124,8 +124,6 @@ void ToONNX(std::shared_ptr<tracer::TracingState>& state) {
     // The idea is delegate as much of the actual argument massaging to
     // Python as possible
 
-    // TODO: Arguably this should use the converters, but how do you apply
-    // envFn? Vexing.
     py::tuple py_inputs(n->inputs().size());
     Py_ssize_t input_nr = 0;
     for (auto* input : n->inputs()) {
