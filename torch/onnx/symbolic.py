@@ -12,7 +12,9 @@ from torch.nn.modules.utils import _pair
 #   transparently dispatched to their non inplace versions in
 #   'run_symbolic_function'.   See Note [Export inplace]
 
-# Helper functions:
+# ---------------------------------------------------------------------
+# Helper functions
+# ---------------------------------------------------------------------
 
 
 def _scalar(x):
@@ -21,27 +23,76 @@ def _scalar(x):
     return x[0]
 
 
-# Symbolics:
+def _if_scalar_type_as(self, tensor):
+    """
+    Convert self into the same type of tensor, as necessary.
+
+    We only support implicit casting for scalars, so we never
+    actually need to insert an ONNX cast operator here; just
+    fix up the scalar.
+    """
+    if isinstance(self, torch._C.Node):
+        return self
+    else:
+        ty = tensor.type().scalarType().lower()
+        return getattr(self, ty)()
+
+
+def _broadcast_if_scalar(x):
+    """Return kwargs enabling broadcasting if 'x' is a scalar."""
+    if isinstance(x, torch._C.Node):
+        return {}
+    else:
+        return {"broadcast_i": 1}
+
+
+# ---------------------------------------------------------------------
+# Symbolic definitions
+# ---------------------------------------------------------------------
+
+
+# Note [Pointwise by scalar]
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~
+# What happens if you add a tensor with a constant (e.g., x + 2)?  There are
+# some moving parts to implementing the ONNX translation in this case:
+#
+#   - By the time we get the scalar in a symbolic function here, it is no longer
+#     a Python long/float, but a PyTorch tensor with numel == 1 (eventually, we
+#     want it to be a zero dim tensor but this change has not happened yet.)
+#     However, the type of this scalar is *exactly* what the user wrote in
+#     Python, which may not match the tensor it is being added to.  PyTorch
+#     will do implicit conversions on scalars; however, ONNX will not, so
+#     we must do the conversion ourselves.  This is what _if_scalar_type_as
+#     does.
+#
+#   - Most of the time, the arguments to self/other are pre-expanded according
+#     to broadcasting.  However, a scalar will NOT be broadcasted, so we have
+#     to enable broadcasting ONNX side.
+#
 
 
 def add(g, self, other, alpha):
     if _scalar(alpha) != 1:
         raise NotImplementedError("add: alpha != 1")
-    return g.op("Add", self, other)
+    # See Note [Pointwise by scalar]
+    return g.op("Add", self, _if_scalar_type_as(other, self), **_broadcast_if_scalar(other))
 
 
 def sub(g, self, other, alpha):
     if _scalar(alpha) != 1:
         raise NotImplementedError("sub: alpha != 1")
-    return g.op("Sub", self, other)
+    # See Note [Pointwise by scalar]
+    return g.op("Sub", self, _if_scalar_type_as(other, self), **_broadcast_if_scalar(other))
 
 
 def mul(g, self, other):
-    return g.op("Mul", self, other)
+    # See Note [Pointwise by scalar]
+    return g.op("Mul", self, _if_scalar_type_as(other, self), **_broadcast_if_scalar(other))
 
 
 def div(g, self, other):
-    return g.op("Div", self, other)
+    # See Note [Pointwise by scalar]
+    return g.op("Div", self, _if_scalar_type_as(other, self), **_broadcast_if_scalar(other))
 
 
 # TODO: untested

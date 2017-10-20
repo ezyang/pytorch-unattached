@@ -144,14 +144,14 @@ def _add_attribute(node, key, value):
     return getattr(node, kind + '_')(name, value)
 
 
-def _newNode(self, opname, *args, **kwargs):
-    n = self.create(opname, args)
+def _newNode(g, opname, *args, **kwargs):
+    n = g.create(opname, args)
     for k, v in sorted(kwargs.items()):
         _add_attribute(n, k, v)
     return n
 
 
-def _graph_op(self, opname, *raw_args, **kwargs):
+def _graph_op(g, opname, *raw_args, **kwargs):
     """
     Create an ONNX operator 'opname', taking 'args' as inputs and attributes
     'kwargs'; returning the node representing the single output of this operator
@@ -187,13 +187,13 @@ def _graph_op(self, opname, *raw_args, **kwargs):
         if isinstance(arg, torch._C.Node):
             return arg
         else:
-            return self.op("Constant", value_z=arg)
+            return g.op("Constant", value_z=arg)
 
     args = list(const_if_tensor(arg) for arg in raw_args)
-    n = self.appendNode(_newNode(self, opname, *args, **kwargs))
+    n = g.appendNode(_newNode(g, opname, *args, **kwargs))
     if outputs == 1:
         return n
-    return tuple(self.appendNode(self.createSelect(n, i)) for i in _range(outputs))
+    return tuple(g.appendNode(g.createSelect(n, i)) for i in _range(outputs))
 
 
 # Note [Export inplace]
@@ -232,8 +232,8 @@ def _run_symbolic_function(g, n, inputs):
         raise
 
 
-def _graph_at(self, opname, *args, **kwargs):
-    return self.op("ATen", *args, operator_s=opname, **kwargs)
+def _graph_at(g, opname, *args, **kwargs):
+    return g.op("ATen", *args, operator_s=opname, **kwargs)
 
 
 # This helper function can create either constant tensor or constant scalar.
@@ -241,7 +241,7 @@ def _graph_at(self, opname, *args, **kwargs):
 #
 # TODO: We might not need this anymore, since most scalars now show up
 # as tensors
-def _graph_constant(self, value, dims, type, *args, **kwargs):
+def _graph_constant(g, value, dims, type, *args, **kwargs):
     assert isinstance(value, numbers.Number)
     assert type is not None
     isscalar = False
@@ -268,8 +268,8 @@ def _graph_constant(self, value, dims, type, *args, **kwargs):
                          "char, short, int, long, half, float, double")
     tensor.fill_(value)
     if isscalar:
-        return self.op("Constant", *args, value_z=tensor, **kwargs)
-    return self.op("Constant", *args, value_t=tensor, **kwargs)
+        return g.op("Constant", *args, value_z=tensor, **kwargs)
+    return g.op("Constant", *args, value_t=tensor, **kwargs)
 
 
 def _node_getitem(self, k):
