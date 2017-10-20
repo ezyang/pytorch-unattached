@@ -15,6 +15,7 @@ from torch.nn.modules.utils import _pair
 
 # Helper functions:
 
+
 def _scalar(x):
     """Convert a scalar tensor into a Python value."""
     assert x.numel() == 1

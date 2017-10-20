@@ -154,11 +154,13 @@ def _op(self, opname, *raw_args, **kwargs):
     outputs = kwargs.pop('outputs', 1)
     # Filter out None attributes, this can be convenient client side
     kwargs = dict((k, v) for k, v in kwargs.iteritems() if v is not None)
+
     def const_if_tensor(arg):
         if isinstance(arg, torch._C.Node):
             return arg
         else:
             return self.op("Constant", value_z=arg)
+
     args = list(const_if_tensor(arg) for arg in raw_args)
     n = self.appendNode(_newNode(self, opname, *args, **kwargs))
     if outputs == 1:
@@ -183,10 +185,7 @@ def run_symbolic_function(g, n, inputs):
     global _current_graph
     assert not _current_graph
     _current_graph = g
-    # TODO: Monkeypatch this on Node or implement it directly in the bindings
-    def get_node_attr(n, k):
-        sel = n.kindOf(k)
-        return getattr(n, sel)(k)
+
     try:
         # See Note [Export inplace]
         if n.kind().endswith('_'):
@@ -197,7 +196,7 @@ def run_symbolic_function(g, n, inputs):
             warnings.warn("ONNX conversion of {} not supported".format(op_name))
             return None
         fn = getattr(torch.onnx.symbolic, op_name)
-        attrs = { k: get_node_attr(n, k) for k in n.attributeNames() }
+        attrs = {k: n[k] for k in n.attributeNames()}
         r = fn(*inputs, **attrs)
         if r is None:
             raise NotImplementedError("torch.onnx.symbolic.{} returned None, "
@@ -280,6 +279,19 @@ def _constant(self, value, dims, type, *args, **kwargs):
         return self.op("Constant", *args, value_z=tensor, **kwargs)
     return self.op("Constant", *args, value_t=tensor, **kwargs)
 
+
+def _node_getitem(self, k):
+    """
+    Accessor for attributes of a node which is polymorphic over
+    return type.
+
+    NB: This is monkey-patched onto Node.
+    """
+    sel = self.kindOf(k)
+    return getattr(self, sel)(k)
+
+
 torch._C.Graph.op = _op
 torch._C.Graph.at = _at
 torch._C.Graph.constant = _constant
+torch._C.Node.__getitem__ = _node_getitem
