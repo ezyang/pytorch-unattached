@@ -154,4 +154,4 @@ def avg_pool2d(input, kernel_size, stride, padding, ceil_mode, count_include_pad
 
 
 def log_softmax(input, dim=None):
-    return op("Log", op('Softmax', input, axis_i=dim).typeAs(input))
+    return op("Log", op('Softmax', input, axis_i=dim).setTypeAs(input))
