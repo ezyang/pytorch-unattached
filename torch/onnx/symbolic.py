@@ -69,6 +69,19 @@ def _broadcast_if_scalar(x):
 #     to broadcasting.  However, a scalar will NOT be broadcasted, so we have
 #     to enable broadcasting ONNX side.
 #
+#   - Dispatch to these functions takes advantage an outrageous coincidence
+#     between the tensor and scalar name.  When we add two tensors together,
+#     you get the dispatch:
+#
+#       add(*[self, other], **{"alpha": alpha})
+#
+#     When you add a tensor and a scalar, you get the dispatch:
+#
+#       add(*[self], **{"other": other, "alpha": alpha})
+#
+#     By having the argument name line up with the name of the scalar attribute
+#     if it exists, we can write a single function for both overloads.
+#
 
 
 def add(g, self, other, alpha):
