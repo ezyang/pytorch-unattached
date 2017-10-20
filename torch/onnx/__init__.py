@@ -116,9 +116,10 @@ def _export(model, args, f, export_params=True, verbose=False, training=False):
 attr_pattern = re.compile("^(.+)_([ifstgz])$")
 
 
-def run_symbolic_method(op_name, symbolic_fn, args):
+def _run_symbolic_method(op_name, symbolic_fn, args):
     """
-    This trampoline function gets invoked for every symbolic call.
+    This trampoline function gets invoked for every symbolic method
+    call from C++.
     """
     try:
         return symbolic_fn(*args)
@@ -150,7 +151,34 @@ def _newNode(self, opname, *args, **kwargs):
     return n
 
 
-def _op(self, opname, *raw_args, **kwargs):
+def _graph_op(self, opname, *raw_args, **kwargs):
+    """
+    Create an ONNX operator 'opname', taking 'args' as inputs and attributes
+    'kwargs'; returning the node representing the single output of this operator
+    (see the `outputs` keyword argument for multi-return nodes).
+
+    The set of operators and the inputs/attributes they take
+    is documented at https://github.com/onnx/onnx/blob/master/docs/Operators.md
+
+    This function is monkey-patched onto Graph.
+
+    Arguments:
+        opname (string): The ONNX operator name, e.g., `Abs` or `Add`.
+        args (Node...): The inputs to the operator; usually provided
+            as arguments to the `symbolic` definition.
+        kwargs: The attributes of the ONNX operator, with keys named
+            according to the following convention: `alpha_f` indicates
+            the `alpha` attribute with type `f`.  The valid type specifiers are
+            `f` (float), `i` (int), `s` (string) or `t` (Tensor).  An attribute
+            specified with type float accepts either a single float, or a
+            list of floats (e.g., you would say `dims_i` for a `dims` attribute
+            that takes a list of integers).
+        outputs (int, optional):  The number of outputs this operator returns;
+            by default an operator is assumed to return a single output.
+            If `outputs` is greater than one, this functions returns a tuple
+            of output `Node`, representing each output of the ONNX operator
+            in positional.
+    """
     outputs = kwargs.pop('outputs', 1)
     # Filter out None attributes, this can be convenient client side
     kwargs = dict((k, v) for k, v in kwargs.iteritems() if v is not None)
@@ -177,14 +205,8 @@ def _op(self, opname, *raw_args, **kwargs):
 # inplace annotations, but we are losing information this way.
 
 
-_current_graph = None
-
-
-def run_symbolic_function(g, n, inputs):
+def _run_symbolic_function(g, n, inputs):
     import torch.onnx.symbolic
-    global _current_graph
-    assert not _current_graph
-    _current_graph = g
 
     try:
         # See Note [Export inplace]
@@ -197,7 +219,7 @@ def run_symbolic_function(g, n, inputs):
             return None
         fn = getattr(torch.onnx.symbolic, op_name)
         attrs = {k: n[k] for k in n.attributeNames()}
-        r = fn(*inputs, **attrs)
+        r = fn(g, *inputs, **attrs)
         if r is None:
             raise NotImplementedError("torch.onnx.symbolic.{} returned None, "
                                       "indicating ONNX translation not supported".format(op_name))
@@ -208,48 +230,18 @@ def run_symbolic_function(g, n, inputs):
         # Otherwise, the backtrace will have the clues you need.
         e.args = ("{} (occurred when translating {})".format(e.args[0], op_name), )
         raise
-    finally:
-        _current_graph = None
 
 
-def op(opname, *args, **kwargs):
-    """
-    Create an ONNX operator 'opname', taking 'args' as inputs and attributes
-    'kwargs'; returning the node representing the single output of this operator
-    (see the `outputs` keyword argument for multi-return nodes).
-
-    The set of operators and the inputs/attributes they take
-    is documented at https://github.com/onnx/onnx/blob/master/docs/Operators.md
-
-    Arguments:
-        opname (string): The ONNX operator name, e.g., `Abs` or `Add`.
-        args (Node...): The inputs to the operator; usually provided
-            as arguments to the `symbolic` definition.
-        kwargs: The attributes of the ONNX operator, with keys named
-            according to the following convention: `alpha_f` indicates
-            the `alpha` attribute with type `f`.  The valid type specifiers are
-            `f` (float), `i` (int), `s` (string) or `t` (Tensor).  An attribute
-            specified with type float accepts either a single float, or a
-            list of floats (e.g., you would say `dims_i` for a `dims` attribute
-            that takes a list of integers).
-        outputs (int, optional):  The number of outputs this operator returns;
-            by default an operator is assumed to return a single output.
-            If `outputs` is greater than one, this functions returns a tuple
-            of output `Node`, representing each output of the ONNX operator
-            in positional.
-    """
-    global _current_graph
-    # TODO: stop using monkey-patch, maybe
-    return _current_graph.op(opname, *args, **kwargs)
-
-
-def _at(self, opname, *args, **kwargs):
+def _graph_at(self, opname, *args, **kwargs):
     return self.op("ATen", *args, operator_s=opname, **kwargs)
 
 
 # This helper function can create either constant tensor or constant scalar.
 # If dims is None or 0 or [0], generate a 0-d tensor (scalar).
-def _constant(self, value, dims, type, *args, **kwargs):
+#
+# TODO: We might not need this anymore, since most scalars now show up
+# as tensors
+def _graph_constant(self, value, dims, type, *args, **kwargs):
     assert isinstance(value, numbers.Number)
     assert type is not None
     isscalar = False
@@ -291,7 +283,7 @@ def _node_getitem(self, k):
     return getattr(self, sel)(k)
 
 
-torch._C.Graph.op = _op
-torch._C.Graph.at = _at
-torch._C.Graph.constant = _constant
+torch._C.Graph.op = _graph_op
+torch._C.Graph.at = _graph_at
+torch._C.Graph.constant = _graph_constant
 torch._C.Node.__getitem__ = _node_getitem

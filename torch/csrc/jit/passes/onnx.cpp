@@ -132,7 +132,7 @@ void ToONNX(std::shared_ptr<tracer::TracingState>& state) {
         py_inputs[input_nr++] = py::cast(envFn(input));
     }
 
-    py::object raw_output = onnx.attr("run_symbolic_function")(ctx.graph, n, py_inputs);
+    py::object raw_output = onnx.attr("_run_symbolic_function")(ctx.graph, n, py_inputs);
 
     if (raw_output.ptr() == Py_None) {
       cloneNode(n);
@@ -174,7 +174,7 @@ void ToONNX(std::shared_ptr<tracer::TracingState>& state) {
     // Call the symbolic function
     // Use a little trampoline function so we can give good error messages
     // upon argument mismatch
-    py::object raw_output = onnx.attr("run_symbolic_method")(op->name(), pyobj.attr("symbolic"), py_symbolic_args);
+    py::object raw_output = onnx.attr("_run_symbolic_method")(op->name(), pyobj.attr("symbolic"), py_symbolic_args);
     if (raw_output.ptr() == Py_None)
       throw std::runtime_error("PythonOp's symbolic returned None, indicating conversion not supported " + op->name());
 
