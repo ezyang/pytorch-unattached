@@ -85,7 +85,7 @@ if (should_compute_output(${idx})) {
 
 DERIVATIVE_MULTI = CodeTemplate("""\
 if (should_compute_output({ ${idxs} })) {
-  auto output_mask = std::array<bool, ${n}>{
+  auto ${output_mask} = std::array<bool, ${n}>{
     ${masks}
   };
   std::tie(${grad_inputs}) = ${derivative};
@@ -535,9 +535,18 @@ def create_autograd_functions(top_env, autogen_functions):
             else:
                 grad_inputs = ', '.join(['grad_inputs[{}]'.format(i) for i in idxs])
                 masks = ['should_compute_output({}),'.format(i) for i in idxs]
+                # A backwards function conventionally takes an
+                # output_mask as an argument.  This means that for the
+                # double backwards, we need two masks: the output_mask
+                # that was passed to backwards, and the grad_mask
+                # specifying which grad-grads we should compute.
+                if '_double_backward' in formula:
+                    output_mask = "grad_mask"
+                else:
+                    output_mask = "output_mask"
                 return DERIVATIVE_MULTI.substitute(
                     idxs=idxs, derivative=formula, grad_inputs=grad_inputs,
-                    masks=masks, n=len(idxs))
+                    output_mask=output_mask, masks=masks, n=len(idxs))
 
         body.extend(unpack)
         for derivative in func['derivatives']:
@@ -761,7 +770,7 @@ def create_variable_type(top_env, aten_declarations):
             env['trace_outputs'] = 'ret'
         else:
             env['return_value'] = '{}(std::move(ret))'.format(declaration['return_type'])
-            env['result'] = 'std::get<0>(ret)' if len(declaration['returns']) > 1 else 'ret'
+            env['result'] = 'ret'
             if len(declaration['returns']) > 1:
                 # NB: This won't work if we get heterogenous outputs
                 outs = ['std::get<{}>(ret)'.format(i)
