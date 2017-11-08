@@ -32,6 +32,21 @@ WITH_DISTRIBUTED = not check_env_flag('NO_DISTRIBUTED') and not IS_WINDOWS
 WITH_DISTRIBUTED_MW = WITH_DISTRIBUTED and check_env_flag('WITH_DISTRIBUTED_MW')
 
 
+"""
+# Build ATen based Variable classes
+from tools.autograd.gen_variable_type import gen_variable_type
+autograd_gen_dir = 'torch/csrc/autograd/generated'
+for d in (autograd_gen_dir,):
+    if not os.path.exists(d):
+        os.mkdir(d)
+gen_variable_type(
+    'torch/lib/tmp_install/share/ATen/Declarations.yaml',
+    autograd_gen_dir)
+import sys
+sys.exit(0)
+"""
+
+
 ################################################################################
 # Workaround setuptools -Wstrict-prototypes warnings
 # I lifted this code from https://stackoverflow.com/a/29634231/23845
