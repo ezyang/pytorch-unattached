@@ -3,7 +3,7 @@
 #include "Exceptions.h"
 
 #include "cudnn-wrapper.h"
-#include <ATen/Tensor.h>
+#include <ATen/ATen.h>
 #include <ATen/Check.h>
 
 namespace at { namespace native {
@@ -155,6 +155,83 @@ struct SpatialTransformerDescriptor
   }
   void set(cudnnDataType_t dataType, int dim, int* size) {
     CUDNN_CHECK(cudnnSetSpatialTransformerNdDescriptor(desc, CUDNN_SAMPLER_BILINEAR, dataType, dim, size));
+  }
+};
+
+struct DropoutDescriptor
+{
+  cudnnDropoutDescriptor_t desc;
+  cudnnHandle_t handle;
+  at::Tensor state;
+  float dropout;
+  DropoutDescriptor() : desc(nullptr) {
+    CUDNN_CHECK(cudnnCreateDropoutDescriptor(&desc));
+  }
+  DropoutDescriptor(const DropoutDescriptor&) = delete;
+  ~DropoutDescriptor() {
+    cudnnDestroyDropoutDescriptor(desc);
+  }
+  void set(cudnnHandle_t handle, float dropout_, unsigned long long seed) {
+    void *state_ptr;
+    size_t state_size;
+    if (!state.defined() && dropout_ > 0) {
+      size_t dropout_state_size;
+      CUDNN_CHECK(cudnnDropoutGetStatesSize(handle, &dropout_state_size));
+      state = at::CUDA(kByte).tensor({static_cast<int64_t>(dropout_state_size)});
+      state_ptr = state.data_ptr();
+      state_size = state.size(0);
+    } else {
+      state_ptr = nullptr;
+      state_size = 0;
+    }
+    CUDNN_CHECK(cudnnSetDropoutDescriptor(desc, handle, dropout_, state_ptr, state_size, seed));
+    dropout = dropout_;
+  }
+};
+
+struct RNNDescriptor
+{
+  cudnnRNNDescriptor_t desc;
+  DropoutDescriptor dropout_desc;
+  RNNDescriptor() : desc(nullptr) {
+    CUDNN_CHECK(cudnnCreateRNNDescriptor(&desc));
+  }
+  RNNDescriptor(const RNNDescriptor&) = delete;
+  ~RNNDescriptor() {
+    cudnnDestroyRNNDescriptor(desc);
+  }
+  // TODO: Borrows a reference to DropoutDescriptor
+  void set(cudnnHandle_t handle, int hidden_size, int num_layers, const DropoutDescriptor& dropout_desc,
+           cudnnRNNInputMode_t input_mode, cudnnDirectionMode_t bidirectional,
+           cudnnRNNMode_t mode, cudnnDataType_t datatype) {
+    CUDNN_CHECK(cudnnSetRNNDescriptor_v6(
+          handle,
+          desc,
+          hidden_size,
+          num_layers,
+          dropout_desc.desc,
+          input_mode,
+          bidirectional,
+          mode,
+          CUDNN_RNN_ALGO_STANDARD,
+          datatype));
+#if CUDNN_VERSION >= 7000 && CUDA_VERSION >= 9000
+    // TODO: This code should live as a utility somewhere in ATen.
+    // Please don't copy paste me!
+    int device;
+    CUDA_CHECK(cudaGetDevice(&device));
+    cudaDeviceProp prop;
+    CUDA_CHECK(cudaGetDeviceProperties(&prop, device));
+    if (prop.major >= 7) {
+      if (datatype == CUDNN_DATA_HALF) {
+        cudnnSetRNNMatrixMathType(desc, CUDNN_TENSOR_OP_MATH);
+      } else {
+        // Technically, as the default it's not necessary to explicitly
+        // set this.
+        cudnnSetRNNMatrixMathType(desc, CUDNN_DEFAULT_MATH);
+      }
+    }
+#endif
   }
 };
 
