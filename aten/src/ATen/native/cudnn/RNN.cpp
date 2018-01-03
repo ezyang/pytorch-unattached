@@ -174,11 +174,11 @@ namespace {
   }
 } // anonymous namespace
 
-std::tuple<Tensor, Tensor, Tensor> rnn(
+std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn(
     const Tensor& input_r, const Tensor& fn_weight_buf, const Tensor& hx, const Tensor& cx,
     int64_t fn_mode, int64_t fn_hidden_size,
     int64_t fn_num_layers, bool fn_batch_first, double fn_dropout,
-    bool fn_train, bool fn_bidirectional, IntList fn_batch_sizes, int64_t fn_dropout_seed,
+    bool fn_train, bool fn_bidirectional, IntList fn_batch_sizes,
     const Tensor& fn_dropout_state
     ) {
 
@@ -193,7 +193,7 @@ std::tuple<Tensor, Tensor, Tensor> rnn(
   fn.train = fn_train;
   fn.bidirectional = fn_bidirectional;
   fn.batch_sizes = fn_batch_sizes;
-  fn.dropout_seed = fn_dropout_seed;
+  fn.dropout_seed = 0;  // doesn't actually affect RNG reset (only set)
   fn.dropout_state = fn_dropout_state;
   fn.weight_buf = fn_weight_buf;
   fn.datatype = getCudnnDataType(input);
