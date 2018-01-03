@@ -6,6 +6,17 @@
 #include <ATen/ATen.h>
 #include <ATen/Check.h>
 
+#if CUDNN_VERSION < 7000
+
+// Reverse engineered from cuDNN 6.
+struct cudnnDropoutStruct {
+  float dropout;
+  int nstates;
+  void * states;
+};
+
+#endif
+
 namespace at { namespace native {
 
 // TODO: Add constructors for all of the descriptors
@@ -157,6 +168,23 @@ struct SpatialTransformerDescriptor
     CUDNN_CHECK(cudnnSetSpatialTransformerNdDescriptor(desc, CUDNN_SAMPLER_BILINEAR, dataType, dim, size));
   }
 };
+
+#if CUDNN_VERSION < 7000
+
+inline cudnnStatus_t cudnnRestoreDropoutDescriptor(
+    cudnnDropoutDescriptor_t dropoutDesc,
+    cudnnHandle_t handle,
+    float dropout,
+    void *states,
+    size_t stateSizeInBytes,
+    unsigned long long seed) {
+  dropoutDesc->dropout = dropout;
+  dropoutDesc->nstates = stateSizeInBytes;
+  dropoutDesc->states = states;
+  return CUDNN_STATUS_SUCCESS;
+}
+
+#endif // CUDNN_VERSION
 
 struct DropoutDescriptor
 {
