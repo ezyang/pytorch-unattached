@@ -161,6 +161,44 @@ struct SpatialTransformerDescriptor
 struct DropoutDescriptor
 {
   cudnnDropoutDescriptor_t desc;
+  at::Tensor state;
+  DropoutDescriptor() : desc(nullptr) {
+    CUDNN_CHECK(cudnnCreateDropoutDescriptor(&desc));
+  }
+  DropoutDescriptor(const DropoutDescriptor&) = delete;
+  ~DropoutDescriptor() {
+    cudnnDestroyDropoutDescriptor(desc);
+  }
+  // This is expensive, avoid calling me!
+  void expensiveSet(cudnnHandle_t handle, float dropout, long long int seed) {
+    void *state_ptr = nullptr;
+    size_t state_size = 0;
+    if (dropout > 0) {
+      size_t dropout_state_size;
+      CUDNN_CHECK(cudnnDropoutGetStatesSize(handle, &dropout_state_size));
+      state = at::CUDA(kByte).tensor({static_cast<int64_t>(dropout_state_size)});
+      state_ptr = state.data_ptr();
+      state_size = state.size(0);
+    }
+    CUDNN_CHECK(cudnnSetDropoutDescriptor(desc, handle, dropout, state_ptr, state_size, seed));
+  }
+  // I'm cheap! Call me!
+  void set(cudnnHandle_t handle, float dropout, at::Tensor state_, long long int seed) {
+    void *state_ptr = nullptr;
+    size_t state_size = 0;
+    if (dropout > 0) {
+      state = state_;
+      state_ptr = state.data_ptr();
+      state_size = state.size(0);
+    }
+    CUDNN_CHECK(cudnnRestoreDropoutDescriptor(desc, handle, dropout, state_ptr, state_size, seed));
+  }
+};
+
+/*
+struct DropoutDescriptor
+{
+  cudnnDropoutDescriptor_t desc;
   cudnnHandle_t handle;
   at::Tensor state;
   float dropout;
@@ -170,6 +208,8 @@ struct DropoutDescriptor
   DropoutDescriptor(const DropoutDescriptor&) = delete;
   ~DropoutDescriptor() {
     cudnnDestroyDropoutDescriptor(desc);
+  }
+  void set(cudnnHandle_t handle, at::Tensor state_) {
   }
   void set(cudnnHandle_t handle, float dropout_, unsigned long long seed) {
     void *state_ptr;
@@ -188,6 +228,7 @@ struct DropoutDescriptor
     dropout = dropout_;
   }
 };
+*/
 
 struct RNNDescriptor
 {
