@@ -239,7 +239,7 @@ std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
   if (is_input_packed) {
     fn.seq_length = fn.batch_sizes.size();
     fn.mini_batch = fn.batch_sizes[0];
-    fn.input_size = input.size(2);  // -1 originally
+    fn.input_size = input.size(-1);
   } else {
     fn.seq_length = input.size(0);
     fn.mini_batch = input.size(1);

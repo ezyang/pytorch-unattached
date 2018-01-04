@@ -254,6 +254,7 @@ def forward(fn, input, hx, weight, out_output, out_hy):
         ))
         fn.workspace_size = workspace_size.value
 
+        # OK actual stuff
         dropout_desc = init_dropout_descriptor(fn, handle)
         # Variable massaging
         output, hy, cy, reserve = torch._C._VariableBase._cudnn_rnn(
