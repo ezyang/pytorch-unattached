@@ -600,4 +600,135 @@ std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn_backward_grad(
   return std::make_tuple(dx, dhx, dcx); // TODO
 }
 
+// MUST BE CALLED AFTER _cudnn_rnn_backward_grad.
+// We'll give a user friendly combined function...
+Tensor _cudnn_rnn_backward_weight(
+    // TODO: I think tensor geometry sufficient for weight_buf
+    const Tensor& input_r, const Tensor& fn_weight_buf, const Tensor& hx, const Tensor& cx,
+    const Tensor& output_r,
+    int64_t fn_mode, int64_t fn_hidden_size,
+    int64_t fn_num_layers, bool fn_batch_first, double fn_dropout,
+    bool fn_train, bool fn_bidirectional, IntList fn_batch_sizes,
+    const Tensor& fn_dropout_state, const Tensor& fn_reserve
+    ) {
+
+  auto input = input_r;
+  auto output = output_r;
+
+  RNNParams fn;
+  fn.set_mode(fn_mode);
+  fn.input_mode = CUDNN_LINEAR_INPUT;
+  fn.hidden_size = fn_hidden_size;
+  fn.num_layers = fn_num_layers;
+  fn.batch_first = fn_batch_first;
+  fn.dropout = fn_dropout;
+  fn.train = fn_train;
+  fn.set_bidirectional(fn_bidirectional);
+  fn.batch_sizes = fn_batch_sizes;
+  fn.dropout_seed = 0;  // doesn't actually affect RNG reset (only set)
+  fn.dropout_state = fn_dropout_state;
+  fn.weight_buf = fn_weight_buf;
+  fn.datatype = getCudnnDataType(input);
+  fn.num_directions = fn.bidirectional ? 2 : 1;
+
+  auto is_input_packed = fn.batch_sizes.size() != 0;
+
+  auto handle = getCudnnHandle();
+
+  if (fn.mode != CUDNN_LSTM) {
+    if (cx.defined()) {
+      throw std::runtime_error("rnn: illegal defined cx for non-LSTM RNN");
+    }
+  }
+
+  if (fn.batch_first && !is_input_packed) {
+    input = input.transpose(0, 1);
+    output = output.transpose(0, 1);
+  }
+
+  auto input_size = _input_size(fn, input);
+  auto hidden_size = _hidden_size(fn);
+
+  if (!fn.train) {
+    throw std::runtime_error("backward_grad can only be called in training mode");
+  }
+  if (!input.sizes().equals(input_size)) {
+    std::ostringstream oss;
+    oss << "Expected input size " << IntList{input_size} << ", got " << input.sizes();
+    throw std::runtime_error(oss.str());
+  }
+  if (hx.defined() && !hx.sizes().equals(hidden_size)) {
+    std::ostringstream oss;
+    oss << "Expected hidden size " << IntList{hidden_size} << ", got " << hx.sizes();
+    throw std::runtime_error(oss.str());
+  }
+  // TODO: pretty sure missing checks here
+
+  AT_ASSERT(hx.is_contiguous(), "hx.is_contiguous()");
+  AT_ASSERT(!cx.defined() || cx.is_contiguous(), "!cx or cx.is_contiguous()");
+
+  auto x = input.contiguous();
+  auto y = output;
+  auto dw = fn_weight_buf.type().tensor(fn_weight_buf.sizes()).zero_();
+
+  // init descriptors
+  auto dropout_p = fn.train ? fn.dropout : 0;
+  DropoutDescriptor dropout_desc;
+  dropout_desc.set(handle, dropout_p, fn.dropout_state, fn.dropout_seed);
+  fn.rnn_desc.set(handle, fn.hidden_size, fn.num_layers, dropout_desc, fn.input_mode, fn.bidirectional, fn.mode, fn.datatype);
+
+  if (is_input_packed) {
+    fn.x_descs = rnn_descriptor_sequence(x, fn.batch_sizes);
+    fn.y_descs = rnn_descriptor_sequence(y, fn.batch_sizes);
+  } else {
+    // TODO: Make sure x[0] has same semantics
+    fn.x_descs = rnn_descriptor(x[0], fn.seq_length);
+    fn.y_descs = rnn_descriptor(y[0], fn.seq_length);
+  }
+  fn.hx_desc.set(hx, 5);
+  fn.hy_desc.set(hx, 5);
+  // TODO: DO NOT use fn.cx_desc/fn.cy_desc if cx is not defined!!
+  if (cx.defined()) {
+    fn.cx_desc.set(cx, 5);
+    fn.cy_desc.set(cx, 5);
+  }
+  fn.w_desc.set(fn_weight_buf, 3);
+
+  size_t workspace_size;
+  // TODO: This is annoying, having to put the cudnnTensorDescriptor_t
+  // in a contiguous array...
+  std::vector<cudnnTensorDescriptor_t> x_descs_arr;
+  x_descs_arr.reserve(fn.x_descs.size());
+  for (auto& x_desc : fn.x_descs) {
+    x_descs_arr.emplace_back(x_desc.desc);
+  }
+  std::vector<cudnnTensorDescriptor_t> y_descs_arr;
+  y_descs_arr.reserve(fn.y_descs.size());
+  for (auto& y_desc : fn.y_descs) {
+    y_descs_arr.emplace_back(y_desc.desc);
+  }
+  CUDNN_CHECK(cudnnGetRNNWorkspaceSize(
+        handle,
+        fn.rnn_desc.desc,
+        fn.seq_length,
+        x_descs_arr.data(),
+        &workspace_size
+        ));
+  // TODO: put this in the correct device???
+  Tensor workspace = at::CUDA(kByte).tensor(workspace_size);
+
+  CUDNN_CHECK(cudnnRNNBackwardWeights(
+        handle,
+        fn.rnn_desc.desc,
+        fn.seq_length,
+        x_descs_arr.data(), x.data_ptr(),
+        fn.hx_desc.desc, hx.data_ptr(),
+        y_descs_arr.data(), y.data_ptr(),
+        workspace.data_ptr(), workspace.size(0),
+        fn.w_desc.desc, dw.data_ptr(),
+        fn_reserve.data_ptr(), fn_reserve.size(0)
+        ));
+  return dw;
+}
+
 }} // namespace at::native

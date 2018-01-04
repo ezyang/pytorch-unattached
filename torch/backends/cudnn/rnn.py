@@ -543,7 +543,7 @@ def backward_weight(fn, input, hx, output, weight, grad_weight):
             raise RuntimeError('Expected input size {}, got {}'.format(
                 input_size, tuple(input.size())))
         if tuple(hx.size()) != hidden_size:
-            raise RuntimeError('Expected input size {}, got {}'.format(
+            raise RuntimeError('Expected hidden size {}, got {}'.format(
                 hidden_size, hx.size()))
 
         assert hx.is_contiguous()
