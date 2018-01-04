@@ -522,6 +522,29 @@ def _num_linear_layers(fn):
 
 def backward_weight(fn, input, hx, output, weight, grad_weight):
     with torch.cuda.device_of(input):
+      if True:
+        if fn.mode == cudnn.CUDNN_LSTM:
+            hx, cx = hx
+        else:
+            cx = None
+
+        handle = cudnn.get_handle()
+        dropout_desc = init_dropout_descriptor(fn, handle)
+        dw = torch._C._VariableBase._cudnn_rnn_backward_weight(
+            Variable(input), Variable(fn.weight_buf), Variable(hx), Variable(cx) if cx is not None else None,
+            Variable(output),
+            fn.mode, fn.hidden_size, fn.num_layers,
+            fn.batch_first, fn.dropout, fn.train, bool(fn.bidirectional),
+            fn.batch_sizes if fn.batch_sizes else (),
+            Variable(dropout_desc.state) if dropout_desc.state is not None else None,
+            Variable(fn.reserve))
+
+        # copy the weights from the weight_buf into grad_weight
+        grad_params = get_parameters(fn, handle, dw)
+        _copyParams(grad_params, grad_weight)
+        return grad_weight
+
+      else:
         is_input_packed = fn.batch_sizes is not None
         handle = cudnn.get_handle()
 

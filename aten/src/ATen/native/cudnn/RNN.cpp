@@ -10,6 +10,7 @@
 namespace at { namespace native {
 
 namespace {
+  // NB: This class is HELLA UNSAFE to use
   struct RNNParams {
     cudnnDataType_t datatype;
     cudnnRNNMode_t mode;
@@ -644,6 +645,16 @@ Tensor _cudnn_rnn_backward_weight(
   if (fn.batch_first && !is_input_packed) {
     input = input.transpose(0, 1);
     output = output.transpose(0, 1);
+  }
+
+  if (is_input_packed) {
+    fn.seq_length = fn.batch_sizes.size();
+    fn.mini_batch = fn.batch_sizes[0];
+    fn.input_size = input.size(-1);
+  } else {
+    fn.seq_length = input.size(0);
+    fn.mini_batch = input.size(1);
+    fn.input_size = input.size(2);
   }
 
   auto input_size = _input_size(fn, input);
