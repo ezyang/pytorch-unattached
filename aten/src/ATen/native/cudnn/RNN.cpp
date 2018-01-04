@@ -197,7 +197,7 @@ namespace {
   void _copyParams() {
   }
 
-  std::initializer_list<int64_t> _input_size(const RNNParams& fn, const Tensor& input) {
+  std::vector<int64_t> _input_size(const RNNParams& fn, const Tensor& input) {
     if (fn.batch_sizes.size() != 0) {
       return {input.size(0), fn.input_size};
     } else {
@@ -205,11 +205,11 @@ namespace {
     }
   }
 
-  std::initializer_list<int64_t> _hidden_size(const RNNParams& fn) {
+  std::vector<int64_t> _hidden_size(const RNNParams& fn) {
     return {fn.num_layers * fn.num_directions, fn.mini_batch, fn.hidden_size};
   }
 
-  std::initializer_list<int64_t> _output_size(const RNNParams& fn, const Tensor& input) {
+  std::vector<int64_t> _output_size(const RNNParams& fn, const Tensor& input) {
     if (fn.batch_sizes.size() != 0) {
       return {input.size(0), fn.hidden_size * fn.num_directions};
     } else {
