@@ -269,7 +269,7 @@ def forward(fn, input, hx, weight, out_output, out_hy):
         if out_cy is not None:
             out_cy.resize_as_(cy.data)
             out_cy.copy_(cy.data)
-        fn.reserve = reserve
+        fn.reserve = reserve.data
       else:
         output = out_output
         hy = out_hy
@@ -400,6 +400,33 @@ def forward(fn, input, hx, weight, out_output, out_hy):
 
 def backward_grad(fn, input, hx, weight, output, grad_output, grad_hy, grad_input, grad_hx):
     with torch.cuda.device_of(input):
+      if True:
+        if fn.mode == cudnn.CUDNN_LSTM:
+            hx, cx = hx
+            grad_hx, grad_cx = grad_hx
+            grad_hy, grad_cy = grad_hy
+        else:
+            cx, grad_cx, grad_cy = None, None, None
+
+        handle = cudnn.get_handle()
+        dropout_desc = init_dropout_descriptor(fn, handle)
+        dx, dhx, dcx = torch._C._VariableBase._cudnn_rnn_backward_grad(
+            Variable(input), Variable(fn.weight_buf), Variable(hx), Variable(cx) if cx is not None else None,
+            Variable(output), Variable(grad_output), Variable(grad_hy), Variable(grad_cy),
+            fn.mode, fn.hidden_size, fn.num_layers,
+            fn.batch_first, fn.dropout, fn.train, bool(fn.bidirectional),
+            fn.batch_sizes if fn.batch_sizes else (),
+            Variable(dropout_desc.state) if dropout_desc.state is not None else None,
+            Variable(fn.reserve))
+
+        grad_input.resize_as_(dx.data)
+        grad_input.copy_(dx.data)
+        grad_hx.resize_as_(dhx.data)
+        grad_hx.copy_(dhx.data)
+        if dcx is not None:
+            grad_cx.resize_as_(dcx.data)
+            grad_cx.copy_(dcx.data)
+      else:
         is_input_packed = fn.batch_sizes is not None
         handle = cudnn.get_handle()
 
