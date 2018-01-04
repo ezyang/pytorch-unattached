@@ -1086,3 +1086,12 @@
   input: nnpack_spatial_convolution_backward_input(input, grad, weight, kW, kH, padW, padH)
   weight: nnpack_spatial_convolution_backward_weight(input, weight.sizes(), grad, kW, kH, padW, padH)
   bias: grad.contiguous().view({grad.size(0), grad.size(1), -1}).sum(0).sum(1)
+
+- name: _cudnn_rnn(Tensor input, Tensor weight, Tensor hx, Tensor cx, int64_t mode, int64_t hidden_size, int64_t num_layers, bool batch_first, double dropout, bool train, bool bidirectional, IntList batch_sizes, Tensor dropout_state)
+  input: not_implemented("_cudnn_rnn")
+  weight: not_implemented("_cudnn_rnn")
+  hx: not_implemented("_cudnn_rnn")
+  cx: not_implemented("_cudnn_rnn")
+  dropout_state: not_implemented("_cudnn_rnn")
+
+

@@ -12,13 +12,14 @@ namespace at { namespace native {
 namespace {
   struct RNNParams {
     cudnnDataType_t datatype;
-    int64_t mode;
+    cudnnRNNMode_t mode;
+    cudnnRNNInputMode_t input_mode;
     int64_t hidden_size;
     int64_t num_layers;
     bool batch_first;
     double dropout;
     bool train;
-    bool bidirectional;
+    cudnnDirectionMode_t bidirectional;
     IntList batch_sizes;
     int64_t dropout_seed;
     Tensor weight_buf;
@@ -174,7 +175,7 @@ namespace {
   }
 } // anonymous namespace
 
-std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn(
+std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
     const Tensor& input_r, const Tensor& fn_weight_buf, const Tensor& hx, const Tensor& cx,
     int64_t fn_mode, int64_t fn_hidden_size,
     int64_t fn_num_layers, bool fn_batch_first, double fn_dropout,
@@ -185,13 +186,29 @@ std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn(
   auto input = input_r;
 
   RNNParams fn;
-  fn.mode = fn_mode;
+  switch (fn_mode) {
+    case CUDNN_RNN_RELU:
+      fn.mode = CUDNN_RNN_RELU;
+      break;
+    case CUDNN_RNN_TANH:
+      fn.mode = CUDNN_RNN_TANH;
+      break;
+    case CUDNN_LSTM:
+      fn.mode = CUDNN_LSTM;
+      break;
+    case CUDNN_GRU:
+      fn.mode = CUDNN_GRU;
+      break;
+    default:
+      throw std::runtime_error("unrecognized mode"); // TODO
+  }
+  fn.input_mode = CUDNN_LINEAR_INPUT;
   fn.hidden_size = fn_hidden_size;
   fn.num_layers = fn_num_layers;
   fn.batch_first = fn_batch_first;
   fn.dropout = fn_dropout;
   fn.train = fn_train;
-  fn.bidirectional = fn_bidirectional;
+  fn.bidirectional = fn_bidirectional ? CUDNN_BIDIRECTIONAL : CUDNN_UNIDIRECTIONAL;
   fn.batch_sizes = fn_batch_sizes;
   fn.dropout_seed = 0;  // doesn't actually affect RNG reset (only set)
   fn.dropout_state = fn_dropout_state;
@@ -222,7 +239,7 @@ std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn(
   if (is_input_packed) {
     fn.seq_length = fn.batch_sizes.size();
     fn.mini_batch = fn.batch_sizes[0];
-    fn.input_size = input.size(0);
+    fn.input_size = input.size(2);  // -1 originally
   } else {
     fn.seq_length = input.size(0);
     fn.mini_batch = input.size(1);
@@ -230,7 +247,7 @@ std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn(
   }
 
   // TODO: factor out (_hidden_size)
-  std::initializer_list<int64_t> hidden_size = {fn.num_layers * fn.num_directions, fn.mini_batch, fn.input_size};
+  std::initializer_list<int64_t> hidden_size = {fn.num_layers * fn.num_directions, fn.mini_batch, fn.hidden_size};
   // TODO: factor out (_output_size)
   std::initializer_list<int64_t> output_size;
   if (fn.batch_sizes.size() != 0) {
@@ -248,14 +265,21 @@ std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn(
   Tensor cy;
   if (cx.defined()) {
     cy = cx.type().tensor(hidden_size);
+  } else {
+    cy = hx.type().tensor(); // Booooh
   }
   auto y = output;
 
   // init descriptors
   // TODO: need logic to do expensive descriptor set somewhere
-  //auto dropout_p = fn.train ? fn.dropout : 0;
+  auto dropout_p = fn.train ? fn.dropout : 0;
   DropoutDescriptor dropout_desc;
-  dropout_desc.set(handle, fn.dropout, fn.dropout_state, fn.dropout_seed);
+  dropout_desc.set(handle, dropout_p, fn.dropout_state, fn.dropout_seed);
+  //dropout_desc.expensiveSet(handle, fn.dropout, fn.dropout_seed);
+  //fn.dropout_state = dropout_desc.state;
+  // stop
+  fn.rnn_desc.set(handle, fn.hidden_size, fn.num_layers, dropout_desc, fn.input_mode, fn.bidirectional, fn.mode, fn.datatype);
+
   if (is_input_packed) {
     fn.x_descs = rnn_descriptor_sequence(x, fn.batch_sizes);
     fn.y_descs = rnn_descriptor_sequence(y, fn.batch_sizes);
@@ -326,6 +350,7 @@ std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn(
   Tensor workspace = at::CUDA(kByte).tensor(workspace_size);
 
   // Swapped requires_grad with train
+  Tensor reserve;
   if (fn.train) {
     size_t reserve_size;
     CUDNN_CHECK(cudnnGetRNNTrainingReserveSize(
@@ -335,7 +360,7 @@ std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn(
           x_descs_arr.data(),
           &reserve_size
           ));
-    Tensor reserve = at::CUDA(kByte).tensor(reserve_size);
+    reserve = at::CUDA(kByte).tensor(reserve_size);
     // TODO: probably reserve needs to be returned
     CUDNN_CHECK(cudnnRNNForwardTraining(
           handle,
@@ -352,6 +377,7 @@ std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn(
           reserve.data_ptr(), reserve.size(0)
           ));
   } else { // inference
+    reserve = at::CUDA(kByte).tensor();
     CUDNN_CHECK(cudnnRNNForwardInference(
           handle,
           fn.rnn_desc.desc,
@@ -371,7 +397,11 @@ std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn(
     }
   }
 
-  return std::make_tuple(output, hy, cy);
+  // TODO remove this
+  if (!reserve.defined()) {
+    throw std::runtime_error("reserve not defined");
+  }
+  return std::make_tuple(output, hy, cy, reserve);
 }
 
 }} // namespace at::native

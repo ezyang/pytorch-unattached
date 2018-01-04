@@ -2,6 +2,7 @@ import torch.cuda
 import torch.backends.cudnn as cudnn
 from torch.backends.cudnn import check_error
 import ctypes
+from torch.autograd import Variable
 
 
 def get_cudnn_mode(mode):
@@ -32,6 +33,18 @@ class Unserializable(object):
 
     def __setstate__(self, state):
         self.inner = None
+
+
+def init_dropout_descriptor(fn, handle):
+    dropout_desc_name = 'desc_' + str(torch.cuda.current_device())
+    dropout_p = fn.dropout if fn.train else 0
+    if (dropout_desc_name not in fn.dropout_state) or (fn.dropout_state[dropout_desc_name].get() is None):
+        fn.dropout_state[dropout_desc_name] = Unserializable(
+            cudnn.DropoutDescriptor(handle, dropout_p, fn.dropout_seed)
+        )
+    dropout_desc = fn.dropout_state[dropout_desc_name].get()
+    dropout_desc.set_dropout(dropout_p, fn.dropout_seed)
+    return dropout_desc
 
 
 def init_rnn_descriptor(fn, handle):
@@ -187,8 +200,79 @@ def _copyParams(params_from, params_to):
             param_to.copy_(param_from, broadcast=False)
 
 
-def forward(fn, input, hx, weight, output, hy):
+def forward(fn, input, hx, weight, out_output, out_hy):
     with torch.cuda.device_of(input):
+      if True:
+        #fn.dropout = 0 # TODO: DEBUG REMOVE ME
+        if fn.mode == cudnn.CUDNN_LSTM:
+            hx, cx = hx
+            out_hy, out_cy = out_hy
+        else:
+            cx, out_cy = None, None
+        if fn.weight_buf is None:
+            raise RuntimeError("not implemented yet")
+
+        handle = cudnn.get_handle()
+
+        # blah blah backwards
+        lib = cudnn.lib
+        fn.datatype = cudnn._typemap[input.type()]
+        is_input_packed = fn.batch_sizes is not None
+        if is_input_packed:
+            fn.seq_length = len(fn.batch_sizes)
+            fn.mini_batch = fn.batch_sizes[0]
+            fn.input_size = input.size(-1)
+        else:
+            fn.seq_length, fn.mini_batch, fn.input_size = input.size()
+        fn.rnn_desc = init_rnn_descriptor(fn, handle)
+        hidden_size = _hidden_size(fn)
+        output_size = _output_size(fn, input)
+        x = input.contiguous()
+        out_output.resize_(*output_size)
+        out_hy.resize_(*hidden_size)
+        if out_cy is not None:
+            out_cy.resize_(*hidden_size)
+        y = out_output
+        if is_input_packed:
+            fn.x_descs = cudnn.descriptor_sequence(x, fn.batch_sizes)
+            fn.y_descs = cudnn.descriptor_sequence(y, fn.batch_sizes)
+        else:
+            fn.x_descs = cudnn.descriptor(x[0], fn.seq_length)
+            fn.y_descs = cudnn.descriptor(y[0], fn.seq_length)
+        fn.hx_desc = cudnn.descriptor(hx)
+        fn.hy_desc = cudnn.descriptor(hx)
+        fn.cx_desc = cudnn.descriptor(cx) if cx is not None else None
+        fn.cy_desc = cudnn.descriptor(cx) if cx is not None else None
+        fn.w_desc = init_weight_descriptor(fn, fn.weight_buf)
+        workspace_size = ctypes.c_long()
+        check_error(lib.cudnnGetRNNWorkspaceSize(
+            handle,
+            fn.rnn_desc,
+            fn.seq_length,
+            fn.x_descs,
+            ctypes.byref(workspace_size)
+        ))
+        fn.workspace_size = workspace_size.value
+
+        dropout_desc = init_dropout_descriptor(fn, handle)
+        # Variable massaging
+        output, hy, cy, reserve = torch._C._VariableBase._cudnn_rnn(
+            Variable(input), Variable(fn.weight_buf), Variable(hx), Variable(cx) if cx is not None else None, fn.mode, fn.hidden_size, fn.num_layers,
+            fn.batch_first, fn.dropout, fn.train, bool(fn.bidirectional),
+            fn.batch_sizes if fn.batch_sizes else (),
+            Variable(dropout_desc.state) if dropout_desc.state is not None else None)
+        out_output.resize_as_(output.data)
+        out_output.copy_(output.data)
+        out_hy.resize_as_(hy.data)
+        out_hy.copy_(hy.data)
+        if out_cy is not None:
+            out_cy.resize_as_(cy.data)
+            out_cy.copy_(cy.data)
+        fn.reserve = reserve
+      else:
+        output = out_output
+        hy = out_hy
+
         lib = cudnn.lib
         handle = cudnn.get_handle()
         fn.datatype = cudnn._typemap[input.type()]
@@ -196,7 +280,7 @@ def forward(fn, input, hx, weight, output, hy):
 
         if fn.mode == cudnn.CUDNN_LSTM:
             hx, cx = hx
-            hy, cy = hy
+            hy, cy = out_hy
         else:
             cx, cy = None, None
 

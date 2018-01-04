@@ -319,5 +319,5 @@
     CPU: _s_poisson_cpu
     CUDA: _s_poisson_cuda
 
-- func: _cudnn_rnn(Tensor input, Tensor weight, Tensor hx, Tensor cx, int64_t mode, int64_t hidden_size, int64_t num_layers, bool batch_first, double dropout, bool train, bool bidirectional, IntList batch_sizes, Tensor dropout_state) -> (Tensor, Tensor, Tensor)
+- func: _cudnn_rnn(Tensor input, Tensor weight, Tensor hx, Tensor? cx, int64_t mode, int64_t hidden_size, int64_t num_layers, bool batch_first, double dropout, bool train, bool bidirectional, IntList batch_sizes, Tensor? dropout_state) -> (Tensor, Tensor, Tensor, Tensor)
   variants: function
