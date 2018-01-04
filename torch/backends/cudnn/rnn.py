@@ -412,7 +412,7 @@ def backward_grad(fn, input, hx, weight, output, grad_output, grad_hy, grad_inpu
         dropout_desc = init_dropout_descriptor(fn, handle)
         dx, dhx, dcx = torch._C._VariableBase._cudnn_rnn_backward_grad(
             Variable(input), Variable(fn.weight_buf), Variable(hx), Variable(cx) if cx is not None else None,
-            Variable(output), Variable(grad_output), Variable(grad_hy), Variable(grad_cy),
+            Variable(output), Variable(grad_output), Variable(grad_hy), Variable(grad_cy) if grad_cy is not None else None,
             fn.mode, fn.hidden_size, fn.num_layers,
             fn.batch_first, fn.dropout, fn.train, bool(fn.bidirectional),
             fn.batch_sizes if fn.batch_sizes else (),
@@ -423,7 +423,7 @@ def backward_grad(fn, input, hx, weight, output, grad_output, grad_hy, grad_inpu
         grad_input.copy_(dx.data)
         grad_hx.resize_as_(dhx.data)
         grad_hx.copy_(dhx.data)
-        if dcx is not None:
+        if grad_cx is not None:
             grad_cx.resize_as_(dcx.data)
             grad_cx.copy_(dcx.data)
       else:
