@@ -317,23 +317,6 @@ std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
   // create the weight buffer and copy the weights into it
   // TODO: eliminate this temporary
   Tensor w;
-  /*
-  // TODO: implement this as a wrapper on top
-  if (!fn.weight_buf.defined()) {
-    auto num_weights = get_num_weights(handle, fn.rnn_desc, fn.x_descs[0], fn.datatype);
-    // TODO: Double check this; it was transcribed from x.new(num_weights)
-    fn.weight_buf = x.type().tensor({num_weights});
-    // filters require >= 3 dimensions
-    fn.w_desc.set(fn_weight_buf, 3);
-    w = fn_weight_buf;
-    // this zero might not seem necessary, but it is in the case
-    // where biases are disabled; then they won't be copied and must be zero'd.
-    // Alternatively, _copyParams could be written more carefully.
-    w.zero_();
-    auto params = get_parameters(fn, handle, w);
-    _copyParams(weight, params);
-  } else {
-  */
   fn.w_desc.set(fn_weight_buf, 3);
   w = fn_weight_buf;
 
@@ -378,7 +361,6 @@ std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
           &reserve_size
           ));
     reserve = at::CUDA(kByte).tensor(reserve_size);
-    // TODO: probably reserve needs to be returned
     CUDNN_CHECK(cudnnRNNForwardTraining(
           handle,
           fn.rnn_desc.desc,

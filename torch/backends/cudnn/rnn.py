@@ -47,6 +47,15 @@ def init_dropout_descriptor(fn, handle):
     return dropout_desc
 
 
+def get_dropout_state(fn, handle):
+    dropout_desc_name = 'desc_' + str(torch.cuda.current_device())
+    dropout_p = fn.dropout if fn.train else 0
+    if dropout_p == 0:
+        return None
+    dropout_desc = fn.dropout_state[dropout_desc_name].get()
+    return dropout_desc.state
+
+
 def init_rnn_descriptor(fn, handle):
     dropout_desc_name = 'desc_' + str(torch.cuda.current_device())
     dropout_p = fn.dropout if fn.train else 0
@@ -202,7 +211,7 @@ def _copyParams(params_from, params_to):
 
 def forward(fn, input, hx, weight, out_output, out_hy):
     with torch.cuda.device_of(input):
-      if True:
+      if False:
         if fn.mode == cudnn.CUDNN_LSTM:
             hx, cx = hx
             out_hy, out_cy = out_hy
@@ -216,23 +225,28 @@ def forward(fn, input, hx, weight, out_output, out_hy):
         # blah blah backwards
         lib = cudnn.lib
         fn.datatype = cudnn._typemap[input.type()]
+        orig_input = input
         is_input_packed = fn.batch_sizes is not None
+        if fn.batch_first and not is_input_packed:
+            input = input.transpose(0, 1)
         if is_input_packed:
             fn.seq_length = len(fn.batch_sizes)
             fn.mini_batch = fn.batch_sizes[0]
             fn.input_size = input.size(-1)
         else:
             fn.seq_length, fn.mini_batch, fn.input_size = input.size()
-        fn.rnn_desc = init_rnn_descriptor(fn, handle)
 
         hidden_size = _hidden_size(fn)
         output_size = _output_size(fn, input)
+
         x = input.contiguous()
         out_output.resize_(*output_size)
         out_hy.resize_(*hidden_size)
         if out_cy is not None:
             out_cy.resize_(*hidden_size)
         y = out_output
+
+        fn.rnn_desc = init_rnn_descriptor(fn, handle)
         if is_input_packed:
             fn.x_descs = cudnn.descriptor_sequence(x, fn.batch_sizes)
             fn.y_descs = cudnn.descriptor_sequence(y, fn.batch_sizes)
@@ -249,13 +263,15 @@ def forward(fn, input, hx, weight, out_output, out_hy):
             num_weights = get_num_weights(
                 handle, fn.rnn_desc, fn.x_descs[0], fn.datatype)
             fn.weight_buf = x.new(num_weights)
+            fn.w_desc = init_weight_descriptor(fn, fn.weight_buf)
             # this zero might not seem necessary, but it is in the case
             # where biases are disabled; then they won't be copied and must be zero'd.
             # Alternatively, _copyParams could be written more carefully.
             fn.weight_buf.zero_()
             params = get_parameters(fn, handle, w)
             _copyParams(weight, params)
-        fn.w_desc = init_weight_descriptor(fn, fn.weight_buf)
+        else:
+            fn.w_desc = init_weight_descriptor(fn, fn.weight_buf)
 
         workspace_size = ctypes.c_long()
         check_error(lib.cudnnGetRNNWorkspaceSize(
@@ -268,13 +284,14 @@ def forward(fn, input, hx, weight, out_output, out_hy):
         fn.workspace_size = workspace_size.value
 
         # OK actual stuff
-        dropout_desc = init_dropout_descriptor(fn, handle)
+        #dropout_desc = init_dropout_descriptor(fn, handle)
+        dropout_state = get_dropout_state(fn, handle)
         # Variable massaging
         output, hy, cy, reserve = torch._C._VariableBase._cudnn_rnn(
-            Variable(input), Variable(fn.weight_buf), Variable(hx), Variable(cx) if cx is not None else None, fn.mode, fn.hidden_size, fn.num_layers,
+            Variable(orig_input), Variable(fn.weight_buf), Variable(hx), Variable(cx) if cx is not None else None, fn.mode, fn.hidden_size, fn.num_layers,
             fn.batch_first, fn.dropout, fn.train, bool(fn.bidirectional),
             fn.batch_sizes if fn.batch_sizes else (),
-            Variable(dropout_desc.state) if dropout_desc.state is not None else None)
+            Variable(dropout_state) if dropout_state is not None else None)
         out_output.resize_as_(output.data)
         out_output.copy_(output.data)
         out_hy.resize_as_(hy.data)
@@ -413,7 +430,7 @@ def forward(fn, input, hx, weight, out_output, out_hy):
 
 def backward_grad(fn, input, hx, weight, output, grad_output, grad_hy, grad_input, grad_hx):
     with torch.cuda.device_of(input):
-      if True:
+      if False:
         if fn.mode == cudnn.CUDNN_LSTM:
             hx, cx = hx
             grad_hx, grad_cx = grad_hx
@@ -535,7 +552,7 @@ def _num_linear_layers(fn):
 
 def backward_weight(fn, input, hx, output, weight, grad_weight):
     with torch.cuda.device_of(input):
-      if True:
+      if False:
         if fn.mode == cudnn.CUDNN_LSTM:
             hx, cx = hx
         else:
