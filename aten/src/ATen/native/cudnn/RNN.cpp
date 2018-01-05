@@ -409,9 +409,10 @@ std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
           workspace.data_ptr(), workspace.size(0)
           ));
 
-    if (fn.batch_first && !is_input_packed) {
-      output.transpose_(0, 1);
-    }
+  }
+
+  if (fn.batch_first && !is_input_packed) {
+    output.transpose_(0, 1);
   }
 
   return std::make_tuple(output, hy, cy, reserve);

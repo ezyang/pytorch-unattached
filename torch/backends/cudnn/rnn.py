@@ -203,7 +203,6 @@ def _copyParams(params_from, params_to):
 def forward(fn, input, hx, weight, out_output, out_hy):
     with torch.cuda.device_of(input):
       if True:
-        #fn.dropout = 0 # TODO: DEBUG REMOVE ME
         if fn.mode == cudnn.CUDNN_LSTM:
             hx, cx = hx
             out_hy, out_cy = out_hy
@@ -225,6 +224,7 @@ def forward(fn, input, hx, weight, out_output, out_hy):
         else:
             fn.seq_length, fn.mini_batch, fn.input_size = input.size()
         fn.rnn_desc = init_rnn_descriptor(fn, handle)
+
         hidden_size = _hidden_size(fn)
         output_size = _output_size(fn, input)
         x = input.contiguous()
@@ -243,7 +243,20 @@ def forward(fn, input, hx, weight, out_output, out_hy):
         fn.hy_desc = cudnn.descriptor(hx)
         fn.cx_desc = cudnn.descriptor(cx) if cx is not None else None
         fn.cy_desc = cudnn.descriptor(cx) if cx is not None else None
+
+        # create the weight buffer and copy the weights into it
+        if fn.weight_buf is None:
+            num_weights = get_num_weights(
+                handle, fn.rnn_desc, fn.x_descs[0], fn.datatype)
+            fn.weight_buf = x.new(num_weights)
+            # this zero might not seem necessary, but it is in the case
+            # where biases are disabled; then they won't be copied and must be zero'd.
+            # Alternatively, _copyParams could be written more carefully.
+            fn.weight_buf.zero_()
+            params = get_parameters(fn, handle, w)
+            _copyParams(weight, params)
         fn.w_desc = init_weight_descriptor(fn, fn.weight_buf)
+
         workspace_size = ctypes.c_long()
         check_error(lib.cudnnGetRNNWorkspaceSize(
             handle,
