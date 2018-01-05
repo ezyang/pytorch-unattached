@@ -217,8 +217,6 @@ def forward(fn, input, hx, weight, out_output, out_hy):
             out_hy, out_cy = out_hy
         else:
             cx, out_cy = None, None
-        if fn.weight_buf is None:
-            raise RuntimeError("not implemented yet")
 
         handle = cudnn.get_handle()
 
@@ -268,7 +266,7 @@ def forward(fn, input, hx, weight, out_output, out_hy):
             # where biases are disabled; then they won't be copied and must be zero'd.
             # Alternatively, _copyParams could be written more carefully.
             fn.weight_buf.zero_()
-            params = get_parameters(fn, handle, w)
+            params = get_parameters(fn, handle, fn.weight_buf)
             _copyParams(weight, params)
         else:
             fn.w_desc = init_weight_descriptor(fn, fn.weight_buf)
