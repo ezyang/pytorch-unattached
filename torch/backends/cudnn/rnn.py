@@ -50,8 +50,6 @@ def init_dropout_descriptor(fn, handle):
 def get_dropout_state(fn, handle):
     dropout_desc_name = 'desc_' + str(torch.cuda.current_device())
     dropout_p = fn.dropout if fn.train else 0
-    if dropout_p == 0:
-        return None
     dropout_desc = fn.dropout_state[dropout_desc_name].get()
     return dropout_desc.state
 
@@ -210,8 +208,10 @@ def _copyParams(params_from, params_to):
 
 
 def forward(fn, input, hx, weight, out_output, out_hy):
+    # DODGY
+    #assert fn.requires_grad == fn.train
     with torch.cuda.device_of(input):
-      if False:
+      if True:
         if fn.mode == cudnn.CUDNN_LSTM:
             hx, cx = hx
             out_hy, out_cy = out_hy
@@ -292,6 +292,10 @@ def forward(fn, input, hx, weight, out_output, out_hy):
             fn.batch_first, fn.dropout, fn.train, bool(fn.bidirectional),
             fn.batch_sizes if fn.batch_sizes else (),
             Variable(dropout_state) if dropout_state is not None else None)
+
+        # WOAAAAAH DUUUUDE
+        if fn.batch_first and not is_input_packed:
+            out_output.transpose_(0, 1)
         out_output.resize_as_(output.data)
         out_output.copy_(output.data)
         out_hy.resize_as_(hy.data)
@@ -315,6 +319,7 @@ def forward(fn, input, hx, weight, out_output, out_hy):
         else:
             cx, cy = None, None
 
+        orig_input = input
         if fn.batch_first and not is_input_packed:
             input = input.transpose(0, 1)
 
@@ -384,6 +389,8 @@ def forward(fn, input, hx, weight, out_output, out_hy):
         fn.workspace_size = workspace_size.value
         with torch.cuda.device_of(input):
             workspace = torch.cuda.ByteTensor(fn.workspace_size)
+
+        assert fn.requires_grad == fn.train
         if fn.requires_grad:
             reserve_size = ctypes.c_long()
             check_error(lib.cudnnGetRNNTrainingReserveSize(
@@ -427,10 +434,36 @@ def forward(fn, input, hx, weight, out_output, out_hy):
         if fn.batch_first and not is_input_packed:
             output.transpose_(0, 1)
 
+        """
+        dropout_state = get_dropout_state(fn, handle)
+        # Variable massaging
+        new_output, new_hy, new_cy, new_reserve = torch._C._VariableBase._cudnn_rnn(
+            Variable(orig_input), Variable(fn.weight_buf), Variable(hx), Variable(cx) if cx is not None else None, fn.mode, fn.hidden_size, fn.num_layers,
+            fn.batch_first, fn.dropout, fn.train, bool(fn.bidirectional),
+            fn.batch_sizes if fn.batch_sizes else (),
+            Variable(dropout_state) if dropout_state is not None else None)
+        #assert (new_output.data - output).abs().max() < 1e-5
+        #assert (new_hy.data - hy).abs().max() < 1e-5
+        #if cy is not None: assert (new_cy.data - cy).abs().max() < 1e-5
+        out_output.zero_()
+        out_output.resize_as_(new_output.data)
+        out_output.copy_(new_output.data)
+        hy.zero_()
+        hy.resize_as_(new_hy.data)
+        hy.copy_(new_hy.data)
+        if cy is not None:
+            cy.zero_()
+            cy.resize_as_(new_cy.data)
+            cy.copy_(new_cy.data)
+        #fn.reserve.zero_()
+        #fn.reserve.copy_(new_reserve.data)
+        fn.reserve = new_reserve.data
+        """
+
 
 def backward_grad(fn, input, hx, weight, output, grad_output, grad_hy, grad_input, grad_hx):
     with torch.cuda.device_of(input):
-      if False:
+      if True:
         if fn.mode == cudnn.CUDNN_LSTM:
             hx, cx = hx
             grad_hx, grad_cx = grad_hx
@@ -552,7 +585,7 @@ def _num_linear_layers(fn):
 
 def backward_weight(fn, input, hx, output, weight, grad_weight):
     with torch.cuda.device_of(input):
-      if False:
+      if True:
         if fn.mode == cudnn.CUDNN_LSTM:
             hx, cx = hx
         else:
