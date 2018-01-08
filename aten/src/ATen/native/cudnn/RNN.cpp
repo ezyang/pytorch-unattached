@@ -34,8 +34,8 @@ namespace {
   }
 
 
-  // NB: This class is HELLA UNSAFE to use
   struct RNNParams {
+    // 11 fields to fill in
     cudnnDataType_t datatype;
     cudnnRNNMode_t mode;
     int64_t hidden_size;
@@ -61,6 +61,7 @@ namespace {
       : input_mode(CUDNN_LINEAR_INPUT)
       {}
 
+    // NB: input must be transposed if batch_first and is_input_packed
     void init_computed(const Tensor& input) {
       auto is_input_packed = batch_sizes.size() != 0;
       num_directions = bidirectional ? 2 : 1;
@@ -659,6 +660,27 @@ Tensor _cudnn_rnn_backward_weight(
         fn_reserve.data_ptr(), fn_reserve.size(0)
         ));
   return dw;
+}
+
+// We need this dispatcher because _cudnn_rnn_backward_weight has a stringent
+// ordering requirement with _cudnn_rnn_backward_grad
+std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn_backward(
+    const Tensor& input, const Tensor& weight, const Tensor& hx, const Tensor& cx,
+    const Tensor& output, const Tensor& grad_output, const Tensor& grad_hy,
+    const Tensor& grad_cy,
+    int64_t mode, int64_t hidden_size,
+    int64_t num_layers, bool batch_first, double dropout,
+    bool train, bool bidirectional, IntList batch_sizes,
+    const Tensor& dropout_state, const Tensor& reserve,
+    std::array<bool, 4> output_mask
+    ) {
+  Tensor dx, dhx, dcx, dw;
+  // NB: unconditionally compute this gradient, because it mutates reserve
+  std::tie(dx, dhx, dcx) = at::native::_cudnn_rnn_backward_grad(input, weight, hx, cx, output, grad_output, grad_hy, grad_cy, mode, hidden_size, num_layers, batch_first, dropout, train, bidirectional, batch_sizes, dropout_state, reserve);
+  if (output_mask[3]) {
+    dw = at::native::_cudnn_rnn_backward_weight(input, weight, hx, cx, output, mode, hidden_size, num_layers, batch_first, dropout, train, bidirectional, batch_sizes, dropout_state, reserve);
+  }
+  return std::tuple<Tensor, Tensor, Tensor, Tensor>{dx, dhx, dcx, dw};
 }
 
 }} // namespace at::native
