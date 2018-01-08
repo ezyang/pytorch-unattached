@@ -208,10 +208,7 @@ def _copyParams(params_from, params_to):
 
 
 def forward(fn, input, hx, weight, out_output, out_hy):
-    # DODGY
-    #assert fn.requires_grad == fn.train
     with torch.cuda.device_of(input):
-      if True:
         if fn.mode == cudnn.CUDNN_LSTM:
             hx, cx = hx
             out_hy, out_cy = out_hy
@@ -247,14 +244,8 @@ def forward(fn, input, hx, weight, out_output, out_hy):
         fn.rnn_desc = init_rnn_descriptor(fn, handle)
         if is_input_packed:
             fn.x_descs = cudnn.descriptor_sequence(x, fn.batch_sizes)
-            fn.y_descs = cudnn.descriptor_sequence(y, fn.batch_sizes)
         else:
             fn.x_descs = cudnn.descriptor(x[0], fn.seq_length)
-            fn.y_descs = cudnn.descriptor(y[0], fn.seq_length)
-        fn.hx_desc = cudnn.descriptor(hx)
-        fn.hy_desc = cudnn.descriptor(hx)
-        fn.cx_desc = cudnn.descriptor(cx) if cx is not None else None
-        fn.cy_desc = cudnn.descriptor(cx) if cx is not None else None
 
         # create the weight buffer and copy the weights into it
         if fn.weight_buf is None:
@@ -302,166 +293,10 @@ def forward(fn, input, hx, weight, out_output, out_hy):
             out_cy.resize_as_(cy.data)
             out_cy.copy_(cy.data)
         fn.reserve = reserve.data
-      else:
-        output = out_output
-        hy = out_hy
-
-        lib = cudnn.lib
-        handle = cudnn.get_handle()
-        fn.datatype = cudnn._typemap[input.type()]
-        is_input_packed = fn.batch_sizes is not None
-
-        if fn.mode == cudnn.CUDNN_LSTM:
-            hx, cx = hx
-            hy, cy = out_hy
-        else:
-            cx, cy = None, None
-
-        orig_input = input
-        if fn.batch_first and not is_input_packed:
-            input = input.transpose(0, 1)
-
-        if fn.dropout != 0 and cudnn.version() < 5103:
-            raise RuntimeError('dropout supported only in cudnn v5.1 and above')
-
-        if is_input_packed:
-            fn.seq_length = len(fn.batch_sizes)
-            fn.mini_batch = fn.batch_sizes[0]
-            fn.input_size = input.size(-1)
-        else:
-            fn.seq_length, fn.mini_batch, fn.input_size = input.size()
-        hidden_size = _hidden_size(fn)
-        output_size = _output_size(fn, input)
-
-        assert hx.is_contiguous()
-        assert cx is None or cx.is_contiguous()
-        x = input.contiguous()
-        output.resize_(*output_size)
-        hy.resize_(*hidden_size)
-        if cy is not None:
-            cy.resize_(*hidden_size)
-        y = output
-
-        # init descriptors
-        fn.rnn_desc = init_rnn_descriptor(fn, handle)
-        if is_input_packed:
-            fn.x_descs = cudnn.descriptor_sequence(x, fn.batch_sizes)
-            fn.y_descs = cudnn.descriptor_sequence(y, fn.batch_sizes)
-        else:
-            fn.x_descs = cudnn.descriptor(x[0], fn.seq_length)
-            fn.y_descs = cudnn.descriptor(y[0], fn.seq_length)
-        fn.hx_desc = cudnn.descriptor(hx)
-        fn.hy_desc = cudnn.descriptor(hx)
-        fn.cx_desc = cudnn.descriptor(cx) if cx is not None else None
-        fn.cy_desc = cudnn.descriptor(cx) if cx is not None else None
-
-        # create the weight buffer and copy the weights into it
-        if fn.weight_buf is None:
-            num_weights = get_num_weights(
-                handle, fn.rnn_desc, fn.x_descs[0], fn.datatype)
-            fn.weight_buf = x.new(num_weights)
-            fn.w_desc = init_weight_descriptor(fn, fn.weight_buf)
-            w = fn.weight_buf
-            # this zero might not seem necessary, but it is in the case
-            # where biases are disabled; then they won't be copied and must be zero'd.
-            # Alternatively, _copyParams could be written more carefully.
-            w.zero_()
-            params = get_parameters(fn, handle, w)
-            _copyParams(weight, params)
-        else:
-            fn.w_desc = init_weight_descriptor(fn, fn.weight_buf)
-            w = fn.weight_buf
-
-        if cx is not None and tuple(cx.size()) != hidden_size:
-            raise RuntimeError('Expected cell size {}, got {}'.format(
-                hidden_size, tuple(cx.size())))
-
-        workspace_size = ctypes.c_long()
-        check_error(lib.cudnnGetRNNWorkspaceSize(
-            handle,
-            fn.rnn_desc,
-            fn.seq_length,
-            fn.x_descs,
-            ctypes.byref(workspace_size)
-        ))
-        fn.workspace_size = workspace_size.value
-        with torch.cuda.device_of(input):
-            workspace = torch.cuda.ByteTensor(fn.workspace_size)
-
-        assert fn.requires_grad == fn.train
-        if fn.requires_grad:
-            reserve_size = ctypes.c_long()
-            check_error(lib.cudnnGetRNNTrainingReserveSize(
-                handle,
-                fn.rnn_desc,
-                fn.seq_length,
-                fn.x_descs,
-                ctypes.byref(reserve_size)
-            ))
-            fn.reserve = torch.cuda.ByteTensor(reserve_size.value)
-
-            check_error(lib.cudnnRNNForwardTraining(
-                handle,
-                fn.rnn_desc,
-                fn.seq_length,
-                fn.x_descs, ctypes.c_void_p(x.data_ptr()),
-                fn.hx_desc, ctypes.c_void_p(hx.data_ptr()),
-                fn.cx_desc, ctypes.c_void_p(cx.data_ptr()) if cx is not None else None,
-                fn.w_desc, ctypes.c_void_p(w.data_ptr()),
-                fn.y_descs, ctypes.c_void_p(y.data_ptr()),
-                fn.hy_desc, ctypes.c_void_p(hy.data_ptr()),
-                fn.cy_desc, ctypes.c_void_p(cy.data_ptr()) if cx is not None else None,
-                ctypes.c_void_p(workspace.data_ptr()), workspace.size(0),
-                ctypes.c_void_p(fn.reserve.data_ptr()), fn.reserve.size(0)
-            ))
-        else:  # inference
-            check_error(lib.cudnnRNNForwardInference(
-                handle,
-                fn.rnn_desc,
-                fn.seq_length,
-                fn.x_descs, ctypes.c_void_p(x.data_ptr()),
-                fn.hx_desc, ctypes.c_void_p(hx.data_ptr()),
-                fn.cx_desc, ctypes.c_void_p(cx.data_ptr()) if cx is not None else None,
-                fn.w_desc, ctypes.c_void_p(w.data_ptr()),
-                fn.y_descs, ctypes.c_void_p(y.data_ptr()),
-                fn.hy_desc, ctypes.c_void_p(hy.data_ptr()),
-                fn.cy_desc, ctypes.c_void_p(cy.data_ptr()) if cx is not None else None,
-                ctypes.c_void_p(workspace.data_ptr()), workspace.size(0)
-            ))
-
-        if fn.batch_first and not is_input_packed:
-            output.transpose_(0, 1)
-
-        """
-        dropout_state = get_dropout_state(fn, handle)
-        # Variable massaging
-        new_output, new_hy, new_cy, new_reserve = torch._C._VariableBase._cudnn_rnn(
-            Variable(orig_input), Variable(fn.weight_buf), Variable(hx), Variable(cx) if cx is not None else None, fn.mode, fn.hidden_size, fn.num_layers,
-            fn.batch_first, fn.dropout, fn.train, bool(fn.bidirectional),
-            fn.batch_sizes if fn.batch_sizes else (),
-            Variable(dropout_state) if dropout_state is not None else None)
-        #assert (new_output.data - output).abs().max() < 1e-5
-        #assert (new_hy.data - hy).abs().max() < 1e-5
-        #if cy is not None: assert (new_cy.data - cy).abs().max() < 1e-5
-        out_output.zero_()
-        out_output.resize_as_(new_output.data)
-        out_output.copy_(new_output.data)
-        hy.zero_()
-        hy.resize_as_(new_hy.data)
-        hy.copy_(new_hy.data)
-        if cy is not None:
-            cy.zero_()
-            cy.resize_as_(new_cy.data)
-            cy.copy_(new_cy.data)
-        #fn.reserve.zero_()
-        #fn.reserve.copy_(new_reserve.data)
-        fn.reserve = new_reserve.data
-        """
 
 
 def backward_grad(fn, input, hx, weight, output, grad_output, grad_hy, grad_input, grad_hx):
     with torch.cuda.device_of(input):
-      if True:
         if fn.mode == cudnn.CUDNN_LSTM:
             hx, cx = hx
             grad_hx, grad_cx = grad_hx
@@ -487,85 +322,6 @@ def backward_grad(fn, input, hx, weight, output, grad_output, grad_hy, grad_inpu
         if grad_cx is not None:
             grad_cx.resize_as_(dcx.data)
             grad_cx.copy_(dcx.data)
-      else:
-        is_input_packed = fn.batch_sizes is not None
-        handle = cudnn.get_handle()
-
-        if fn.mode == cudnn.CUDNN_LSTM:
-            hx, cx = hx
-            grad_hx, grad_cx = grad_hx
-            grad_hy, grad_cy = grad_hy
-        else:
-            cx, grad_cx, grad_cy = None, None, None
-
-        if fn.batch_first and not is_input_packed:
-            input = input.transpose(0, 1)
-            grad_output = grad_output.transpose(0, 1)
-            output = output.transpose(0, 1)
-
-        input_size = _input_size(fn, input)
-        hidden_size = _hidden_size(fn)
-        output_size = _output_size(fn, input)
-
-        assert hx.is_contiguous()
-        assert cx is None or cx.is_contiguous()
-        x = input.contiguous()
-        dy = grad_output.contiguous()
-        y = output
-        w = fn.weight_buf
-        dx = grad_input.resize_as_(input)
-        dhy = grad_hy.contiguous().view(*hidden_size)
-        dcy = grad_cy.contiguous().view(*hidden_size) if grad_cy is not None else None
-        dhx = grad_hx.resize_(*hidden_size)
-        dcx = grad_cx.resize_(*hidden_size) if grad_cx is not None else None
-
-        if fn.dropout != 0 and cudnn.version() < 5103:
-            raise RuntimeError('dropout supported only in cudnn v 5.1 and above')
-        if not fn.requires_grad:
-            raise RuntimeError('backward_grad can only be called when the function requires grad!')
-        if tuple(input.size()) != input_size:
-            raise RuntimeError('Expected input size {}, got {}'.format(
-                input_size, tuple(input.size())))
-        if tuple(output.size()) != output_size:
-            raise RuntimeError('Expected output size {}, got {}'.format(
-                output_size, output.size()))
-        if hx is not None and tuple(hx.size()) != hidden_size:
-            raise RuntimeError('Expected hidden size {}, got {}'.format(
-                hidden_size, hx.size()))
-        if cx is not None and tuple(cx.size()) != hidden_size:
-            raise RuntimeError('Expected cell size {}, got {}'.format(
-                hidden_size, cx.size()))
-        if dhy is not None and tuple(dhy.size()) != hidden_size:
-            raise RuntimeError('Expected d_hidden size {}, got {}'.format(
-                hidden_size, dhy.size()))
-        if dcy is not None and tuple(dcy.size()) != hidden_size:
-            raise RuntimeError('Expected d_cell size {}, got {}'.format(
-                hidden_size, dcy.size()))
-        if not dhy.is_cuda or not dy.is_cuda or (dcy is not None and not dcy.is_cuda):
-            raise RuntimeError('Gradients aren\'t CUDA tensors')
-
-        with torch.cuda.device_of(input):
-            workspace = torch.cuda.ByteTensor(fn.workspace_size)
-        check_error(cudnn.lib.cudnnRNNBackwardData(
-            handle,
-            fn.rnn_desc,
-            fn.seq_length,
-            fn.y_descs, ctypes.c_void_p(y.data_ptr()),
-            fn.y_descs, ctypes.c_void_p(dy.data_ptr()),
-            fn.hy_desc, ctypes.c_void_p(dhy.data_ptr()),
-            fn.cy_desc, ctypes.c_void_p(dcy.data_ptr()) if cx is not None else None,
-            fn.w_desc, ctypes.c_void_p(w.data_ptr()),
-            fn.hx_desc, ctypes.c_void_p(hx.data_ptr()),
-            fn.cx_desc, ctypes.c_void_p(cx.data_ptr()) if cx is not None else None,
-            fn.x_descs, ctypes.c_void_p(dx.data_ptr()),
-            fn.hx_desc, ctypes.c_void_p(dhx.data_ptr()),
-            fn.cx_desc, ctypes.c_void_p(dcx.data_ptr()) if cx is not None else None,
-            ctypes.c_void_p(workspace.data_ptr()), workspace.size(0),
-            ctypes.c_void_p(fn.reserve.data_ptr()), fn.reserve.size(0)
-        ))
-
-        if fn.batch_first and not is_input_packed:
-            grad_input = grad_input.transpose_(0, 1)
 
 
 def _num_linear_layers(fn):
@@ -583,7 +339,6 @@ def _num_linear_layers(fn):
 
 def backward_weight(fn, input, hx, output, weight, grad_weight):
     with torch.cuda.device_of(input):
-      if True:
         if fn.mode == cudnn.CUDNN_LSTM:
             hx, cx = hx
         else:
@@ -599,56 +354,6 @@ def backward_weight(fn, input, hx, output, weight, grad_weight):
             fn.batch_sizes if fn.batch_sizes else (),
             Variable(dropout_desc.state) if dropout_desc.state is not None else None,
             Variable(fn.reserve))
-
-        # copy the weights from the weight_buf into grad_weight
-        grad_params = get_parameters(fn, handle, dw)
-        _copyParams(grad_params, grad_weight)
-        return grad_weight
-
-      else:
-        is_input_packed = fn.batch_sizes is not None
-        handle = cudnn.get_handle()
-
-        if fn.mode == cudnn.CUDNN_LSTM:
-            hx, cx = hx
-        else:
-            cx = None
-
-        if fn.batch_first and not is_input_packed:
-            input = input.transpose(0, 1)
-            output = output.transpose(0, 1)
-        input_size = _input_size(fn, input)
-        hidden_size = _hidden_size(fn)
-        if not fn.requires_grad:
-            raise RuntimeError('backward_weight can only be called when the function requires grad!')
-        if fn.dropout != 0 and cudnn.version() < 5103:
-            raise RuntimeError('dropout supported only in cudnn v 5.1 and above')
-        if tuple(input.size()) != input_size:
-            raise RuntimeError('Expected input size {}, got {}'.format(
-                input_size, tuple(input.size())))
-        if tuple(hx.size()) != hidden_size:
-            raise RuntimeError('Expected hidden size {}, got {}'.format(
-                hidden_size, hx.size()))
-
-        assert hx.is_contiguous()
-        assert cx is None or cx.is_contiguous()
-        x = input.contiguous()
-        y = output
-        dw = fn.weight_buf.new().resize_as_(fn.weight_buf).zero_()
-
-        with torch.cuda.device_of(input):
-            workspace = torch.cuda.ByteTensor(fn.workspace_size)
-        check_error(cudnn.lib.cudnnRNNBackwardWeights(
-            handle,
-            fn.rnn_desc,
-            fn.seq_length,
-            fn.x_descs, ctypes.c_void_p(x.data_ptr()),
-            fn.hx_desc, ctypes.c_void_p(hx.data_ptr()),
-            fn.y_descs, ctypes.c_void_p(y.data_ptr()),
-            ctypes.c_void_p(workspace.data_ptr()), workspace.size(0),
-            fn.w_desc, ctypes.c_void_p(dw.data_ptr()),
-            ctypes.c_void_p(fn.reserve.data_ptr()), fn.reserve.size(0)
-        ))
 
         # copy the weights from the weight_buf into grad_weight
         grad_params = get_parameters(fn, handle, dw)
