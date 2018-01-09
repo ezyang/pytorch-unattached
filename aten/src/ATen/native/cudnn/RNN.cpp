@@ -62,9 +62,13 @@ namespace {
       : input_mode(CUDNN_LINEAR_INPUT)
       {}
 
-    // NB: input must be transposed if batch_first and is_input_packed
-    void init_computed(const Tensor& input) {
+    // NB: must be called BEFORE you transpose input, because
+    // we handle the transposition internally
+    void init_computed(TensorGeometry input) {
       auto is_input_packed = batch_sizes.size() != 0;
+      if (batch_first && !is_input_packed) {
+        input = input.transpose(0, 1);
+      }
       num_directions = bidirectional ? 2 : 1;
       if (is_input_packed) {
         seq_length = batch_sizes.size();
@@ -201,16 +205,19 @@ namespace {
         weight_buf: a 1D tensor containing the CuDNN-allocated weight (or grad_weight) buffer
     Returns:
         parameters: [(weight_ih, weight_hh, bias_ih, bias_hh)*], with length equal to the num_layers.
+            This is represented as a pair of vector, and outer-dimension stride
+            (NB: Can't return MatrixRef because we need to allocate the underlying tensor)
   */
-  std::vector<std::vector<Tensor>>
+  std::pair<std::vector<Tensor>, size_t> // stride0
   get_parameters(const RNNParams& fn, const RNNDescriptors& descs, cudnnHandle_t handle, const Tensor& weight_buf) {
     auto cudnn_methods = { cudnnGetRNNLinLayerMatrixParams, cudnnGetRNNLinLayerBiasParams };
-    std::vector<std::vector<Tensor>> params;
+    std::vector<Tensor> params;
     int64_t num_linear_layers = _num_linear_layers(fn);
     int64_t num_layers = fn.num_directions * fn.num_layers;
     size_t cur_offset = 0;
+    size_t global_layer_params_count = 0;
     for (int64_t layer = 0; layer < num_layers; layer++) {
-      std::vector<Tensor> layer_params;
+      size_t layer_params_count = 0;
       for (auto cudnn_method : cudnn_methods) {
         for (int64_t linear_id = 0; linear_id < num_linear_layers; linear_id++) {
           FilterDescriptor lin_layer_mat_desc;
@@ -258,16 +265,20 @@ namespace {
             std::initializer_list<int64_t> size = {*filter_dim_a[0].data<int>() * num_linear_layers / 2, *filter_dim_a[2].data<int>()};
             // TODO: Check if this leaks memory
             Tensor param = fn.weight_buf.type().tensor().set_(*fn.weight_buf.storage(), offset, size);
-            layer_params.emplace_back(std::move(param));
+            params.emplace_back(std::move(param));
           } else {
             AT_ASSERT(cur_offset == offset, "cur_offset == offset");
           }
           cur_offset = offset + *filter_dim_a[0].data<int>();
         }
       } // for cudnn_method
-      params.emplace_back(std::move(layer_params));
+      if (layer == 0) {
+        global_layer_params_count = layer_params_count;
+      } else {
+        AT_ASSERT(global_layer_params_count == layer_params_count, "%d (global) != %d", global_layer_params_count, layer_params_count);
+      }
     } // for layer
-    return params;
+    return std::make_pair(params, global_layer_params_count);
   }
 
   void _copyParams() {
@@ -304,7 +315,7 @@ std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn_unflattened(
     bool train, bool bidirectional, IntList batch_sizes,
     const Tensor& dropout_state
     ) {
-  MatrixRef<Tensor> weights{weights_arr, weights_stride0};
+  MatrixRef<Tensor> weights{weights_arr, static_cast<size_t>(weights_stride0)};
 
   auto weight = Tensor{};
   return at::_cudnn_rnn(input, weight, hx, cx, mode, hidden_size, num_layers,
@@ -334,6 +345,7 @@ std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
   fn.dropout_state = fn_dropout_state;
   fn.weight_buf = fn_weight_buf;
   fn.datatype = getCudnnDataType(input);
+  fn.init_computed(TensorGeometry{input});
 
   // TODO: Set device to input
 
@@ -348,8 +360,6 @@ std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
   if (fn_batch_first && !is_input_packed) {
     input = input.transpose(0, 1);
   }
-
-  fn.init_computed(input);
 
   auto hidden_size = _hidden_size(fn);
   auto output_size = _output_size(fn, input);
@@ -469,6 +479,7 @@ std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn_backward_grad(
   fn.weight_buf = fn_weight_buf;
   fn.datatype = getCudnnDataType(input);
   fn.num_directions = fn.bidirectional ? 2 : 1;
+  fn.init_computed(TensorGeometry{input});
 
   // TODO: Set device to input
   auto handle = getCudnnHandle();
@@ -485,8 +496,6 @@ std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn_backward_grad(
     grad_output = grad_output.transpose(0, 1);
     output = output.transpose(0, 1);
   }
-
-  fn.init_computed(input);
 
   auto input_size = _input_size(fn, input);
   auto hidden_size = _hidden_size(fn);
@@ -609,6 +618,7 @@ Tensor _cudnn_rnn_backward_weight(
   fn.dropout_state = fn_dropout_state;
   fn.weight_buf = fn_weight_buf;
   fn.datatype = getCudnnDataType(input);
+  fn.init_computed(TensorGeometry{input});
 
   auto handle = getCudnnHandle();
 
@@ -624,7 +634,6 @@ Tensor _cudnn_rnn_backward_weight(
     output = output.transpose(0, 1);
   }
 
-  fn.init_computed(input);
   auto input_size = _input_size(fn, input);
   auto hidden_size = _hidden_size(fn);
 
