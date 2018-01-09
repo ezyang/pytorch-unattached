@@ -1,6 +1,7 @@
 #include <ATen/ATen.h>
 #include <ATen/NativeFunctions.h>
 #include <ATen/Config.h>
+#include <ATen/MatrixRef.h>
 
 #include <ATen/cudnn/cudnn-wrapper.h>
 #include <ATen/cudnn/Descriptors.h>
@@ -293,6 +294,22 @@ namespace {
   }
 
 } // anonymous namespace
+
+// We explicitly need to support this use-case, as networks that use
+// weight-tying (c.f. #3751) need to be packed every iteration.
+std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn_unflattened(
+    const Tensor& input, TensorList weights_arr, int64_t weights_stride0, const Tensor& hx, const Tensor& cx,
+    int64_t mode, int64_t hidden_size,
+    int64_t num_layers, bool batch_first, double dropout,
+    bool train, bool bidirectional, IntList batch_sizes,
+    const Tensor& dropout_state
+    ) {
+  MatrixRef<Tensor> weights{weights_arr, weights_stride0};
+
+  auto weight = Tensor{};
+  return at::_cudnn_rnn(input, weight, hx, cx, mode, hidden_size, num_layers,
+                        batch_first, dropout, train, bidirectional, batch_sizes, dropout_state);
+}
 
 // NB: when fn_batch_sizes is empty, that means no batch sizes was specified
 std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
