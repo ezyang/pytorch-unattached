@@ -298,5 +298,13 @@ Tensor view_as(const Tensor& self, const Tensor& other) {
   return self.view(other.sizes());
 }
 
+std::vector<Tensor> _smoketest_cons(const Tensor& x, TensorList xs) {
+  std::vector<Tensor> r;
+  r.reserve(xs.size() + 1);
+  r.push_back(x);
+  std::copy(xs.begin(), xs.end(), r.end());
+  return r;
+}
+
 }
 }

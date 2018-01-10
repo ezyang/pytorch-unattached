@@ -332,3 +332,6 @@
 # here only for testing purposes.
 - func: _cudnn_rnn_backward_weight(Tensor input, Tensor weight, Tensor hx, Tensor? cx, Tensor output, int64_t mode, int64_t hidden_size, int64_t num_layers, bool batch_first, double dropout, bool train, bool bidirectional, IntList batch_sizes, Tensor? dropout_state, Tensor reserve) -> Tensor
   variants: function
+
+- func: _smoketest_cons(Tensor x, TensorList xs) -> TensorList
+  variants: function
