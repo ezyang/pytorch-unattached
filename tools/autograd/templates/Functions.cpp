@@ -54,6 +54,11 @@ Tensor not_implemented(const char* name) {
       std::string("the derivative for '") + name + "' is not implemented");
 }
 
+std::vector<Variable> not_implemented_list(const char* name) {
+  throw std::runtime_error(
+      std::string("the derivative for '") + name + "' is not implemented");
+}
+
 Tensor maybe_multiply(const Tensor & t, const Scalar & s) {
   bool is_one = false;
   if (s.isFloatingPoint()) {

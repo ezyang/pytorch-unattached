@@ -1097,6 +1097,6 @@
   cx: not_implemented("_cudnn_rnn")
   dropout_state: not_implemented("_cudnn_rnn")
 
-#- name: _smoketest_cons(Tensor x, TensorList xs)
-#  x: not_implemented("_smoketest_cons")
-#  xs: not_implemented("_smoketest_cons")
+- name: _smoketest_cons(Tensor x, TensorList xs)
+  x: not_implemented("_smoketest_cons")
+  xs: not_implemented_list("_smoketest_cons")
