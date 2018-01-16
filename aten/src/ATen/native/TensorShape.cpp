@@ -306,5 +306,9 @@ std::vector<Tensor> _smoketest_cons(const Tensor& x, TensorList xs) {
   return r;
 }
 
+std::tuple<Tensor, std::vector<Tensor>> _smoketest_cons_backward(TensorList xs) {
+  return std::make_tuple(xs.front(), xs.slice(1));
+}
+
 }
 }
