@@ -51,6 +51,7 @@ namespace at {
     /// @name Simple Operations
     /// @{
 
+    // TODO: Maybe this should iterate over ArrayRef<T>, not T
     iterator begin() const { return arr.begin(); }
     iterator end() const { return arr.end(); }
 
@@ -71,7 +72,6 @@ namespace at {
       } else {
         AT_ASSERT(0, "MatrixRef: out of bounds dimension %d; expected 0 or 1", dim);
       }
-      return arr.size;
     }
 
     /// front - Get the first element.
@@ -92,7 +92,7 @@ namespace at {
     /// @}
     /// @name Operator Overloads
     /// @{
-    const ArrayRef<T> &operator[](size_t Index) const {
+    ArrayRef<T> operator[](size_t Index) const {
       return arr.slice(Index*stride0, Index*stride0+stride0);
     }
 
