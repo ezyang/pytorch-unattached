@@ -279,7 +279,20 @@ namespace {
     return std::make_pair(params, global_layer_params_count);
   }
 
-  void _copyParams() {
+  void _copyParams(MatrixRef<Tensor> params_from, MatrixRef<Tensor> params_to) {
+    AT_ASSERT(params_from.size(0) == params_to.size(0), "number of layers mismatch");
+    for (size_t i = 0; i < params_from.size(0); i++) {
+      auto layer_params_from = params_from[0];
+      auto layer_params_to = params_to[0];
+      for (auto a = layer_params_from.begin(), b = layer_params_to.begin();
+           a != layer_params_from.end() && b != layer_params_to.end();
+           ++a, ++b) {
+        auto param_from = *a, param_to = *b;
+        AT_ASSERT(param_from.type() == param_to.type(), "parameter types mismatch");
+        // TODO: broadcast=False (NB: parameter two is async...)
+        param_to.copy_(param_from);
+      }
+    }
   }
 
   std::vector<int64_t> _input_size(const RNNParams& fn, const Tensor& input) {
@@ -304,25 +317,10 @@ namespace {
 
 } // anonymous namespace
 
-// We explicitly need to support this use-case, as networks that use
-// weight-tying (c.f. #3751) need to be packed every iteration.
-std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn_unflattened(
-    const Tensor& input, TensorList weights_arr, int64_t weights_stride0, const Tensor& hx, const Tensor& cx,
-    int64_t mode, int64_t hidden_size,
-    int64_t num_layers, bool batch_first, double dropout,
-    bool train, bool bidirectional, IntList batch_sizes,
-    const Tensor& dropout_state
-    ) {
-  MatrixRef<Tensor> weights{weights_arr, static_cast<size_t>(weights_stride0)};
-
-  auto weight = Tensor{};
-  return at::_cudnn_rnn(input, weight, hx, cx, mode, hidden_size, num_layers,
-                        batch_first, dropout, train, bidirectional, batch_sizes, dropout_state);
-}
-
 // NB: when fn_batch_sizes is empty, that means no batch sizes was specified
 std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
-    const Tensor& input_r, const Tensor& fn_weight_buf, const Tensor& hx, const Tensor& cx,
+    const Tensor& input_r, TensorList weight, int64_t weight_stride0,
+    const Tensor& fn_weight_buf, const Tensor& hx, const Tensor& cx,
     int64_t fn_mode, int64_t fn_hidden_size,
     int64_t fn_num_layers, bool fn_batch_first, double fn_dropout,
     bool fn_train, bool fn_bidirectional, IntList fn_batch_sizes,
@@ -380,7 +378,19 @@ std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
   RNNDescriptors descs(fn, handle, x, y, hx, cx);
 
   FilterDescriptor w_desc;
-  w_desc.set(fn.weight_buf, 3);
+  if (!fn.weight_buf.defined()) {
+    auto num_weights = get_num_weights(handle, descs.rnn_desc, descs.x_descs[0], fn.datatype);
+    fn.weight_buf = x.type().tensor(num_weights);
+    w_desc.set(fn.weight_buf, 3);
+    fn.weight_buf.zero_();
+    std::vector<Tensor> params;
+    size_t params_stride0;
+    std::tie(params, params_stride0) = get_parameters(fn, descs, w_desc, handle, fn.weight_buf);
+    _copyParams(MatrixRef<Tensor>{weight, static_cast<size_t>(weight_stride0)},
+                MatrixRef<Tensor>{params, params_stride0});
+  } else {
+    w_desc.set(fn.weight_buf, 3);
+  }
 
   if (cx.defined() && !cx.sizes().equals(hidden_size)) {
     std::ostringstream oss;
