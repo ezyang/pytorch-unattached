@@ -276,7 +276,7 @@ def forward(fn, input, hx, weight, out_output, out_hy):
         #dropout_desc = init_dropout_descriptor(fn, handle)
         dropout_state = get_dropout_state(fn, handle)
         # Variable massaging
-        output, hy, cy, reserve = torch._C._VariableBase._cudnn_rnn(
+        output, hy, cy, reserve = torch._C._VariableFunctions._cudnn_rnn(
             Variable(orig_input), Variable(fn.weight_buf), Variable(hx), Variable(cx) if cx is not None else None, fn.mode, fn.hidden_size, fn.num_layers,
             fn.batch_first, fn.dropout, fn.train, bool(fn.bidirectional),
             fn.batch_sizes if fn.batch_sizes else (),
@@ -306,7 +306,7 @@ def backward_grad(fn, input, hx, weight, output, grad_output, grad_hy, grad_inpu
 
         handle = cudnn.get_handle()
         dropout_desc = init_dropout_descriptor(fn, handle)
-        dx, dhx, dcx = torch._C._VariableBase._cudnn_rnn_backward_grad(
+        dx, dhx, dcx = torch._C._VariableFunctions._cudnn_rnn_backward_grad(
             Variable(input), Variable(fn.weight_buf), Variable(hx), Variable(cx) if cx is not None else None,
             Variable(output), Variable(grad_output), Variable(grad_hy), Variable(grad_cy) if grad_cy is not None else None,
             fn.mode, fn.hidden_size, fn.num_layers,
@@ -346,7 +346,7 @@ def backward_weight(fn, input, hx, output, weight, grad_weight):
 
         handle = cudnn.get_handle()
         dropout_desc = init_dropout_descriptor(fn, handle)
-        dw = torch._C._VariableBase._cudnn_rnn_backward_weight(
+        dw = torch._C._VariableFunctions._cudnn_rnn_backward_weight(
             Variable(input), Variable(fn.weight_buf), Variable(hx), Variable(cx) if cx is not None else None,
             Variable(output),
             fn.mode, fn.hidden_size, fn.num_layers,
