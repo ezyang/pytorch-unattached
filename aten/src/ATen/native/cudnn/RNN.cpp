@@ -105,6 +105,7 @@ namespace {
     }
   };
 
+  // NB: Doesn't include the weight descriptor
   struct RNNDescriptors {
     DropoutDescriptor dropout_desc;
     RNNDescriptor rnn_desc;
@@ -116,7 +117,6 @@ namespace {
     TensorDescriptor hy_desc;
     TensorDescriptor cx_desc;
     TensorDescriptor cy_desc;
-    FilterDescriptor w_desc;
 
     RNNDescriptors(const RNNParams& fn, cudnnHandle_t handle, Tensor x, Tensor y, Tensor hx, Tensor cx) {
       auto is_input_packed = fn.batch_sizes.size() != 0;
@@ -140,8 +140,6 @@ namespace {
         cx_desc.set(cx, 5);
         cy_desc.set(cx, 5);
       }
-
-      w_desc.set(fn.weight_buf, 3);
     }
 
     // TODO: This is annoying, having to put the cudnnTensorDescriptor_t
@@ -209,7 +207,7 @@ namespace {
             (NB: Can't return MatrixRef because we need to allocate the underlying tensor)
   */
   std::pair<std::vector<Tensor>, size_t> // stride0
-  get_parameters(const RNNParams& fn, const RNNDescriptors& descs, cudnnHandle_t handle, const Tensor& weight_buf) {
+  get_parameters(const RNNParams& fn, const RNNDescriptors& descs, const FilterDescriptor& w_desc, cudnnHandle_t handle, const Tensor& weight_buf) {
     auto cudnn_methods = { cudnnGetRNNLinLayerMatrixParams, cudnnGetRNNLinLayerBiasParams };
     std::vector<Tensor> params;
     int64_t num_linear_layers = _num_linear_layers(fn);
@@ -227,7 +225,7 @@ namespace {
                 descs.rnn_desc.desc,
                 layer,
                 descs.x_descs[0].desc,
-                descs.w_desc.desc,
+                w_desc.desc,
                 weight_buf.data_ptr(),
                 linear_id,
                 lin_layer_mat_desc.desc,
@@ -381,6 +379,9 @@ std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
   auto handle = getCudnnHandle();
   RNNDescriptors descs(fn, handle, x, y, hx, cx);
 
+  FilterDescriptor w_desc;
+  w_desc.set(fn.weight_buf, 3);
+
   if (cx.defined() && !cx.sizes().equals(hidden_size)) {
     std::ostringstream oss;
     oss << "Expected cell size " << IntList{hidden_size} << ", got " << cx.sizes();
@@ -419,7 +420,7 @@ std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
           x_descs_arr.data(), x.data_ptr(),
           descs.hx_desc.desc, hx.data_ptr(),
           cx.defined() ? descs.cx_desc.desc : nullptr, cx.defined() ? cx.data_ptr() : nullptr,
-          descs.w_desc.desc, fn_weight_buf.data_ptr(),
+          w_desc.desc, fn_weight_buf.data_ptr(),
           y_descs_arr.data(), y.data_ptr(),
           descs.hy_desc.desc, hy.data_ptr(),
           cy.defined() ? descs.cy_desc.desc : nullptr, cy.defined() ? cy.data_ptr() : nullptr,
@@ -435,7 +436,7 @@ std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
           x_descs_arr.data(), x.data_ptr(),
           descs.hx_desc.desc, hx.data_ptr(),
           cx.defined() ? descs.cx_desc.desc : nullptr, cx.defined() ? cx.data_ptr() : nullptr,
-          descs.w_desc.desc, fn_weight_buf.data_ptr(),
+          w_desc.desc, fn_weight_buf.data_ptr(),
           y_descs_arr.data(), y.data_ptr(),
           descs.hy_desc.desc, hy.data_ptr(),
           cy.defined() ? descs.cy_desc.desc : nullptr, cy.defined() ? cy.data_ptr() : nullptr,
@@ -553,6 +554,9 @@ std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn_backward_grad(
 
   RNNDescriptors descs(fn, handle, x, y, hx, cx);
 
+  FilterDescriptor w_desc;
+  w_desc.set(fn.weight_buf, 3);
+
   size_t workspace_size;
   auto x_descs_arr = descs.get_x_descs();
   auto y_descs_arr = descs.get_y_descs();
@@ -574,7 +578,7 @@ std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn_backward_grad(
         y_descs_arr.data(), dy.data_ptr(),
         descs.hy_desc.desc, dhy.data_ptr(),
         cx.defined() ? descs.cy_desc.desc : nullptr, cx.defined() ? dcy.data_ptr() : nullptr,
-        descs.w_desc.desc, w.data_ptr(),
+        w_desc.desc, w.data_ptr(),
         descs.hx_desc.desc, hx.data_ptr(),
         cx.defined() ? descs.cx_desc.desc : nullptr, cx.defined() ? cx.data_ptr() : nullptr,
         x_descs_arr.data(), dx.data_ptr(),
@@ -662,6 +666,9 @@ Tensor _cudnn_rnn_backward_weight(
 
   RNNDescriptors descs(fn, handle, x, y, hx, cx);
 
+  FilterDescriptor w_desc;
+  w_desc.set(fn.weight_buf, 3);
+
   size_t workspace_size;
   auto x_descs_arr = descs.get_x_descs();
   auto y_descs_arr = descs.get_y_descs();
@@ -682,7 +689,7 @@ Tensor _cudnn_rnn_backward_weight(
         descs.hx_desc.desc, hx.data_ptr(),
         y_descs_arr.data(), y.data_ptr(),
         workspace.data_ptr(), workspace.size(0),
-        descs.w_desc.desc, dw.data_ptr(),
+        w_desc.desc, dw.data_ptr(),
         fn_reserve.data_ptr(), fn_reserve.size(0)
         ));
   return dw;
