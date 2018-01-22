@@ -111,7 +111,7 @@ def process_function(func):
     env['compute_index_ranges'] = []
     for arg in func['args_with_gradients']:
         if arg['type'] == 'TensorList':
-            size = '{}_size_'.format(arg['name']);
+            size = '{}_size_'.format(arg['name'])
             saved_list_sizes.append('size_t {}_size_;'.format(arg['name']))
         else:
             size = '1'

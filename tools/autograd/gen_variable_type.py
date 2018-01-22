@@ -240,7 +240,7 @@ def emit_body(declaration):
             setup.extend(save_variables(func['saved_inputs'], False))
             for arg in func['args_with_gradients']:
                 if arg['type'] == 'TensorList':
-                    setup.append("grad_fn->{}_size_ = {}.size();".format(arg['name'], arg['name']));
+                    setup.append("grad_fn->{}_size_ = {}.size();".format(arg['name'], arg['name']))
 
         body = []
         body.extend(emit_check_no_requires_grad(differentiable_inputs, args_with_derivatives))
