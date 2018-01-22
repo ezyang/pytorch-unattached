@@ -336,5 +336,8 @@
 - func: _smoketest_cons(Tensor x, TensorList xs) -> TensorList
   variants: function
 
+- func: _smoketest_cons_snoc(Tensor x, TensorList xs, Tensor y) -> TensorList
+  variants: function
+
 - func: _smoketest_cons_backward(TensorList xs) -> (Tensor, TensorList)
   variants: function

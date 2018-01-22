@@ -379,6 +379,7 @@ std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
 
   FilterDescriptor w_desc;
   if (!fn.weight_buf.defined()) {
+    throw std::runtime_error("BOOOM");
     auto num_weights = get_num_weights(handle, descs.rnn_desc, descs.x_descs[0], fn.datatype);
     fn.weight_buf = x.type().tensor(num_weights);
     w_desc.set(fn.weight_buf, 3);

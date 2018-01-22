@@ -1094,3 +1094,8 @@
 - name: _smoketest_cons(Tensor x, TensorList xs)
   x: not_implemented("_smoketest_cons")
   xs: not_implemented_list("_smoketest_cons")
+
+- name: _smoketest_cons_snoc(Tensor x, TensorList xs, Tensor y)
+  xs: not_implemented_list("_smoketest_cons_snoc")
+  x: not_implemented("_smoketest_cons_snoc")
+  y: not_implemented("_smoketest_cons_snoc")
