@@ -276,9 +276,9 @@ def forward(fn, input, hx, weight, out_output, out_hy):
         #dropout_desc = init_dropout_descriptor(fn, handle)
         dropout_state = get_dropout_state(fn, handle)
         # Variable massaging
+        weight_arr = [Variable(w) for ws in weight for w in ws]
         output, hy, cy, reserve = torch._C._VariableFunctions._cudnn_rnn(
-            # TODO
-            Variable(orig_input), Variable(fn.weight_buf), Variable(hx), Variable(cx) if cx is not None else None, fn.mode, fn.hidden_size, fn.num_layers,
+            Variable(orig_input), weight_arr, len(weight), Variable(fn.weight_buf), Variable(hx), Variable(cx) if cx is not None else None, fn.mode, fn.hidden_size, fn.num_layers,
             fn.batch_first, fn.dropout, fn.train, bool(fn.bidirectional),
             fn.batch_sizes if fn.batch_sizes else (),
             Variable(dropout_state) if dropout_state is not None else None)
