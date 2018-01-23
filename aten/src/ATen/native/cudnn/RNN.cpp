@@ -235,7 +235,9 @@ namespace {
           cudnnTensorFormat_t format;
           int nb_dims;
           constexpr int min_dim = 3;
-          // TODO: The use of CPU tensor here is a bit goofy in c++
+          // TODO: The use of CPU tensor here is a bit goofy in C++,
+          // some sort of alloca would be good enough except that it is
+          // kind of convenient to be able to prod() on it.
           Tensor filter_dim_a = at::CPU(kInt).tensor(min_dim);
           CUDNN_CHECK(cudnnGetFilterNdDescriptor(
                 lin_layer_mat_desc.desc,
@@ -413,7 +415,7 @@ std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
         x_descs_arr.data(),
         &workspace_size
         ));
-  Tensor workspace = at::CUDA(kByte).tensor(workspace_size);
+  Tensor workspace = input.type().toScalarType(kByte).tensor(workspace_size);
 
   Tensor reserve;
   // NB: Previously, the test was for fn.requires_grad, but we don't have
@@ -427,7 +429,7 @@ std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
           x_descs_arr.data(),
           &reserve_size
           ));
-    reserve = at::CUDA(kByte).tensor(reserve_size);
+    reserve = input.type().toScalarType(kByte).tensor(reserve_size);
     CUDNN_CHECK(cudnnRNNForwardTraining(
           handle,
           descs.rnn_desc.desc,
@@ -443,7 +445,7 @@ std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
           reserve.data_ptr(), reserve.size(0)
           ));
   } else { // inference
-    reserve = at::CUDA(kByte).tensor();
+    reserve = input.type().toScalarType(kByte).tensor();
     CUDNN_CHECK(cudnnRNNForwardInference(
           handle,
           descs.rnn_desc.desc,
@@ -583,7 +585,7 @@ std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn_backward_grad(
         &workspace_size
         ));
   // TODO: put this in the correct device???
-  Tensor workspace = at::CUDA(kByte).tensor(workspace_size);
+  Tensor workspace = input.type().toScalarType(kByte).tensor(workspace_size);
 
   CUDNN_CHECK(cudnnRNNBackwardData(
         handle,
@@ -694,7 +696,7 @@ Tensor _cudnn_rnn_backward_weight(
         x_descs_arr.data(),
         &workspace_size
         ));
-  Tensor workspace = at::CUDA(kByte).tensor(workspace_size);
+  Tensor workspace = input.type().toScalarType(kByte).tensor(workspace_size);
 
   CUDNN_CHECK(cudnnRNNBackwardWeights(
         handle,
