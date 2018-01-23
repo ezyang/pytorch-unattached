@@ -319,7 +319,7 @@ namespace {
 
 // NB: when fn_batch_sizes is empty, that means no batch sizes was specified
 std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
-    const Tensor& input_r, TensorList weight, int64_t weight_stride0,
+    const Tensor& input_r,
     const Tensor& fn_weight_buf, const Tensor& hx, const Tensor& cx,
     int64_t fn_mode, int64_t fn_hidden_size,
     int64_t fn_num_layers, bool fn_batch_first, double fn_dropout,
@@ -328,6 +328,8 @@ std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
     ) {
 
   auto input = input_r;
+  TensorList weight;
+  int64_t weight_stride0 = 0;
 
   RNNParams fn;
   fn.set_mode(fn_mode);
@@ -378,6 +380,7 @@ std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
   RNNDescriptors descs(fn, handle, x, y, hx, cx);
 
   FilterDescriptor w_desc;
+  /*
   if (!fn.weight_buf.defined()) {
     throw std::runtime_error("BOOOM");
     auto num_weights = get_num_weights(handle, descs.rnn_desc, descs.x_descs[0], fn.datatype);
@@ -390,8 +393,9 @@ std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
     _copyParams(MatrixRef<Tensor>{weight, static_cast<size_t>(weight_stride0)},
                 MatrixRef<Tensor>{params, params_stride0});
   } else {
+  */
     w_desc.set(fn.weight_buf, 3);
-  }
+  // }
 
   if (cx.defined() && !cx.sizes().equals(hidden_size)) {
     std::ostringstream oss;

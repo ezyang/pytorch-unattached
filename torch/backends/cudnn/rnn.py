@@ -278,7 +278,7 @@ def forward(fn, input, hx, weight, out_output, out_hy):
         # Variable massaging
         output, hy, cy, reserve = torch._C._VariableFunctions._cudnn_rnn(
             # TODO
-            Variable(orig_input), [], 0, Variable(fn.weight_buf), Variable(hx), Variable(cx) if cx is not None else None, fn.mode, fn.hidden_size, fn.num_layers,
+            Variable(orig_input), Variable(fn.weight_buf), Variable(hx), Variable(cx) if cx is not None else None, fn.mode, fn.hidden_size, fn.num_layers,
             fn.batch_first, fn.dropout, fn.train, bool(fn.bidirectional),
             fn.batch_sizes if fn.batch_sizes else (),
             Variable(dropout_state) if dropout_state is not None else None)
