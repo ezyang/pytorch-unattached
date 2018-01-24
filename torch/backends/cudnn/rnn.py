@@ -83,24 +83,6 @@ def init_weight_descriptor(fn, weight):
     return w_desc
 
 
-def _input_size(fn, input):
-    if fn.batch_sizes is not None:
-        return (input.size(0), fn.input_size)
-    else:
-        return (fn.seq_length, fn.mini_batch, fn.input_size)
-
-
-def _hidden_size(fn):
-    return (fn.num_layers * fn.num_directions, fn.mini_batch, fn.hidden_size)
-
-
-def _output_size(fn, input):
-    if fn.batch_sizes is not None:
-        return (input.size(0), fn.hidden_size * fn.num_directions)
-    else:
-        return (fn.seq_length, fn.mini_batch, fn.hidden_size * fn.num_directions)
-
-
 def get_num_weights(handle, rnn_desc, x_desc, datatype):
     weight_size = ctypes.c_long()
     check_error(cudnn.lib.cudnnGetRNNParamsSize(
