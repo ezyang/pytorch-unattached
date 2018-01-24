@@ -93,7 +93,7 @@ namespace at {
     /// @name Operator Overloads
     /// @{
     ArrayRef<T> operator[](size_t Index) const {
-      return arr.slice(Index*stride0, Index*stride0+stride0);
+      return arr.slice(Index*stride0, stride0);
     }
 
     /// Disallow accidental assignment from a temporary.
