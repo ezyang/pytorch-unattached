@@ -35,6 +35,7 @@ class Unserializable(object):
         self.inner = None
 
 
+# Needs in fn: dropout, train, dropout_state, dropout_seed
 def init_dropout_descriptor(fn, handle):
     dropout_desc_name = 'desc_' + str(torch.cuda.current_device())
     dropout_p = fn.dropout if fn.train else 0
@@ -207,7 +208,7 @@ def _copyParams(params_from, params_to):
             param_to.copy_(param_from, broadcast=False)
 
 
-def forward(fn, input, hx, weight, out_output, out_hy):
+def forward(fn, input, hx, weight):
     with torch.cuda.device_of(input):
         if fn.mode == cudnn.CUDNN_LSTM:
             hx, cx = hx
@@ -215,24 +216,25 @@ def forward(fn, input, hx, weight, out_output, out_hy):
             cx = None
 
         handle = cudnn.get_handle()
-
-        orig_input = input
-
-        # OK actual stuff
         dropout_desc = init_dropout_descriptor(fn, handle)
-        #dropout_state = get_dropout_state(fn, handle)
-        # Variable massaging
+
+        # TODO: in an ideal world, we could pass list of list direct
         weight_arr = [Variable(w) for ws in weight for w in ws]
         weight_stride0 = len(weight[0])
         for ws in weight:
             assert len(ws) == weight_stride0
+
         output, hy, cy, reserve, new_weight_buf = torch._C._VariableFunctions._cudnn_rnn(
-            Variable(orig_input), weight_arr, weight_stride0, Variable(fn.weight_buf) if fn.weight_buf is not None else None, Variable(hx), Variable(cx) if cx is not None else None, fn.mode, fn.hidden_size, fn.num_layers,
+            Variable(input), weight_arr, weight_stride0,
+            Variable(fn.weight_buf) if fn.weight_buf is not None else None,
+            Variable(hx),
+            Variable(cx) if cx is not None else None,
+            fn.mode, fn.hidden_size, fn.num_layers,
             fn.batch_first, fn.dropout, fn.train, bool(fn.bidirectional),
             fn.batch_sizes if fn.batch_sizes else (),
             Variable(dropout_desc.state) if dropout_desc.state is not None else None)
 
-        # WOAAAAAH DUUUUDE
+        # For backwards
         fn.weight_buf = new_weight_buf.data
         fn.reserve = reserve.data
 
@@ -244,14 +246,13 @@ def forward(fn, input, hx, weight, out_output, out_hy):
         return output.data, extra_outs
 
 
-def backward_grad(fn, input, hx, weight, output, grad_output, grad_hy, grad_input, grad_hx):
+def backward_grad(fn, input, hx, weight, output, grad_output, grad_hy):
     with torch.cuda.device_of(input):
         if fn.mode == cudnn.CUDNN_LSTM:
             hx, cx = hx
-            grad_hx, grad_cx = grad_hx
             grad_hy, grad_cy = grad_hy
         else:
-            cx, grad_cx, grad_cy = None, None, None
+            cx, grad_cy = None, None
 
         handle = cudnn.get_handle()
         dropout_desc = init_dropout_descriptor(fn, handle)
@@ -264,13 +265,10 @@ def backward_grad(fn, input, hx, weight, output, grad_output, grad_hy, grad_inpu
             Variable(dropout_desc.state) if dropout_desc.state is not None else None,
             Variable(fn.reserve))
 
-        grad_input.resize_as_(dx.data)
-        grad_input.copy_(dx.data)
-        grad_hx.resize_as_(dhx.data)
-        grad_hx.copy_(dhx.data)
-        if grad_cx is not None:
-            grad_cx.resize_as_(dcx.data)
-            grad_cx.copy_(dcx.data)
+        if cx is not None:
+            return dx.data, (dhx.data, dcx.data)
+        else:
+            return dx.data, dhx.data
 
 
 def _num_linear_layers(fn):
@@ -286,7 +284,7 @@ def _num_linear_layers(fn):
         raise RuntimeError('Unknown mode: {}'.format(fn.mode))
 
 
-def backward_weight(fn, input, hx, output, weight, grad_weight):
+def backward_weight(fn, input, hx, output, weight):
     with torch.cuda.device_of(input):
         if fn.mode == cudnn.CUDNN_LSTM:
             hx, cx = hx
