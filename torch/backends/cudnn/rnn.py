@@ -330,7 +330,7 @@ def backward_weight(fn, input, hx, output, weight, grad_weight):
         weight_arr = [Variable(w) for ws in weight for w in ws]
         weight_stride0 = len(weight[0])
         dropout_desc = init_dropout_descriptor(fn, handle)
-        r = torch._C._VariableFunctions._cudnn_rnn_backward_weight(
+        dw = torch._C._VariableFunctions._cudnn_rnn_backward_weight(
             Variable(input), weight_arr, weight_stride0, Variable(fn.weight_buf), Variable(hx), Variable(cx) if cx is not None else None,
             Variable(output),
             fn.mode, fn.hidden_size, fn.num_layers,
@@ -338,14 +338,5 @@ def backward_weight(fn, input, hx, output, weight, grad_weight):
             fn.batch_sizes if fn.batch_sizes else (),
             Variable(dropout_desc.state) if dropout_desc.state is not None else None,
             Variable(fn.reserve))
-        # lool
-        dw = r[:-1]
-        flat_dw = r[-1]
 
-        grad_params = get_parameters(fn, handle, flat_dw)
-        _copyParams(grad_params, grad_weight)
-        #return grad_weight
-
-        new_grad_weight = [list(map(lambda x: x.data, dw[i:i + weight_stride0])) for i in range(0, len(dw), weight_stride0)]
-
-        return new_grad_weight
+        return [list(map(lambda x: x.data, dw[i:i + weight_stride0])) for i in range(0, len(dw), weight_stride0)]

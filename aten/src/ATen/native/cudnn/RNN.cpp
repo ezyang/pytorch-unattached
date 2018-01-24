@@ -609,7 +609,7 @@ std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn_backward_grad(
 
 // NB: This MUST BE CALLED AFTER _cudnn_rnn_backward_grad.
 // We'll give a user friendly combined function...
-std::tuple<std::vector<Tensor>, Tensor> _cudnn_rnn_backward_weight(
+std::vector<Tensor> _cudnn_rnn_backward_weight(
     // TODO: I think tensor geometry sufficient for weight_buf/weight
     const Tensor& input_r, TensorList weight_arr, int64_t weight_stride0,
     const Tensor& fn_weight_buf, const Tensor& hx, const Tensor& cx,
@@ -720,7 +720,7 @@ std::tuple<std::vector<Tensor>, Tensor> _cudnn_rnn_backward_weight(
   _copyParams(MatrixRef<Tensor>{grad_params_arr, grad_params_stride0},
               MatrixRef<Tensor>{grad_weight_arr, static_cast<size_t>(weight_stride0)});
 
-  return std::tuple<std::vector<Tensor>, Tensor>{ grad_weight_arr, dw }; // stride is known from call site (and also inconvenient to return)
+  return grad_weight_arr; // stride is known from call site (and also inconvenient to return)
 }
 
 // We need this dispatcher because _cudnn_rnn_backward_weight has a stringent
@@ -740,7 +740,7 @@ std::tuple<Tensor, Tensor, Tensor, std::vector<Tensor>> _cudnn_rnn_backward(
   std::tie(dx, dhx, dcx) = at::native::_cudnn_rnn_backward_grad(input, fn_weight_buf, hx, cx, output, grad_output, grad_hy, grad_cy, mode, hidden_size, num_layers, batch_first, dropout, train, bidirectional, batch_sizes, dropout_state, reserve);
   std::vector<Tensor> dw;
   if (output_mask[3]) {
-    std::tie(dw, std::ignore) = at::native::_cudnn_rnn_backward_weight(input, weight, weight_stride0, fn_weight_buf, hx, cx, output, mode, hidden_size, num_layers, batch_first, dropout, train, bidirectional, batch_sizes, dropout_state, reserve);
+    dw = at::native::_cudnn_rnn_backward_weight(input, weight, weight_stride0, fn_weight_buf, hx, cx, output, mode, hidden_size, num_layers, batch_first, dropout, train, bidirectional, batch_sizes, dropout_state, reserve);
   }
   return std::tuple<Tensor, Tensor, Tensor, TensorList>{dx, dhx, dcx, dw};
 }
