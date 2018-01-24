@@ -344,6 +344,8 @@ def backward_weight(fn, input, hx, output, weight, grad_weight):
 
         grad_params = get_parameters(fn, handle, flat_dw)
         _copyParams(grad_params, grad_weight)
-        return grad_weight
+        #return grad_weight
 
-        return [list(map(lambda x: x.data, dw[i:i + weight_stride0])) for i in range(0, len(dw), weight_stride0)]
+        new_grad_weight = [list(map(lambda x: x.data, dw[i:i + weight_stride0])) for i in range(0, len(dw), weight_stride0)]
+
+        return new_grad_weight

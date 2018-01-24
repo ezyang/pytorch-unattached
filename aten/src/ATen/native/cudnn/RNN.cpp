@@ -263,7 +263,7 @@ namespace {
             AT_ASSERT(*filter_dim_a.prod().data<int>() == *filter_dim_a[0].data<int>(), "filter_dim_a.prod() == filter_dim_a[0]");
             std::initializer_list<int64_t> size = {*filter_dim_a[0].data<int>() * num_linear_layers / 2, *filter_dim_a[2].data<int>()};
             // TODO: Check if this leaks memory
-            Tensor param = fn.weight_buf.type().tensor().set_(*fn.weight_buf.storage(), offset, size);
+            Tensor param = weight_buf.type().tensor().set_(*weight_buf.storage(), offset, size);
             params.emplace_back(std::move(param));
             layer_params_count++;
           } else {
