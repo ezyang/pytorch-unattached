@@ -290,7 +290,7 @@ class CudnnRNN(NestedIOFunction):
         else:
             hy = tuple(h.new() for h in hx)
 
-        cudnn.rnn.forward(self, input, hx, weight, output, hy)
+        output, hy = cudnn.rnn.forward(self, input, hx, weight, output, hy)
 
         self.save_for_backward(input, hx, weight, output)
         return output, hy

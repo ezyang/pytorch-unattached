@@ -211,41 +211,12 @@ def forward(fn, input, hx, weight, out_output, out_hy):
     with torch.cuda.device_of(input):
         if fn.mode == cudnn.CUDNN_LSTM:
             hx, cx = hx
-            out_hy, out_cy = out_hy
         else:
-            cx, out_cy = None, None
+            cx = None
 
         handle = cudnn.get_handle()
 
-        # blah blah backwards
-        lib = cudnn.lib
-        fn.datatype = cudnn._typemap[input.type()]
         orig_input = input
-        is_input_packed = fn.batch_sizes is not None
-        if fn.batch_first and not is_input_packed:
-            input = input.transpose(0, 1)
-        if is_input_packed:
-            fn.seq_length = len(fn.batch_sizes)
-            fn.mini_batch = fn.batch_sizes[0]
-            fn.input_size = input.size(-1)
-        else:
-            fn.seq_length, fn.mini_batch, fn.input_size = input.size()
-
-        hidden_size = _hidden_size(fn)
-        output_size = _output_size(fn, input)
-
-        x = input.contiguous()
-        out_output.resize_(*output_size)
-        out_hy.resize_(*hidden_size)
-        if out_cy is not None:
-            out_cy.resize_(*hidden_size)
-        y = out_output
-
-        fn.rnn_desc = init_rnn_descriptor(fn, handle)
-        if is_input_packed:
-            fn.x_descs = cudnn.descriptor_sequence(x, fn.batch_sizes)
-        else:
-            fn.x_descs = cudnn.descriptor(x[0], fn.seq_length)
 
         # OK actual stuff
         dropout_desc = init_dropout_descriptor(fn, handle)
@@ -263,16 +234,14 @@ def forward(fn, input, hx, weight, out_output, out_hy):
 
         # WOAAAAAH DUUUUDE
         fn.weight_buf = new_weight_buf.data
-        if fn.batch_first and not is_input_packed:
-            out_output.transpose_(0, 1)
-        out_output.resize_as_(output.data)
-        out_output.copy_(output.data)
-        out_hy.resize_as_(hy.data)
-        out_hy.copy_(hy.data)
-        if out_cy is not None:
-            out_cy.resize_as_(cy.data)
-            out_cy.copy_(cy.data)
         fn.reserve = reserve.data
+
+        if cx is not None:
+            extra_outs = (hy.data, cy.data)
+        else:
+            extra_outs = hy.data
+
+        return output.data, extra_outs
 
 
 def backward_grad(fn, input, hx, weight, output, grad_output, grad_hy, grad_input, grad_hx):
