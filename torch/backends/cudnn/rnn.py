@@ -259,31 +259,26 @@ def forward(fn, input, hx, weight, out_output, out_hy):
             fn.weight_buf.zero_()
             params = get_parameters(fn, handle, fn.weight_buf)
             _copyParams(weight, params)
+            fn.weight_buf = None
         else:
             fn.w_desc = init_weight_descriptor(fn, fn.weight_buf)
-
-        workspace_size = ctypes.c_long()
-        check_error(lib.cudnnGetRNNWorkspaceSize(
-            handle,
-            fn.rnn_desc,
-            fn.seq_length,
-            fn.x_descs,
-            ctypes.byref(workspace_size)
-        ))
-        fn.workspace_size = workspace_size.value
 
         # OK actual stuff
         #dropout_desc = init_dropout_descriptor(fn, handle)
         dropout_state = get_dropout_state(fn, handle)
         # Variable massaging
         weight_arr = [Variable(w) for ws in weight for w in ws]
-        output, hy, cy, reserve = torch._C._VariableFunctions._cudnn_rnn(
-            Variable(orig_input), weight_arr, len(weight), Variable(fn.weight_buf), Variable(hx), Variable(cx) if cx is not None else None, fn.mode, fn.hidden_size, fn.num_layers,
+        weight_stride0 = len(weight[0])
+        for ws in weight:
+            assert len(ws) == weight_stride0
+        output, hy, cy, reserve, new_weight_buf = torch._C._VariableFunctions._cudnn_rnn(
+            Variable(orig_input), weight_arr, weight_stride0, Variable(fn.weight_buf) if fn.weight_buf is not None else None, Variable(hx), Variable(cx) if cx is not None else None, fn.mode, fn.hidden_size, fn.num_layers,
             fn.batch_first, fn.dropout, fn.train, bool(fn.bidirectional),
             fn.batch_sizes if fn.batch_sizes else (),
             Variable(dropout_state) if dropout_state is not None else None)
 
         # WOAAAAAH DUUUUDE
+        fn.weight_buf = new_weight_buf.data
         if fn.batch_first and not is_input_packed:
             out_output.transpose_(0, 1)
         out_output.resize_as_(output.data)

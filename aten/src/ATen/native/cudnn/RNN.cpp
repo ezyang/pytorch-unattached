@@ -251,8 +251,7 @@ namespace {
           AT_ASSERT(nb_dims <= min_dim, "cudnnGetFilterNdDescriptor failed nb_dims (%d) <= min_dim (%d)", nb_dims, min_dim);
           auto elem_size = dataSize(fn.datatype);
           auto offset_bytes = (char*)matrix_pointer - (char*)weight_buf.data_ptr();
-          // TODO: make this assert more informative
-          AT_ASSERT(offset_bytes % elem_size, "offset_bytes `mod` elem_size");
+          AT_ASSERT(offset_bytes % elem_size == 0, "offset_bytes `mod` elem_size != 0 (%d %% %d)", offset_bytes, elem_size);
           size_t offset = offset_bytes / elem_size;
 
           // for all the RNN types provided by CUDNN, all the ih weights
@@ -266,6 +265,7 @@ namespace {
             // TODO: Check if this leaks memory
             Tensor param = fn.weight_buf.type().tensor().set_(*fn.weight_buf.storage(), offset, size);
             params.emplace_back(std::move(param));
+            layer_params_count++;
           } else {
             AT_ASSERT(cur_offset == offset, "cur_offset == offset");
           }
@@ -284,15 +284,14 @@ namespace {
   void _copyParams(MatrixRef<Tensor> params_from, MatrixRef<Tensor> params_to) {
     AT_ASSERT(params_from.size(0) == params_to.size(0), "number of layers mismatch");
     for (size_t i = 0; i < params_from.size(0); i++) {
-      auto layer_params_from = params_from[0];
-      auto layer_params_to = params_to[0];
+      auto layer_params_from = params_from[i];
+      auto layer_params_to = params_to[i];
       for (auto a = layer_params_from.begin(), b = layer_params_to.begin();
            a != layer_params_from.end() && b != layer_params_to.end();
            ++a, ++b) {
         auto param_from = *a, param_to = *b;
         AT_ASSERT(param_from.type() == param_to.type(), "parameter types mismatch");
-        // TODO: broadcast=False (NB: parameter two is async...)
-        param_to.copy_(param_from);
+        param_to.copy_(param_from.view_as(param_to));
       }
     }
   }
@@ -320,7 +319,7 @@ namespace {
 } // anonymous namespace
 
 // NB: when fn_batch_sizes is empty, that means no batch sizes was specified
-std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
+std::tuple<Tensor, Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
     const Tensor& input_r,
     TensorList weight, int64_t weight_stride0,
     const Tensor& fn_weight_buf, const Tensor& hx, const Tensor& cx,
@@ -433,7 +432,7 @@ std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
           x_descs_arr.data(), x.data_ptr(),
           descs.hx_desc.desc, hx.data_ptr(),
           cx.defined() ? descs.cx_desc.desc : nullptr, cx.defined() ? cx.data_ptr() : nullptr,
-          w_desc.desc, fn_weight_buf.data_ptr(),
+          w_desc.desc, fn.weight_buf.data_ptr(),
           y_descs_arr.data(), y.data_ptr(),
           descs.hy_desc.desc, hy.data_ptr(),
           cy.defined() ? descs.cy_desc.desc : nullptr, cy.defined() ? cy.data_ptr() : nullptr,
@@ -449,7 +448,7 @@ std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
           x_descs_arr.data(), x.data_ptr(),
           descs.hx_desc.desc, hx.data_ptr(),
           cx.defined() ? descs.cx_desc.desc : nullptr, cx.defined() ? cx.data_ptr() : nullptr,
-          w_desc.desc, fn_weight_buf.data_ptr(),
+          w_desc.desc, fn.weight_buf.data_ptr(),
           y_descs_arr.data(), y.data_ptr(),
           descs.hy_desc.desc, hy.data_ptr(),
           cy.defined() ? descs.cy_desc.desc : nullptr, cy.defined() ? cy.data_ptr() : nullptr,
@@ -462,7 +461,7 @@ std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
     output.transpose_(0, 1);
   }
 
-  return std::make_tuple(output, hy, cy, reserve);
+  return std::make_tuple(output, hy, cy, reserve, fn.weight_buf);
 }
 
 std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn_backward_grad(
