@@ -74,6 +74,10 @@ namespace at {
       }
     }
 
+    size_t numel() const {
+      return arr.size();
+    }
+
     /// front - Get the first element.
     const T &front() const {
       return arr.front();

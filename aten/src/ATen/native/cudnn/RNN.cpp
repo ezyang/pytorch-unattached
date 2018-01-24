@@ -609,15 +609,18 @@ std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn_backward_grad(
 
 // NB: This MUST BE CALLED AFTER _cudnn_rnn_backward_grad.
 // We'll give a user friendly combined function...
-Tensor _cudnn_rnn_backward_weight(
-    // TODO: I think tensor geometry sufficient for weight_buf
-    const Tensor& input_r, const Tensor& fn_weight_buf, const Tensor& hx, const Tensor& cx,
+std::tuple<std::vector<Tensor>, Tensor> _cudnn_rnn_backward_weight(
+    // TODO: I think tensor geometry sufficient for weight_buf/weight
+    const Tensor& input_r, TensorList weight_arr, int64_t weight_stride0,
+    const Tensor& fn_weight_buf, const Tensor& hx, const Tensor& cx,
     const Tensor& output_r,
     int64_t fn_mode, int64_t fn_hidden_size,
     int64_t fn_num_layers, bool fn_batch_first, double fn_dropout,
     bool fn_train, bool fn_bidirectional, IntList fn_batch_sizes,
     const Tensor& fn_dropout_state, const Tensor& fn_reserve
     ) {
+
+  MatrixRef<Tensor> weight{ weight_arr, static_cast<size_t>(weight_stride0) };
 
   auto input = input_r;
   auto output = output_r;
@@ -704,13 +707,26 @@ Tensor _cudnn_rnn_backward_weight(
         w_desc.desc, dw.data_ptr(),
         fn_reserve.data_ptr(), fn_reserve.size(0)
         ));
-  return dw;
+
+  std::vector<Tensor> grad_weight_arr;
+  grad_weight_arr.reserve( weight.numel() );
+  for (const auto& w : weight_arr) {
+    grad_weight_arr.emplace_back(w.type().tensor(w.sizes()).zero_());
+  }
+
+  std::vector<Tensor> grad_params_arr;
+  size_t grad_params_stride0;
+  std::tie(grad_params_arr, grad_params_stride0) = get_parameters(fn, descs, w_desc, handle, dw);
+  _copyParams(MatrixRef<Tensor>{grad_params_arr, grad_params_stride0},
+              MatrixRef<Tensor>{grad_weight_arr, static_cast<size_t>(weight_stride0)});
+
+  return std::tuple<std::vector<Tensor>, Tensor>{ grad_weight_arr, dw }; // stride is known from call site (and also inconvenient to return)
 }
 
 // We need this dispatcher because _cudnn_rnn_backward_weight has a stringent
 // ordering requirement with _cudnn_rnn_backward_grad
-std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn_backward(
-    const Tensor& input, const Tensor& weight, const Tensor& hx, const Tensor& cx,
+std::tuple<Tensor, Tensor, Tensor, std::vector<Tensor>> _cudnn_rnn_backward(
+    const Tensor& input, TensorList weight, int64_t weight_stride0, const Tensor& fn_weight_buf, const Tensor& hx, const Tensor& cx,
     const Tensor& output, const Tensor& grad_output, const Tensor& grad_hy,
     const Tensor& grad_cy,
     int64_t mode, int64_t hidden_size,
@@ -719,13 +735,14 @@ std::tuple<Tensor, Tensor, Tensor, Tensor> _cudnn_rnn_backward(
     const Tensor& dropout_state, const Tensor& reserve,
     std::array<bool, 4> output_mask
     ) {
-  Tensor dx, dhx, dcx, dw;
+  Tensor dx, dhx, dcx;
   // NB: unconditionally compute this gradient, because it mutates reserve
-  std::tie(dx, dhx, dcx) = at::native::_cudnn_rnn_backward_grad(input, weight, hx, cx, output, grad_output, grad_hy, grad_cy, mode, hidden_size, num_layers, batch_first, dropout, train, bidirectional, batch_sizes, dropout_state, reserve);
+  std::tie(dx, dhx, dcx) = at::native::_cudnn_rnn_backward_grad(input, fn_weight_buf, hx, cx, output, grad_output, grad_hy, grad_cy, mode, hidden_size, num_layers, batch_first, dropout, train, bidirectional, batch_sizes, dropout_state, reserve);
+  std::vector<Tensor> dw;
   if (output_mask[3]) {
-    dw = at::native::_cudnn_rnn_backward_weight(input, weight, hx, cx, output, mode, hidden_size, num_layers, batch_first, dropout, train, bidirectional, batch_sizes, dropout_state, reserve);
+    std::tie(dw, std::ignore) = at::native::_cudnn_rnn_backward_weight(input, weight, weight_stride0, fn_weight_buf, hx, cx, output, mode, hidden_size, num_layers, batch_first, dropout, train, bidirectional, batch_sizes, dropout_state, reserve);
   }
-  return std::tuple<Tensor, Tensor, Tensor, Tensor>{dx, dhx, dcx, dw};
+  return std::tuple<Tensor, Tensor, Tensor, TensorList>{dx, dhx, dcx, dw};
 }
 
 }} // namespace at::native

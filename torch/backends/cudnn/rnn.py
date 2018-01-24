@@ -247,22 +247,6 @@ def forward(fn, input, hx, weight, out_output, out_hy):
         else:
             fn.x_descs = cudnn.descriptor(x[0], fn.seq_length)
 
-        # create the weight buffer and copy the weights into it
-        if fn.weight_buf is None:
-            num_weights = get_num_weights(
-                handle, fn.rnn_desc, fn.x_descs[0], fn.datatype)
-            fn.weight_buf = x.new(num_weights)
-            fn.w_desc = init_weight_descriptor(fn, fn.weight_buf)
-            # this zero might not seem necessary, but it is in the case
-            # where biases are disabled; then they won't be copied and must be zero'd.
-            # Alternatively, _copyParams could be written more carefully.
-            fn.weight_buf.zero_()
-            params = get_parameters(fn, handle, fn.weight_buf)
-            _copyParams(weight, params)
-            fn.weight_buf = None
-        else:
-            fn.w_desc = init_weight_descriptor(fn, fn.weight_buf)
-
         # OK actual stuff
         #dropout_desc = init_dropout_descriptor(fn, handle)
         dropout_state = get_dropout_state(fn, handle)
@@ -279,6 +263,8 @@ def forward(fn, input, hx, weight, out_output, out_hy):
 
         # WOAAAAAH DUUUUDE
         fn.weight_buf = new_weight_buf.data
+        # Help out backwards
+        fn.w_desc = init_weight_descriptor(fn, fn.weight_buf)
         if fn.batch_first and not is_input_packed:
             out_output.transpose_(0, 1)
         out_output.resize_as_(output.data)
@@ -341,17 +327,23 @@ def backward_weight(fn, input, hx, output, weight, grad_weight):
             cx = None
 
         handle = cudnn.get_handle()
+        weight_arr = [Variable(w) for ws in weight for w in ws]
+        weight_stride0 = len(weight[0])
         dropout_desc = init_dropout_descriptor(fn, handle)
-        dw = torch._C._VariableFunctions._cudnn_rnn_backward_weight(
-            Variable(input), Variable(fn.weight_buf), Variable(hx), Variable(cx) if cx is not None else None,
+        r = torch._C._VariableFunctions._cudnn_rnn_backward_weight(
+            Variable(input), weight_arr, weight_stride0, Variable(fn.weight_buf), Variable(hx), Variable(cx) if cx is not None else None,
             Variable(output),
             fn.mode, fn.hidden_size, fn.num_layers,
             fn.batch_first, fn.dropout, fn.train, bool(fn.bidirectional),
             fn.batch_sizes if fn.batch_sizes else (),
             Variable(dropout_desc.state) if dropout_desc.state is not None else None,
             Variable(fn.reserve))
+        # lool
+        dw = r[:-1]
+        flat_dw = r[-1]
 
-        # copy the weights from the weight_buf into grad_weight
-        grad_params = get_parameters(fn, handle, dw)
+        grad_params = get_parameters(fn, handle, flat_dw)
         _copyParams(grad_params, grad_weight)
         return grad_weight
+
+        return [list(map(lambda x: x.data, dw[i:i + weight_stride0])) for i in range(0, len(dw), weight_stride0)]

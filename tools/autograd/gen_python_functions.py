@@ -99,6 +99,7 @@ SUPPORTED_RETURN_TYPES = {
     'std::tuple<Tensor,Tensor,Tensor>',
     'std::tuple<Tensor,Tensor,Tensor,Tensor>',
     'std::tuple<Tensor,Tensor,Tensor,Tensor,Tensor>',
+    'std::tuple<std::vector<Tensor>,Tensor>',
     'std::vector<Tensor>',
     'Scalar', 'bool', 'int64_t', 'void*'
 }
