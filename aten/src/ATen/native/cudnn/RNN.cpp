@@ -18,8 +18,11 @@ namespace {
     double dropout;
     Tensor dropout_state;
     DropoutDescriptorParams() {}
-    DropoutDescriptorParams(bool train, double dropout, Tensor dropout_state)
-      : train(train), dropout(dropout), dropout_state(dropout_state) {}
+    void set(bool train_, double dropout_, Tensor dropout_state_) {
+      train = train_;
+      dropout = dropout_;
+      dropout_state = dropout_state_;
+    }
     DropoutDescriptor descriptor(cudnnHandle_t handle) const {
       // NB: dropout_seed passed dummy 0, because it isn't actually used
       // when dropout_state is defined.
@@ -373,17 +376,12 @@ std::tuple<Tensor, Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
   auto weight_buf = weight_buf_r;
 
   RNNParams fn;
-
-  fn.dropout.train = fn_train;
-  fn.dropout.dropout = fn_dropout;
-  fn.dropout.dropout_state = fn_dropout_state;
-
   fn.rnn.set_mode(fn_mode);
   fn.rnn.hidden_size = fn_hidden_size;
   fn.rnn.num_layers = fn_num_layers;
   fn.rnn.set_bidirectional(fn_bidirectional);
   fn.rnn.datatype = getCudnnDataType(input);
-
+  fn.dropout.set(fn_train, fn_dropout, fn_dropout_state);
   fn.tensors.set(input.sizes(), fn_batch_sizes, batch_first);
 
   // TODO: Set device to input
@@ -520,17 +518,12 @@ std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn_backward_grad(
   auto output = output_r;
 
   RNNParams fn;
-
-  fn.dropout.train = fn_train;
-  fn.dropout.dropout = fn_dropout;
-  fn.dropout.dropout_state = fn_dropout_state;
-
   fn.rnn.set_mode(fn_mode);
   fn.rnn.hidden_size = fn_hidden_size;
   fn.rnn.num_layers = fn_num_layers;
   fn.rnn.set_bidirectional(fn_bidirectional);
   fn.rnn.datatype = getCudnnDataType(input);
-
+  fn.dropout.set(fn_train, fn_dropout, fn_dropout_state);
   fn.tensors.set(input.sizes(), fn_batch_sizes, batch_first);
 
   // TODO: Set device to input
@@ -665,17 +658,12 @@ std::vector<Tensor> _cudnn_rnn_backward_weight(
   auto output = output_r;
 
   RNNParams fn;
-
-  fn.dropout.train = fn_train;
-  fn.dropout.dropout = fn_dropout;
-  fn.dropout.dropout_state = fn_dropout_state;
-
   fn.rnn.set_mode(fn_mode);
   fn.rnn.hidden_size = fn_hidden_size;
   fn.rnn.num_layers = fn_num_layers;
   fn.rnn.set_bidirectional(fn_bidirectional);
   fn.rnn.datatype = getCudnnDataType(input);
-
+  fn.dropout.set(fn_train, fn_dropout, fn_dropout_state);
   fn.tensors.set(input.sizes(), fn_batch_sizes, batch_first);
 
   auto handle = getCudnnHandle();
