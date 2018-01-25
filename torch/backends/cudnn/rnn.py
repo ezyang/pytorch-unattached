@@ -36,15 +36,15 @@ class Unserializable(object):
 
 
 # Needs in fn: dropout, train, dropout_state, dropout_seed
-def init_dropout_descriptor(fn, handle):
+def init_dropout_descriptor(handle, dropout, train, dropout_seed, dropout_state):
     dropout_desc_name = 'desc_' + str(torch.cuda.current_device())
-    dropout_p = fn.dropout if fn.train else 0
-    if (dropout_desc_name not in fn.dropout_state) or (fn.dropout_state[dropout_desc_name].get() is None):
-        fn.dropout_state[dropout_desc_name] = Unserializable(
-            cudnn.DropoutDescriptor(handle, dropout_p, fn.dropout_seed)
+    dropout_p = dropout if train else 0
+    if (dropout_desc_name not in dropout_state) or (dropout_state[dropout_desc_name].get() is None):
+        dropout_state[dropout_desc_name] = Unserializable(
+            cudnn.DropoutDescriptor(handle, dropout_p, dropout_seed)
         )
-    dropout_desc = fn.dropout_state[dropout_desc_name].get()
-    dropout_desc.set_dropout(dropout_p, fn.dropout_seed)
+    dropout_desc = dropout_state[dropout_desc_name].get()
+    dropout_desc.set_dropout(dropout_p, dropout_seed)
     return dropout_desc
 
 
@@ -198,7 +198,7 @@ def forward(fn, input, hx, weight):
             cx = None
 
         handle = cudnn.get_handle()
-        dropout_desc = init_dropout_descriptor(fn, handle)
+        dropout_desc = init_dropout_descriptor(handle, fn.dropout, fn.train, fn.dropout_seed, fn.dropout_state)
 
         # TODO: in an ideal world, we could pass list of list direct
         weight_arr = [Variable(w) for ws in weight for w in ws]
@@ -237,7 +237,7 @@ def backward_grad(fn, input, hx, weight, output, grad_output, grad_hy):
             cx, grad_cy = None, None
 
         handle = cudnn.get_handle()
-        dropout_desc = init_dropout_descriptor(fn, handle)
+        dropout_desc = init_dropout_descriptor(handle, fn.dropout, fn.train, fn.dropout_seed, fn.dropout_state)
         dx, dhx, dcx = torch._C._VariableFunctions._cudnn_rnn_backward_grad(
             Variable(input), Variable(fn.weight_buf), Variable(hx), Variable(cx) if cx is not None else None,
             Variable(output), Variable(grad_output), Variable(grad_hy), Variable(grad_cy) if grad_cy is not None else None,
@@ -276,7 +276,7 @@ def backward_weight(fn, input, hx, output, weight):
         handle = cudnn.get_handle()
         weight_arr = [Variable(w) for ws in weight for w in ws]
         weight_stride0 = len(weight[0])
-        dropout_desc = init_dropout_descriptor(fn, handle)
+        dropout_desc = init_dropout_descriptor(handle, fn.dropout, fn.train, fn.dropout_seed, fn.dropout_state)
         dw = torch._C._VariableFunctions._cudnn_rnn_backward_weight(
             Variable(input), weight_arr, weight_stride0, Variable(fn.weight_buf), Variable(hx), Variable(cx) if cx is not None else None,
             Variable(output),

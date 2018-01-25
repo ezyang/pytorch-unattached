@@ -361,8 +361,11 @@ namespace {
 } // anonymous namespace
 
 // NB: does inplace update into TensorList
-Tensor _cudnn_rnn_flatten_weight_(
-    TensorList weight, int64_t weight_stride0,
+// It would be a relatively simple matter to refactor this into multiple
+// functions, only one of which does an inplace update, but we leave this
+// for future work
+Tensor _cudnn_rnn_flatten_weight(
+    TensorList weight_arr, int64_t weight_stride0,
     int64_t input_size,
     int64_t fn_mode, int64_t fn_hidden_size,
     int64_t fn_num_layers, bool batch_first, double fn_dropout,
@@ -370,7 +373,11 @@ Tensor _cudnn_rnn_flatten_weight_(
     const Tensor& fn_dropout_state
     ) {
 
-  auto any_param = weight[0];
+  if (weight_arr.size() == 0) {
+    throw std::runtime_error("_cudnn_rnn_flatten_weight_: cannot flatten empty weight list");
+  }
+
+  auto any_param = weight_arr[0];
 
   RNNDescriptorParams rnn;
   rnn.set_mode(fn_mode);
@@ -386,7 +393,7 @@ Tensor _cudnn_rnn_flatten_weight_(
   RNNDescriptor rnn_desc = rnn.descriptor(handle, dropout.descriptor(handle));
 
   // TODO: allocation here is goofy
-  TensorDescriptor x_desc(any_param.type().tensor(1, input_size));
+  TensorDescriptor x_desc(any_param.type().tensor({1, input_size}), 5);
 
   auto num_weights = get_num_weights(handle, rnn_desc, x_desc, rnn.datatype);
   auto weight_buf = any_param.type().tensor(num_weights);
@@ -395,15 +402,25 @@ Tensor _cudnn_rnn_flatten_weight_(
   w_desc.set(weight_buf, 3);
 
   // Slice off views into weight_buf
-  std::vector<Tensor> params;
+  std::vector<Tensor> params_arr;
   size_t params_stride0;
-  std::tie(params, params_stride0) = get_parameters(handle, rnn, rnn_desc, x_desc, w_desc, weight_buf);
+  std::tie(params_arr, params_stride0) = get_parameters(handle, rnn, rnn_desc, x_desc, w_desc, weight_buf);
+
+  MatrixRef<Tensor> weight{weight_arr, static_cast<size_t>(weight_stride0)},
+                    params{params_arr, params_stride0};
 
   // Copy weights
-  _copyParams(MatrixRef<Tensor>{weight, static_cast<size_t>(weight_stride0)},
-              MatrixRef<Tensor>{params, params_stride0});
+  _copyParams(weight, params);
 
-  // TODO: Update the storage
+  // Update the storage
+  for (size_t i = 0; i < weight.size(0); i++) {
+    for (auto orig_param_it = weight[i].begin(), new_param_it = params[i].begin();
+         orig_param_it != weight[i].end() && new_param_it != params[i].end();
+         orig_param_it++, new_param_it++) {
+      auto orig_param = *orig_param_it, new_param = *new_param_it;
+      orig_param.set_(new_param.view_as(orig_param));
+    }
+  }
 
   return weight_buf;
 }
