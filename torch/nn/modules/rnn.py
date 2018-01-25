@@ -76,25 +76,22 @@ class RNNBase(Module):
             return
 
         with torch.cuda.device_of(any_param):
+            import torch.backends.cudnn.rnn as rnn
+
             weight_arr = [w for ws in self.all_weights for w in ws]
             weight_stride0 = len(self.all_weights[0])
 
-            import torch.backends.cudnn.rnn as rnn
-            import torch.backends.cudnn as cudnn
-            from torch.autograd import Variable
-
-            handle = cudnn.get_handle()
-            #dropout_desc = rnn.init_dropout_descriptor(handle, self.dropout, self.training, 0, self.dropout_state)
+            # NB: This is a temporary hack while we still don't have Tensor
+            # bindings for ATen functions
             with torch.no_grad():
+                # NB: this is an INPLACE function on weight_arr, that's why the
+                # no_grad() is necessary.
                 weight_buf = torch._C._VariableFunctions._cudnn_rnn_flatten_weight(
                     weight_arr, weight_stride0,
                     self.input_size, rnn.get_cudnn_mode(self.mode), self.hidden_size, self.num_layers,
-                    self.batch_first, 0, False, bool(self.bidirectional),
-                    # batch_sizes (does not seem to be necessary)
-                    (),
-                    None)
-            self._param_buf_size = weight_buf.size(0)
+                    self.batch_first, bool(self.bidirectional))
 
+            self._param_buf_size = weight_buf.size(0)
             self._data_ptrs = list(p.data.data_ptr() for p in self.parameters())
 
     def _apply(self, fn):

@@ -76,6 +76,12 @@ namespace {
       rnn_desc.set(handle, hidden_size, num_layers, std::move(dropout_desc), input_mode, bidirectional, mode, datatype);
       return rnn_desc;
     }
+
+    RNNDescriptor descriptor(cudnnHandle_t handle) const {
+      DropoutDescriptor dropout_desc;
+      dropout_desc.set(handle, 0, {}, 0);  // dummy dropout descriptor
+      return descriptor(handle, std::move(dropout_desc));
+    }
   };
 
   // TensorDescriptor list
@@ -368,9 +374,8 @@ Tensor _cudnn_rnn_flatten_weight(
     TensorList weight_arr, int64_t weight_stride0,
     int64_t input_size,
     int64_t fn_mode, int64_t fn_hidden_size,
-    int64_t fn_num_layers, bool batch_first, double fn_dropout,
-    bool fn_train, bool fn_bidirectional, IntList fn_batch_sizes,
-    const Tensor& fn_dropout_state
+    int64_t fn_num_layers, bool batch_first,
+    bool fn_bidirectional
     ) {
 
   if (weight_arr.size() == 0) {
@@ -386,11 +391,11 @@ Tensor _cudnn_rnn_flatten_weight(
   rnn.set_bidirectional(fn_bidirectional);
   rnn.datatype = getCudnnDataType(any_param);
 
-  DropoutDescriptorParams dropout;
-  dropout.set(fn_train, fn_dropout, fn_dropout_state);
-
   auto handle = getCudnnHandle();
-  RNNDescriptor rnn_desc = rnn.descriptor(handle, dropout.descriptor(handle));
+  // NB: So, I am pretty sure that get_parameters() does not rely in any way
+  // on the dropout descriptor.  So we fake up a dummy one instead of try
+  // to actually make one legitimately.
+  RNNDescriptor rnn_desc = rnn.descriptor(handle);
 
   // TODO: allocation here is goofy
   TensorDescriptor x_desc(any_param.type().tensor({1, input_size}), 5);
