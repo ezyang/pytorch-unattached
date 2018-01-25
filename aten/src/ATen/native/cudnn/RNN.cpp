@@ -107,7 +107,6 @@ namespace {
 
   // NB: Doesn't include the weight descriptor
   struct RNNDescriptors {
-    DropoutDescriptor dropout_desc;
     RNNDescriptor rnn_desc;
     // NB: this won't actually lay out the tensor descriptor pointers
     // in the right way, so you'll have to preprocess them
@@ -123,8 +122,9 @@ namespace {
       auto dropout_p = fn.train ? fn.dropout : 0;
       // NB: dropout_seed passed dummy 0, because it isn't actually used
       // when dropout_state is defined.
+      DropoutDescriptor dropout_desc;
       dropout_desc.set(handle, dropout_p, fn.dropout_state, 0);
-      rnn_desc.set(handle, fn.hidden_size, fn.num_layers, dropout_desc, fn.input_mode, fn.bidirectional, fn.mode, fn.datatype);
+      rnn_desc.set(handle, fn.hidden_size, fn.num_layers, std::move(dropout_desc), fn.input_mode, fn.bidirectional, fn.mode, fn.datatype);
 
       if (is_input_packed) {
         x_descs = rnn_descriptor_sequence(x, fn.batch_sizes);
@@ -148,7 +148,7 @@ namespace {
       std::vector<cudnnTensorDescriptor_t> r;
       r.reserve(descs.size());
       for (auto& desc : descs) {
-        r.emplace_back(desc.desc);
+        r.emplace_back(desc.desc());
       }
       return r;
     }
@@ -165,7 +165,7 @@ namespace {
   int64_t get_num_weights(cudnnHandle_t handle, const RNNDescriptor& rnn_desc,
                           const TensorDescriptor& x_desc, cudnnDataType_t datatype) {
     size_t weight_size;
-    CUDNN_CHECK(cudnnGetRNNParamsSize(handle, rnn_desc.desc, x_desc.desc, &weight_size, datatype));
+    CUDNN_CHECK(cudnnGetRNNParamsSize(handle, rnn_desc.desc(), x_desc.desc(), &weight_size, datatype));
     auto elem_size = dataSize(datatype);
     AT_ASSERT(weight_size % elem_size == 0, "cudnnGetRNNParamsSize returned nonsensical weight_size");
     return weight_size / elem_size;
@@ -222,13 +222,13 @@ namespace {
           void* matrix_pointer;
           CUDNN_CHECK(cudnn_method(
                 handle,
-                descs.rnn_desc.desc,
+                descs.rnn_desc.desc(),
                 layer,
-                descs.x_descs[0].desc,
-                w_desc.desc,
+                descs.x_descs[0].desc(),
+                w_desc.desc(),
                 weight_buf.data_ptr(),
                 linear_id,
-                lin_layer_mat_desc.desc,
+                lin_layer_mat_desc.desc(),
                 &matrix_pointer
                 ));
           cudnnDataType_t data_type;
@@ -240,7 +240,7 @@ namespace {
           // kind of convenient to be able to prod() on it.
           Tensor filter_dim_a = at::CPU(kInt).tensor(min_dim);
           CUDNN_CHECK(cudnnGetFilterNdDescriptor(
-                lin_layer_mat_desc.desc,
+                lin_layer_mat_desc.desc(),
                 min_dim,
                 &data_type,
                 &format,
@@ -405,7 +405,7 @@ std::tuple<Tensor, Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
   auto y_descs_arr = descs.get_y_descs();
   CUDNN_CHECK(cudnnGetRNNWorkspaceSize(
         handle,
-        descs.rnn_desc.desc,
+        descs.rnn_desc.desc(),
         fn.seq_length,
         x_descs_arr.data(),
         &workspace_size
@@ -419,7 +419,7 @@ std::tuple<Tensor, Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
     size_t reserve_size;
     CUDNN_CHECK(cudnnGetRNNTrainingReserveSize(
           handle,
-          descs.rnn_desc.desc,
+          descs.rnn_desc.desc(),
           fn.seq_length,
           x_descs_arr.data(),
           &reserve_size
@@ -427,15 +427,15 @@ std::tuple<Tensor, Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
     reserve = input.type().toScalarType(kByte).tensor(reserve_size);
     CUDNN_CHECK(cudnnRNNForwardTraining(
           handle,
-          descs.rnn_desc.desc,
+          descs.rnn_desc.desc(),
           fn.seq_length,
           x_descs_arr.data(), x.data_ptr(),
-          descs.hx_desc.desc, hx.data_ptr(),
-          cx.defined() ? descs.cx_desc.desc : nullptr, cx.defined() ? cx.data_ptr() : nullptr,
-          w_desc.desc, fn.weight_buf.data_ptr(),
+          descs.hx_desc.desc(), hx.data_ptr(),
+          cx.defined() ? descs.cx_desc.desc() : nullptr, cx.defined() ? cx.data_ptr() : nullptr,
+          w_desc.desc(), fn.weight_buf.data_ptr(),
           y_descs_arr.data(), y.data_ptr(),
-          descs.hy_desc.desc, hy.data_ptr(),
-          cy.defined() ? descs.cy_desc.desc : nullptr, cy.defined() ? cy.data_ptr() : nullptr,
+          descs.hy_desc.desc(), hy.data_ptr(),
+          cy.defined() ? descs.cy_desc.desc() : nullptr, cy.defined() ? cy.data_ptr() : nullptr,
           workspace.data_ptr(), workspace.size(0),
           reserve.data_ptr(), reserve.size(0)
           ));
@@ -443,15 +443,15 @@ std::tuple<Tensor, Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
     reserve = input.type().toScalarType(kByte).tensor();
     CUDNN_CHECK(cudnnRNNForwardInference(
           handle,
-          descs.rnn_desc.desc,
+          descs.rnn_desc.desc(),
           fn.seq_length,
           x_descs_arr.data(), x.data_ptr(),
-          descs.hx_desc.desc, hx.data_ptr(),
-          cx.defined() ? descs.cx_desc.desc : nullptr, cx.defined() ? cx.data_ptr() : nullptr,
-          w_desc.desc, fn.weight_buf.data_ptr(),
+          descs.hx_desc.desc(), hx.data_ptr(),
+          cx.defined() ? descs.cx_desc.desc() : nullptr, cx.defined() ? cx.data_ptr() : nullptr,
+          w_desc.desc(), fn.weight_buf.data_ptr(),
           y_descs_arr.data(), y.data_ptr(),
-          descs.hy_desc.desc, hy.data_ptr(),
-          cy.defined() ? descs.cy_desc.desc : nullptr, cy.defined() ? cy.data_ptr() : nullptr,
+          descs.hy_desc.desc(), hy.data_ptr(),
+          cy.defined() ? descs.cy_desc.desc() : nullptr, cy.defined() ? cy.data_ptr() : nullptr,
           workspace.data_ptr(), workspace.size(0)
           ));
 
@@ -574,7 +574,7 @@ std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn_backward_grad(
   auto y_descs_arr = descs.get_y_descs();
   CUDNN_CHECK(cudnnGetRNNWorkspaceSize(
         handle,
-        descs.rnn_desc.desc,
+        descs.rnn_desc.desc(),
         fn.seq_length,
         x_descs_arr.data(),
         &workspace_size
@@ -584,18 +584,18 @@ std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn_backward_grad(
 
   CUDNN_CHECK(cudnnRNNBackwardData(
         handle,
-        descs.rnn_desc.desc,
+        descs.rnn_desc.desc(),
         fn.seq_length,
         y_descs_arr.data(), y.data_ptr(),
         y_descs_arr.data(), dy.data_ptr(),
-        descs.hy_desc.desc, dhy.data_ptr(),
-        cx.defined() ? descs.cy_desc.desc : nullptr, cx.defined() ? dcy.data_ptr() : nullptr,
-        w_desc.desc, w.data_ptr(),
-        descs.hx_desc.desc, hx.data_ptr(),
-        cx.defined() ? descs.cx_desc.desc : nullptr, cx.defined() ? cx.data_ptr() : nullptr,
+        descs.hy_desc.desc(), dhy.data_ptr(),
+        cx.defined() ? descs.cy_desc.desc() : nullptr, cx.defined() ? dcy.data_ptr() : nullptr,
+        w_desc.desc(), w.data_ptr(),
+        descs.hx_desc.desc(), hx.data_ptr(),
+        cx.defined() ? descs.cx_desc.desc() : nullptr, cx.defined() ? cx.data_ptr() : nullptr,
         x_descs_arr.data(), dx.data_ptr(),
-        descs.hx_desc.desc, dhx.data_ptr(),
-        cx.defined() ? descs.cx_desc.desc : nullptr, cx.defined() ? dcx.data_ptr() : nullptr,
+        descs.hx_desc.desc(), dhx.data_ptr(),
+        cx.defined() ? descs.cx_desc.desc() : nullptr, cx.defined() ? dcx.data_ptr() : nullptr,
         workspace.data_ptr(), workspace.size(0),
         fn_reserve.data_ptr(), fn_reserve.size(0)
         ));
@@ -689,7 +689,7 @@ std::vector<Tensor> _cudnn_rnn_backward_weight(
   auto y_descs_arr = descs.get_y_descs();
   CUDNN_CHECK(cudnnGetRNNWorkspaceSize(
         handle,
-        descs.rnn_desc.desc,
+        descs.rnn_desc.desc(),
         fn.seq_length,
         x_descs_arr.data(),
         &workspace_size
@@ -698,13 +698,13 @@ std::vector<Tensor> _cudnn_rnn_backward_weight(
 
   CUDNN_CHECK(cudnnRNNBackwardWeights(
         handle,
-        descs.rnn_desc.desc,
+        descs.rnn_desc.desc(),
         fn.seq_length,
         x_descs_arr.data(), x.data_ptr(),
-        descs.hx_desc.desc, hx.data_ptr(),
+        descs.hx_desc.desc(), hx.data_ptr(),
         y_descs_arr.data(), y.data_ptr(),
         workspace.data_ptr(), workspace.size(0),
-        w_desc.desc, dw.data_ptr(),
+        w_desc.desc(), dw.data_ptr(),
         fn_reserve.data_ptr(), fn_reserve.size(0)
         ));
 

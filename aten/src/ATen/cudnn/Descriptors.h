@@ -90,7 +90,7 @@ class TensorDescriptor
 public:
   explicit TensorDescriptor() : Descriptor() {};
   explicit TensorDescriptor(const at::Tensor &t, int64_t pad = 0)
-    : TensorDescriptor()
+    : Descriptor()
   {
     set(t, pad);
   }
@@ -184,16 +184,14 @@ inline cudnnStatus_t cudnnRestoreDropoutDescriptor(
 #endif // CUDNN_VERSION
 
 struct DropoutDescriptor
+  : public Descriptor<cudnnDropoutStruct,
+                      &cudnnCreateDropoutDescriptor,
+                      &cudnnDestroyDropoutDescriptor>
 {
-  cudnnDropoutDescriptor_t desc;
+  DropoutDescriptor() : Descriptor() {}
+
   at::Tensor state;
-  DropoutDescriptor() : desc(nullptr) {
-    CUDNN_CHECK(cudnnCreateDropoutDescriptor(&desc));
-  }
-  DropoutDescriptor(const DropoutDescriptor&) = delete;
-  ~DropoutDescriptor() {
-    cudnnDestroyDropoutDescriptor(desc);
-  }
+
   // This is expensive, avoid calling me!
   void expensiveSet(cudnnHandle_t handle, float dropout, long long int seed) {
     void *state_ptr = nullptr;
@@ -205,8 +203,9 @@ struct DropoutDescriptor
       state_ptr = state.data_ptr();
       state_size = state.size(0);
     }
-    CUDNN_CHECK(cudnnSetDropoutDescriptor(desc, handle, dropout, state_ptr, state_size, seed));
+    CUDNN_CHECK(cudnnSetDropoutDescriptor(desc(), handle, dropout, state_ptr, state_size, seed));
   }
+
   // I'm cheap! Call me!
   void set(cudnnHandle_t handle, float dropout, at::Tensor state_, long long int seed) {
     void *state_ptr = nullptr;
@@ -216,66 +215,27 @@ struct DropoutDescriptor
       state_ptr = state.data_ptr();
       state_size = state.size(0);
     }
-    CUDNN_CHECK(cudnnRestoreDropoutDescriptor(desc, handle, dropout, state_ptr, state_size, seed));
+    CUDNN_CHECK(cudnnRestoreDropoutDescriptor(desc(), handle, dropout, state_ptr, state_size, seed));
   }
 };
-
-/*
-struct DropoutDescriptor
-{
-  cudnnDropoutDescriptor_t desc;
-  cudnnHandle_t handle;
-  at::Tensor state;
-  float dropout;
-  DropoutDescriptor() : desc(nullptr) {
-    CUDNN_CHECK(cudnnCreateDropoutDescriptor(&desc));
-  }
-  DropoutDescriptor(const DropoutDescriptor&) = delete;
-  ~DropoutDescriptor() {
-    cudnnDestroyDropoutDescriptor(desc);
-  }
-  void set(cudnnHandle_t handle, at::Tensor state_) {
-  }
-  void set(cudnnHandle_t handle, float dropout_, unsigned long long seed) {
-    void *state_ptr;
-    size_t state_size;
-    if (!state.defined() && dropout_ > 0) {
-      size_t dropout_state_size;
-      CUDNN_CHECK(cudnnDropoutGetStatesSize(handle, &dropout_state_size));
-      state = at::CUDA(kByte).tensor({static_cast<int64_t>(dropout_state_size)});
-      state_ptr = state.data_ptr();
-      state_size = state.size(0);
-    } else {
-      state_ptr = nullptr;
-      state_size = 0;
-    }
-    CUDNN_CHECK(cudnnSetDropoutDescriptor(desc, handle, dropout_, state_ptr, state_size, seed));
-    dropout = dropout_;
-  }
-};
-*/
 
 struct RNNDescriptor
+  : public Descriptor<cudnnRNNStruct,
+                      &cudnnCreateRNNDescriptor,
+                      &cudnnDestroyRNNDescriptor>
 {
-  cudnnRNNDescriptor_t desc;
-  DropoutDescriptor dropout_desc;
-  RNNDescriptor() : desc(nullptr) {
-    CUDNN_CHECK(cudnnCreateRNNDescriptor(&desc));
-  }
-  RNNDescriptor(const RNNDescriptor&) = delete;
-  ~RNNDescriptor() {
-    cudnnDestroyRNNDescriptor(desc);
-  }
-  // TODO: Borrows a reference to DropoutDescriptor
-  void set(cudnnHandle_t handle, int hidden_size, int num_layers, const DropoutDescriptor& dropout_desc,
+  DropoutDescriptor dropout_desc_;
+  RNNDescriptor() : Descriptor() {}
+  void set(cudnnHandle_t handle, int hidden_size, int num_layers, DropoutDescriptor&& dropout_desc,
            cudnnRNNInputMode_t input_mode, cudnnDirectionMode_t bidirectional,
            cudnnRNNMode_t mode, cudnnDataType_t datatype) {
+    dropout_desc_ = std::move(dropout_desc);
     CUDNN_CHECK(cudnnSetRNNDescriptor_v6(
           handle,
-          desc,
+          desc(),
           hidden_size,
           num_layers,
-          dropout_desc.desc,
+          dropout_desc_.desc(),
           input_mode,
           bidirectional,
           mode,
@@ -290,11 +250,11 @@ struct RNNDescriptor
     CUDA_CHECK(cudaGetDeviceProperties(&prop, device));
     if (prop.major >= 7) {
       if (datatype == CUDNN_DATA_HALF) {
-        cudnnSetRNNMatrixMathType(desc, CUDNN_TENSOR_OP_MATH);
+        cudnnSetRNNMatrixMathType(desc(), CUDNN_TENSOR_OP_MATH);
       } else {
         // Technically, as the default it's not necessary to explicitly
         // set this.
-        cudnnSetRNNMatrixMathType(desc, CUDNN_DEFAULT_MATH);
+        cudnnSetRNNMatrixMathType(desc(), CUDNN_DEFAULT_MATH);
       }
     }
 #endif
