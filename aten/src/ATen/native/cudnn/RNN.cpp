@@ -167,8 +167,7 @@ namespace {
     TensorDescriptor cy_desc;
 
     RNNDescriptors(const RNNParams& fn, cudnnHandle_t handle, Tensor x, Tensor y, Tensor hx, Tensor cx) {
-      DropoutDescriptor dropout_desc = fn.dropout.descriptor(handle);
-      rnn_desc = fn.rnn.descriptor(handle, std::move(dropout_desc));
+      rnn_desc = fn.rnn.descriptor(handle, fn.dropout.descriptor(handle));
       x_descs = fn.tensors.descriptors(x);
       y_descs = fn.tensors.descriptors(y);
       hx_desc.set(hx, 5);
@@ -360,6 +359,54 @@ namespace {
   }
 
 } // anonymous namespace
+
+// NB: does inplace update into TensorList
+Tensor _cudnn_rnn_flatten_weight_(
+    TensorList weight, int64_t weight_stride0,
+    int64_t input_size,
+    int64_t fn_mode, int64_t fn_hidden_size,
+    int64_t fn_num_layers, bool batch_first, double fn_dropout,
+    bool fn_train, bool fn_bidirectional, IntList fn_batch_sizes,
+    const Tensor& fn_dropout_state
+    ) {
+
+  auto any_param = weight[0];
+
+  RNNDescriptorParams rnn;
+  rnn.set_mode(fn_mode);
+  rnn.hidden_size = fn_hidden_size;
+  rnn.num_layers = fn_num_layers;
+  rnn.set_bidirectional(fn_bidirectional);
+  rnn.datatype = getCudnnDataType(any_param);
+
+  DropoutDescriptorParams dropout;
+  dropout.set(fn_train, fn_dropout, fn_dropout_state);
+
+  auto handle = getCudnnHandle();
+  RNNDescriptor rnn_desc = rnn.descriptor(handle, dropout.descriptor(handle));
+
+  // TODO: allocation here is goofy
+  TensorDescriptor x_desc(any_param.type().tensor(1, input_size));
+
+  auto num_weights = get_num_weights(handle, rnn_desc, x_desc, rnn.datatype);
+  auto weight_buf = any_param.type().tensor(num_weights);
+
+  FilterDescriptor w_desc;
+  w_desc.set(weight_buf, 3);
+
+  // Slice off views into weight_buf
+  std::vector<Tensor> params;
+  size_t params_stride0;
+  std::tie(params, params_stride0) = get_parameters(handle, rnn, rnn_desc, x_desc, w_desc, weight_buf);
+
+  // Copy weights
+  _copyParams(MatrixRef<Tensor>{weight, static_cast<size_t>(weight_stride0)},
+              MatrixRef<Tensor>{params, params_stride0});
+
+  // TODO: Update the storage
+
+  return weight_buf;
+}
 
 // NB: when fn_batch_sizes is empty, that means no batch sizes was specified
 std::tuple<Tensor, Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
