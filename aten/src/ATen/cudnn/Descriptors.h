@@ -55,7 +55,9 @@ static inline void fixSizeOneDimStride(int dim, const int *size, int *stride) {
 template <typename T, cudnnStatus_t (*dtor)(T*)>
 struct DescriptorDeleter {
   void operator()(T* x) {
-    CUDNN_CHECK(dtor(x));
+    if (x != nullptr) {
+      CUDNN_CHECK(dtor(x));
+    }
   }
 };
 
@@ -63,21 +65,23 @@ struct DescriptorDeleter {
 // is to give the underlying type the Descriptor_t points to (usually,
 // if it's cudnnTensorDescriptor_t it points to cudnnTensorStruct),
 // the constructor and the destructor.  Subclasses are responsible
-// for forwarding constructors and defining a set() function to actually
-// set the descriptor.
+// for defining a set() function to actually set the descriptor.
 template <typename T, cudnnStatus_t (*ctor)(T**), cudnnStatus_t (*dtor)(T*)>
 class Descriptor
 {
 public:
-  explicit Descriptor() {
-    T* raw_desc;
-    CUDNN_CHECK(ctor(&raw_desc));
-    desc_.reset(raw_desc);
-  }
-
   // TODO: Figure out why const-correctness doesn't work here
   T* desc() const { return desc_.get(); }
   T* desc() { return desc_.get(); }
+  T* mut_desc() { init(); return desc_.get(); }
+protected:
+  void init() {
+    if (desc_ == nullptr) {
+      T* raw_desc;
+      CUDNN_CHECK(ctor(&raw_desc));
+      desc_.reset(raw_desc);
+    }
+  }
 private:
   std::unique_ptr<T, DescriptorDeleter<T, dtor>> desc_;
 };
@@ -88,10 +92,8 @@ class TensorDescriptor
                       &cudnnDestroyTensorDescriptor>
 {
 public:
-  explicit TensorDescriptor() : Descriptor() {};
-  explicit TensorDescriptor(const at::Tensor &t, int64_t pad = 0)
-    : Descriptor()
-  {
+  TensorDescriptor() {}
+  explicit TensorDescriptor(const at::Tensor &t, int64_t pad = 0) {
     set(t, pad);
   }
 
@@ -114,7 +116,7 @@ public:
 private:
   void set(cudnnDataType_t dataType, int dim, int* size, int* stride) {
     fixSizeOneDimStride(dim, size, stride);
-    CUDNN_CHECK(cudnnSetTensorNdDescriptor(desc(), dataType, dim, size, stride));
+    CUDNN_CHECK(cudnnSetTensorNdDescriptor(mut_desc(), dataType, dim, size, stride));
   }
 };
 
@@ -126,12 +128,11 @@ class FilterDescriptor
                       &cudnnDestroyFilterDescriptor>
 {
 public:
-  explicit FilterDescriptor() : Descriptor() {};
   void set(const at::Tensor &t, int64_t pad = 0);
 
 private:
   void set(cudnnDataType_t dataType, int dim, int* size) {
-    CUDNN_CHECK(cudnnSetFilterNdDescriptor(desc(), dataType, CUDNN_TENSOR_NCHW, dim, size));
+    CUDNN_CHECK(cudnnSetFilterNdDescriptor(mut_desc(), dataType, CUDNN_TENSOR_NCHW, dim, size));
   }
 };
 
@@ -143,13 +144,13 @@ struct ConvolutionDescriptor
   void set(cudnnDataType_t dataType, int dim, int* pad, int* stride, int * upscale /* aka dilation */, int groups) {
     cudnnDataType_t mathType = dataType;
     if (dataType == CUDNN_DATA_HALF) mathType = CUDNN_DATA_FLOAT;
-    CUDNN_CHECK(cudnnSetConvolutionNdDescriptor(desc(), dim, pad, stride, upscale,
+    CUDNN_CHECK(cudnnSetConvolutionNdDescriptor(mut_desc(), dim, pad, stride, upscale,
                                           CUDNN_CROSS_CORRELATION, mathType));
 #if CUDNN_VERSION >= 7000
-    CUDNN_CHECK(cudnnSetConvolutionGroupCount(desc(), groups));
-    CUDNN_CHECK(cudnnSetConvolutionMathType(desc(), CUDNN_DEFAULT_MATH));
+    CUDNN_CHECK(cudnnSetConvolutionGroupCount(mut_desc(), groups));
+    CUDNN_CHECK(cudnnSetConvolutionMathType(mut_desc(), CUDNN_DEFAULT_MATH));
     if(dataType == CUDNN_DATA_HALF)
-      CUDNN_CHECK(cudnnSetConvolutionMathType(desc(), CUDNN_TENSOR_OP_MATH));
+      CUDNN_CHECK(cudnnSetConvolutionMathType(mut_desc(), CUDNN_TENSOR_OP_MATH));
 #endif
   }
 };
@@ -159,10 +160,8 @@ struct SpatialTransformerDescriptor
                       &cudnnCreateSpatialTransformerDescriptor,
                       &cudnnDestroySpatialTransformerDescriptor>
 {
-  SpatialTransformerDescriptor() : Descriptor() {
-  }
   void set(cudnnDataType_t dataType, int dim, int* size) {
-    CUDNN_CHECK(cudnnSetSpatialTransformerNdDescriptor(desc(), CUDNN_SAMPLER_BILINEAR, dataType, dim, size));
+    CUDNN_CHECK(cudnnSetSpatialTransformerNdDescriptor(mut_desc(), CUDNN_SAMPLER_BILINEAR, dataType, dim, size));
   }
 };
 
@@ -188,8 +187,6 @@ struct DropoutDescriptor
                       &cudnnCreateDropoutDescriptor,
                       &cudnnDestroyDropoutDescriptor>
 {
-  DropoutDescriptor() : Descriptor() {}
-
   at::Tensor state;
 
   // This is expensive, avoid calling me!
@@ -203,7 +200,7 @@ struct DropoutDescriptor
       state_ptr = state.data_ptr();
       state_size = state.size(0);
     }
-    CUDNN_CHECK(cudnnSetDropoutDescriptor(desc(), handle, dropout, state_ptr, state_size, seed));
+    CUDNN_CHECK(cudnnSetDropoutDescriptor(mut_desc(), handle, dropout, state_ptr, state_size, seed));
   }
 
   // I'm cheap! Call me!
@@ -215,7 +212,7 @@ struct DropoutDescriptor
       state_ptr = state.data_ptr();
       state_size = state.size(0);
     }
-    CUDNN_CHECK(cudnnRestoreDropoutDescriptor(desc(), handle, dropout, state_ptr, state_size, seed));
+    CUDNN_CHECK(cudnnRestoreDropoutDescriptor(mut_desc(), handle, dropout, state_ptr, state_size, seed));
   }
 };
 
@@ -225,14 +222,13 @@ struct RNNDescriptor
                       &cudnnDestroyRNNDescriptor>
 {
   DropoutDescriptor dropout_desc_;
-  RNNDescriptor() : Descriptor() {}
   void set(cudnnHandle_t handle, int hidden_size, int num_layers, DropoutDescriptor&& dropout_desc,
            cudnnRNNInputMode_t input_mode, cudnnDirectionMode_t bidirectional,
            cudnnRNNMode_t mode, cudnnDataType_t datatype) {
     dropout_desc_ = std::move(dropout_desc);
     CUDNN_CHECK(cudnnSetRNNDescriptor_v6(
           handle,
-          desc(),
+          mut_desc(),
           hidden_size,
           num_layers,
           dropout_desc_.desc(),
@@ -250,11 +246,11 @@ struct RNNDescriptor
     CUDA_CHECK(cudaGetDeviceProperties(&prop, device));
     if (prop.major >= 7) {
       if (datatype == CUDNN_DATA_HALF) {
-        cudnnSetRNNMatrixMathType(desc(), CUDNN_TENSOR_OP_MATH);
+        cudnnSetRNNMatrixMathType(mut_desc(), CUDNN_TENSOR_OP_MATH);
       } else {
         // Technically, as the default it's not necessary to explicitly
         // set this.
-        cudnnSetRNNMatrixMathType(desc(), CUDNN_DEFAULT_MATH);
+        cudnnSetRNNMatrixMathType(mut_desc(), CUDNN_DEFAULT_MATH);
       }
     }
 #endif

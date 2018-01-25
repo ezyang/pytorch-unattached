@@ -228,7 +228,7 @@ namespace {
                 w_desc.desc(),
                 weight_buf.data_ptr(),
                 linear_id,
-                lin_layer_mat_desc.desc(),
+                lin_layer_mat_desc.mut_desc(),
                 &matrix_pointer
                 ));
           cudnnDataType_t data_type;
@@ -431,11 +431,11 @@ std::tuple<Tensor, Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
           fn.seq_length,
           x_descs_arr.data(), x.data_ptr(),
           descs.hx_desc.desc(), hx.data_ptr(),
-          cx.defined() ? descs.cx_desc.desc() : nullptr, cx.defined() ? cx.data_ptr() : nullptr,
+          descs.cx_desc.desc(), cx.defined() ? cx.data_ptr() : nullptr,
           w_desc.desc(), fn.weight_buf.data_ptr(),
           y_descs_arr.data(), y.data_ptr(),
           descs.hy_desc.desc(), hy.data_ptr(),
-          cy.defined() ? descs.cy_desc.desc() : nullptr, cy.defined() ? cy.data_ptr() : nullptr,
+          descs.cy_desc.desc(), cy.defined() ? cy.data_ptr() : nullptr,
           workspace.data_ptr(), workspace.size(0),
           reserve.data_ptr(), reserve.size(0)
           ));
@@ -447,11 +447,11 @@ std::tuple<Tensor, Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
           fn.seq_length,
           x_descs_arr.data(), x.data_ptr(),
           descs.hx_desc.desc(), hx.data_ptr(),
-          cx.defined() ? descs.cx_desc.desc() : nullptr, cx.defined() ? cx.data_ptr() : nullptr,
+          descs.cx_desc.desc(), cx.defined() ? cx.data_ptr() : nullptr,
           w_desc.desc(), fn.weight_buf.data_ptr(),
           y_descs_arr.data(), y.data_ptr(),
           descs.hy_desc.desc(), hy.data_ptr(),
-          cy.defined() ? descs.cy_desc.desc() : nullptr, cy.defined() ? cy.data_ptr() : nullptr,
+          descs.cy_desc.desc(), cy.defined() ? cy.data_ptr() : nullptr,
           workspace.data_ptr(), workspace.size(0)
           ));
 
@@ -589,13 +589,13 @@ std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn_backward_grad(
         y_descs_arr.data(), y.data_ptr(),
         y_descs_arr.data(), dy.data_ptr(),
         descs.hy_desc.desc(), dhy.data_ptr(),
-        cx.defined() ? descs.cy_desc.desc() : nullptr, cx.defined() ? dcy.data_ptr() : nullptr,
+        descs.cy_desc.desc(), cx.defined() ? dcy.data_ptr() : nullptr,
         w_desc.desc(), w.data_ptr(),
         descs.hx_desc.desc(), hx.data_ptr(),
-        cx.defined() ? descs.cx_desc.desc() : nullptr, cx.defined() ? cx.data_ptr() : nullptr,
+        descs.cx_desc.desc(), cx.defined() ? cx.data_ptr() : nullptr,
         x_descs_arr.data(), dx.data_ptr(),
         descs.hx_desc.desc(), dhx.data_ptr(),
-        cx.defined() ? descs.cx_desc.desc() : nullptr, cx.defined() ? dcx.data_ptr() : nullptr,
+        descs.cx_desc.desc(), cx.defined() ? dcx.data_ptr() : nullptr,
         workspace.data_ptr(), workspace.size(0),
         fn_reserve.data_ptr(), fn_reserve.size(0)
         ));
