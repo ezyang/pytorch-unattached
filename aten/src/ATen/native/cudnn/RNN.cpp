@@ -396,7 +396,7 @@ Tensor _cudnn_rnn_flatten_weight(
   TensorDescriptor x_desc(any_param.type().tensor({1, input_size}), 5);
 
   auto num_weights = get_num_weights(handle, rnn_desc, x_desc, rnn.datatype);
-  auto weight_buf = any_param.type().tensor(num_weights);
+  auto weight_buf = any_param.type().tensor(num_weights).zero_();
 
   FilterDescriptor w_desc;
   w_desc.set(weight_buf, 3);
