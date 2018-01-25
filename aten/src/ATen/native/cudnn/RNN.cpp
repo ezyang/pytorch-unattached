@@ -20,7 +20,9 @@ namespace {
     DropoutDescriptorParams() {}
     DropoutDescriptorParams(bool train, double dropout, Tensor dropout_state)
       : train(train), dropout(dropout), dropout_state(dropout_state) {}
-    DropoutDescriptor descriptor(cudnnHandle_t handle) {
+    DropoutDescriptor descriptor(cudnnHandle_t handle) const {
+      // NB: dropout_seed passed dummy 0, because it isn't actually used
+      // when dropout_state is defined.
       auto dropout_p = train ? dropout : 0;
       DropoutDescriptor dropout_desc;
       dropout_desc.set(handle, dropout_p, dropout_state, 0);
@@ -39,7 +41,7 @@ namespace {
 
     cudnnRNNInputMode_t input_mode = CUDNN_LINEAR_INPUT;
 
-    int64_t num_directions() {
+    int64_t num_directions() const {
       return bidirectional ? 2 : 1;
     }
 
@@ -66,7 +68,7 @@ namespace {
       bidirectional = fn_bidirectional ? CUDNN_BIDIRECTIONAL : CUDNN_UNIDIRECTIONAL;
     }
 
-    RNNDescriptor descriptor(cudnnHandle_t handle, DropoutDescriptor&& dropout_desc) {
+    RNNDescriptor descriptor(cudnnHandle_t handle, DropoutDescriptor&& dropout_desc) const {
       RNNDescriptor rnn_desc;
       rnn_desc.set(handle, hidden_size, num_layers, std::move(dropout_desc), input_mode, bidirectional, mode, datatype);
       return rnn_desc;
@@ -105,14 +107,14 @@ namespace {
     int64_t inner_size;  // previously known as "input_size"
     int64_t outer_size;  // only valid when !is_input_packed
 
-    bool is_input_packed() {
+    bool is_input_packed() const {
       return batch_sizes.size() != 0;
     }
 
     void set(IntList input_size, IntList batch_sizes_, bool batch_first) {
       batch_sizes = batch_sizes_;
       if (is_input_packed()) {
-        seq_length = batch_sizes.size()
+        seq_length = batch_sizes.size();
         mini_batch = batch_sizes[0];
         // NB: When input is packed, the mini_batch size is NOT the size
         // of the outer dimension
@@ -130,8 +132,8 @@ namespace {
       }
     }
 
-    // TODO: check these for consistency?
-    std::vector<TensorDescriptor> descriptors(Tensor x) {
+    // TODO: check x for consistency with input_size?
+    std::vector<TensorDescriptor> descriptors(Tensor x) const {
       auto is_input_packed = batch_sizes.size() != 0;
       if (is_input_packed) {
         return rnn_descriptor_sequence(x, batch_sizes);
@@ -162,10 +164,6 @@ namespace {
     TensorDescriptor cy_desc;
 
     RNNDescriptors(const RNNParams& fn, cudnnHandle_t handle, Tensor x, Tensor y, Tensor hx, Tensor cx) {
-      auto is_input_packed = fn.batch_sizes.size() != 0;
-      auto dropout_p = fn.train ? fn.dropout : 0;
-      // NB: dropout_seed passed dummy 0, because it isn't actually used
-      // when dropout_state is defined.
       DropoutDescriptor dropout_desc = fn.dropout.descriptor(handle);
       rnn_desc = fn.rnn.descriptor(handle, std::move(dropout_desc));
       x_descs = fn.tensors.descriptors(x);
@@ -352,9 +350,9 @@ namespace {
 
   std::vector<int64_t> _output_size(const RNNDescriptorParams& rnn, const TensorDescriptorListParams& tensors) {
     if (tensors.is_input_packed()) {
-      return {tensors.outer_size, rnn.hidden_size * rnn.num_directions};
+      return {tensors.outer_size, rnn.hidden_size * rnn.num_directions()};
     } else {
-      return {tensors.seq_length, tensors.mini_batch, rnn.hidden_size * rnn.num_directions};
+      return {tensors.seq_length, tensors.mini_batch, rnn.hidden_size * rnn.num_directions()};
     }
   }
 
@@ -364,7 +362,7 @@ namespace {
 std::tuple<Tensor, Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
     const Tensor& input_r,
     TensorList weight, int64_t weight_stride0,
-    const Tensor& fn_weight_buf, const Tensor& hx, const Tensor& cx,
+    const Tensor& weight_buf_r, const Tensor& hx, const Tensor& cx,
     int64_t fn_mode, int64_t fn_hidden_size,
     int64_t fn_num_layers, bool batch_first, double fn_dropout,
     bool fn_train, bool fn_bidirectional, IntList fn_batch_sizes,
@@ -372,6 +370,7 @@ std::tuple<Tensor, Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
     ) {
 
   auto input = input_r;
+  auto weight_buf = weight_buf_r;
 
   RNNParams fn;
 
@@ -422,18 +421,18 @@ std::tuple<Tensor, Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
   RNNDescriptors descs(fn, handle, x, y, hx, cx);
 
   FilterDescriptor w_desc;
-  if (!fn.weight_buf.defined()) {
-    auto num_weights = get_num_weights(handle, descs.rnn_desc, descs.x_descs[0], fn.datatype);
-    fn.weight_buf = x.type().tensor(num_weights);
-    w_desc.set(fn.weight_buf, 3);
-    fn.weight_buf.zero_();
+  if (!weight_buf.defined()) {
+    auto num_weights = get_num_weights(handle, descs.rnn_desc, descs.x_descs[0], fn.rnn.datatype);
+    weight_buf = x.type().tensor(num_weights);
+    w_desc.set(weight_buf, 3);
+    weight_buf.zero_();
     std::vector<Tensor> params;
     size_t params_stride0;
-    std::tie(params, params_stride0) = get_parameters(fn, descs, w_desc, handle, fn.weight_buf);
+    std::tie(params, params_stride0) = get_parameters(handle, fn.rnn, descs.rnn_desc, descs.x_descs[0], w_desc, weight_buf);
     _copyParams(MatrixRef<Tensor>{weight, static_cast<size_t>(weight_stride0)},
                 MatrixRef<Tensor>{params, params_stride0});
   } else {
-    w_desc.set(fn.weight_buf, 3);
+    w_desc.set(weight_buf, 3);
   }
 
   if (cx.defined() && !cx.sizes().equals(hidden_size)) {
@@ -448,7 +447,7 @@ std::tuple<Tensor, Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
   CUDNN_CHECK(cudnnGetRNNWorkspaceSize(
         handle,
         descs.rnn_desc.desc(),
-        fn.seq_length,
+        fn.tensors.seq_length,
         x_descs_arr.data(),
         &workspace_size
         ));
@@ -457,12 +456,12 @@ std::tuple<Tensor, Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
   Tensor reserve;
   // NB: Previously, the test was for fn.requires_grad, but we don't have
   // this information.  Use 'train' as a proxy.
-  if (fn.train) {
+  if (fn.dropout.train) {
     size_t reserve_size;
     CUDNN_CHECK(cudnnGetRNNTrainingReserveSize(
           handle,
           descs.rnn_desc.desc(),
-          fn.seq_length,
+          fn.tensors.seq_length,
           x_descs_arr.data(),
           &reserve_size
           ));
@@ -470,11 +469,11 @@ std::tuple<Tensor, Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
     CUDNN_CHECK(cudnnRNNForwardTraining(
           handle,
           descs.rnn_desc.desc(),
-          fn.seq_length,
+          fn.tensors.seq_length,
           x_descs_arr.data(), x.data_ptr(),
           descs.hx_desc.desc(), hx.data_ptr(),
           descs.cx_desc.desc(), cx.defined() ? cx.data_ptr() : nullptr,
-          w_desc.desc(), fn.weight_buf.data_ptr(),
+          w_desc.desc(), weight_buf.data_ptr(),
           y_descs_arr.data(), y.data_ptr(),
           descs.hy_desc.desc(), hy.data_ptr(),
           descs.cy_desc.desc(), cy.defined() ? cy.data_ptr() : nullptr,
@@ -486,11 +485,11 @@ std::tuple<Tensor, Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
     CUDNN_CHECK(cudnnRNNForwardInference(
           handle,
           descs.rnn_desc.desc(),
-          fn.seq_length,
+          fn.tensors.seq_length,
           x_descs_arr.data(), x.data_ptr(),
           descs.hx_desc.desc(), hx.data_ptr(),
           descs.cx_desc.desc(), cx.defined() ? cx.data_ptr() : nullptr,
-          w_desc.desc(), fn.weight_buf.data_ptr(),
+          w_desc.desc(), weight_buf.data_ptr(),
           y_descs_arr.data(), y.data_ptr(),
           descs.hy_desc.desc(), hy.data_ptr(),
           descs.cy_desc.desc(), cy.defined() ? cy.data_ptr() : nullptr,
@@ -503,11 +502,11 @@ std::tuple<Tensor, Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
     output.transpose_(0, 1);
   }
 
-  return std::make_tuple(output, hy, cy, reserve, fn.weight_buf);
+  return std::make_tuple(output, hy, cy, reserve, weight_buf);
 }
 
 std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn_backward_grad(
-    const Tensor& input_r, const Tensor& fn_weight_buf, const Tensor& hx, const Tensor& cx,
+    const Tensor& input_r, const Tensor& weight_buf, const Tensor& hx, const Tensor& cx,
     const Tensor& output_r, const Tensor& grad_output_r, const Tensor& grad_hy,
     const Tensor& grad_cy,
     int64_t fn_mode, int64_t fn_hidden_size,
@@ -537,7 +536,7 @@ std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn_backward_grad(
   // TODO: Set device to input
   auto handle = getCudnnHandle();
 
-  if (fn.mode != CUDNN_LSTM) {
+  if (fn.rnn.mode != CUDNN_LSTM) {
     if (cx.defined()) {
       throw std::runtime_error("rnn: illegal defined cx for non-LSTM RNN");
     }
@@ -560,14 +559,14 @@ std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn_backward_grad(
   auto x = input.contiguous();
   auto dy = grad_output.contiguous();
   auto y = output;
-  auto w = fn.weight_buf;
+  auto w = weight_buf;
   auto dx = input.type().tensor(input.sizes()); // TODO: more compact way of saying this
   auto dhy = grad_hy.contiguous().view(hidden_size);
   auto dcy = grad_cy.defined() ? grad_cy.contiguous().view(hidden_size) : Tensor();
   auto dhx = hx.type().tensor(hidden_size);
   auto dcx = cx.defined() ? cx.type().tensor(hidden_size) : hx.type().tensor(); // Boooh
 
-  if (!fn.train) {
+  if (!fn.dropout.train) {
     throw std::runtime_error("backward_grad can only be called in training mode");
   }
   if (!input.sizes().equals(input_size)) {
@@ -607,7 +606,7 @@ std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn_backward_grad(
   RNNDescriptors descs(fn, handle, x, y, hx, cx);
 
   FilterDescriptor w_desc;
-  w_desc.set(fn.weight_buf, 3);
+  w_desc.set(weight_buf, 3);
 
   size_t workspace_size;
   auto x_descs_arr = descs.get_x_descs();
@@ -615,7 +614,7 @@ std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn_backward_grad(
   CUDNN_CHECK(cudnnGetRNNWorkspaceSize(
         handle,
         descs.rnn_desc.desc(),
-        fn.seq_length,
+        fn.tensors.seq_length,
         x_descs_arr.data(),
         &workspace_size
         ));
@@ -625,7 +624,7 @@ std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn_backward_grad(
   CUDNN_CHECK(cudnnRNNBackwardData(
         handle,
         descs.rnn_desc.desc(),
-        fn.seq_length,
+        fn.tensors.seq_length,
         y_descs_arr.data(), y.data_ptr(),
         y_descs_arr.data(), dy.data_ptr(),
         descs.hy_desc.desc(), dhy.data_ptr(),
@@ -652,7 +651,7 @@ std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn_backward_grad(
 std::vector<Tensor> _cudnn_rnn_backward_weight(
     // TODO: I think tensor geometry sufficient for weight_buf/weight
     const Tensor& input_r, TensorList weight_arr, int64_t weight_stride0,
-    const Tensor& fn_weight_buf, const Tensor& hx, const Tensor& cx,
+    const Tensor& weight_buf, const Tensor& hx, const Tensor& cx,
     const Tensor& output_r,
     int64_t fn_mode, int64_t fn_hidden_size,
     int64_t fn_num_layers, bool batch_first, double fn_dropout,
@@ -681,7 +680,7 @@ std::vector<Tensor> _cudnn_rnn_backward_weight(
 
   auto handle = getCudnnHandle();
 
-  if (fn.mode != CUDNN_LSTM) {
+  if (fn.rnn.mode != CUDNN_LSTM) {
     if (cx.defined()) {
       throw std::runtime_error("rnn: illegal defined cx for non-LSTM RNN");
     }
@@ -696,7 +695,7 @@ std::vector<Tensor> _cudnn_rnn_backward_weight(
   auto input_size = _input_size(fn.tensors);
   auto hidden_size = _hidden_size(fn.rnn, fn.tensors);
 
-  if (!fn.train) {
+  if (!fn.dropout.train) {
     throw std::runtime_error("backward_grad can only be called in training mode");
   }
   if (!input.sizes().equals(input_size)) {
@@ -717,12 +716,12 @@ std::vector<Tensor> _cudnn_rnn_backward_weight(
 
   auto x = input.contiguous();
   const auto& y = output;
-  auto dw = fn_weight_buf.type().tensor(fn_weight_buf.sizes()).zero_();
+  auto dw = weight_buf.type().tensor(weight_buf.sizes()).zero_();
 
   RNNDescriptors descs(fn, handle, x, y, hx, cx);
 
   FilterDescriptor w_desc;
-  w_desc.set(fn.weight_buf, 3);
+  w_desc.set(weight_buf, 3);
 
   size_t workspace_size;
   auto x_descs_arr = descs.get_x_descs();
@@ -730,7 +729,7 @@ std::vector<Tensor> _cudnn_rnn_backward_weight(
   CUDNN_CHECK(cudnnGetRNNWorkspaceSize(
         handle,
         descs.rnn_desc.desc(),
-        fn.seq_length,
+        fn.tensors.seq_length,
         x_descs_arr.data(),
         &workspace_size
         ));
@@ -739,7 +738,7 @@ std::vector<Tensor> _cudnn_rnn_backward_weight(
   CUDNN_CHECK(cudnnRNNBackwardWeights(
         handle,
         descs.rnn_desc.desc(),
-        fn.seq_length,
+        fn.tensors.seq_length,
         x_descs_arr.data(), x.data_ptr(),
         descs.hx_desc.desc(), hx.data_ptr(),
         y_descs_arr.data(), y.data_ptr(),
@@ -756,7 +755,7 @@ std::vector<Tensor> _cudnn_rnn_backward_weight(
 
   std::vector<Tensor> grad_params_arr;
   size_t grad_params_stride0;
-  std::tie(grad_params_arr, grad_params_stride0) = get_parameters(fn, descs, w_desc, handle, dw);
+  std::tie(grad_params_arr, grad_params_stride0) = get_parameters(handle, fn.rnn, descs.rnn_desc, descs.x_descs[0], w_desc, dw);
   _copyParams(MatrixRef<Tensor>{grad_params_arr, grad_params_stride0},
               MatrixRef<Tensor>{grad_weight_arr, static_cast<size_t>(weight_stride0)});
 
@@ -766,7 +765,7 @@ std::vector<Tensor> _cudnn_rnn_backward_weight(
 // We need this dispatcher because _cudnn_rnn_backward_weight has a stringent
 // ordering requirement with _cudnn_rnn_backward_grad
 std::tuple<Tensor, Tensor, Tensor, std::vector<Tensor>> _cudnn_rnn_backward(
-    const Tensor& input, TensorList weight, int64_t weight_stride0, const Tensor& fn_weight_buf, const Tensor& hx, const Tensor& cx,
+    const Tensor& input, TensorList weight, int64_t weight_stride0, const Tensor& weight_buf, const Tensor& hx, const Tensor& cx,
     const Tensor& output, const Tensor& grad_output, const Tensor& grad_hy,
     const Tensor& grad_cy,
     int64_t mode, int64_t hidden_size,
@@ -777,10 +776,10 @@ std::tuple<Tensor, Tensor, Tensor, std::vector<Tensor>> _cudnn_rnn_backward(
     ) {
   Tensor dx, dhx, dcx;
   // NB: unconditionally compute this gradient, because it mutates reserve
-  std::tie(dx, dhx, dcx) = at::native::_cudnn_rnn_backward_grad(input, fn_weight_buf, hx, cx, output, grad_output, grad_hy, grad_cy, mode, hidden_size, num_layers, batch_first, dropout, train, bidirectional, batch_sizes, dropout_state, reserve);
+  std::tie(dx, dhx, dcx) = at::native::_cudnn_rnn_backward_grad(input, weight_buf, hx, cx, output, grad_output, grad_hy, grad_cy, mode, hidden_size, num_layers, batch_first, dropout, train, bidirectional, batch_sizes, dropout_state, reserve);
   std::vector<Tensor> dw;
   if (output_mask[3]) {
-    dw = at::native::_cudnn_rnn_backward_weight(input, weight, weight_stride0, fn_weight_buf, hx, cx, output, mode, hidden_size, num_layers, batch_first, dropout, train, bidirectional, batch_sizes, dropout_state, reserve);
+    dw = at::native::_cudnn_rnn_backward_weight(input, weight, weight_stride0, weight_buf, hx, cx, output, mode, hidden_size, num_layers, batch_first, dropout, train, bidirectional, batch_sizes, dropout_state, reserve);
   }
   return std::tuple<Tensor, Tensor, Tensor, TensorList>{dx, dhx, dcx, dw};
 }
