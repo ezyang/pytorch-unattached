@@ -126,7 +126,7 @@ def process_function(func):
             unpack.append('auto {} = {}_.unpack({});'.format(name, name, ptr))
         elif arg['type'] == 'TensorList':
             saved_variables.append('std::vector<SavedVariable> {}_;'.format(name))
-            release_variables.append('{}.clear()'.format(name))
+            release_variables.append('{}_.clear();'.format(name))
             unpack.append('auto {} = unpack_list({}_);'.format(name, name))
         elif arg['type'] == 'IntList':
             saved_variables.append('std::vector<int64_t> {};'.format(name))
