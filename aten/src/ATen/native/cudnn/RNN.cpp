@@ -823,14 +823,19 @@ std::vector<Tensor> _cudnn_rnn_backward_weight(
 // ordering requirement with _cudnn_rnn_backward_grad
 std::tuple<Tensor, Tensor, Tensor, std::vector<Tensor>> _cudnn_rnn_backward(
     const Tensor& input, TensorList weight, int64_t weight_stride0, const Tensor& weight_buf, const Tensor& hx, const Tensor& cx,
-    const Tensor& output, const Tensor& grad_output, const Tensor& grad_hy,
-    const Tensor& grad_cy,
+    const Tensor& output, const Tensor& grad_output_r, const Tensor& grad_hy_r,
+    const Tensor& grad_cy_r,
     int64_t mode, int64_t hidden_size,
     int64_t num_layers, bool batch_first, double dropout,
     bool train, bool bidirectional, IntList batch_sizes,
     const Tensor& dropout_state, const Tensor& reserve,
     std::array<bool, 4> output_mask
     ) {
+
+  auto grad_output = grad_output_r.defined() ? grad_output_r : output.type().zeros_like(output);
+  auto grad_hy = grad_hy_r.defined() ? grad_hy_r : hx.type().zeros_like(hx);
+  auto grad_cy = cx.defined() ? (grad_cy_r.defined() ? grad_cy_r : cx.type().zeros_like(cx)) : grad_cy_r;
+
   Tensor dx, dhx, dcx;
   // NB: unconditionally compute this gradient, because it mutates reserve
   std::tie(dx, dhx, dcx) = at::native::_cudnn_rnn_backward_grad(input, weight_buf, hx, cx, output, grad_output, grad_hy, grad_cy, mode, hidden_size, num_layers, batch_first, dropout, train, bidirectional, batch_sizes, dropout_state, reserve);
