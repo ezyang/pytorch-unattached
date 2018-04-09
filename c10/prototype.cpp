@@ -38,11 +38,11 @@
 template<typename T>
 class ArrayRef {
              public:
-             typedef const T *iterator;
-             typedef const T *const_iterator;
-             typedef size_t size_type;
+             using iterator = const T *;
+             using const_iterator = const T *;
+             using size_type = size_t;
 
-             typedef std::reverse_iterator<iterator> reverse_iterator;
+             using reverse_iterator = std::reverse_iterator<iterator>;
 
              private:
              /// The start of the array, in an external buffer.
@@ -56,19 +56,21 @@ class ArrayRef {
              /// @{
 
              /// Construct an empty ArrayRef.
-             /*implicit*/ ArrayRef() : Data(nullptr), Length(0) {}
+             /*implicit*/ constexpr ArrayRef() : Data(nullptr), Length(0) {}
 
              /// Construct an ArrayRef from a single element.
-             /*implicit*/ ArrayRef(const T &OneElt)
+             /*implicit*/ constexpr ArrayRef(const T &OneElt)
              : Data(&OneElt), Length(1) {}
 
              /// Construct an ArrayRef from a pointer and length.
-             /*implicit*/ ArrayRef(const T *data, size_t length)
+             constexpr ArrayRef(const T *data, size_t length)
              : Data(data), Length(length) {}
 
              /// Construct an ArrayRef from a range.
-             ArrayRef(const T *begin, const T *end)
-             : Data(begin), Length(end - begin) {}
+             constexpr ArrayRef(const T *begin, const T *end)
+             : Data(begin), Length(end - begin) {
+               AT_ASSERT(end > begin);
+             }
 
              /// Construct an ArrayRef from a std::vector.
              template<typename A>
@@ -85,42 +87,43 @@ class ArrayRef {
              /*implicit*/ constexpr ArrayRef(const T (&Arr)[N]) : Data(Arr), Length(N) {}
 
              /// Construct an ArrayRef from a std::initializer_list.
-             /*implicit*/ ArrayRef(const std::initializer_list<T> &Vec)
+             /*implicit*/ constexpr ArrayRef(const std::initializer_list<T> &Vec)
              : Data(Vec.begin() == Vec.end() ? (T*)nullptr : Vec.begin()),
              Length(Vec.size()) {}
 
              /// @}
              /// @name Simple Operations
              /// @{
+             // @ezyang: Can we return const_iterator from here and make ArrayRef read only?
+             //          If we really need it, we can consider having a mutable variant, but mutability by default seems unsafe here.
+             constexpr iterator begin() const { return Data; }
+             constexpr iterator end() const { return Data + Length; }
 
-             iterator begin() const { return Data; }
-             iterator end() const { return Data + Length; }
-
-             reverse_iterator rbegin() const { return reverse_iterator(end()); }
-             reverse_iterator rend() const { return reverse_iterator(begin()); }
+             constexpr reverse_iterator rbegin() const { return reverse_iterator(end()); }
+             constexpr reverse_iterator rend() const { return reverse_iterator(begin()); }
 
              /// empty - Check if the array is empty.
-             bool empty() const { return Length == 0; }
+             constexpr bool empty() const { return Length == 0; }
 
-             const T *data() const { return Data; }
+             constexpr const T *data() const { return Data; }
 
              /// size - Get the array size.
-             size_t size() const { return Length; }
+             constexpr size_t size() const { return Length; }
 
              /// front - Get the first element.
-             const T &front() const {
+             constexpr const T &front() const {
              AT_ASSERT(!empty(), "Empty list!");
              return Data[0];
              }
 
              /// back - Get the last element.
-             const T &back() const {
+             constexpr const T &back() const {
              AT_ASSERT(!empty(), "Empty list!");
              return Data[Length-1];
              }
 
              /// equals - Check for element-wise equality.
-             bool equals(ArrayRef RHS) const {
+             constexpr bool equals(ArrayRef RHS) const {
              if (Length != RHS.Length)
              return false;
              return std::equal(begin(), end(), RHS.begin());
@@ -128,23 +131,23 @@ class ArrayRef {
 
              /// slice(n, m) - Chop off the first N elements of the array, and keep M
              /// elements in the array.
-             ArrayRef<T> slice(size_t N, size_t M) const {
+             constexpr ArrayRef<T> slice(size_t N, size_t M) const {
              AT_ASSERT(N+M <= size(), "Invalid specifier");
              return ArrayRef<T>(data()+N, M);
              }
 
              /// slice(n) - Chop off the first N elements of the array.
-             ArrayRef<T> slice(size_t N) const { return slice(N, size() - N); }
+             constexpr ArrayRef<T> slice(size_t N) const { return slice(N, size() - N); }
 
              /// @}
              /// @name Operator Overloads
              /// @{
-             const T &operator[](size_t Index) const {
+             constexpr const T &operator[](size_t Index) const {
              return Data[Index];
              }
 
              /// Vector compatibility
-             const T &at(size_t Index) const {
+             constexpr const T &at(size_t Index) const {
              AT_ASSERT(Index < Length, "Invalid index!");
              return Data[Index];
              }
@@ -201,7 +204,7 @@ class ArrayRef {
 //
 // TODO: Does this also contain per Tensor properties, like contiguity?
 class TypeId final {
-  int64_t id_;
+  const int64_t id_;
   explicit constexpr TypeId(int64_t id) : id_(id) {}
   friend class TypeIds;
 };
@@ -231,7 +234,7 @@ using SmallVector = std::vector<T>;
 // directly
 class TensorImpl {
   // Used for dispatch on the object
-  TypeId type_id_;
+  const TypeId type_id_;
   // We have an interesting problem here, which regards our short term plan for
   // integrating PyTorch and Caffe2 without having to rewrite all of Torch/Caffe2's
   // operators.  Recall that both Torch and Caffe2 have their own, existing tensor
@@ -243,6 +246,7 @@ class TensorImpl {
 public:
   explicit TensorImpl(TypeId type_id) : type_id_(type_id), refcount_(1) {};
   // Inline?  Virtual?  See the admonition above.
+  // @ezyang: Virtual size not needed since we only need a wrapper to the new layout, not to the old one?
   virtual ArrayRef<int64_t> size() const {
     return size_;
   }
@@ -255,13 +259,13 @@ public:
   virtual void* data_ptr() const {
     throw std::runtime_error("TensorImpl::data_ptr()");
   }
-  virtual ~TensorImpl() {}
+  virtual ~TensorImpl() = default;
 };
 
 // See design notes on Tensor.h, where this is hardcoded a few times.
+// @ezyang: What are your concerns about using an empty CPU tensor instead of an undefined one?
 class UndefinedTensorImpl : public TensorImpl {
   UndefinedTensorImpl() : TensorImpl(TypeIds::Undefined) {};
-  static UndefinedTensorImpl singleton_;
 public:
   ArrayRef<int64_t> size() const override {
     throw std::runtime_error("UndefinedTensorImpl::size()");
@@ -269,12 +273,15 @@ public:
   int64_t dim() const override {
     throw std::runtime_error("UndefinedTensorImpl::dim()");
   }
-  static inline UndefinedTensorImpl* singleton() {
+  static UndefinedTensorImpl* singleton() {
+    // @ezyang: Not sure this singleton is a good idea. If wrapped in Tensor, it is subject to ref counting and might get destructed.
+    //          If we need this singleton, we should wrap it into a Tensor instance here to make sure the ref count is always positive.
+    static UndefinedTensorImpl singleton_;
     return &singleton_;
   }
 };
 
-class CPUTensorImpl : public TensorImpl {
+class CPUTensorImpl final : public TensorImpl {
   void* data_ptr_;
 public:
   CPUTensorImpl() : TensorImpl(TypeIds::CPUTensor), data_ptr_(nullptr) {};
@@ -284,7 +291,10 @@ public:
   // Missing retain/release
 };
 
-class StridedCPUTensorImpl : public TensorImpl {
+// @ezyang: Inheriting StridedCPUTensorImpl from CPUTensorImpl has some issues with
+//          the TypeId. I'd recommend having these classes independent of each other
+//          and pull out common functionality into a member object used by both.
+class StridedCPUTensorImpl final : public TensorImpl {
   SmallVector<int64_t> stride_;
   StridedCPUTensorImpl() : TensorImpl(TypeIds::StridedCPUTensor) {};
   ArrayRef<int64_t> stride() const override {
@@ -293,14 +303,14 @@ class StridedCPUTensorImpl : public TensorImpl {
   // Missing retain/release
 };
 
-class OpenCLTensorImpl : public TensorImpl {
+class OpenCLTensorImpl final : public TensorImpl {
   void* opencl_handle;
   OpenCLTensorImpl() : TensorImpl(TypeIds::OpenCLTensor) {};
 };
 
 using opengl_handle = uint16_t;
 
-class OpenGLTensorImpl : public TensorImpl {
+class OpenGLTensorImpl final : public TensorImpl {
   opengl_handle handle_;
   OpenGLTensorImpl() : TensorImpl(TypeIds::OpenCLTensor) {};
 public:
@@ -369,6 +379,8 @@ class Tensor final {
     return ret;
   }
 
+  // @ezyang: I think it makes sense to pull out refcounting functionality into
+  //          a separate helper class.
   // Refcounting kit
   void retain() {
     ++pImpl->refcount_;
@@ -400,6 +412,7 @@ public:
 
   // Copy assignment
   Tensor & operator=(Tensor && rhs) & noexcept {
+    // @ezyang: I'd explicitly set rhs to undefined for better debugability.
     rhs.swap(*this);
     return *this;
   }
@@ -421,7 +434,7 @@ public:
   }
 
   // We do a lot of null-pointer checks in our code, good to have this be cheap.
-  inline bool defined() const {
+  bool defined() const {
     return pImpl != UndefinedTensorImpl::singleton();
   }
 
@@ -432,7 +445,7 @@ public:
   int64_t dim() const {
     return pImpl->dim();
   }
-  inline int64_t ndimension() const {
+  int64_t ndimension() const {
     return dim();
   }
   ArrayRef<int64_t> size() const {
@@ -446,6 +459,9 @@ public:
     return pImpl->type_id();
   }
    */
+  // @ezyang: Do we want to try honoring const-ness for the underlying data?
+  //          i.e. const T* data() const {} and T* data() {} ?
+  //          not sure if it's a good idea, but we should consider it.
   template<typename T>
   T * data() const {
     return static_cast<T*>(pImpl->data_ptr());
