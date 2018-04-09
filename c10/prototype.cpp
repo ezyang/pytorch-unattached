@@ -154,7 +154,7 @@ class ArrayRef {
 
              /// Disallow accidental assignment from a temporary.
              ///
-             /// The declaration here is extra complicated so that "arrayRef =TypeId( )"
+             /// The declaration here is extra complicated so that "arrayRef = {}"
              /// continues to select the move assignment operator.
              template <typename U>
              typename std::enable_if<std::is_same<U, T>::value, ArrayRef<T>>::type &
