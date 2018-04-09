@@ -94,8 +94,9 @@ class ArrayRef {
              /// @}
              /// @name Simple Operations
              /// @{
-             // @ezyang: Can we return const_iterator from here and make ArrayRef read only?
+             // smessmer to @ezyang: Can we return const_iterator from here and make ArrayRef read only?
              //          If we really need it, we can consider having a mutable variant, but mutability by default seems unsafe here.
+             // ezyang to @smessmer: I made the change to ATen proper and I'm seeing if it works or not.
              constexpr iterator begin() const { return Data; }
              constexpr iterator end() const { return Data + Length; }
 
@@ -215,7 +216,8 @@ public:
   static constexpr TypeId StridedCPUTensor = TypeId(2);
   static constexpr TypeId OpenCLTensor = TypeId(3);
 };
-// @ezyang: PODs need default constructor. Probably don't want this for TypeId.
+// smessmer to @ezyang: PODs need default constructor. Probably don't want this for TypeId.
+// ezyang to @smessmer: Duly noted and closed.
 //static_assert(std::is_pod<TypeId>());
 
 //===--- TensorImpl.h -----------------------------------------------*- C++ -*-===//
@@ -245,9 +247,7 @@ class TensorImpl {
   friend class Tensor;
 public:
   explicit TensorImpl(TypeId type_id) : type_id_(type_id), refcount_(1) {};
-  // Inline?  Virtual?  See the admonition above.
-  // @ezyang: Virtual size not needed since we only need a wrapper to the new layout, not to the old one?
-  virtual ArrayRef<int64_t> size() const {
+  inline ArrayRef<int64_t> size() const {
     return size_;
   }
   virtual ArrayRef<int64_t> stride() const {
@@ -263,19 +263,23 @@ public:
 };
 
 // See design notes on Tensor.h, where this is hardcoded a few times.
-// @ezyang: What are your concerns about using an empty CPU tensor instead of an undefined one?
+// smessmer to @ezyang: What are your concerns about using an empty CPU tensor instead of an undefined one?
+// ezyang to @smessmer: For example, there will be a method tensor, the semantics are x.tensor({2, 3}) will
+//      create a 2x3 tensor of the same "type" as x.  If x is an empty CPU tensor, you'll get a CPU tensor,
+//      instead of an error, which should have happened.  It just seems morally wrong to privilege empty CPU
+//      tensors in this way.  Also, you don't get reliable pointer equality tests anymore.
 class UndefinedTensorImpl : public TensorImpl {
   UndefinedTensorImpl() : TensorImpl(TypeIds::Undefined) {};
 public:
-  ArrayRef<int64_t> size() const override {
-    throw std::runtime_error("UndefinedTensorImpl::size()");
-  }
   int64_t dim() const override {
     throw std::runtime_error("UndefinedTensorImpl::dim()");
   }
   static UndefinedTensorImpl* singleton() {
-    // @ezyang: Not sure this singleton is a good idea. If wrapped in Tensor, it is subject to ref counting and might get destructed.
+    // smessmer to @ezyang: Not sure this singleton is a good idea. If wrapped in Tensor, it is subject to ref counting and might get destructed.
     //          If we need this singleton, we should wrap it into a Tensor instance here to make sure the ref count is always positive.
+    // ezyang to @smessmer: I added checks for UndefinedTensorImpl in retain/release, but it is a bit awkward.
+    //          But if it's just one singleton it might be OK.  The primary motivation for a singleton is so we can
+    //          avoid dereferencing the pointer to do a null check.
     static UndefinedTensorImpl singleton_;
     return &singleton_;
   }
@@ -288,12 +292,14 @@ public:
   void* data_ptr() const override {
     return data_ptr_;
   }
-  // Missing retain/release
 };
 
-// @ezyang: Inheriting StridedCPUTensorImpl from CPUTensorImpl has some issues with
+// smessmer to @ezyang: Inheriting StridedCPUTensorImpl from CPUTensorImpl has some issues with
 //          the TypeId. I'd recommend having these classes independent of each other
 //          and pull out common functionality into a member object used by both.
+// ezyang to @smessmer: Have at it. The point of having private Impls is we can move stuff
+//          around with impunity.  My personal preference is for CPUTensorImpl to have data_ptr_
+//          and stride_, and have no StridedCPUTensorImpl.
 class StridedCPUTensorImpl final : public TensorImpl {
   SmallVector<int64_t> stride_;
   StridedCPUTensorImpl() : TensorImpl(TypeIds::StridedCPUTensor) {};
@@ -379,13 +385,17 @@ class Tensor final {
     return ret;
   }
 
-  // @ezyang: I think it makes sense to pull out refcounting functionality into
+  // smessmer to @ezyang: I think it makes sense to pull out refcounting functionality into
   //          a separate helper class.
+  // ezyang to @smessmer: I'm back to wondering, why don't we just have these methods on the impl?
+  //          we can make their method names longer...
   // Refcounting kit
   void retain() {
+    if (pImpl == UndefinedTensorImpl::singleton()) return;
     ++pImpl->refcount_;
   }
   void release() {
+    if (pImpl == UndefinedTensorImpl::singleton()) return;
     if(--pImpl->refcount_ == 0) {
       delete pImpl;
     }
