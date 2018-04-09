@@ -151,7 +151,7 @@ class ArrayRef {
 
              /// Disallow accidental assignment from a temporary.
              ///
-             /// The declaration here is extra complicated so that "arrayRef = {}"
+             /// The declaration here is extra complicated so that "arrayRef =TypeId( )"
              /// continues to select the move assignment operator.
              template <typename U>
              typename std::enable_if<std::is_same<U, T>::value, ArrayRef<T>>::type &
@@ -202,14 +202,18 @@ class ArrayRef {
 // TODO: Does this also contain per Tensor properties, like contiguity?
 class TypeId final {
   int64_t id_;
-  explicit TypeId(int64_t id) : id_(id) {}
-public:
-  static constexpr TypeId Undefined = {0};
-  static constexpr TypeId CPUTensor = {1};
-  static constexpr TypeId StridedCPUTensor = {2};
-  static constexpr TypeId OpenCLTensor = {3};
+  explicit constexpr TypeId(int64_t id) : id_(id) {}
+  friend class TypeIds;
 };
-static_assert(std::is_pod<TypeId>());
+class TypeIds final {
+public:
+  static constexpr TypeId Undefined = TypeId(0);
+  static constexpr TypeId CPUTensor = TypeId(1);
+  static constexpr TypeId StridedCPUTensor = TypeId(2);
+  static constexpr TypeId OpenCLTensor = TypeId(3);
+};
+// @ezyang: PODs need default constructor. Probably don't want this for TypeId.
+//static_assert(std::is_pod<TypeId>());
 
 //===--- TensorImpl.h -----------------------------------------------*- C++ -*-===//
 
@@ -256,7 +260,7 @@ public:
 
 // See design notes on Tensor.h, where this is hardcoded a few times.
 class UndefinedTensorImpl : public TensorImpl {
-  UndefinedTensorImpl() : TensorImpl(TypeId::Undefined) {};
+  UndefinedTensorImpl() : TensorImpl(TypeIds::Undefined) {};
   static UndefinedTensorImpl singleton_;
 public:
   ArrayRef<int64_t> size() const override {
@@ -273,16 +277,16 @@ public:
 class CPUTensorImpl : public TensorImpl {
   void* data_ptr_;
 public:
-  CPUTensorImpl() : TensorImpl(TypeId::CPUTensor), data_ptr_(nullptr) {};
+  CPUTensorImpl() : TensorImpl(TypeIds::CPUTensor), data_ptr_(nullptr) {};
   void* data_ptr() const override {
     return data_ptr_;
   }
   // Missing retain/release
 };
 
-class StridedCPUTensorImpl : public CPUTensorImpl {
+class StridedCPUTensorImpl : public TensorImpl {
   SmallVector<int64_t> stride_;
-  StridedCPUTensorImpl() : TensorImpl(TypeId::StridedCPUTensor) {};
+  StridedCPUTensorImpl() : TensorImpl(TypeIds::StridedCPUTensor) {};
   ArrayRef<int64_t> stride() const override {
     return stride_;
   }
@@ -291,14 +295,14 @@ class StridedCPUTensorImpl : public CPUTensorImpl {
 
 class OpenCLTensorImpl : public TensorImpl {
   void* opencl_handle;
-  OpenCLTensorImpl() : TensorImpl(TypeId::OpenCLTensor) {};
+  OpenCLTensorImpl() : TensorImpl(TypeIds::OpenCLTensor) {};
 };
 
 using opengl_handle = uint16_t;
 
 class OpenGLTensorImpl : public TensorImpl {
   opengl_handle handle_;
-  OpenGLTensorImpl() : TensorImpl(TypeId::OpenCLTensor) {};
+  OpenGLTensorImpl() : TensorImpl(TypeIds::OpenCLTensor) {};
 public:
   opengl_handle handle() const {
     return handle_;
@@ -458,7 +462,7 @@ public:
 
 /*
 opengl_handle handle(Tensor x) const {
-  if (x.type_id() != TypeId::OpenGL) {
+  if (x.type_id() != TypeIds::OpenGL) {
     throw "";
   }
   // code that knows about Impls
@@ -466,13 +470,13 @@ opengl_handle handle(Tensor x) const {
 }
  */
 
-
+/*
 void f(Tensor x, Tensor y) {
-  Tensor z = x + y;
+  //Tensor z = x + y;
   // 1. Is this checked?
   // 2. When are people going to use it
-  auto& zimpl = z.unsafe_get_impl<StridedCPUTensorImpl>();
-  ...
+  //auto& zimpl = z.unsafe_get_impl<StridedCPUTensorImpl>();
+  //...
 }
 
 
@@ -485,7 +489,7 @@ void f(Tensor x, Tensor y) {
   auto h = zimpl.handle();
 }
 
-/* BAD IDEA
+// BAD IDEA
 void f(const OpenGLTensorImpl& x, const OpenGLTensorImpl& y) {
   Tensor z = Tensor(x) + Tensor(y);
   // 1. Is this checked?
@@ -493,10 +497,9 @@ void f(const OpenGLTensorImpl& x, const OpenGLTensorImpl& y) {
   auto& zimpl = z.unsafe_get_impl<OpenGLTensorImpl>();
   auto h = zimpl.handle();
 }
-*/
 
 
 void f(Tensor x, Tensor y) {
   Tensor z = x + y;
   auto h = opengl_handle(z);
-}
+}*/
