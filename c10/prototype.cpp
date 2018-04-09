@@ -207,6 +207,7 @@ public:
   static constexpr TypeId Undefined = {0};
   static constexpr TypeId CPUTensor = {1};
   static constexpr TypeId StridedCPUTensor = {2};
+  static constexpr TypeId OpenCLTensor = {3};
 };
 static_assert(std::is_pod<TypeId>());
 
@@ -232,8 +233,11 @@ class TensorImpl {
   // operators.  Recall that both Torch and Caffe2 have their own, existing tensor
   // types, which record sizes by themselves.
   SmallVector<int64_t> size_;
+  // Refcounting
+  std::atomic<int> refcount_;
+  friend class Tensor;
 public:
-  explicit TensorImpl(TypeId type_id) : type_id_(type_id) {};
+  explicit TensorImpl(TypeId type_id) : type_id_(type_id), refcount_(1) {};
   // Inline?  Virtual?  See the admonition above.
   virtual ArrayRef<int64_t> size() const {
     return size_;
@@ -247,9 +251,7 @@ public:
   virtual void* data_ptr() const {
     throw std::runtime_error("TensorImpl::data_ptr()");
   }
-  virtual void retain() = 0;
-  virtual void release() = 0;
-  virtual ~Tensor() = 0;
+  virtual ~TensorImpl() {}
 };
 
 // See design notes on Tensor.h, where this is hardcoded a few times.
@@ -258,13 +260,11 @@ class UndefinedTensorImpl : public TensorImpl {
   static UndefinedTensorImpl singleton_;
 public:
   ArrayRef<int64_t> size() const override {
-    throw std::runtime_error("UndefinedTensorImpl::sizes()");
+    throw std::runtime_error("UndefinedTensorImpl::size()");
   }
   int64_t dim() const override {
-    throw std::runtime_error("UndefinedTensorImpl::sizes()");
+    throw std::runtime_error("UndefinedTensorImpl::dim()");
   }
-  void retain() override {}
-  void release() override {}
   static inline UndefinedTensorImpl* singleton() {
     return &singleton_;
   }
@@ -277,6 +277,7 @@ public:
   void* data_ptr() const override {
     return data_ptr_;
   }
+  // Missing retain/release
 };
 
 class StridedCPUTensorImpl : public CPUTensorImpl {
@@ -285,7 +286,26 @@ class StridedCPUTensorImpl : public CPUTensorImpl {
   ArrayRef<int64_t> stride() const override {
     return stride_;
   }
+  // Missing retain/release
 };
+
+class OpenCLTensorImpl : public TensorImpl {
+  void* opencl_handle;
+  OpenCLTensorImpl() : TensorImpl(TypeId::OpenCLTensor) {};
+};
+
+using opengl_handle = uint16_t;
+
+class OpenGLTensorImpl : public TensorImpl {
+  opengl_handle handle_;
+  OpenGLTensorImpl() : TensorImpl(TypeId::OpenCLTensor) {};
+public:
+  opengl_handle handle() const {
+    return handle_;
+  }
+};
+
+// const OpenCLTensorImpl&
 
 // NB: From ATen I dropped the following methods:
 //  - toString()
@@ -309,29 +329,59 @@ class StridedCPUTensorImpl : public CPUTensorImpl {
 //        as our default constructor is much better for us.
 // - Fixed the mismatch between PyTorch and C++ methods
 //      - sizes() is now size()
+//
+// Tensor x = ...;
+// Tensor y = x;  // NO COPY
+
+
+
+// SUMMING UP
+// 1. There will NOT be a retain/release on the Tensor class.  There might be
+// some unsafe mechanism to retain/release (because C API bindings need it), but it won't
+// be a method with an easy name to spell.
+// 2. virtual issue, DELAYED (it's OK for now)
+// 3. Undefined tensor... can we make illegal states unrepresentable?
+// 4. Because of ArrayRef, we will need to define code style guide (ArrayRef disagrees)
 
 class Tensor final {
   TensorImpl * pImpl;
-public:
+
   // This is a relatively unsafe constructor which you should avoid using if you
   // don't need it.  The retain parameter specifies whether or not this constructor
   // takes ownership of the passed Impl or not (when retain = true, the caller retains
   // their reference.)
-  Tensor(TensorImpl* self, bool retain)
-  : pImpl(self) {
-      if (pImpl == nullptr) {
-        throw std::runtime_error("Tensor with nullptr not supported");
-      }
-      if(retain && pImpl != UndefinedTensorImpl::singleton())
-      pImpl->retain();
+  Tensor(TensorImpl* self)
+      : pImpl(self) {
+    if (pImpl == nullptr) {
+      throw std::runtime_error("Tensor with nullptr not supported");
+    }
+  }
+  TensorImpl * get() const {
+    return pImpl;
+  }
+  TensorImpl * detach() {
+    TensorImpl * ret = pImpl;
+    pImpl = UndefinedTensorImpl::singleton();
+    return ret;
   }
 
+  // Refcounting kit
+  void retain() {
+    ++pImpl->refcount_;
+  }
+  void release() {
+    if(--pImpl->refcount_ == 0) {
+      delete pImpl;
+    }
+  }
+
+public:
   // Normal constructors
-  Tensor(): Tensor(UndefinedTensorImpl::singleton(), false) {}
+  Tensor(): Tensor(UndefinedTensorImpl::singleton()) {}
   Tensor(const Tensor & rhs)
       : pImpl(rhs.pImpl) {
     if (pImpl != UndefinedTensorImpl::singleton())
-      pImpl->retain();
+      retain();
   }
   Tensor(Tensor && rhs) noexcept
   : pImpl(rhs.pImpl) {
@@ -341,7 +391,7 @@ public:
   // Destructor
   ~Tensor() {
     if (pImpl != UndefinedTensorImpl::singleton())
-      pImpl->release();
+      release();
   }
 
   // Copy assignment
@@ -357,29 +407,13 @@ public:
     return *this;
   }
 
-  // Direct PIMPL manipulation methods.  Use of these is discouraged, but may be needed
-  // in binding code.
   void reset() {
     Tensor().swap(*this);
-  }
-  void reset(TensorImpl * rhs) {
-    Tensor(rhs, true).swap(*this);
-  }
-  void reset(TensorImpl * rhs, bool retain) {
-    Tensor(rhs, retain).swap(*this );
   }
   void swap(Tensor & rhs) noexcept {
     TensorImpl * tmp = pImpl;
     pImpl = rhs.pImpl;
     rhs.pImpl = tmp;
-  }
-  TensorImpl * get() const {
-    return pImpl;
-  }
-  TensorImpl * detach() {
-    TensorImpl * ret = pImpl;
-    pImpl = UndefinedTensorImpl::singleton();
-    return ret;
   }
 
   // We do a lot of null-pointer checks in our code, good to have this be cheap.
@@ -403,10 +437,16 @@ public:
   ArrayRef<int64_t> stride() const {
     return pImpl->stride();
   }
+  /*
+  TypeId type_id() const {
+    return pImpl->type_id();
+  }
+   */
   template<typename T>
   T * data() const {
     return static_cast<T*>(pImpl->data_ptr());
   }
+
 
   // TODO: work out the type() situation
 
@@ -415,3 +455,48 @@ public:
   // The "well known" Tensor functions will call into the dispatch mechanism (yet to be
   // implemented)
 };
+
+/*
+opengl_handle handle(Tensor x) const {
+  if (x.type_id() != TypeId::OpenGL) {
+    throw "";
+  }
+  // code that knows about Impls
+  static_cast<>
+}
+ */
+
+
+void f(Tensor x, Tensor y) {
+  Tensor z = x + y;
+  // 1. Is this checked?
+  // 2. When are people going to use it
+  auto& zimpl = z.unsafe_get_impl<StridedCPUTensorImpl>();
+  ...
+}
+
+
+// OK fine.
+void f(Tensor x, Tensor y) {
+  Tensor z = x + y;
+  // 1. Is this checked?  YES
+  // 2. When are people going to use it
+  auto& zimpl = z.unsafe_get_impl<OpenGLTensorImpl>();
+  auto h = zimpl.handle();
+}
+
+/* BAD IDEA
+void f(const OpenGLTensorImpl& x, const OpenGLTensorImpl& y) {
+  Tensor z = Tensor(x) + Tensor(y);
+  // 1. Is this checked?
+  // 2. When are people going to use it
+  auto& zimpl = z.unsafe_get_impl<OpenGLTensorImpl>();
+  auto h = zimpl.handle();
+}
+*/
+
+
+void f(Tensor x, Tensor y) {
+  Tensor z = x + y;
+  auto h = opengl_handle(z);
+}
