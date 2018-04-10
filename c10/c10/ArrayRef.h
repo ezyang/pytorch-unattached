@@ -119,7 +119,8 @@ public:
   }
 
   /// equals - Check for element-wise equality.
-  constexpr bool equals(ArrayRef RHS) const {
+  /// NB: constexpr in C++14
+  /*constexpr*/ bool equals(ArrayRef RHS) const {
     if (Length != RHS.Length)
       return false;
     return std::equal(begin(), end(), RHS.begin());

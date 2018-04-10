@@ -1,11 +1,15 @@
 #pragma once
 
-#include <c10/TypeId.h>
-#include <c10/ArrayRef.h>
+#include "c10/TypeId.h"
+#include "c10/ArrayRef.h"
 
 #include "Retainable.h"
 
 #include <vector>
+
+namespace c10 {
+  class Tensor;
+}
 
 // NB: It's called guts because it's short and gets the point across :)
 namespace c10 { namespace guts {
@@ -22,7 +26,7 @@ using SmallVector = std::vector<T>;
 // NB: Use of virtual functions means that this is NOT a plain old data class.
 // This means that we don't get inlineable C API functions which access the representation
 // directly
-class TensorImpl : Retainable {
+class TensorImpl : public RetainableImpl {
   // Used for dispatch on the object
   const TypeId type_id_;
 
@@ -32,7 +36,7 @@ class TensorImpl : Retainable {
   friend class c10::Tensor;
 
 public:
-  explicit TensorImpl(TypeId type_id) : type_id_(type_id), refcount_(1) {};
+  explicit TensorImpl(TypeId type_id) : type_id_(type_id), RetainableImpl() {};
 
   inline ArrayRef<int64_t> size() const {
     return size_;

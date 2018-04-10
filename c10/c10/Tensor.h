@@ -35,105 +35,29 @@ namespace c10 {
 // 3. Undefined tensor... can we make illegal states unrepresentable?
 // 4. Because of ArrayRef, we will need to define code style guide (ArrayRef disagrees)
 
-class Tensor final {
-  guts::TensorImpl *pImpl;
-
+// NB: This is publically inherited, but only to conveniently bring the public methods
+// of Retainable into scope.  If this is causing bad error messages, make it private
+// again and explicitly 'using' each of the public methods you want to propagate.
+class Tensor final : public guts::Retainable<Tensor, guts::TensorImpl, guts::UndefinedTensorImpl> {
   // This is a relatively unsafe constructor which you should avoid using if you
   // don't need it.  The retain parameter specifies whether or not this constructor
   // takes ownership of the passed Impl or not (when retain = true, the caller retains
   // their reference.)
-  Tensor(guts::TensorImpl *self)
-      : pImpl(self) {
-    if (pImpl == nullptr) {
-      throw std::runtime_error("Tensor with nullptr not supported");
-    }
-  }
-
-  guts::TensorImpl *get() const {
-    return pImpl;
-  }
-
-  guts::TensorImpl *detach() {
-    guts::TensorImpl *ret = pImpl;
-    pImpl = guts::UndefinedTensorImpl::singleton();
-    return ret;
-  }
-
-  // smessmer to @ezyang: I think it makes sense to pull out refcounting functionality into
-  //          a separate helper class.
-  // ezyang to @smessmer: I'm back to wondering, why don't we just have these methods on the impl?
-  //          we can make their method names longer...
-  // Refcounting kit
-  void retain() {
-    if (pImpl == guts::UndefinedTensorImpl::singleton()) return;
-    ++pImpl->refcount_;
-  }
-
-  void release() {
-    if (pImpl == guts::UndefinedTensorImpl::singleton()) return;
-    if (--pImpl->refcount_ == 0) {
-      delete pImpl;
-    }
-  }
+  explicit Tensor(guts::TensorImpl *self) : guts::Retainable<Tensor, guts::TensorImpl, guts::UndefinedTensorImpl>(self) {}
 
 public:
   // Normal constructors
-  Tensor() : Tensor(guts::UndefinedTensorImpl::singleton()) {}
-
-  Tensor(const Tensor &rhs)
-      : pImpl(rhs.pImpl) {
-    if (pImpl != guts::UndefinedTensorImpl::singleton())
-      retain();
-  }
-
-  Tensor(Tensor &&rhs) noexcept
-      : pImpl(rhs.pImpl) {
-    rhs.pImpl = guts::UndefinedTensorImpl::singleton();
-  }
-
-  // Destructor
-  ~Tensor() {
-    if (pImpl != guts::UndefinedTensorImpl::singleton())
-      release();
-  }
-
-  // Copy assignment
-  Tensor &operator=(Tensor &&rhs) &noexcept {
-    // smessmer to @ezyang: I'd explicitly set rhs to undefined for better debugability.
-    // ezyang to @smessmer: That's a bunch of extra refcount bumps though, isn't it?
-    rhs.swap(*this);
-    return *this;
-  }
-
-  Tensor &operator=(Tensor const &rhs) &{
-    //TensorBase ctor retains original rhs.pImpl
-    //then rhs.pImpl is swapped with this->pImpl
-    //finally TensorBase dtor releases rhs.pImpl, which was originally this->pImpl
-    Tensor(rhs).swap(*this);
-    return *this;
-  }
-
-  void reset() {
-    Tensor().swap(*this);
-  }
-
-  void swap(Tensor &rhs) noexcept {
-    guts::TensorImpl *tmp = pImpl;
-    pImpl = rhs.pImpl;
-    rhs.pImpl = tmp;
-  }
-
-  // We do a lot of null-pointer checks in our code, good to have this be cheap.
-  bool defined() const {
-    return pImpl != guts::UndefinedTensorImpl::singleton();
-  }
+  // TODO: I don't know if it's safe to replace this with = default here... godbolt time...
+  Tensor() : guts::Retainable<Tensor, guts::TensorImpl, guts::UndefinedTensorImpl>() {}
+  Tensor(const Tensor &rhs) : guts::Retainable<Tensor, guts::TensorImpl, guts::UndefinedTensorImpl>(rhs) {}
+  Tensor(Tensor &&rhs) noexcept : guts::Retainable<Tensor, guts::TensorImpl, guts::UndefinedTensorImpl>(std::move(rhs)) {}
 
   // These methods are SO important, they are currently implemented via virtual dispatch
   // via our implementation classes.  Most non-core methods should be implemented by
   // the generic dispatch mechanism.
 
   int64_t dim() const {
-    return pImpl->dim();
+    return get()->dim();
   }
 
   int64_t ndimension() const {
@@ -141,11 +65,11 @@ public:
   }
 
   ArrayRef<int64_t> size() const {
-    return pImpl->size();
+    return get()->size();
   }
 
   ArrayRef<int64_t> stride() const {
-    return pImpl->stride();
+    return get()->stride();
   }
   /*
   TypeId type_id() const {
@@ -159,7 +83,7 @@ public:
   //          Back story is at https://github.com/zdevito/ATen/issues/27
   template<typename T>
   T *data() const {
-    return static_cast<T *>(pImpl->data_ptr());
+    return static_cast<T *>(get()->data_ptr());
   }
 
 

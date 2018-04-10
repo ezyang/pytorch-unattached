@@ -1,9 +1,15 @@
 #pragma once
 
+#include "Retainable.h"
+
 #include <cstddef>
 #include <memory>
 
 namespace c10 { namespace guts {
+
+// Some design constraints:
+//  - We want a single "allocator" struct which contains all of the information for
+//    malloc, realloc and free
 
 // Corresponds to THAllocator
 struct Allocator {
@@ -11,6 +17,7 @@ struct Allocator {
   void* (*realloc)(void*, void*, ptrdiff_t);
   void* (*free)(void*, void*);
 };
+
 
 // Storage is NOT part of the public API
 //
@@ -23,8 +30,7 @@ struct Allocator {
 // In Caffe2, this was previously implemented directly as a std::shared_ptr.  Doing
 // it this means that realloc is not possible because a std::shared_ptr only
 // records the free() pointer.
-class Storage : std::enable_shared_from_this<Storage> {
-private:
+class StorageImpl {
   void* data_;
   ptrdiff_t size_;
   // TODO: pack this boolean flag?
@@ -44,6 +50,13 @@ private:
   // TODO: Maybe reconsider this
   Allocator* allocator_;
   void* allocator_context_;
+
+  static constexpr StorageImpl* singleton() {
+    return nullptr;
+  }
+};
+
+class Storage : Retainable<Storage, StorageImpl, StorageImpl> {
 };
 
 }} // namespace c10::guts
