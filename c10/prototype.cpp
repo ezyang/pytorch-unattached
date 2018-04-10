@@ -422,7 +422,8 @@ public:
 
   // Copy assignment
   Tensor & operator=(Tensor && rhs) & noexcept {
-    // @ezyang: I'd explicitly set rhs to undefined for better debugability.
+    // smessmer to @ezyang: I'd explicitly set rhs to undefined for better debugability.
+    // ezyang to @smessmer: That's a bunch of extra refcount bumps though, isn't it?
     rhs.swap(*this);
     return *this;
   }
@@ -469,9 +470,11 @@ public:
     return pImpl->type_id();
   }
    */
-  // @ezyang: Do we want to try honoring const-ness for the underlying data?
+  // smessmer to @ezyang: Do we want to try honoring const-ness for the underlying data?
   //          i.e. const T* data() const {} and T* data() {} ?
   //          not sure if it's a good idea, but we should consider it.
+  // ezyang to @smessmer: This is difficult to do without adding more user-visible 'Tensor' types.
+  //          Back story is at https://github.com/zdevito/ATen/issues/27
   template<typename T>
   T * data() const {
     return static_cast<T*>(pImpl->data_ptr());
