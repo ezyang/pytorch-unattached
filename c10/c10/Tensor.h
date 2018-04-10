@@ -39,12 +39,6 @@ namespace c10 {
 // of Retainable into scope.  If this is causing bad error messages, make it private
 // again and explicitly 'using' each of the public methods you want to propagate.
 class Tensor final : public guts::Retainable<Tensor, guts::TensorImpl, guts::UndefinedTensorImpl> {
-  // This is a relatively unsafe constructor which you should avoid using if you
-  // don't need it.  The retain parameter specifies whether or not this constructor
-  // takes ownership of the passed Impl or not (when retain = true, the caller retains
-  // their reference.)
-  explicit Tensor(guts::TensorImpl *self) : guts::Retainable<Tensor, guts::TensorImpl, guts::UndefinedTensorImpl>(self) {}
-
 public:
   // Normal constructors
   // TODO: I don't know if it's safe to replace this with = default here... godbolt time...
