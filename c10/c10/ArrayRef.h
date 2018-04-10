@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include "c10/Assert.h"
+#include "Assert.h"
 
 #include <array>
 #include <iterator>

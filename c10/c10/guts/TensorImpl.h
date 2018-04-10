@@ -27,9 +27,6 @@ class TensorImpl {
   SmallVector<int64_t> size_;
   void* data_ptr_;
 
-  // Refcounting
-  std::atomic<int> refcount_;
-
   friend class c10::Tensor;
 
 public:

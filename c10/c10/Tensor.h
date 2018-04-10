@@ -1,6 +1,6 @@
 #pragma once
 
-#include "c10/guts/TensorImpl.h"
+#include "guts/TensorImpl.h"
 
 namespace c10 {
 
