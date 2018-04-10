@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 // A compact identifier which stores all of the information necessary to
 // carry out a dispatch on a type.  This is NOT NECESSARILY in one-to-one
 // correspondence with the type hierarchy of TensorImpl, because we may decide

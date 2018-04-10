@@ -1,5 +1,9 @@
 #pragma once
 
+#include "c10/impl/TensorImpl.h"
+
+namespace c10 {
+
 // Design notes:
 //  - Manual retain/release instead of shared_ptr. Reasons:
 //      - PRIMARY: It's possible to work with the underlying retained object using
@@ -32,23 +36,25 @@
 // 4. Because of ArrayRef, we will need to define code style guide (ArrayRef disagrees)
 
 class Tensor final {
-  TensorImpl * pImpl;
+  TensorImpl *pImpl;
 
   // This is a relatively unsafe constructor which you should avoid using if you
   // don't need it.  The retain parameter specifies whether or not this constructor
   // takes ownership of the passed Impl or not (when retain = true, the caller retains
   // their reference.)
-  Tensor(TensorImpl* self)
+  Tensor(TensorImpl *self)
       : pImpl(self) {
     if (pImpl == nullptr) {
       throw std::runtime_error("Tensor with nullptr not supported");
     }
   }
-  TensorImpl * get() const {
+
+  TensorImpl *get() const {
     return pImpl;
   }
-  TensorImpl * detach() {
-    TensorImpl * ret = pImpl;
+
+  TensorImpl *detach() {
+    TensorImpl *ret = pImpl;
     pImpl = UndefinedTensorImpl::singleton();
     return ret;
   }
@@ -62,23 +68,26 @@ class Tensor final {
     if (pImpl == UndefinedTensorImpl::singleton()) return;
     ++pImpl->refcount_;
   }
+
   void release() {
     if (pImpl == UndefinedTensorImpl::singleton()) return;
-    if(--pImpl->refcount_ == 0) {
+    if (--pImpl->refcount_ == 0) {
       delete pImpl;
     }
   }
 
 public:
   // Normal constructors
-  Tensor(): Tensor(UndefinedTensorImpl::singleton()) {}
-  Tensor(const Tensor & rhs)
+  Tensor() : Tensor(UndefinedTensorImpl::singleton()) {}
+
+  Tensor(const Tensor &rhs)
       : pImpl(rhs.pImpl) {
     if (pImpl != UndefinedTensorImpl::singleton())
       retain();
   }
-  Tensor(Tensor && rhs) noexcept
-  : pImpl(rhs.pImpl) {
+
+  Tensor(Tensor &&rhs) noexcept
+      : pImpl(rhs.pImpl) {
     rhs.pImpl = UndefinedTensorImpl::singleton();
   }
 
@@ -89,13 +98,14 @@ public:
   }
 
   // Copy assignment
-  Tensor & operator=(Tensor && rhs) & noexcept {
+  Tensor &operator=(Tensor &&rhs) &noexcept {
     // smessmer to @ezyang: I'd explicitly set rhs to undefined for better debugability.
     // ezyang to @smessmer: That's a bunch of extra refcount bumps though, isn't it?
     rhs.swap(*this);
     return *this;
   }
-  Tensor & operator=(Tensor const & rhs) & {
+
+  Tensor &operator=(Tensor const &rhs) &{
     //TensorBase ctor retains original rhs.pImpl
     //then rhs.pImpl is swapped with this->pImpl
     //finally TensorBase dtor releases rhs.pImpl, which was originally this->pImpl
@@ -106,8 +116,9 @@ public:
   void reset() {
     Tensor().swap(*this);
   }
-  void swap(Tensor & rhs) noexcept {
-    TensorImpl * tmp = pImpl;
+
+  void swap(Tensor &rhs) noexcept {
+    TensorImpl *tmp = pImpl;
     pImpl = rhs.pImpl;
     rhs.pImpl = tmp;
   }
@@ -124,12 +135,15 @@ public:
   int64_t dim() const {
     return pImpl->dim();
   }
+
   int64_t ndimension() const {
     return dim();
   }
+
   ArrayRef<int64_t> size() const {
     return pImpl->size();
   }
+
   ArrayRef<int64_t> stride() const {
     return pImpl->stride();
   }
@@ -144,8 +158,8 @@ public:
   // ezyang to @smessmer: This is difficult to do without adding more user-visible 'Tensor' types.
   //          Back story is at https://github.com/zdevito/ATen/issues/27
   template<typename T>
-  T * data() const {
-    return static_cast<T*>(pImpl->data_ptr());
+  T *data() const {
+    return static_cast<T *>(pImpl->data_ptr());
   }
 
 
@@ -157,3 +171,4 @@ public:
   // implemented)
 };
 
+} // namespace c10

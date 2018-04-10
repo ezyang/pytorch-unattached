@@ -1,10 +1,16 @@
 #pragma once
 
+#include "c10/TypeId.h"
+#include "c10/ArrayRef.h"
+
+#include <vector>
+
+namespace c10 {
 
 // TODO: Fill in an actual SmallVector implementation here.  Both Folly and LLVM's
 // implementation are a bit annoying to make standalone.  Maybe this can be made
 // simpler by assuming T is POD.
-template <typename T>
+template<typename T>
 using SmallVector = std::vector<T>;
 
 // For now: try using empty tensors for type (I think we'll probably add a Type
@@ -23,21 +29,28 @@ class TensorImpl {
   SmallVector<int64_t> size_;
   // Refcounting
   std::atomic<int> refcount_;
+
   friend class Tensor;
+
 public:
   explicit TensorImpl(TypeId type_id) : type_id_(type_id), refcount_(1) {};
+
   inline ArrayRef<int64_t> size() const {
     return size_;
   }
+
   virtual ArrayRef<int64_t> stride() const {
     throw std::runtime_error("TensorImpl::stride()");
   }
+
   virtual int64_t dim() const {
     return static_cast<int64_t>(size().size());
   }
-  virtual void* data_ptr() const {
+
+  virtual void *data_ptr() const {
     throw std::runtime_error("TensorImpl::data_ptr()");
   }
+
   virtual ~TensorImpl() = default;
 };
 
@@ -53,7 +66,8 @@ public:
   int64_t dim() const override {
     throw std::runtime_error("UndefinedTensorImpl::dim()");
   }
-  static UndefinedTensorImpl* singleton() {
+
+  static UndefinedTensorImpl *singleton() {
     // smessmer to @ezyang: Not sure this singleton is a good idea. If wrapped in Tensor, it is subject to ref counting and might get destructed.
     //          If we need this singleton, we should wrap it into a Tensor instance here to make sure the ref count is always positive.
     // ezyang to @smessmer: I added checks for UndefinedTensorImpl in retain/release, but it is a bit awkward.
@@ -65,10 +79,11 @@ public:
 };
 
 class CPUTensorImpl final : public TensorImpl {
-  void* data_ptr_;
+  void *data_ptr_;
 public:
   CPUTensorImpl() : TensorImpl(TypeIds::CPUTensor), data_ptr_(nullptr) {};
-  void* data_ptr() const override {
+
+  void *data_ptr() const override {
     return data_ptr_;
   }
 };
@@ -81,25 +96,27 @@ public:
 //          and stride_, and have no StridedCPUTensorImpl.
 class StridedCPUTensorImpl final : public TensorImpl {
   SmallVector<int64_t> stride_;
+
   StridedCPUTensorImpl() : TensorImpl(TypeIds::StridedCPUTensor) {};
+
   ArrayRef<int64_t> stride() const override {
     return stride_;
   }
   // Missing retain/release
 };
 
-class OpenCLTensorImpl final : public TensorImpl {
-  void* opencl_handle;
-  OpenCLTensorImpl() : TensorImpl(TypeIds::OpenCLTensor) {};
-};
-
-using opengl_handle = uint16_t;
+/*
+// Example:
 
 class OpenGLTensorImpl final : public TensorImpl {
   opengl_handle handle_;
+
   OpenGLTensorImpl() : TensorImpl(TypeIds::OpenCLTensor) {};
 public:
   opengl_handle handle() const {
     return handle_;
   }
 };
+*/
+
+} // namespace c10

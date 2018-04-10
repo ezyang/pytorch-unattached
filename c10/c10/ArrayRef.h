@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include "c10/Assert.h"
+
 #include <array>
 #include <iterator>
 #include <vector>
@@ -106,13 +108,13 @@ public:
 
   /// front - Get the first element.
   constexpr const T &front() const {
-    AT_ASSERT(!empty(), "Empty list!");
+    C10_ASSERT(!empty(), "Empty list!");
     return Data[0];
   }
 
   /// back - Get the last element.
   constexpr const T &back() const {
-    AT_ASSERT(!empty(), "Empty list!");
+    C10_ASSERT(!empty(), "Empty list!");
     return Data[Length-1];
   }
 
@@ -126,7 +128,7 @@ public:
   /// slice(n, m) - Chop off the first N elements of the array, and keep M
   /// elements in the array.
   constexpr ArrayRef<T> slice(size_t N, size_t M) const {
-    AT_ASSERT(N+M <= size(), "Invalid specifier");
+    C10_ASSERT(N+M <= size(), "Invalid specifier");
     return ArrayRef<T>(data()+N, M);
   }
 
@@ -142,7 +144,7 @@ public:
 
   /// Vector compatibility
   constexpr const T &at(size_t Index) const {
-    AT_ASSERT(Index < Length, "Invalid index!");
+    C10_ASSERT(Index < Length, "Invalid index!");
     return Data[Index];
   }
 
