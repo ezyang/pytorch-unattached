@@ -12,6 +12,7 @@ class RetainableImpl {
   template <typename T, typename TImpl, typename NullType>
   friend class Retainable;
 
+public:
   virtual ~RetainableImpl() {}
 
 protected:

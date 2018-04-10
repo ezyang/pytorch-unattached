@@ -43,6 +43,8 @@ class StorageImpl : public RetainableImpl {
   // deallocator if this is what you want.
   // NB: I axed TH_STORAGE_VIEW; it makes things complicated for not a good enough
   // reason
+  // NB: I axed TH_STORAGE_REFCOUNTED; it seems to always be turned on.  If we do want
+  // this, itw ould be a good fit for the Retainable class.
 
   // The general expectation is that the user of the library has installed some global variable
   // including the allocator you want, so we don't want to splat copies of the allocator everywhere,
@@ -51,10 +53,11 @@ class StorageImpl : public RetainableImpl {
   Allocator* allocator_;
   void* allocator_context_;
 
-  virtual ~StorageImpl() override {
-  }
-
 public:
+
+  ~StorageImpl() override {
+    allocator_->free(allocator_context_, data_);
+  }
   static constexpr StorageImpl* singleton() {
     return nullptr;
   }
