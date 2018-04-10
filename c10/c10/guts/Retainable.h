@@ -33,14 +33,10 @@ class Retainable {
       delete pImpl;
     }
   }
+  // NB: invariant: if self == nullptr, then nullptr == NullType::singleton()
+  Retainable(TImpl *self) : pImpl(self) {}
 
 protected:
-  // TODO: Maybe make private?
-  Retainable(TImpl *self) : pImpl(self) {
-    if (pImpl == nullptr) {
-      throw std::runtime_error("Retainable with nullptr not supported");
-    }
-  }
 
   Retainable() : pImpl(NullType::singleton()) {}
 
