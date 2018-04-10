@@ -51,6 +51,9 @@ class StorageImpl : public RetainableImpl {
   Allocator* allocator_;
   void* allocator_context_;
 
+  virtual ~StorageImpl() override {
+  }
+
 public:
   static constexpr StorageImpl* singleton() {
     return nullptr;

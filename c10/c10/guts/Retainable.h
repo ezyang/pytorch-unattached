@@ -12,6 +12,8 @@ class RetainableImpl {
   template <typename T, typename TImpl, typename NullType>
   friend class Retainable;
 
+  virtual ~RetainableImpl() {}
+
 protected:
   RetainableImpl() : refcount_(1) {}
 };
