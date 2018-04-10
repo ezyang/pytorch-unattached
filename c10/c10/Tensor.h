@@ -44,9 +44,9 @@ class Tensor final : public guts::Retainable<Tensor, guts::TensorImpl, guts::Und
 public:
   // Normal constructors
   // TODO: I don't know if it's safe to replace this with = default here... godbolt time...
-  Tensor() : TensorBase() {}
-  Tensor(const Tensor &rhs) : TensorBase(rhs) {}
-  Tensor(Tensor &&rhs) noexcept : TensorBase(std::move(rhs)) {}
+  Tensor()  = default;
+  Tensor(const Tensor &rhs) = default;
+  Tensor(Tensor &&rhs) noexcept = default;
 
   // These methods are SO important, they are currently implemented via virtual dispatch
   // via our implementation classes.  Most non-core methods should be implemented by

@@ -30,7 +30,7 @@ public:
   virtual void* malloc(std::size_t) = 0;
   virtual void* realloc(void* p, std::size_t s) {
     void* np = malloc(s);
-    memcpy();
+    // memcpy();
     return nullptr;
   };
   virtual void* free(void*) = 0;
@@ -95,8 +95,8 @@ class Storage : public Retainable<Storage, StorageImpl, StorageImpl> {
   using StorageBase = Retainable<Storage, StorageImpl, StorageImpl>;
 
 public:
-  Storage(const Storage &rhs) : StorageBase(rhs) {}
-  Storage(Storage &&rhs) noexcept : StorageBase(std::move(rhs)) {}
+  Storage(const Storage &rhs) = default;
+  Storage(Storage &&rhs) noexcept = default;
 
   Storage(std::size_t element_size, std::size_t size, Allocator* allocator) : StorageBase(new StorageImpl()) {
     auto* impl = get();
