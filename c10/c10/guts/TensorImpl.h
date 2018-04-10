@@ -14,6 +14,8 @@ namespace c10 {
 // NB: It's called guts because it's short and gets the point across :)
 namespace c10 { namespace guts {
 
+class UndefinedTensorImpl;
+
 // TODO: Fill in an actual SmallVector implementation here.  Both Folly and LLVM's
 // implementation are a bit annoying to make standalone.  Maybe this can be made
 // simpler by assuming T is POD.

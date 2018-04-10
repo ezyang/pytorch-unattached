@@ -30,7 +30,7 @@ struct Allocator {
 // In Caffe2, this was previously implemented directly as a std::shared_ptr.  Doing
 // it this means that realloc is not possible because a std::shared_ptr only
 // records the free() pointer.
-class StorageImpl {
+class StorageImpl : public RetainableImpl {
   void* data_;
   ptrdiff_t size_;
   // TODO: pack this boolean flag?
@@ -51,12 +51,19 @@ class StorageImpl {
   Allocator* allocator_;
   void* allocator_context_;
 
+public:
   static constexpr StorageImpl* singleton() {
     return nullptr;
   }
 };
 
-class Storage : Retainable<Storage, StorageImpl, StorageImpl> {
+class Storage : public Retainable<Storage, StorageImpl, StorageImpl> {
+  using StorageBase = Retainable<Storage, StorageImpl, StorageImpl>;
+
+public:
+  Storage() : StorageBase() {}
+  Storage(const Storage &rhs) : StorageBase(rhs) {}
+  Storage(Storage &&rhs) noexcept : StorageBase(std::move(rhs)) {}
 };
 
 }} // namespace c10::guts

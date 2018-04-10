@@ -39,12 +39,14 @@ namespace c10 {
 // of Retainable into scope.  If this is causing bad error messages, make it private
 // again and explicitly 'using' each of the public methods you want to propagate.
 class Tensor final : public guts::Retainable<Tensor, guts::TensorImpl, guts::UndefinedTensorImpl> {
+  using TensorBase = guts::Retainable<Tensor, guts::TensorImpl, guts::UndefinedTensorImpl>;
+
 public:
   // Normal constructors
   // TODO: I don't know if it's safe to replace this with = default here... godbolt time...
-  Tensor() : guts::Retainable<Tensor, guts::TensorImpl, guts::UndefinedTensorImpl>() {}
-  Tensor(const Tensor &rhs) : guts::Retainable<Tensor, guts::TensorImpl, guts::UndefinedTensorImpl>(rhs) {}
-  Tensor(Tensor &&rhs) noexcept : guts::Retainable<Tensor, guts::TensorImpl, guts::UndefinedTensorImpl>(std::move(rhs)) {}
+  Tensor() : TensorBase() {}
+  Tensor(const Tensor &rhs) : TensorBase(rhs) {}
+  Tensor(Tensor &&rhs) noexcept : TensorBase(std::move(rhs)) {}
 
   // These methods are SO important, they are currently implemented via virtual dispatch
   // via our implementation classes.  Most non-core methods should be implemented by

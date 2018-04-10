@@ -16,8 +16,8 @@ protected:
   RetainableImpl() : refcount_(1) {}
 };
 
-// TODO: I may have gone a leeetle too far with the template arguments.  (Maybe TImpl should know
-// what its null type as an associated type; ditto with T to TImpl.)
+// Impl cannot be a dependent type, because this template is being used as a CRTP, and at the
+// time of template instantiation we don't know anything about T yet.
 template <typename T, typename TImpl, typename NullType>
 class Retainable {
   TImpl *pImpl;
