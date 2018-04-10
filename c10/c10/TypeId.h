@@ -21,7 +21,7 @@
 // NB: NO default constructor
 class TypeId final {
   const int64_t id_;
-  explicit constexpr TypeId(int64_t id) : id_(id) {}
+  explicit constexpr TypeId(int64_t id) noexcept : id_(id) {}
   friend class TypeIds;
 };
 
