@@ -36,12 +36,13 @@ class Retainable {
       delete pImpl;
     }
   }
-  // NB: invariant: if self == nullptr, then nullptr == NullType::singleton()
-  Retainable(TImpl *self) : pImpl(self) {}
 
 protected:
 
   Retainable() : pImpl(NullType::singleton()) {}
+
+  // NB: invariant: if self == nullptr, then nullptr == NullType::singleton()
+  Retainable(TImpl *self) : pImpl(self) {}
 
   Retainable(const T &rhs)
       : pImpl(rhs.pImpl) {

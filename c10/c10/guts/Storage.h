@@ -7,17 +7,38 @@
 
 namespace c10 { namespace guts {
 
+// Use cases of allocators:
+//  - I'm inside an operator, I need to allocate some helper buffer or
+//    similar for my operation.
+//  - Entirely inside the backend, its hidden away, the CPU tensor needs
+//    a way to call malloc/GPU needs a way to call GPU malloc (which
+//    could be a completely different implementation
+
 // Some design constraints:
 //  - We want a single "allocator" struct which contains all of the information for
 //    malloc, realloc and free
 
-// Corresponds to THAllocator
-struct Allocator {
-  void* (*malloc)(void*, ptrdiff_t);
-  void* (*realloc)(void*, void*, ptrdiff_t);
-  void* (*free)(void*, void*);
+// Would be more accurate to call this CPUAllocator/CPUStorage
+// CPU is easy; GPU you want to know what device you're allocating
+// memory on.  Not enough to know that it's GPU memory.  There may
+// be trickier versions.
+
+// Corresponds to THAllocator, but in C++ style.
+class Allocator {
+public:
+  // Tentatively malloc/realloc are not needed
+  virtual void* malloc(std::size_t) = 0;
+  virtual void* realloc(void* p, std::size_t s) {
+    void* np = malloc(s);
+    memcpy();
+    return nullptr;
+  };
+  virtual void* free(void*) = 0;
 };
 
+// TODO: Need a default allocator...
+
+class Storage;
 
 // Storage is NOT part of the public API
 //
@@ -32,7 +53,9 @@ struct Allocator {
 // records the free() pointer.
 class StorageImpl : public RetainableImpl {
   void* data_;
-  ptrdiff_t size_;
+  // NB: This is not BYTES, this is number of elements!
+  std::size_t size_;
+  std::size_t element_size_;
   // TODO: pack this boolean flag?
   // Is this storage resizable?  If it comes externally, or has been
   // shared to some external system, it may not be.  Corresponds to
@@ -51,25 +74,80 @@ class StorageImpl : public RetainableImpl {
   // just indirect to the correct one.
   // TODO: Maybe reconsider this
   Allocator* allocator_;
-  void* allocator_context_;
+
+  friend class Storage;
 
 public:
-
   ~StorageImpl() override {
-    allocator_->free(allocator_context_, data_);
+    allocator_->free(data_);
   }
+
   static constexpr StorageImpl* singleton() {
     return nullptr;
   }
 };
 
+// This is currently written in a decidedly non-PIMPL-y way.  We won't the benefits of separate
+// compilation writing it this way.  If we need it, you need to move these methods around and
+// write a little more boilerplate.  The current style is to reduce boilerplate.
+
 class Storage : public Retainable<Storage, StorageImpl, StorageImpl> {
   using StorageBase = Retainable<Storage, StorageImpl, StorageImpl>;
 
 public:
-  Storage() : StorageBase() {}
   Storage(const Storage &rhs) : StorageBase(rhs) {}
   Storage(Storage &&rhs) noexcept : StorageBase(std::move(rhs)) {}
+
+  Storage(std::size_t element_size, std::size_t size, Allocator* allocator) : StorageBase(new StorageImpl()) {
+    auto* impl = get();
+    impl->data_ = allocator->malloc(element_size * size);
+    impl->element_size_ = element_size;
+    impl->size_ = size;
+    impl->resizable_ = true;
+    impl->allocator_ = allocator;
+  }
+
+  void resize() {
+    auto* impl = get();
+    if (!impl->resizable_) {
+      throw std::runtime_error("trying to resize storage that is not resizable");
+    }
+    // This has one more virtual dispatch than we might have had, if realloc
+  }
+
+  // Straight up reimplementation of the ATen Storage API
+
+  template <typename T>
+  inline const T* data() const {
+    return static_cast<T*>(get()->data_);
+  }
+
+  template <typename T>
+  inline T* data() {
+    return static_cast<T*>(get()->data_);
+  }
+
+  inline const void* data_ptr() const {
+    return get()->data_;
+  }
+
+  inline void* data_ptr() {
+    return get()->data_;
+  }
+
+  // THStorage_(size)
+  inline std::size_t size() const {
+    return get()->size_;
+  }
+
+  // THStorage_(elementSize) ???
+  inline std::size_t elementSize() const {
+    return get()->element_size_;
+  }
+
+
+
+
 };
 
 }} // namespace c10::guts
