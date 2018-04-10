@@ -1,7 +1,9 @@
 #pragma once
 
-#include "c10/TypeId.h"
-#include "c10/ArrayRef.h"
+#include <c10/TypeId.h>
+#include <c10/ArrayRef.h>
+
+#include "Retainable.h"
 
 #include <vector>
 
@@ -20,7 +22,7 @@ using SmallVector = std::vector<T>;
 // NB: Use of virtual functions means that this is NOT a plain old data class.
 // This means that we don't get inlineable C API functions which access the representation
 // directly
-class TensorImpl {
+class TensorImpl : Retainable {
   // Used for dispatch on the object
   const TypeId type_id_;
 
