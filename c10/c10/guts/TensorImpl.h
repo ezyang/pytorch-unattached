@@ -5,7 +5,8 @@
 
 #include <vector>
 
-namespace c10 {
+// NB: It's called guts because it's short and gets the point across :)
+namespace c10 { namespace guts {
 
 // TODO: Fill in an actual SmallVector implementation here.  Both Folly and LLVM's
 // implementation are a bit annoying to make standalone.  Maybe this can be made
@@ -22,21 +23,29 @@ using SmallVector = std::vector<T>;
 class TensorImpl {
   // Used for dispatch on the object
   const TypeId type_id_;
-  // We have an interesting problem here, which regards our short term plan for
-  // integrating PyTorch and Caffe2 without having to rewrite all of Torch/Caffe2's
-  // operators.  Recall that both Torch and Caffe2 have their own, existing tensor
-  // types, which record sizes by themselves.
+
   SmallVector<int64_t> size_;
+  void* data_ptr_;
+
   // Refcounting
   std::atomic<int> refcount_;
 
-  friend class Tensor;
+  friend class c10::Tensor;
 
 public:
   explicit TensorImpl(TypeId type_id) : type_id_(type_id), refcount_(1) {};
 
   inline ArrayRef<int64_t> size() const {
     return size_;
+  }
+
+  // NB: In Caffe2, this quantity is CACHED.  For simplicity, we don't cache it for now, but consider
+  // doing so.
+  // NB: This was ported in from the TH backend (which we normally defer to.)
+  inline int64_t numel() const {
+    int64_t r = 1;
+    for (auto s : size()) r *= s;
+    return r;
   }
 
   virtual ArrayRef<int64_t> stride() const {
@@ -47,8 +56,8 @@ public:
     return static_cast<int64_t>(size().size());
   }
 
-  virtual void *data_ptr() const {
-    throw std::runtime_error("TensorImpl::data_ptr()");
+  inline void *data_ptr() const {
+    return data_ptr_;
   }
 
   virtual ~TensorImpl() = default;
@@ -83,17 +92,16 @@ class CPUTensorImpl final : public TensorImpl {
 public:
   CPUTensorImpl() : TensorImpl(TypeIds::CPUTensor), data_ptr_(nullptr) {};
 
-  void *data_ptr() const override {
-    return data_ptr_;
-  }
 };
 
+/*
 // smessmer to @ezyang: Inheriting StridedCPUTensorImpl from CPUTensorImpl has some issues with
 //          the TypeId. I'd recommend having these classes independent of each other
 //          and pull out common functionality into a member object used by both.
 // ezyang to @smessmer: Have at it. The point of having private Impls is we can move stuff
 //          around with impunity.  My personal preference is for CPUTensorImpl to have data_ptr_
 //          and stride_, and have no StridedCPUTensorImpl.
+// ezyang: Temporarily suspending this while I experiment with an Impl hierarchy which Caffe2 legacy needs.
 class StridedCPUTensorImpl final : public TensorImpl {
   SmallVector<int64_t> stride_;
 
@@ -104,6 +112,7 @@ class StridedCPUTensorImpl final : public TensorImpl {
   }
   // Missing retain/release
 };
+*/
 
 /*
 // Example:
@@ -119,4 +128,4 @@ public:
 };
 */
 
-} // namespace c10
+}} // namespace c10::guts

@@ -30,5 +30,5 @@ public:
   // These are just here for illustrative purposes
   static constexpr TypeId Undefined = TypeId(0);
   static constexpr TypeId CPUTensor = TypeId(1);
-  static constexpr TypeId StridedCPUTensor = TypeId(2);
+  static constexpr TypeId CUDATensor = TypeId(2);
 };

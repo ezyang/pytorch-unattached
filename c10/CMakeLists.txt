@@ -8,7 +8,7 @@ set(C10_INSTALL_INCLUDE_SUBDIR "include")
 add_library(c10 SHARED
         c10/Tensor.cpp
         c10/ArrayRef.cpp
-        c10/TypeId.cpp c10/Assert.h c10/Assert.cpp c10/impl/TensorImpl.cpp)
+        c10/TypeId.cpp c10/Assert.h c10/Assert.cpp c10/guts/TensorImpl.cpp c10/Storage.cpp c10/Storage.h c10/guts/Storage.cpp c10/guts/Storage.h)
 
 target_include_directories(c10 PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>

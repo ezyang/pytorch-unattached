@@ -1,6 +1,6 @@
 #pragma once
 
-#include "c10/impl/TensorImpl.h"
+#include "c10/guts/TensorImpl.h"
 
 namespace c10 {
 
@@ -14,10 +14,10 @@ namespace c10 {
 //        metadata next to the regular dynamic allocation) and
 //        std::enabled_shared_from_this (which generally needs to store a weak pointer
 //        to the control block).
-// - UndefinedTensorImpl instead of null pointer. Reasons:
+// - guts::UndefinedTensorImpl instead of null pointer. Reasons:
 //      - We originally had a null pointer in ATen, but this meant that when we
 //        incorrectly attempted to use such a null pointer, we would segfault and
-//        crash, which is very unfriendly for our Python users.  Using an UndefinedTensorImpl
+//        crash, which is very unfriendly for our Python users.  Using an guts::UndefinedTensorImpl
 //        as our default constructor is much better for us.
 // - Fixed the mismatch between PyTorch and C++ methods
 //      - sizes() is now size()
@@ -36,26 +36,26 @@ namespace c10 {
 // 4. Because of ArrayRef, we will need to define code style guide (ArrayRef disagrees)
 
 class Tensor final {
-  TensorImpl *pImpl;
+  guts::TensorImpl *pImpl;
 
   // This is a relatively unsafe constructor which you should avoid using if you
   // don't need it.  The retain parameter specifies whether or not this constructor
   // takes ownership of the passed Impl or not (when retain = true, the caller retains
   // their reference.)
-  Tensor(TensorImpl *self)
+  Tensor(guts::TensorImpl *self)
       : pImpl(self) {
     if (pImpl == nullptr) {
       throw std::runtime_error("Tensor with nullptr not supported");
     }
   }
 
-  TensorImpl *get() const {
+  guts::TensorImpl *get() const {
     return pImpl;
   }
 
-  TensorImpl *detach() {
-    TensorImpl *ret = pImpl;
-    pImpl = UndefinedTensorImpl::singleton();
+  guts::TensorImpl *detach() {
+    guts::TensorImpl *ret = pImpl;
+    pImpl = guts::UndefinedTensorImpl::singleton();
     return ret;
   }
 
@@ -65,12 +65,12 @@ class Tensor final {
   //          we can make their method names longer...
   // Refcounting kit
   void retain() {
-    if (pImpl == UndefinedTensorImpl::singleton()) return;
+    if (pImpl == guts::UndefinedTensorImpl::singleton()) return;
     ++pImpl->refcount_;
   }
 
   void release() {
-    if (pImpl == UndefinedTensorImpl::singleton()) return;
+    if (pImpl == guts::UndefinedTensorImpl::singleton()) return;
     if (--pImpl->refcount_ == 0) {
       delete pImpl;
     }
@@ -78,22 +78,22 @@ class Tensor final {
 
 public:
   // Normal constructors
-  Tensor() : Tensor(UndefinedTensorImpl::singleton()) {}
+  Tensor() : Tensor(guts::UndefinedTensorImpl::singleton()) {}
 
   Tensor(const Tensor &rhs)
       : pImpl(rhs.pImpl) {
-    if (pImpl != UndefinedTensorImpl::singleton())
+    if (pImpl != guts::UndefinedTensorImpl::singleton())
       retain();
   }
 
   Tensor(Tensor &&rhs) noexcept
       : pImpl(rhs.pImpl) {
-    rhs.pImpl = UndefinedTensorImpl::singleton();
+    rhs.pImpl = guts::UndefinedTensorImpl::singleton();
   }
 
   // Destructor
   ~Tensor() {
-    if (pImpl != UndefinedTensorImpl::singleton())
+    if (pImpl != guts::UndefinedTensorImpl::singleton())
       release();
   }
 
@@ -118,14 +118,14 @@ public:
   }
 
   void swap(Tensor &rhs) noexcept {
-    TensorImpl *tmp = pImpl;
+    guts::TensorImpl *tmp = pImpl;
     pImpl = rhs.pImpl;
     rhs.pImpl = tmp;
   }
 
   // We do a lot of null-pointer checks in our code, good to have this be cheap.
   bool defined() const {
-    return pImpl != UndefinedTensorImpl::singleton();
+    return pImpl != guts::UndefinedTensorImpl::singleton();
   }
 
   // These methods are SO important, they are currently implemented via virtual dispatch
@@ -165,7 +165,7 @@ public:
 
   // TODO: work out the type() situation
 
-  // TODO: work out the storage() situation
+  // TODO: work out the guts() situation
 
   // The "well known" Tensor functions will call into the dispatch mechanism (yet to be
   // implemented)
