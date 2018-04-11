@@ -1,98 +1,8 @@
-#ifndef CAFFE2_CORE_TENSOR_H_
-#define CAFFE2_CORE_TENSOR_H_
+// NB: included from tensor.h
 
-#include <cstddef>
-#include <cstdint>
-#include <fstream>
-#include <sstream>
-#include <type_traits>
-#include <typeinfo>
-#include <vector>
+template <>
+class Tensor<CPUContext> {
 
-#include <c10/Tensor.h>
-
-#include "caffe2/core/common.h"
-#include "caffe2/core/flags.h"
-#include "caffe2/core/context.h"
-#include "caffe2/core/typeid.h"
-#include "caffe2/core/logging.h"
-
-// A global boolean variable to control whether we free memory when a Tensor
-// is shrinked to a smaller size. As a result, a Tensor is always going to
-// keep the memory allocated for its maximum capacity reshaped to so far.
-CAFFE2_DECLARE_bool(caffe2_keep_on_shrink);
-
-// Since we can have high variance in blob memory allocated across different
-// inputs in the same run, we will shrink the blob only if the memory gain
-// is larger than this flag in bytes.
-CAFFE2_DECLARE_int64(caffe2_max_keep_on_shrink_memory);
-
-namespace caffe2 {
-
-/**
- * A utility function to convert vector<int> to vector<TIndex>.
- */
-inline vector<TIndex> ToVectorTIndex(const std::vector<int>& src) {
-  return vector<TIndex>(src.begin(), src.end());
-}
-
-/**
- * Return product of all dimensions starting from K
- */
-inline TIndex size_from_dim_(int k, const vector<TIndex>& dims) {
-  TIndex r = 1;
-  for (int i = k; i < dims.size(); ++i) {
-    r *= dims[i];
-  }
-  return r;
-}
-
-// Product of all dims up to
-inline TIndex size_to_dim_(int k, const vector<TIndex>& dims) {
-  CAFFE_ENFORCE(k <= dims.size());
-  TIndex r = 1;
-  for (int i = 0; i < k; ++i) {
-    r *= dims[i];
-  }
-  return r;
-}
-
-// Product of all dims between k and l (not including dims[k] and dims[l])
-inline TIndex size_between_dim_(int k, int l, const vector<TIndex>& dims) {
-  CAFFE_ENFORCE(l < dims.size());
-  TIndex r = 1;
-  if (k < l) {
-    for (int i = k + 1; i < l; ++i) {
-      r *= dims[i];
-    }
-  } else {
-    for (int i = l + 1; i < k; ++i) {
-      r *= dims[i];
-    }
-  }
-  return r;
-}
-
-inline int canonical_axis_index_(int axis_index, int ndims) {
-  CAFFE_ENFORCE_GE(axis_index, -ndims);
-  CAFFE_ENFORCE_LT(axis_index, ndims);
-  if (axis_index < 0) {
-    return axis_index + ndims;
-  }
-  return axis_index;
-}
-
-/**
- * @brief Tensor is the basic class in Caffe2 that stores a contiguous memory
- * with its shape information.
- *
- * The Tensor class is essentially a wrapper around a device-specific memory
- * (the device is specified by the Context template argument), and deals with
- * the allocation and de-allocation of such memory. We make a simplified
- * assumption that the memory is always contiguous.
- */
-template <class Context>
-class Tensor {
  public:
   /**
    * Initializes an empty tensor.
@@ -112,9 +22,9 @@ class Tensor {
    * @brief Creates a tensor from a source tensor, copying over the content.
    *
    * Note that the source tensor can be from a different device context. The
-   * second argument provides a device context object (either Context or
+   * second argument provides a device context object (either CPUContext or
    * SrcContext) that will be responsible for copying the underlying data.
-   * If you do not wish to pass in a Context object, an equivalent constructor
+   * If you do not wish to pass in a CPUContext object, an equivalent constructor
    * function exists that will create an implicit context object for copy, but
    * be noted that this will cause a potential performance hit.
    */
@@ -131,7 +41,7 @@ class Tensor {
    * providing a context for copy if you can.
    *
    * Since it's a potentially expensive operation - making copy constructor
-   * explicit here. If SrcContext != Context it's actually a typecast
+   * explicit here. If SrcContext != CPUContext it's actually a typecast
    * constructor and it should be definitely explicit.
    */
   template <class SrcContext>
@@ -143,11 +53,11 @@ class Tensor {
    * @brief Creates a tensor, and fills its contents with the given values.
    */
   template <typename T>
-  Tensor(const vector<TIndex>& dims, const vector<T>& values, Context* context)
+  Tensor(const vector<TIndex>& dims, const vector<T>& values, CPUContext* context)
       : meta_(TypeMeta::Make<T>()) {
     Resize(dims);
     CAFFE_ENFORCE_EQ_WITH_CALLER(values.size(), size_);
-    context->template Copy<T, CPUContext, Context>(size_, values.data(), mutable_data<T>());
+    context->template Copy<T, CPUContext, CPUContext>(size_, values.data(), mutable_data<T>());
   }
 
   /**
@@ -155,9 +65,9 @@ class Tensor {
    */
   template <typename T,
             typename = typename std::enable_if<std::is_scalar<T>::value>::type>
-  Tensor(const T& value, Context* context) {
+  Tensor(const T& value, CPUContext* context) {
     Resize(vector<TIndex>{});
-    context->template Copy<T, CPUContext, Context>(size_, &value, mutable_data<T>());
+    context->template Copy<T, CPUContext, CPUContext>(size_, &value, mutable_data<T>());
   }
 
   /**
@@ -175,7 +85,7 @@ class Tensor {
       if (meta_.copy()) {
         meta_.copy()(src.raw_data(), raw_mutable_data(), size());
       } else {
-        context->template CopyBytes<SrcContext, Context>(
+        context->template CopyBytes<SrcContext, CPUContext>(
             nbytes(), src.raw_data(), raw_mutable_data());
       }
     }
@@ -377,7 +287,7 @@ class Tensor {
     return ss.str();
   }
 
-  void swap(Tensor<Context>& other) {
+  void swap(Tensor<CPUContext>& other) {
     std::swap(dims_, other.dims_);
     std::swap(size_, other.size_);
     std::swap(meta_, other.meta_);
@@ -535,7 +445,7 @@ class Tensor {
         // destruction procedure.
         auto size = size_;
         auto dtor = meta_.dtor();
-        auto ptr_and_deleter = Context::New(size_ * meta_.itemsize());
+        auto ptr_and_deleter = CPUContext::New(size_ * meta_.itemsize());
         auto deleter = ptr_and_deleter.second;
         data_.reset(
             ptr_and_deleter.first, [size, dtor, deleter](void* ptr) -> void {
@@ -545,7 +455,7 @@ class Tensor {
         meta_.ctor()(data_.get(), size_);
       } else {
         // For fundamental type, new and delete is easier.
-        auto ptr_and_deleter = Context::New(size_ * meta_.itemsize());
+        auto ptr_and_deleter = CPUContext::New(size_ * meta_.itemsize());
         data_.reset(ptr_and_deleter.first, ptr_and_deleter.second);
       }
       capacity_ = size_ * meta_.itemsize();
@@ -688,6 +598,8 @@ class Tensor {
   bool reserved_ = false;
   // In case of chunk load we store how much data was already loaded
 
+  c10::Tensor tensor_;
+
  private:
   template <
       typename T,
@@ -757,113 +669,3 @@ class Tensor {
   // discourage the use of = for Tensors.
   Tensor& operator=(const Tensor& src) = delete;
 };
-
-#include "caffe2/core/cpu_tensor.h"
-
-// For simplicity, we will typedef Tensor<CPUContext> to TensorCPU.
-typedef Tensor<CPUContext> TensorCPU;
-
-constexpr int k_limit_default_ = 1000;
-
-// Type call registry
-typedef TypeMeta (*TypeCall)(const void*);
-TypeCall GetTypeCallFunction(CaffeTypeId id);
-void RegisterTypeCallFunction(CaffeTypeId id, TypeCall c);
-
-template <class Context>
-TypeMeta GetTensorType(const void* c) {
-  const Tensor<Context>* tc = static_cast<const Tensor<Context>*>(c);
-  return tc->meta();
-}
-
-// Shape call registry
-typedef vector<TIndex> (*TensorInfoCall)(
-    const void*,
-    bool* shares_data,
-    size_t* capacity,
-    DeviceOption* device);
-TensorInfoCall GetTensorInfoFunction(CaffeTypeId id);
-void RegisterTensorInfoFunction(CaffeTypeId id, TensorInfoCall c);
-
-template <class Context>
-vector<TIndex> GetTensorInfo(
-    const void* c,
-    bool* shares_data,
-    size_t* capacity,
-    DeviceOption* device) {
-  const Tensor<Context>* tc = static_cast<const Tensor<Context>*>(c);
-  *shares_data = tc->shares_data();
-  *capacity = tc->capacity_nbytes();
-  device->set_device_type(CPU);
-  device->set_cuda_gpu_id(0);
-  return tc->dims();
-}
-
-class TensorPrinter {
- public:
-  explicit TensorPrinter(
-      const std::string& tensor_name = "",
-      const std::string& file_name = "",
-      int limit = k_limit_default_);
-  ~TensorPrinter();
-
-  template <class T>
-  void Print(const Tensor<CPUContext>& tensor);
-
-  template <class Context>
-  void PrintMeta(const Tensor<Context>& tensor);
-
-  template <class Context>
-  string MetaStr(const Tensor<Context>& tensor);
-
- private:
-  bool to_file_;
-  int limit_;
-  std::unique_ptr<std::ofstream> log_file_;
-  std::string tensor_name_;
-};
-
-template <class T>
-void TensorPrinter::Print(const Tensor<CPUContext>& tensor) {
-  std::stringstream values_stream;
-  // One most likely doesn't want to print int64-number of items for visual
-  // inspection, so we cast down to int here.
-  int total_count = static_cast<int>(
-      std::min(tensor.size(), TIndex(limit_)));
-  const T* tensor_data = tensor.template data<T>();
-  for (int i = 0; i < total_count - 1; ++i) {
-    values_stream << tensor_data[i] << ",";
-  }
-  // We do not add a comma after the last item.
-  values_stream << tensor_data[total_count - 1];
-  if (to_file_) {
-    (*log_file_) << MetaStr(tensor) << values_stream.str() << std::endl;
-  } else {
-    // Log to console.
-    LOG(INFO) << MetaStr(tensor) << values_stream.str();
-  }
-}
-
-template <class Context>
-void TensorPrinter::PrintMeta(const Tensor<Context>& tensor) {
-  if (to_file_) {
-    (*log_file_) << MetaStr(tensor) << std::endl;
-  } else {
-    LOG(INFO) << MetaStr(tensor);
-  }
-}
-
-template <class Context>
-std::string TensorPrinter::MetaStr(const Tensor<Context>& tensor) {
-  std::stringstream meta_stream;
-  meta_stream << "Tensor " << tensor_name_ << " of type "
-              << tensor.meta().name() << ". Dims: (";
-  for (const auto dim : tensor.dims()) {
-    meta_stream << dim << ",";
-  }
-  meta_stream << "): ";
-  return meta_stream.str();
-}
-
-}  // namespace caffe2
-#endif  // CAFFE2_CORE_TENSOR_H_
