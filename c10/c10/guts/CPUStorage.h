@@ -101,18 +101,6 @@ public:
 
   // Straight up reimplementation of the ATen CPUStorage API
 
-  template <typename T>
-  inline const T* data() const {
-    C10_ASSERT(sizeof(T) == scalar_size_);
-    return static_cast<T*>(data_);
-  }
-
-  template <typename T>
-  inline T* data() {
-    C10_ASSERT(sizeof(T) == scalar_size_);
-    return static_cast<T*>(data_);
-  }
-
   inline const void* data_ptr() const {
     return data_.get();
   }
