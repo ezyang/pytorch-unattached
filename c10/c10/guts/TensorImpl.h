@@ -114,7 +114,7 @@ public:
   CPUTensorImpl(const CPUStorage& storage) : TensorImpl(TypeIds::CPUTensor), storage_(storage) {};
 
   inline void *data_ptr() const {
-    return storage_->data_ptr() + storage_offset_;
+    return static_cast<uint8_t*>(storage_->data_ptr()) + storage_offset_;
   }
 };
 
