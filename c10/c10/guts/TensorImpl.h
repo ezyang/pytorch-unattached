@@ -2,6 +2,7 @@
 
 #include "c10/TypeId.h"
 #include "c10/ArrayRef.h"
+#include "c10/guts/CPUStorage.h"
 
 #include "Retainable.h"
 
@@ -19,6 +20,8 @@ class UndefinedTensorImpl;
 // TODO: Fill in an actual SmallVector implementation here.  Both Folly and LLVM's
 // implementation are a bit annoying to make standalone.  Maybe this can be made
 // simpler by assuming T is POD.
+// TODO: For the common case of sizes and strides, the lengths of the two arrays
+// are equal, so there is no need to store the ndim twice.  Worth thinking about.
 template<typename T>
 using SmallVector = std::vector<T>;
 
@@ -33,7 +36,6 @@ class TensorImpl : public RetainableImpl {
   const TypeId type_id_;
 
   SmallVector<int64_t> size_;
-  void* data_ptr_;
 
   friend class c10::Tensor;
 
@@ -61,8 +63,8 @@ public:
     return static_cast<int64_t>(size().size());
   }
 
-  inline void *data_ptr() const {
-    return data_ptr_;
+  virtual void *data_ptr() const {
+    throw std::runtime_error("TensorImpl::data_ptr()");
   }
 
   virtual ~TensorImpl() = default;
@@ -93,44 +95,27 @@ public:
 };
 
 class CPUTensorImpl final : public TensorImpl {
-  void *data_ptr_;
+  // Note: storage->size() may be greater than the recorded size of the tensor
+  CPUStorage storage_;
+  // Note: In Torch this can be nonzero, because we support views into the
+  // inside of tensors.  In historic Caffe2 this was always zero.
+  std::size_t storage_offset_;
+  // NB: shares_data from Caffe2 was axed, because it is SOLELY used to determine
+  // check what the overall tensor usage is.  We can rewrite that code to
+  // keep a mapping of storage base pointers that it has seen (these all
+  // "count" the same), and perhaps add a bit to storage which tells us if
+  // it is "external" or "internal" (external storages don't count for accounting
+  // purposes.)
+  // NB: reserved from Caffe2 axed; as there are TWO sizes, we can easily
+  // implement the reserved pattern by having the storage be larger than the
+  // size recorded in a Tensor.  Hooray!
+  // TODO: Add strides
 public:
-  CPUTensorImpl() : TensorImpl(TypeIds::CPUTensor), data_ptr_(nullptr) {};
+  CPUTensorImpl(const CPUStorage& storage) : TensorImpl(TypeIds::CPUTensor), storage_(storage) {};
 
-};
-
-/*
-// smessmer to @ezyang: Inheriting StridedCPUTensorImpl from CPUTensorImpl has some issues with
-//          the TypeId. I'd recommend having these classes independent of each other
-//          and pull out common functionality into a member object used by both.
-// ezyang to @smessmer: Have at it. The point of having private Impls is we can move stuff
-//          around with impunity.  My personal preference is for CPUTensorImpl to have data_ptr_
-//          and stride_, and have no StridedCPUTensorImpl.
-// ezyang: Temporarily suspending this while I experiment with an Impl hierarchy which Caffe2 legacy needs.
-class StridedCPUTensorImpl final : public TensorImpl {
-  SmallVector<int64_t> stride_;
-
-  StridedCPUTensorImpl() : TensorImpl(TypeIds::StridedCPUTensor) {};
-
-  ArrayRef<int64_t> stride() const override {
-    return stride_;
-  }
-  // Missing retain/release
-};
-*/
-
-/*
-// Example:
-
-class OpenGLTensorImpl final : public TensorImpl {
-  opengl_handle handle_;
-
-  OpenGLTensorImpl() : TensorImpl(TypeIds::OpenCLTensor) {};
-public:
-  opengl_handle handle() const {
-    return handle_;
+  inline void *data_ptr() const {
+    return storage_->data_ptr() + storage_offset_;
   }
 };
-*/
 
 }} // namespace c10::guts
