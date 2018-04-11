@@ -2,7 +2,6 @@
 
 #include "c10/TypeId.h"
 #include "c10/ArrayRef.h"
-#include "c10/guts/CPUStorage.h"
 
 #include "Retainable.h"
 
@@ -68,6 +67,13 @@ public:
   }
 
   virtual ~TensorImpl() = default;
+
+  // The following virtual functions TEMPORARILY live here.  When the
+  // dispatcher comes online, they will become dispatched by that mechanism.
+
+  // Create a new tensor of the same type as this tensor
+  virtual Tensor tensor(ArrayRef<int64_t> size) const {
+  }
 };
 
 // See design notes on Tensor.h, where this is hardcoded a few times.
@@ -91,30 +97,6 @@ public:
     //          avoid dereferencing the pointer to do a null check.
     static UndefinedTensorImpl singleton_;
     return &singleton_;
-  }
-};
-
-class CPUTensorImpl final : public TensorImpl {
-  // Note: storage->size() may be greater than the recorded size of the tensor
-  CPUStorage storage_;
-  // Note: In Torch this can be nonzero, because we support views into the
-  // inside of tensors.  In historic Caffe2 this was always zero.
-  std::size_t storage_offset_;
-  // NB: shares_data from Caffe2 was axed, because it is SOLELY used to determine
-  // check what the overall tensor usage is.  We can rewrite that code to
-  // keep a mapping of storage base pointers that it has seen (these all
-  // "count" the same), and perhaps add a bit to storage which tells us if
-  // it is "external" or "internal" (external storages don't count for accounting
-  // purposes.)
-  // NB: reserved from Caffe2 axed; as there are TWO sizes, we can easily
-  // implement the reserved pattern by having the storage be larger than the
-  // size recorded in a Tensor.  Hooray!
-  // TODO: Add strides
-public:
-  CPUTensorImpl(const CPUStorage& storage) : TensorImpl(TypeIds::CPUTensor), storage_(storage) {};
-
-  inline void *data_ptr() const {
-    return storage_->data_ptr() + storage_offset_;
   }
 };
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Retainable.h"
+#include "c10/guts/Retainable.h"
 
 #include <cstddef>
 #include <memory>
@@ -9,7 +9,7 @@
 #include <utility>
 #include <c10/Assert.h>
 
-namespace c10 { namespace guts {
+namespace c10 { namespace cpu {
 
 // CPUStorage is NOT part of the public API
 //
@@ -35,6 +35,7 @@ class CPUStorageImpl {
   data_t data_;
 
   // NB: This is number of elements, NOT bytes
+  // TODO: Maybe it should be bytes?!?!
   // TODO: I'm not sure why we have to save this info
   std::size_t size_;
   std::size_t element_size_; // in bytes
@@ -143,4 +144,4 @@ using CPUStorage = std::shared_ptr<CPUStorageImpl>;
 
 // TODO: perfect forwarding helper constructor for make_shared
 
-}} // namespace c10::guts
+}} // namespace c10::cpu
