@@ -46,8 +46,9 @@ namespace c10 {
 // NB: This is publically inherited, but only to conveniently bring the public methods
 // of Retainable into scope.  If this is causing bad error messages, make it private
 // again and explicitly 'using' each of the public methods you want to propagate.
-class Tensor final : public guts::Retainable<Tensor, guts::TensorImpl, guts::UndefinedTensorImpl> {
-  using TensorBase = guts::Retainable<Tensor, guts::TensorImpl, guts::UndefinedTensorImpl>;
+class Tensor final {
+  using TensorBase = guts::Retainable<guts::TensorImpl, guts::UndefinedTensorImpl>;
+  TensorBase impl_;
 
 public:
   // Normal constructors

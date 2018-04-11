@@ -9,99 +9,96 @@ namespace c10 { namespace guts {
 class RetainableImpl {
   std::atomic<int> refcount_;
 
-  template <typename T, typename TImpl, typename NullType>
+  template <typename T, typename NullType>
   friend class Retainable;
 
 public:
-  virtual ~RetainableImpl() {}
+  virtual ~RetainableImpl() = default;
 
 protected:
   RetainableImpl() : refcount_(1) {}
 };
 
-// Impl cannot be a dependent type, because this template is being used as a CRTP, and at the
-// time of template instantiation we don't know anything about T yet.
-template <typename T, typename TImpl, typename NullType>
-class Retainable {
+template <typename TImpl, typename NullType>
+class Retainable final {
   TImpl *pImpl;
 
-  void retain() {
+  void retain() noexcept {
     if (pImpl == NullType::singleton()) return;
     ++pImpl->refcount_;
   }
 
-  void release() {
+  void release() noexcept {
     if (pImpl == NullType::singleton()) return;
     if (--pImpl->refcount_ == 0) {
       delete pImpl;
+      pImpl = NullType::singleton();
     }
   }
 
-protected:
+public:
 
   Retainable() : pImpl(NullType::singleton()) {}
 
   // NB: invariant: if self == nullptr, then nullptr == NullType::singleton()
   Retainable(TImpl *self) : pImpl(self) {}
 
-  Retainable(const T &rhs)
-      : pImpl(rhs.pImpl) {
-    if (pImpl != NullType::singleton()) {
-      retain();
-    }
-  }
-
-  Retainable(T &&rhs) noexcept
+  Retainable(Retainable &&rhs) noexcept
       : pImpl(rhs.pImpl) {
     rhs.pImpl = NullType::singleton();
   }
 
-  // NB: Non-virtual!!!
-  ~Retainable() {
-    if (pImpl != NullType::singleton()) {
-      release();
-    }
+  Retainable(const Retainable &rhs)
+      : pImpl(rhs.pImpl) {
+    retain();
   }
 
-  inline TImpl *get() const {
+  ~Retainable() {
+    release();
+  }
+
+  TImpl *get() const noexcept {
     return pImpl;
   }
 
-  TImpl *detach() {
-    TImpl *ret = pImpl;
-    pImpl = NullType::singleton();
-    return ret;
+  TImpl* operator*() const noexcept {
+    return pImpl;
   }
 
-public:
+  TImpl* operator->() const noexcept {
+    return **this;
+  }
+
   // Copy assignment
-  T &operator=(T &&rhs) &noexcept {
+  Retainable &operator=(Retainable &&rhs) &noexcept {
     // smessmer to @ezyang: I'd explicitly set rhs to undefined for better debugability.
     // ezyang to @smessmer: That's a bunch of extra refcount bumps though, isn't it?
+    // smessmer to @ezyang: Only if *this is valid. And in that case, you probably want these bumps because you want to free the memory held by *this. I added it.
+    release();
     rhs.swap(*this);
     return *this;
   }
 
-  T &operator=(T const &rhs) &{
+  Retainable &operator=(const Retainable &rhs) &noexcept {
     //TensorBase ctor retains original rhs.pImpl
     //then rhs.pImpl is swapped with this->pImpl
     //finally TensorBase dtor releases rhs.pImpl, which was originally this->pImpl
-    T(rhs).swap(*this);
+    Retainable(rhs).swap(*this);
     return *this;
   }
 
-  void reset() {
-    T().swap(*this);
+  void reset() noexcept {
+    Retainable().swap(*this);
   }
 
-  void swap(T &rhs) noexcept {
+  void swap(Retainable &rhs) noexcept {
     TImpl *tmp = pImpl;
     pImpl = rhs.pImpl;
     rhs.pImpl = tmp;
   }
 
   // We do a lot of null-pointer checks in our code, good to have this be cheap.
-  bool defined() const {
+  bool defined() const noexcept {
     return pImpl != NullType::singleton();
   }
 };
