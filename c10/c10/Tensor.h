@@ -1,6 +1,14 @@
 #pragma once
 
-#include "guts/TensorImpl.h"
+#include "guts/Retainable.h"
+#include "ArrayRef.h"
+
+namespace c10 { namespace guts {
+
+  class TensorImpl;
+  class UndefinedTensorImpl;
+
+}}
 
 namespace c10 {
 
@@ -52,40 +60,20 @@ public:
   // via our implementation classes.  Most non-core methods should be implemented by
   // the generic dispatch mechanism.
 
-  int64_t dim() const {
-    return get()->dim();
-  }
+  // The definitions of these live in TensorMethods.h
+  inline int64_t dim() const;
+  inline ArrayRef<int64_t> size() const;
+  inline ArrayRef<int64_t> stride() const;
+  inline void* data_ptr() const;
 
-  int64_t ndimension() const {
+  inline int64_t Tensor::ndimension() const {
     return dim();
   }
 
-  ArrayRef<int64_t> size() const {
-    return get()->size();
-  }
-
-  ArrayRef<int64_t> stride() const {
-    return get()->stride();
-  }
-  /*
-  TypeId type_id() const {
-    return pImpl->type_id();
-  }
-   */
-  // smessmer to @ezyang: Do we want to try honoring const-ness for the underlying data?
-  //          i.e. const T* data() const {} and T* data() {} ?
-  //          not sure if it's a good idea, but we should consider it.
-  // ezyang to @smessmer: This is difficult to do without adding more user-visible 'Tensor' types.
-  //          Back story is at https://github.com/zdevito/ATen/issues/27
   template<typename T>
-  T *data() const {
-    return static_cast<T *>(get()->data_ptr());
+  inline T *data() const {
+    return static_cast<T *>(data_ptr());
   }
-
-
-  // TODO: work out the type() situation
-
-  // TODO: work out the guts() situation
 
   // The "well known" Tensor functions will call into the dispatch mechanism (yet to be
   // implemented)

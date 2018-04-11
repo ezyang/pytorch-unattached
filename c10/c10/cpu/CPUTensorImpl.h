@@ -5,16 +5,7 @@
 
 namespace c10 { namespace cpu {
 
-struct CPUAllocator {
-  CPUAllocator() {}
-  // In case the allocator wants to manage some internal state that needs
-  // to be freed later
-  virtual ~CPUAllocator() noexcept {}
-  // virtual std::unique_ptr<, > malloc() {}
-  virtual realloc() {}
-}
-
-class CPUTensorImpl final : public TensorImpl {
+class CPUTensorImpl final : public guts::TensorImpl {
   // Note: storage->size() may be greater than the recorded size of the tensor
   CPUStorage storage_;
   // Note: In Torch this can be nonzero, because we support views into the
