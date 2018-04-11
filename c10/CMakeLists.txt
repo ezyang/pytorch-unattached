@@ -1,10 +1,19 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.2)
 project(c10)
 
 set(CMAKE_CXX_STANDARD 11)
 
-set(C10_INSTALL_INCLUDE_SUBDIR "include")
+# NB: This stuff was cargo-culted from ATen.  Halp!!
+set(C10_INSTALL_BIN_SUBDIR "bin" CACHE PATH "ATen install binary subdirectory")
+set(C10_INSTALL_LIB_SUBDIR "lib" CACHE PATH "ATen install library subdirectory")
+set(C10_INSTALL_INCLUDE_SUBDIR "include" CACHE PATH "ATen install include subdirectory")
 
+SET(C10_INSTALL_BIN_DIR "bin" CACHE PATH "AT install binary subdirectory")
+SET(C10_INSTALL_LIB_DIR "lib" CACHE PATH "AT install library subdirectory")
+SET(C10_INSTALL_INCLUDE_DIR "include" CACHE PATH "AT install include subdirectory")
+SET(C10_INSTALL_SHARE_DIR "share" CACHE PATH "AT install include subdirectory")
+
+# TODO: This is still in flux
 add_library(c10_cuda OBJECT
         c10/cuda/CUDAStorage.cpp
         c10/cuda/CUDAStorage.h
@@ -28,4 +37,13 @@ target_include_directories(c10 PUBLIC
         )
 
 install(DIRECTORY c10 DESTINATION "${C10_INSTALL_INCLUDE_SUBDIR}"
-        FILES_MATCHING PATTERN "*.h")
+  FILES_MATCHING PATTERN "*.h")
+
+install(TARGETS c10 EXPORT c10_targets
+  RUNTIME DESTINATION "${C10_INSTALL_BIN_DIR}"
+  LIBRARY DESTINATION "${C10_INSTALL_LIB_DIR}"
+  ARCHIVE DESTINATION "${C10_INSTALL_LIB_DIR}")
+
+install(EXPORT c10_targets DESTINATION share/cmake/c10
+  FILE c10_targets.cmake
+  COMPONENT dev)

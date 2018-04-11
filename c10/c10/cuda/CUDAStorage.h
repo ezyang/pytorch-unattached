@@ -23,7 +23,7 @@ public:
   , size_(size)
   , resizable_(resizable)
   {
-    CUDA_CHECK(cudaGetDevice(&device_));
+    // CUDA_CHECK(cudaGetDevice(&device_));
   }
 
   inline const void* data_ptr() const {

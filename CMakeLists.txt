@@ -164,6 +164,7 @@ include_directories(BEFORE ${PROJECT_BINARY_DIR})
 add_subdirectory(caffe/proto)
 
 # ---[ Main build
+add_subdirectory(c10)
 add_subdirectory(caffe2)
 
 # Documentation Option
