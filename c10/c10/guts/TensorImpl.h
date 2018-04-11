@@ -31,25 +31,24 @@ using SmallVector = std::vector<T>;
 // NB: Use of virtual functions means that this is NOT a plain old data class.
 // This means that we don't get inlineable C API functions which access the representation
 // directly
-class TensorImpl : public RetainableImpl {
+class TensorImpl : private RetainableImpl {
   // Used for dispatch on the object
   const TypeId type_id_;
 
   SmallVector<int64_t> size_;
 
-  friend class c10::Tensor;
-
 public:
-  explicit TensorImpl(TypeId type_id) : type_id_(type_id), RetainableImpl() {};
+  explicit TensorImpl(TypeId type_id) : RetainableImpl(), type_id_(type_id), size_() {};
 
-  inline ArrayRef<int64_t> size() const {
+  ArrayRef<int64_t> size() const {
     return size_;
   }
 
   // NB: In Caffe2, this quantity is CACHED.  For simplicity, we don't cache it for now, but consider
   // doing so.
   // NB: This was ported in from the TH backend (which we normally defer to.)
-  inline int64_t numel() const {
+  // smessmer to @ezyang: Do we need this in here? Seems like something that can live as a non-member.
+  int64_t numel() const {
     int64_t r = 1;
     for (auto s : size()) r *= s;
     return r;
@@ -76,7 +75,7 @@ public:
 //      create a 2x3 tensor of the same "type" as x.  If x is an empty CPU tensor, you'll get a CPU tensor,
 //      instead of an error, which should have happened.  It just seems morally wrong to privilege empty CPU
 //      tensors in this way.  Also, you don't get reliable pointer equality tests anymore.
-class UndefinedTensorImpl : public TensorImpl {
+class UndefinedTensorImpl final : public TensorImpl {
   UndefinedTensorImpl() : TensorImpl(TypeIds::Undefined) {};
 public:
   int64_t dim() const override {
@@ -111,9 +110,9 @@ class CPUTensorImpl final : public TensorImpl {
   // size recorded in a Tensor.  Hooray!
   // TODO: Add strides
 public:
-  CPUTensorImpl(const CPUStorage& storage) : TensorImpl(TypeIds::CPUTensor), storage_(storage) {};
+  explicit CPUTensorImpl(const CPUStorage& storage) : TensorImpl(TypeIds::CPUTensor), storage_(storage) {};
 
-  inline void *data_ptr() const {
+  void *data_ptr() const override {
     return static_cast<uint8_t*>(storage_->data_ptr()) + storage_offset_;
   }
 };

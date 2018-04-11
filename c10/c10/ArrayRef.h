@@ -35,7 +35,7 @@ namespace c10 {
 /// This is intended to be trivially copyable, so it should be passed by
 /// value.
 template<typename T>
-class ArrayRef {
+class ArrayRef final {
 public:
   using iterator = const T *;
   using const_iterator = const T *;
@@ -55,10 +55,10 @@ public:
   /// @{
 
   /// Construct an empty ArrayRef.
-  /*implicit*/ constexpr ArrayRef() : Data(nullptr), Length(0) {}
+  constexpr ArrayRef() : Data(nullptr), Length(0) {}
 
   /// Construct an ArrayRef from a single element.
-  /*implicit*/ constexpr ArrayRef(const T &OneElt)
+  explicit constexpr ArrayRef(const T &OneElt)
     : Data(&OneElt), Length(1) {}
 
   /// Construct an ArrayRef from a pointer and length.
@@ -119,11 +119,8 @@ public:
   }
 
   /// equals - Check for element-wise equality.
-  /// NB: constexpr in C++14
-  /*constexpr*/ bool equals(ArrayRef RHS) const {
-    if (Length != RHS.Length)
-      return false;
-    return std::equal(begin(), end(), RHS.begin());
+  constexpr bool equals(ArrayRef RHS) const {
+    return Length == RHS.Length && std::equal(begin(), end(), RHS.begin());
   }
 
   /// slice(n, m) - Chop off the first N elements of the array, and keep M
@@ -169,13 +166,6 @@ public:
   /// @name Expensive Operations
   /// @{
   std::vector<T> vec() const {
-    return std::vector<T>(Data, Data+Length);
-  }
-
-  /// @}
-  /// @name Conversion operators
-  /// @{
-  operator std::vector<T>() const {
     return std::vector<T>(Data, Data+Length);
   }
 

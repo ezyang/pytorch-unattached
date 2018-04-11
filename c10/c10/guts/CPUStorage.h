@@ -28,6 +28,8 @@ namespace c10 { namespace guts {
 //
 // Roughly corresponds to THStorage from old ATen
 class CPUStorageImpl {
+  // smessmer to @ezyang: We might want to use folly::Function instead.
+  //                      The folly::Function header is quite self contained, i.e. can be copied here without the rest of folly.
   using data_t = std::unique_ptr<void, std::function<void(void*)>>;
 
   // NB: THAllocator is axed; instead, all you can pass now is a custom deleter,
@@ -101,22 +103,22 @@ public:
 
   // Straight up reimplementation of the ATen CPUStorage API
 
-  inline const void* data_ptr() const {
+  const void* data_ptr() const {
     return data_.get();
   }
 
-  inline void* data_ptr() {
+  void* data_ptr() {
     return data_.get();
   }
 
   // THStorage_(size)
-  inline std::size_t size() const {
+  std::size_t size() const {
     return size_;
   }
 
   // THStorage_(elementSize)
   // I'm... not really sure why we need to store this in here.
-  inline std::size_t elementSize() const {
+  std::size_t elementSize() const {
     return element_size_;
   }
 

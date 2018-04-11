@@ -38,8 +38,9 @@ namespace c10 {
 // NB: This is publically inherited, but only to conveniently bring the public methods
 // of Retainable into scope.  If this is causing bad error messages, make it private
 // again and explicitly 'using' each of the public methods you want to propagate.
-class Tensor final : public guts::Retainable<Tensor, guts::TensorImpl, guts::UndefinedTensorImpl> {
-  using TensorBase = guts::Retainable<Tensor, guts::TensorImpl, guts::UndefinedTensorImpl>;
+class Tensor final {
+  using TensorBase = guts::Retainable<guts::TensorImpl, guts::UndefinedTensorImpl>;
+  TensorBase impl_;
 
 public:
   // Normal constructors
@@ -53,7 +54,7 @@ public:
   // the generic dispatch mechanism.
 
   int64_t dim() const {
-    return get()->dim();
+    return impl_->dim();
   }
 
   int64_t ndimension() const {
@@ -61,11 +62,11 @@ public:
   }
 
   ArrayRef<int64_t> size() const {
-    return get()->size();
+    return impl_->size();
   }
 
   ArrayRef<int64_t> stride() const {
-    return get()->stride();
+    return impl_->stride();
   }
   /*
   TypeId type_id() const {
@@ -79,7 +80,8 @@ public:
   //          Back story is at https://github.com/zdevito/ATen/issues/27
   template<typename T>
   T *data() const {
-    return static_cast<T *>(get()->data_ptr());
+    static_assert(std::is_pod<T>::value, "We only support casting tensor data to primitive data types.");
+    return static_cast<T *>(impl_->data_ptr());
   }
 
 
