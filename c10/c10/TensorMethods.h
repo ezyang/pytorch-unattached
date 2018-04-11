@@ -30,4 +30,13 @@ inline void *Tensor::data_ptr() const {
   return impl_->data_ptr();
 }
 
+inline int64_t Tensor::ndimension() const {
+  return dim();
+}
+
+template<typename T>
+inline T *Tensor::data() const {
+  return static_cast<T *>(data_ptr());
+}
+
 } // namespace c10

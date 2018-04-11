@@ -2,6 +2,7 @@
 
 #include "c10/TypeId.h"
 #include "c10/ArrayRef.h"
+#include "c10/Tensor.h"
 
 #include "Retainable.h"
 
@@ -69,7 +70,9 @@ public:
   // dispatcher comes online, they will become dispatched by that mechanism.
 
   // Create a new tensor of the same type as this tensor
-  //virtual Tensor tensor(ArrayRef<int64_t> size) const = 0;
+  virtual Tensor tensor(ArrayRef<int64_t> size) const {
+    throw std::runtime_error("TensorImpl::tensor()");
+  }
 };
 
 // See design notes on Tensor.h, where this is hardcoded a few times.

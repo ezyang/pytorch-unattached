@@ -66,18 +66,17 @@ public:
   inline ArrayRef<int64_t> size() const;
   inline ArrayRef<int64_t> stride() const;
   inline void* data_ptr() const;
-
-  inline int64_t ndimension() const {
-    return dim();
-  }
+  inline int64_t ndimension() const;
 
   template<typename T>
-  inline T *data() const {
-    return static_cast<T *>(data_ptr());
-  }
+  inline T *data() const;
 
   // The "well known" Tensor functions will call into the dispatch mechanism (yet to be
   // implemented)
+
+  // To be something like:
+  // Tensor add(Tensor x, Tensor y) { guts::dispatch("add", x, y); }
+
 };
 
 } // namespace c10
