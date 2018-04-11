@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CPUAllocator.h"
 #include "c10/guts/Retainable.h"
 
 #include <cstddef>
@@ -8,6 +9,7 @@
 #include <cstdlib>
 #include <utility>
 #include <c10/Assert.h>
+#include <algorithm>
 
 namespace c10 { namespace cpu {
 
@@ -36,11 +38,7 @@ class CPUStorageImpl {
   // which is enough tod o the important things.
   data_t data_;
 
-  // NB: This is number of elements, NOT bytes
-  // TODO: Maybe it should be bytes?!?!
-  // TODO: I'm not sure why we have to save this info
-  std::size_t size_;
-  std::size_t element_size_; // in bytes
+  std::size_t size_; // in bytes
 
   // Is this storage resizable?  If it comes externally, or has been shared to some external system, it may not be.
   // Corresponds to TH_STORAGE_RESIZABLE.
@@ -80,21 +78,28 @@ class CPUStorageImpl {
   // NB: I axed TH_STORAGE_VIEW; it makes things complicated for not a good enough
   // reason
   // NB: I axed TH_STORAGE_REFCOUNTED; it seems to always be turned on.  If we do want
-  // this, itw ould be a good fit for the Retainable class.
+  // this, it would be a good fit for the Retainable class.
 
 public:
-  CPUStorageImpl(std::size_t element_size, std::size_t size)
-  : data_(std::malloc(element_size * size), [](void* x) { free(x); })
-  , element_size_(element_size)
+  // TODO: Permit allocator to be passed in through this function
+  // TODO: Maybe ball up the allocator into a context
+
+  CPUStorageImpl()
+  : data_(nullptr)
+  , size_(0)
+  , resizable_(true)
+  {}
+
+  CPUStorageImpl(std::size_t size)
+  : data_(getCPUAllocator()->malloc(size))
   , size_(size)
   , resizable_(true)
   {}
 
   // TODO: Make a more descriptive constructor for non-resizable things.  Note that since you're
   // using make_shared most of the time for storages, a static method won't cut it.
-  CPUStorageImpl(data_t&& data, std::size_t element_size, std::size_t size, bool resizable=true)
+  CPUStorageImpl(data_t&& data, std::size_t size, bool resizable=true)
   : data_(std::move(data))
-  , element_size_(element_size)
   , size_(size)
   , resizable_(resizable)
   {}
@@ -112,15 +117,8 @@ public:
     return data_.get();
   }
 
-  // THStorage_(size)
-  std::size_t size() const {
+  std::size_t sizeBytes() const {
     return size_;
-  }
-
-  // THStorage_(elementSize)
-  // I'm... not really sure why we need to store this in here.
-  std::size_t elementSize() const {
-    return element_size_;
   }
 
   // THStorage_(swap)
@@ -139,6 +137,28 @@ public:
   // NB: deleted retain/free
   // NB: all of the new variants are sucked through the new constructor
   // NB: deleted fill/set/get
+
+  // Meditation of THStorage_(resize)
+  // Caffe2 behavior is when keep_data == false
+  void resize_(std::size_t new_size, bool keep_data = true) {
+    if (!resizable_) throw std::runtime_error("trying to resize storage that is not resizable");
+    // TODO: Consider bringing back the old realloc path from TH?
+    data_t old_data = std::move(data_);
+    std::size_t old_size = size_;
+    if (size_ == 0) {
+      data_ = nullptr;
+    } else {
+      data_ = getCPUAllocator()->malloc(new_size);
+    }
+    size_ = new_size;
+    if (old_data != nullptr && keep_data) {
+      std::size_t copy_size = std::min(new_size, size_);
+      if (copy_size > 0) {
+        std::memcpy(data_.get(), old_data.get(), copy_size);
+      }
+      old_data.reset();
+    }
+  }
 
 };
 

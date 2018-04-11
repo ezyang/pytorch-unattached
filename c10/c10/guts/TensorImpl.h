@@ -3,6 +3,7 @@
 #include "c10/TypeId.h"
 #include "c10/ArrayRef.h"
 #include "c10/Tensor.h"
+#include "c10/SmallVector.h"
 
 #include "Retainable.h"
 
@@ -15,21 +16,15 @@ namespace c10 {
 // NB: It's called guts because it's short and gets the point across :)
 namespace c10 { namespace guts {
 
-// TODO: Fill in an actual SmallVector implementation here.  Both Folly and LLVM's
-// implementation are a bit annoying to make standalone.  Maybe this can be made
-// simpler by assuming T is POD.
-// TODO: For the common case of sizes and strides, the lengths of the two arrays
-// are equal, so there is no need to store the ndim twice.  Worth thinking about.
-template<typename T>
-using SmallVector = std::vector<T>;
-
 // For now: try using empty tensors for type (I think we'll probably add a Type
 // object)
 
 // NB: Use of virtual functions means that this is NOT a plain old data class.
 // This means that we don't get inlineable C API functions which access the representation
 // directly
-class TensorImpl : private RetainableImpl {
+// ezyang to @smessmer: You need some sort of way to cast from TensorImpl to RetainableImpl, otherwise
+// the wrapper doesn't seem to work???
+class TensorImpl : public RetainableImpl {
   // Used for dispatch on the object
   const TypeId type_id_;
 
@@ -68,10 +63,10 @@ public:
 
   // The following virtual functions TEMPORARILY live here.  When the
   // dispatcher comes online, they will become dispatched by that mechanism.
+  // They're labeled with HACK in their name
 
-  // Create a new tensor of the same type as this tensor
-  virtual Tensor tensor(ArrayRef<int64_t> size) const {
-    throw std::runtime_error("TensorImpl::tensor()");
+  virtual void HACK_resize_(ArrayRef<int64_t> size, ArrayRef<int64_t> stride) {
+    throw std::runtime_error("resize");
   }
 };
 

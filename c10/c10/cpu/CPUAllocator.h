@@ -21,4 +21,10 @@ struct SimpleCPUAllocator : public CPUAllocator {
   }
 };
 
+// Now that I've written these functions, I remembered that Zach suggested that
+// we should use a context stored in our objects which will let us avoid an indirection
+
+CPUAllocator* getCPUAllocator();
+void setCPUAllocator(CPUAllocator* allocator);
+
 }}

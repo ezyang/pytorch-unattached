@@ -6,6 +6,7 @@
 namespace c10 { namespace cpu {
 
 class CPUTensorImpl final : public guts::TensorImpl {
+  std::size_t element_size_;
   // Note: storage->size() may be greater than the recorded size of the tensor
   CPUStorage storage_;
   // Note: In Torch this can be nonzero, because we support views into the
@@ -21,12 +22,31 @@ class CPUTensorImpl final : public guts::TensorImpl {
   // NB: reserved from Caffe2 axed; as there are TWO sizes, we can easily
   // implement the reserved pattern by having the storage be larger than the
   // size recorded in a Tensor.  Hooray!
-  // TODO: Add strides
+  // TODO: Move this to the parent class
+  SmallVector<int64_t> stride_;
 public:
-  CPUTensorImpl(const CPUStorage& storage) : TensorImpl(TypeIds::CPUTensor), storage_(storage) {};
+  CPUTensorImpl(std::size_t element_size, const CPUStorage& storage)
+  : TensorImpl(TypeIds::CPUTensor)
+      , element_size_(element_size)
+      , storage_(storage)
+  {};
 
-  inline void *data_ptr() const {
+  void *data_ptr() const override {
     return static_cast<void*>(static_cast<char*>(storage_->data_ptr()) + storage_offset_);
+  }
+
+  // Hacked up operators
+
+  static Tensor HACK_tensor(std::size_t element_size, ArrayRef<int64_t> size, ArrayRef<int64_t> stride) {
+    auto storage = std::make_shared<CPUStorageImpl>();
+    Tensor r = Tensor::_fromImpl(new CPUTensorImpl(element_size, storage));
+    r.resize_(size, stride);
+    return r;
+  }
+
+  // Channeling THTensor_(resizeNd)
+  void HACK_resize_(ArrayRef<int64_t> size, ArrayRef<int64_t> stride) override {
+    C10_ASSERT(size.size() == stride.size());
   }
 };
 

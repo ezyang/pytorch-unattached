@@ -50,7 +50,11 @@ class Tensor final {
   using TensorBase = guts::Retainable<guts::TensorImpl, guts::UndefinedTensorImpl>;
   TensorBase impl_;
 
+  Tensor(TensorBase impl) : impl_(impl) {};
+
 public:
+  static Tensor _fromImpl(guts::TensorImpl* impl) { return Tensor(TensorBase(impl)); };
+
   // Normal constructors
   // TODO: I don't know if it's safe to replace this with = default here... godbolt time...
   Tensor()  = default;
@@ -73,6 +77,8 @@ public:
 
   // The "well known" Tensor functions will call into the dispatch mechanism (yet to be
   // implemented)
+
+  void resize_(ArrayRef<int64_t> size, ArrayRef<int64_t> stride);
 
   // To be something like:
   // Tensor add(Tensor x, Tensor y) { guts::dispatch("add", x, y); }

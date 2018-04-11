@@ -28,6 +28,7 @@ add_library(c10 SHARED
         c10/TypeId.h
         c10/Assert.cpp
         c10/Assert.h
+        c10/Optional.h
         c10/guts/TensorImpl.cpp
         c10/guts/TensorImpl.h
         c10/guts/Retainable.cpp
@@ -38,7 +39,7 @@ add_library(c10 SHARED
         c10/cpu/CPUAllocator.h
         c10/cpu/CPUTensorImpl.cpp
         c10/cpu/CPUTensorImpl.h
-        c10/TensorMethods.h)
+        c10/TensorMethods.h c10/SmallVector.cpp c10/SmallVector.h)
 target_include_directories(c10 PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<INSTALL_INTERFACE:${C10_INSTALL_INCLUDE_SUBDIR}>
