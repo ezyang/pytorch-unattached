@@ -1,4 +1,4 @@
-#include "Storage.h"
+#include "CPUStorage.h"
 
 namespace c10 { namespace internal {
 

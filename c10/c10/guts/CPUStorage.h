@@ -7,40 +7,9 @@
 
 namespace c10 { namespace guts {
 
-// Use cases of allocators:
-//  - I'm inside an operator, I need to allocate some helper buffer or
-//    similar for my operation.
-//  - Entirely inside the backend, its hidden away, the CPU tensor needs
-//    a way to call malloc/GPU needs a way to call GPU malloc (which
-//    could be a completely different implementation
+class CPUStorage;
 
-// Some design constraints:
-//  - We want a single "allocator" struct which contains all of the information for
-//    malloc, realloc and free
-
-// Would be more accurate to call this CPUAllocator/CPUStorage
-// CPU is easy; GPU you want to know what device you're allocating
-// memory on.  Not enough to know that it's GPU memory.  There may
-// be trickier versions.
-
-// Corresponds to THAllocator, but in C++ style.
-class Allocator {
-public:
-  // Tentatively malloc/realloc are not needed
-  virtual void* malloc(std::size_t) = 0;
-  virtual void* realloc(void* p, std::size_t s) {
-    void* np = malloc(s);
-    // memcpy();
-    return nullptr;
-  };
-  virtual void* free(void*) = 0;
-};
-
-// TODO: Need a default allocator...
-
-class Storage;
-
-// Storage is NOT part of the public API
+// CPUStorage is NOT part of the public API
 //
 // Every Tensor is backed by a storage; multiple tensors may share the same storage
 // (which is why we need an indirection.)
@@ -51,7 +20,7 @@ class Storage;
 // In Caffe2, this was previously implemented directly as a std::shared_ptr.  Doing
 // it this means that realloc is not possible because a std::shared_ptr only
 // records the free() pointer.
-class StorageImpl : public RetainableImpl {
+class CPUStorageImpl : public RetainableImpl {
   void* data_;
   // NB: This is not BYTES, this is number of elements!
   std::size_t size_;
@@ -75,14 +44,14 @@ class StorageImpl : public RetainableImpl {
   // TODO: Maybe reconsider this
   Allocator* allocator_;
 
-  friend class Storage;
+  friend class CPUStorage;
 
 public:
-  ~StorageImpl() override {
+  ~CPUStorageImpl() override {
     allocator_->free(data_);
   }
 
-  static constexpr StorageImpl* singleton() {
+  static constexpr CPUStorageImpl* singleton() {
     return nullptr;
   }
 };
@@ -91,14 +60,14 @@ public:
 // compilation writing it this way.  If we need it, you need to move these methods around and
 // write a little more boilerplate.  The current style is to reduce boilerplate.
 
-class Storage : public Retainable<Storage, StorageImpl, StorageImpl> {
-  using StorageBase = Retainable<Storage, StorageImpl, StorageImpl>;
+class CPUStorage : public Retainable<CPUStorage, CPUStorageImpl, CPUStorageImpl> {
+  using StorageBase = Retainable<CPUStorage, CPUStorageImpl, CPUStorageImpl>;
 
 public:
-  Storage(const Storage &rhs) = default;
-  Storage(Storage &&rhs) noexcept = default;
+  CPUStorage(const CPUStorage &rhs) = default;
+  CPUStorage(CPUStorage &&rhs) noexcept = default;
 
-  Storage(std::size_t element_size, std::size_t size, Allocator* allocator) : StorageBase(new StorageImpl()) {
+  CPUStorage(std::size_t element_size, std::size_t size, Allocator* allocator) : StorageBase(new CPUStorageImpl()) {
     auto* impl = get();
     impl->data_ = allocator->malloc(element_size * size);
     impl->element_size_ = element_size;
@@ -115,7 +84,7 @@ public:
     // This has one more virtual dispatch than we might have had, if realloc
   }
 
-  // Straight up reimplementation of the ATen Storage API
+  // Straight up reimplementation of the ATen CPUStorage API
 
   template <typename T>
   inline const T* data() const {
