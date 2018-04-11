@@ -1,4 +1,5 @@
 #include "c10/guts/TensorImpl.h"
+#include "c10/Optional.h"
 
 #include "CPUStorage.h"
 #include "CPUAllocator.h"
@@ -23,6 +24,14 @@ class CPUTensorImpl final : public guts::TensorImpl {
   // implement the reserved pattern by having the storage be larger than the
   // size recorded in a Tensor.  Hooray!
   // TODO: Move this to the parent class
+  // Reminder: The way stride works is:
+  //    size[0]*stride[0] + size[1]*stride[1] + ...
+  // This means you can end up in weird situations.  Make sure to think about:
+  //    stride[i] == 0 (broadcasting)
+  //    stride[i] < 0 (negative strides)
+  //    size[i] == 0 (useful to maintain size information!)
+  //    stride[i] % size[i-1] != 0 (rolling window strides / not "embeddable")
+  //    len(size) == 0 (scalars)
   SmallVector<int64_t> stride_;
 public:
   CPUTensorImpl(std::size_t element_size, const CPUStorage& storage)
@@ -45,8 +54,10 @@ public:
   }
 
   // Channeling THTensor_(resizeNd)
-  void HACK_resize_(ArrayRef<int64_t> size, ArrayRef<int64_t> stride) override {
-    C10_ASSERT(size.size() == stride.size());
+  // NB: This code is GENERIC for all strided tensors.
+  void HACK_resize_(ArrayRef<int64_t> size, c10::optional<ArrayRef<int64_t>> stride) override {
+    C10_ASSERT(stride && size.size() == stride->size());
+    auto do_nothing = true;
   }
 };
 

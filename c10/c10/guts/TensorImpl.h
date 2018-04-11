@@ -4,6 +4,7 @@
 #include "c10/ArrayRef.h"
 #include "c10/Tensor.h"
 #include "c10/SmallVector.h"
+#include "c10/Optional.h"
 
 #include "Retainable.h"
 
@@ -65,7 +66,7 @@ public:
   // dispatcher comes online, they will become dispatched by that mechanism.
   // They're labeled with HACK in their name
 
-  virtual void HACK_resize_(ArrayRef<int64_t> size, ArrayRef<int64_t> stride) {
+  virtual void HACK_resize_(ArrayRef<int64_t> size, c10::optional<ArrayRef<int64_t>> stride) {
     throw std::runtime_error("resize");
   }
 };

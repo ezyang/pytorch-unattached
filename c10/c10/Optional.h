@@ -954,10 +954,10 @@ constexpr optional<X&> make_optional(std::reference_wrapper<X> v)
 namespace std
 {
   template <typename T>
-  struct hash<at::optional<T>>
+  struct hash<c10::optional<T>>
   {
     typedef typename hash<T>::result_type result_type;
-    typedef at::optional<T> argument_type;
+    typedef c10::optional<T> argument_type;
 
     constexpr result_type operator()(argument_type const& arg) const {
       return arg ? std::hash<T>{}(*arg) : result_type{};
@@ -965,10 +965,10 @@ namespace std
   };
 
   template <typename T>
-  struct hash<at::optional<T&>>
+  struct hash<c10::optional<T&>>
   {
     typedef typename hash<T>::result_type result_type;
-    typedef at::optional<T&> argument_type;
+    typedef c10::optional<T&> argument_type;
 
     constexpr result_type operator()(argument_type const& arg) const {
       return arg ? std::hash<T>{}(*arg) : result_type{};

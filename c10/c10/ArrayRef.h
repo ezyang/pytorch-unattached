@@ -107,13 +107,15 @@ public:
   constexpr size_t size() const { return Length; }
 
   /// front - Get the first element.
-  constexpr const T &front() const {
+  // C++14 only
+  /*constexpr*/ const T &front() const {
     C10_ASSERT(!empty(), "Empty list!");
     return Data[0];
   }
 
   /// back - Get the last element.
-  constexpr const T &back() const {
+  // C++14 only
+  /*constexpr*/ const T &back() const {
     C10_ASSERT(!empty(), "Empty list!");
     return Data[Length-1];
   }
@@ -125,7 +127,8 @@ public:
 
   /// slice(n, m) - Chop off the first N elements of the array, and keep M
   /// elements in the array.
-  constexpr ArrayRef<T> slice(size_t N, size_t M) const {
+  // C++14 only
+  /*constexpr*/ ArrayRef<T> slice(size_t N, size_t M) const {
     C10_ASSERT(N+M <= size(), "Invalid specifier");
     return ArrayRef<T>(data()+N, M);
   }
@@ -141,7 +144,8 @@ public:
   }
 
   /// Vector compatibility
-  constexpr const T &at(size_t Index) const {
+  // C++14 only
+  /*constexpr*/ const T &at(size_t Index) const {
     C10_ASSERT(Index < Length, "Invalid index!");
     return Data[Index];
   }
