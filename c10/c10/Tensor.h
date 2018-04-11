@@ -67,7 +67,7 @@ public:
   inline ArrayRef<int64_t> stride() const;
   inline void* data_ptr() const;
 
-  inline int64_t Tensor::ndimension() const {
+  inline int64_t ndimension() const {
     return dim();
   }
 

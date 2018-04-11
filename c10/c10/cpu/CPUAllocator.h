@@ -7,7 +7,7 @@ struct CPUAllocator {
   // In case the allocator wants to manage some internal state that needs
   // to be freed later
   virtual ~CPUAllocator() noexcept {}
-  virtual std::unique_ptr<void, std::function<void(void*)>> malloc() {}
+  //virtual std::unique_ptr<void, std::function<void(void*)>> malloc() {}
   // virtual void realloc() {}
 };
 

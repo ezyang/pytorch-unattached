@@ -10,15 +10,15 @@
 namespace c10 {
 
 inline int64_t Tensor::dim() const {
-  return get()->dim();
+  return impl_->dim();
 }
 
 inline ArrayRef<int64_t> Tensor::size() const {
-  return get()->size();
+  return impl_->size();
 }
 
 inline ArrayRef<int64_t> Tensor::stride() const {
-  return get()->stride();
+  return impl_->stride();
 }
 
 // smessmer to @ezyang: Do we want to try honoring const-ness for the underlying data?
@@ -27,7 +27,7 @@ inline ArrayRef<int64_t> Tensor::stride() const {
 // ezyang to @smessmer: This is difficult to do without adding more user-visible 'Tensor' types.
 //          Back story is at https://github.com/zdevito/ATen/issues/27
 inline void *Tensor::data_ptr() const {
-  return get()->data_ptr();
+  return impl_->data_ptr();
 }
 
 } // namespace c10
