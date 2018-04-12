@@ -48,6 +48,8 @@ OperatorBase::OperatorBase(const OperatorDef& operator_def, Workspace* ws)
   for (const string& output_str : operator_def.output()) {
     outputs_.push_back(CHECK_NOTNULL(ws->CreateBlob(output_str)));
   }
+
+  type_ = operator_def.type();
 }
 
 vector<TensorShape> OperatorBase::InputTensorShapes() {
@@ -358,7 +360,7 @@ GradientOpsMeta GetGradientForOp(
   return meta;
 }
 
-static TensorShapes InferBlobShapesAndTypes(
+TensorShapes InferBlobShapesAndTypes(
     CaffeMap<string, TensorShape>& blob_desc,
     const vector<NetDef*>& nets) {
   for (auto& defptr : nets) {
@@ -544,9 +546,9 @@ TensorShapes InferBlobShapesAndTypesFromWorkspace(
   return InferBlobShapesAndTypes(blob_desc, nets);
 }
 
-TensorShapes InferBlobShapesAndTypesFromMap(const CaffeMap<std::string,
-    std::vector<TIndex>>& blob_dimensions,
-    const vector<NetDef *> &nets) {
+TensorShapes InferBlobShapesAndTypesFromMap(
+    const CaffeMap<std::string, std::vector<TIndex>>& blob_dimensions,
+    const vector<NetDef*>& nets) {
   CaffeMap<string, TensorShape> blob_desc;
   // Populate shapes from known blobs
   for (const auto& blob : blob_dimensions) {
