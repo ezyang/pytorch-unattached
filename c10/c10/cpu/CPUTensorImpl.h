@@ -124,7 +124,14 @@ public:
         storage_ = std::make_shared<CPUStorageImpl>();
       }
       auto new_size_bytes = high_watermark * element_size_bytes_ + storage_offset_bytes_;
-      if (new_size_bytes > storage_->sizeBytes()) {
+      bool needs_resize =
+          // not enough space, OR
+          new_size_bytes > storage_->sizeBytes() ||
+          // we're not allowed to keep the old storage on a shrink, OR
+          !getGlobalCPUContext().keepOnShrink() ||
+          // we shrunk greater than the maximum "keep on shrink" bytes.
+          storage_->sizeBytes() - new_size_bytes > getGlobalCPUContext().maxKeepOnShrinkBytes();
+      if (needs_resize) {
         storage_->resize_(new_size_bytes);
       }
     }
