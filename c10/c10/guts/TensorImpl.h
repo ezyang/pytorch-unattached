@@ -9,6 +9,7 @@
 #include "Retainable.h"
 
 #include <vector>
+#include <c10/DimVector.h>
 
 namespace c10 {
   class Tensor;
@@ -31,7 +32,7 @@ protected:
   // Used for dispatch on the object
   const TypeId type_id_;
 
-  SmallVector<int64_t, 5> size_;
+  DimVector size_;
 
 public:
   explicit TensorImpl(TypeId type_id) : RetainableImpl(), type_id_(type_id), size_() {};

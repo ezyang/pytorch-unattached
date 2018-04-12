@@ -1,3 +1,4 @@
+#include <c10/DimVector.h>
 #include "c10/guts/TensorImpl.h"
 #include "c10/Optional.h"
 
@@ -5,6 +6,21 @@
 #include "CPUAllocator.h"
 
 namespace c10 { namespace cpu {
+
+// TODO: Refactor this into a utility header file
+auto compute_extent = [](ArrayRef<int64_t> size, ArrayRef<int64_t> stride) {
+  // Watermarks are inclusive.  NB: watermarks can be negative! Careful!
+  ssize_t high_watermark = 0;
+  ssize_t low_watermark = 0;
+  for (ssize_t d = size.size() - 1; d >= 0; d--) {
+    if (stride[d] >= 0) {
+      high_watermark += (size[d] - 1) * stride[d];
+    } else {
+      low_watermark += (size[d] - 1) * stride[d];
+    }
+  }
+  return std::pair<ssize_t, ssize_t>(low_watermark, high_watermark);
+};
 
 // Everything is ssize_t to prevent us from accidentally doing a signed-unsigned operation
 // which is basically never what you want.  But using ssize_t instead of int64_t shuts
@@ -38,7 +54,7 @@ class CPUTensorImpl final : public guts::TensorImpl {
   //    stride[i] % size[i-1] != 0 (rolling window strides / not "embeddable")
   //    len(size) == 0 (scalars)
   // See also https://ezyang.github.io/stride-visualizer/index.html
-  SmallVector<int64_t, 5> stride_;
+  DimVector stride_;
 public:
   CPUTensorImpl(ssize_t element_size_bytes, const CPUStorage& storage)
   : TensorImpl(TypeIds::CPUTensor)
@@ -78,20 +94,6 @@ public:
     C10_ASSERT(new_size.size() == new_stride.size());
     bool unchanged = new_size.equals(size()) && new_stride.equals(stride());
     if (unchanged) return;
-    // TODO: Refactor this into a utility
-    auto compute_extent = [](ArrayRef<int64_t> size, ArrayRef<int64_t> stride) {
-      // Watermarks are inclusive.  NB: watermarks can be negative! Careful!
-      ssize_t high_watermark = 0;
-      ssize_t low_watermark = 0;
-      for (ssize_t d = size.size() - 1; d >= 0; d--) {
-        if (stride[d] >= 0) {
-          high_watermark += (size[d] - 1) * stride[d];
-        } else {
-          low_watermark += (size[d] - 1) * stride[d];
-        }
-      }
-      return std::pair<ssize_t, ssize_t>(low_watermark, high_watermark);
-    };
     ssize_t low_watermark, high_watermark;
     std::tie(low_watermark, high_watermark) = compute_extent(new_size, new_stride);
     // NB: Actually, we should be able to support resizing the left-side of the tensor; we
