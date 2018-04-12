@@ -16,6 +16,7 @@
 #pragma once
 
 #include "Assert.h"
+#include "SmallVector.h"
 
 #include <array>
 #include <iterator>
@@ -68,6 +69,14 @@ public:
   /// Construct an ArrayRef from a range.
   constexpr ArrayRef(const T *begin, const T *end)
     : Data(begin), Length(end - begin) {}
+
+  /// Construct an ArrayRef from a SmallVector. This is templated in order to
+  /// avoid instantiating SmallVectorTemplateCommon<T> whenever we
+  /// copy-construct an ArrayRef.
+  template<typename U>
+  /*implicit*/ ArrayRef(const SmallVectorTemplateCommon<T, U> &Vec)
+    : Data(Vec.data()), Length(Vec.size()) {
+  }
 
   /// Construct an ArrayRef from a std::vector.
   template<typename A>

@@ -31,7 +31,7 @@ protected:
   // Used for dispatch on the object
   const TypeId type_id_;
 
-  SmallVector<int64_t> size_;
+  SmallVector<int64_t, 5> size_;
 
 public:
   explicit TensorImpl(TypeId type_id) : RetainableImpl(), type_id_(type_id), size_() {};

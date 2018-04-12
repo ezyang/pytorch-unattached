@@ -33,7 +33,7 @@ class CPUTensorImpl final : public guts::TensorImpl {
   //    stride[i] % size[i-1] != 0 (rolling window strides / not "embeddable")
   //    len(size) == 0 (scalars)
   // See also https://ezyang.github.io/stride-visualizer/index.html
-  SmallVector<int64_t> stride_;
+  SmallVector<int64_t, 5> stride_;
 public:
   CPUTensorImpl(std::size_t element_size, const CPUStorage& storage)
   : TensorImpl(TypeIds::CPUTensor)

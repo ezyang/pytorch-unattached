@@ -29,6 +29,7 @@ add_library(c10 SHARED
         c10/Assert.cpp
         c10/Assert.h
         c10/Optional.h
+        c10/AlignOf.h
         c10/guts/TensorImpl.cpp
         c10/guts/TensorImpl.h
         c10/guts/Retainable.cpp
