@@ -17,11 +17,9 @@ namespace c10 {
 //      - PRIMARY: It's possible to work with the underlying retained object using
 //        a C API, which is basically impossible to do with shared_ptr because
 //        it doesn't expose a manual retain()/release() API
-//      - SECONDARY: A true intrusive reference count has some nice properties
-//        which you don't get from use of std::make_shared (to put the refcount
-//        metadata next to the regular dynamic allocation) and
-//        std::enabled_shared_from_this (which generally needs to store a weak pointer
-//        to the control block).
+//      - SECONDARY: A true intrusive reference count avoids the need to store
+//        a weak pointer to the control block (as is the case for
+//        std::enabled_shared_from_this).
 // - guts::UndefinedTensorImpl instead of null pointer. Reasons:
 //      - We originally had a null pointer in ATen, but this meant that when we
 //        incorrectly attempted to use such a null pointer, we would segfault and
