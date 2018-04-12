@@ -7,8 +7,18 @@
 
 namespace c10 { namespace cpu {
 
+DimVector contiguous_strides(ArrayRef<int64_t> size) {
+  DimVector v(size.size());
+  ssize_t total_size = 1;
+  for (ssize_t d = size.size() - 1; d >= 0; d--) {
+    v[d] = total_size;
+    total_size *= size[d];
+  }
+  return v;  // RVO
+}
+
 // TODO: Refactor this into a utility header file
-auto compute_extent = [](ArrayRef<int64_t> size, ArrayRef<int64_t> stride) {
+std::pair<ssize_t, ssize_t> compute_extent(ArrayRef<int64_t> size, ArrayRef<int64_t> stride) {
   // Watermarks are inclusive.  NB: watermarks can be negative! Careful!
   ssize_t high_watermark = 0;
   ssize_t low_watermark = 0;
@@ -19,7 +29,7 @@ auto compute_extent = [](ArrayRef<int64_t> size, ArrayRef<int64_t> stride) {
       low_watermark += (size[d] - 1) * stride[d];
     }
   }
-  return std::pair<ssize_t, ssize_t>(low_watermark, high_watermark);
+  return {low_watermark, high_watermark};
 };
 
 // Everything is ssize_t to prevent us from accidentally doing a signed-unsigned operation
