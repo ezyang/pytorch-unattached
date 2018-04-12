@@ -22,7 +22,7 @@ DimVector contiguous_strides(ArrayRef<int64_t> size) {
 // TODO: Refactor this into a utility header file
 std::pair<ssize_t, ssize_t> compute_extent(ArrayRef<int64_t> size, ArrayRef<int64_t> stride) {
   // Watermarks are inclusive.  NB: watermarks can be negative! Careful!
-  ssize_t high_watermark = 0;n
+  ssize_t high_watermark = 0;
   ssize_t low_watermark = 0;
   for (ssize_t d = size.size() - 1; d >= 0; d--) {
     if (stride[d] >= 0) {
