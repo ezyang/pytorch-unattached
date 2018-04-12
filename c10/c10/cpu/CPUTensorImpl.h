@@ -41,21 +41,26 @@ std::pair<ssize_t, ssize_t> compute_extent(ArrayRef<int64_t> size, ArrayRef<int6
 class CPUTensorImpl final : public guts::TensorImpl {
   ssize_t element_size_bytes_;
   // Note: storage->size() may be greater than the recorded size of the tensor
-  // ezyang to @smessmer: Maybe we should consider using a never-null pointer
+  // ezyang to @smessmer: Maybe we should consider using a never-null pointer.
+  // If you do that a number of "is null" tests can be deleted.
   CPUStorage storage_;
+
   // Note: In Torch this can be nonzero, because we support views into the
   // inside of tensors.  In historic Caffe2 this was always zero.
   // NB: This is BYTES!!!  Different from TH historically, which was scalar size.
   ssize_t storage_offset_bytes_;
+
   // NB: shares_data from Caffe2 was axed, because it is SOLELY used to determine
   // check what the overall tensor usage is.  We can rewrite that code to
   // keep a mapping of storage base pointers that it has seen (these all
   // "count" the same), and perhaps add a bit to storage which tells us if
   // it is "external" or "internal" (external storages don't count for accounting
   // purposes.)
+
   // NB: reserved from Caffe2 axed; as there are TWO sizes, we can easily
   // implement the reserved pattern by having the storage be larger than the
   // size recorded in a Tensor.  Hooray!
+
   // TODO: Move this to the parent class
   // Reminder: The way stride works is:
   //    size[0]*stride[0] + size[1]*stride[1] + ...
@@ -128,9 +133,9 @@ public:
           // not enough space, OR
           new_size_bytes > storage_->sizeBytes() ||
           // we're not allowed to keep the old storage on a shrink, OR
-          !getGlobalCPUContext().keepOnShrink() ||
+          !globalCPUContext().keepOnShrink() ||
           // we shrunk greater than the maximum "keep on shrink" bytes.
-          storage_->sizeBytes() - new_size_bytes > getGlobalCPUContext().maxKeepOnShrinkBytes();
+          storage_->sizeBytes() - new_size_bytes > globalCPUContext().maxKeepOnShrinkBytes();
       if (needs_resize) {
         storage_->resize_(new_size_bytes, keep_data);
       }

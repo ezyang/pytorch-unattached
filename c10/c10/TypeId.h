@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+namespace c10 {
+
 // A compact identifier which stores all of the information necessary to
 // carry out a dispatch on a type.  This is NOT NECESSARILY in one-to-one
 // correspondence with the type hierarchy of TensorImpl, because we may decide
@@ -21,14 +23,19 @@
 // NB: NO default constructor
 class TypeId final {
   const int64_t id_;
+
   explicit constexpr TypeId(int64_t id) noexcept : id_(id) {}
+
   friend class TypeIds;
 };
 
 class TypeIds final {
 public:
   // These are just here for illustrative purposes
+  // NB: In C++11 you have to add these in TypeId.cpp too
   static constexpr TypeId Undefined = TypeId(0);
   static constexpr TypeId CPUTensor = TypeId(1);
   static constexpr TypeId CUDATensor = TypeId(2);
 };
+
+}

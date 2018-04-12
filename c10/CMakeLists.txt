@@ -40,7 +40,13 @@ add_library(c10 SHARED
         c10/cpu/CPUAllocator.h
         c10/cpu/CPUTensorImpl.cpp
         c10/cpu/CPUTensorImpl.h
-        c10/TensorMethods.h c10/SmallVector.cpp c10/SmallVector.h c10/DimVector.h c10/cpu/CPUContext.cpp c10/cpu/CPUContext.h)
+        c10/TensorMethods.h
+        c10/SmallVector.cpp
+        c10/SmallVector.h
+        c10/DimVector.h
+        c10/cpu/CPUContext.cpp
+        c10/cpu/CPUContext.h
+        c10/c10.h)
 target_include_directories(c10 PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<INSTALL_INTERFACE:${C10_INSTALL_INCLUDE_SUBDIR}>
@@ -57,3 +63,8 @@ install(TARGETS c10 EXPORT c10_targets
 install(EXPORT c10_targets DESTINATION share/cmake/c10
   FILE c10_targets.cmake
   COMPONENT dev)
+
+# TODO: Put this in the subdirectory
+add_executable(c10_scratch
+        c10/test/scratch.cpp)
+target_link_libraries(c10_scratch c10)

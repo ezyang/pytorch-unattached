@@ -29,6 +29,6 @@ public:
   void setMaxKeepOnShrinkBytes(ssize_t s) { max_keep_on_shrink_bytes_ = s; }
 };
 
-CPUContext &getGlobalCPUContext();
+CPUContext &globalCPUContext();
 
 }}
