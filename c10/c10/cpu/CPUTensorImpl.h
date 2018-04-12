@@ -9,8 +9,8 @@ namespace c10 { namespace cpu {
 // Return the strides corresponding to a contiguous layout of size.
 DimVector contiguous_strides(ArrayRef<int64_t> size) {
   DimVector v(size.size());
-  ssize_t total_size = 1;
-  for (ssize_t d = size.size() - 1; d >= 0; d--) {
+  int64_t total_size = 1;
+  for (int64_t d = size.size() - 1; d >= 0; d--) {
     v[d] = total_size;
     total_size *= size[d];
   }
@@ -20,11 +20,11 @@ DimVector contiguous_strides(ArrayRef<int64_t> size) {
 // Given size and strides, return the lowest and highest indices (inclusive) which may
 // be accessed with them.
 // TODO: Refactor this into a utility header file
-std::pair<ssize_t, ssize_t> compute_extent(ArrayRef<int64_t> size, ArrayRef<int64_t> stride) {
+std::pair<int64_t, int64_t> compute_extent(ArrayRef<int64_t> size, ArrayRef<int64_t> stride) {
   // Watermarks are inclusive.  NB: watermarks can be negative! Careful!
-  ssize_t high_watermark = 0;
-  ssize_t low_watermark = 0;
-  for (ssize_t d = size.size() - 1; d >= 0; d--) {
+  int64_t high_watermark = 0;
+  int64_t low_watermark = 0;
+  for (int64_t d = size.size() - 1; d >= 0; d--) {
     if (stride[d] >= 0) {
       high_watermark += (size[d] - 1) * stride[d];
     } else {
@@ -34,14 +34,14 @@ std::pair<ssize_t, ssize_t> compute_extent(ArrayRef<int64_t> size, ArrayRef<int6
   return {low_watermark, high_watermark};
 };
 
-// Everything is ssize_t to prevent us from accidentally doing a signed-unsigned operation
-// which is basically never what you want.  But using ssize_t instead of int64_t shuts
+// Everything is int64_t to prevent us from accidentally doing a signed-unsigned operation
+// which is basically never what you want.  But using int64_t instead of int64_t shuts
 // up the compiler about size_t conversions from standard library.
 
 class CPUTensorImpl final : public guts::TensorImpl {
   // dzhulgakov: I'd strongly suggest to keep around actual type, not just size to do type checking. Please look at TypeMeta - it solves a lot of issues
   // dzhulgakov: Caffe2 now supports fancy stuff like Tensor of std::string (or other types), TF too. I think we should handle it which requires some TypeMeta-like care to call constructors at right places. We can reuse it verbatim
-  ssize_t element_size_bytes_;
+  int64_t element_size_bytes_;
   // Note: storage->size() may be greater than the recorded size of the tensor
   // ezyang to @smessmer: Maybe we should consider using a never-null pointer.
   // If you do that a number of "is null" tests can be deleted.
@@ -50,7 +50,7 @@ class CPUTensorImpl final : public guts::TensorImpl {
   // Note: In Torch this can be nonzero, because we support views into the
   // inside of tensors.  In historic Caffe2 this was always zero.
   // NB: This is BYTES!!!  Different from TH historically, which was scalar size.
-  ssize_t storage_offset_bytes_;
+  int64_t storage_offset_bytes_;
 
   // NB: shares_data from Caffe2 was axed, because it is SOLELY used to determine
   // check what the overall tensor usage is.  We can rewrite that code to
@@ -76,7 +76,7 @@ class CPUTensorImpl final : public guts::TensorImpl {
   // See also https://ezyang.github.io/stride-visualizer/index.html
   DimVector stride_;
 public:
-  CPUTensorImpl(ssize_t element_size_bytes, const CPUStorage& storage)
+  CPUTensorImpl(int64_t element_size_bytes, const CPUStorage& storage)
   : TensorImpl(TypeIds::CPUTensor)
       , element_size_bytes_(element_size_bytes)
       , storage_(storage)
@@ -116,7 +116,7 @@ public:
     C10_ASSERT(new_size.size() == new_stride.size());
     bool unchanged = new_size.equals(size()) && new_stride.equals(stride());
     if (unchanged) return;
-    ssize_t low_watermark, high_watermark;
+    int64_t low_watermark, high_watermark;
     std::tie(low_watermark, high_watermark) = compute_extent(new_size, new_stride);
     // NB: Actually, we should be able to support resizing the left-side of the tensor; we
     // simply need to support the case when the pointer doesn't point to the beginning

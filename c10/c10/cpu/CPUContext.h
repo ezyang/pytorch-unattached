@@ -19,14 +19,14 @@ class CPUContext final {
   // These come from Caffe2; correspond to FLAGS_caffe2_keep_on_shrink
   // and FLAGS_caffe2_max_keep_on_shrink_memory
   bool keep_on_shrink_;
-  size_t max_keep_on_shrink_bytes_;
+  int64_t max_keep_on_shrink_bytes_;
 public:
   CPUAllocator *getCPUAllocator() { return allocator_; }
   void setCPUAllocator(CPUAllocator* allocator) { allocator_ = allocator; }
   bool keepOnShrink() { return keep_on_shrink_; }
   void setKeepOnShrink(bool b) { keep_on_shrink_ = b; }
   size_t maxKeepOnShrinkBytes() { return max_keep_on_shrink_bytes_; }
-  void setMaxKeepOnShrinkBytes(ssize_t s) { max_keep_on_shrink_bytes_ = s; }
+  void setMaxKeepOnShrinkBytes(int64_t s) { max_keep_on_shrink_bytes_ = s; }
 };
 
 CPUContext &globalCPUContext();

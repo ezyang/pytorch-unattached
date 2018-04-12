@@ -40,7 +40,7 @@ class CPUStorageImpl {
   data_t data_;
 
   // dzhulgakov: do we ever need a flag to see whether storage is shared among several views or not? if we add enabled_shared_from_this then we can just use shared_ptr::use_count()
-  ssize_t size_; // in bytes
+  int64_t size_; // in bytes
 
   // Is this storage resizable?  If it comes externally, or has been shared to some external system, it may not be.
   // Corresponds to TH_STORAGE_RESIZABLE.
@@ -95,7 +95,7 @@ public:
   , resizable_(true)
   {}
 
-  CPUStorageImpl(ssize_t size)
+  CPUStorageImpl(int64_t size)
   : data_(globalCPUContext().getCPUAllocator()->malloc(size))
   , size_(size)
   , resizable_(true)
@@ -103,7 +103,7 @@ public:
 
   // TODO: Make a more descriptive constructor for non-resizable things.  Note that since you're
   // using make_shared most of the time for storages, a static method won't cut it.
-  CPUStorageImpl(data_t&& data, ssize_t size, bool resizable=true)
+  CPUStorageImpl(data_t&& data, int64_t size, bool resizable=true)
   : data_(std::move(data))
   , size_(size)
   , resizable_(resizable)
@@ -122,7 +122,7 @@ public:
     return data_.get();
   }
 
-  ssize_t sizeBytes() const {
+  int64_t sizeBytes() const {
     return size_;
   }
 
@@ -146,11 +146,11 @@ public:
   // Meditation of THStorage_(resize)
   // Caffe2 behavior is when keep_data == false
   // dzhulgakov: Caffe2 has Reserve()/Extend() which is basically keep_data = true. I'd suggest to limit this behavior as much as possible, for example: allow only incremental growth and call it something more uncommon than 'resize'
-  void resize_(ssize_t new_size, bool keep_data = true) {
+  void resize_(int64_t new_size, bool keep_data = true) {
     if (!resizable_) throw std::runtime_error("trying to resize storage that is not resizable");
     // TODO: Consider bringing back the old realloc path from TH?
     data_t old_data = std::move(data_);
-    ssize_t old_size = size_;
+    int64_t old_size = size_;
     if (new_size == 0) {
       data_ = nullptr;
     } else {
@@ -158,7 +158,7 @@ public:
     }
     size_ = new_size;
     if (old_data != nullptr && keep_data) {
-      ssize_t copy_size = std::min(new_size, size_);
+      int64_t copy_size = std::min(new_size, size_);
       if (copy_size > 0) {
         std::memcpy(data_.get(), old_data.get(), copy_size);
       }
