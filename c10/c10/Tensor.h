@@ -48,10 +48,11 @@ namespace c10 {
 //    - ssize_t is not actually signed on Windows, isn't part of the standard,
 //      and only guarantees that -1 is representable
 //    - long is still 32-bit on 64-bit Windows systems
+//    - ptrdiff_t is hypothetically OK, but it's not an intuitive name
 //
-// So, we have two choices: (1) we could define our OWN integer type (appropriately
-// macro'ed to get the right thing or), or (2) we can always use int64_t and eat
-// the performance cost on 32-bit systems.  We have chosen (2).
+// So, we have two choices: (1) we could define our OWN integer type (synonym
+// to ptrdiff_t), or (2) we can always use int64_t and eat the performance cost on
+// 32-bit systems.  We have chosen (2).
 //
 // See also http://en.cppreference.com/w/cpp/language/types
 
