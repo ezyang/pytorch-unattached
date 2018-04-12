@@ -104,7 +104,7 @@ public:
   // incorrectly assume the original tensor was
   // contiguously strided for every negative index, even when it was not.
   // See also https://github.com/pytorch/pytorch/issues/229
-  void HACK_resize_(ArrayRef<int64_t> new_size, ArrayRef<int64_t> new_stride) override {
+  void HACK_resize_(ArrayRef<int64_t> new_size, ArrayRef<int64_t> new_stride, bool keep_data) override {
     C10_ASSERT(new_size.size() == new_stride.size());
     bool unchanged = new_size.equals(size()) && new_stride.equals(stride());
     if (unchanged) return;
@@ -132,7 +132,7 @@ public:
           // we shrunk greater than the maximum "keep on shrink" bytes.
           storage_->sizeBytes() - new_size_bytes > getGlobalCPUContext().maxKeepOnShrinkBytes();
       if (needs_resize) {
-        storage_->resize_(new_size_bytes);
+        storage_->resize_(new_size_bytes, keep_data);
       }
     }
   }

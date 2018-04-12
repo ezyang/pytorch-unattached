@@ -69,7 +69,7 @@ public:
   // dispatcher comes online, they will become dispatched by that mechanism.
   // They're labeled with HACK in their name
 
-  virtual void HACK_resize_(ArrayRef<int64_t> size, ArrayRef<int64_t> stride) {
+  virtual void HACK_resize_(ArrayRef<int64_t> size, ArrayRef<int64_t> stride, bool keep_data = true) {
     throw std::runtime_error("resize");
   }
 };
