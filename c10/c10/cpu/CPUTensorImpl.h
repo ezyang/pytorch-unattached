@@ -57,12 +57,37 @@ public:
   // Channeling THTensor_(resizeNd)
   // NB: This code is GENERIC for all strided tensors.
   // When stride is not set, it is assumed you wanted to preserve the original stride
-  void HACK_resize_(ArrayRef<int64_t> new_size, c10::optional<ArrayRef<int64_t>> new_stride) override {
-    C10_ASSERT(new_stride && new_size.size() == new_stride->size());
-    // My achey achey Haskell heart (where's the Maybe monad when you need it...)
-    bool unchanged = new_size.equals(size()) && (!new_stride || new_stride->equals(stride()));
+  // NB: resizeNd used to accept NULL stride, in which case contiguous strides are
+  // assumed.  To keep this function simple, we FORCE the callee to pass new_stride;
+  // it's a simple matter to compute what the appropriate contiguous strides for a
+  // tensor are.
+  // WARNING: BC-breaking change; previously a negative number was assumed to mean
+  // "compute whatever the appropriate contiguous stride is."  But this didn't even
+  // work in all cases; when determining if sizes/strides had changed, resizeNd would
+  // incorrectly assume the original tensor was
+  // contiguously strided for every negative index, even when it was not.
+  // See also https://github.com/pytorch/pytorch/issues/229
+  void HACK_resize_(ArrayRef<int64_t> new_size, ArrayRef<int64_t> new_stride) override {
+    C10_ASSERT(new_size.size() == new_stride.size());
+    bool unchanged = new_size.equals(size()) && new_stride.equals(stride());
     if (unchanged) return;
-    //size_ = new_size;
+    auto compute_extent = [](ArrayRef<int64_t> size, ArrayRef<int64_t> stride) {
+      // Watermarks are inclusive.  NB: watermarks can be negative! Careful!
+      ssize_t high_watermark = 0;
+      ssize_t low_watermark = 0;
+      for (ssize_t d = size.size() - 1; d >= 0; d--) {
+        if (stride[d] >= 0) {
+          high_watermark += (size[d] - 1) * stride[d];
+        } else {
+          low_watermark += (size[d] - 1) * stride[d];
+        }
+      }
+      return std::pair<ssize_t, ssize_t>(low_watermark, high_watermark);
+    };
+    ssize_t low_watermark, high_watermark;
+    std::tie(low_watermark, high_watermark) = compute_extent(new_size, new_stride);
+    size_.assign(new_size.begin(), new_size.end());
+    stride_.assign(new_stride.begin(), new_stride.end());
   }
 };
 
