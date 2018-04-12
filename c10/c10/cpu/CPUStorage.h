@@ -38,7 +38,7 @@ class CPUStorageImpl {
   // which is enough tod o the important things.
   data_t data_;
 
-  std::size_t size_; // in bytes
+  ssize_t size_; // in bytes
 
   // Is this storage resizable?  If it comes externally, or has been shared to some external system, it may not be.
   // Corresponds to TH_STORAGE_RESIZABLE.
@@ -90,7 +90,7 @@ public:
   , resizable_(true)
   {}
 
-  CPUStorageImpl(std::size_t size)
+  CPUStorageImpl(ssize_t size)
   : data_(getCPUAllocator()->malloc(size))
   , size_(size)
   , resizable_(true)
@@ -98,7 +98,7 @@ public:
 
   // TODO: Make a more descriptive constructor for non-resizable things.  Note that since you're
   // using make_shared most of the time for storages, a static method won't cut it.
-  CPUStorageImpl(data_t&& data, std::size_t size, bool resizable=true)
+  CPUStorageImpl(data_t&& data, ssize_t size, bool resizable=true)
   : data_(std::move(data))
   , size_(size)
   , resizable_(resizable)
@@ -117,7 +117,7 @@ public:
     return data_.get();
   }
 
-  std::size_t sizeBytes() const {
+  ssize_t sizeBytes() const {
     return size_;
   }
 
@@ -140,11 +140,11 @@ public:
 
   // Meditation of THStorage_(resize)
   // Caffe2 behavior is when keep_data == false
-  void resize_(std::size_t new_size, bool keep_data = true) {
+  void resize_(ssize_t new_size, bool keep_data = true) {
     if (!resizable_) throw std::runtime_error("trying to resize storage that is not resizable");
     // TODO: Consider bringing back the old realloc path from TH?
     data_t old_data = std::move(data_);
-    std::size_t old_size = size_;
+    ssize_t old_size = size_;
     if (size_ == 0) {
       data_ = nullptr;
     } else {
@@ -152,7 +152,7 @@ public:
     }
     size_ = new_size;
     if (old_data != nullptr && keep_data) {
-      std::size_t copy_size = std::min(new_size, size_);
+      ssize_t copy_size = std::min(new_size, size_);
       if (copy_size > 0) {
         std::memcpy(data_.get(), old_data.get(), copy_size);
       }
