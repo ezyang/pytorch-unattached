@@ -22,10 +22,6 @@ namespace c10 { namespace cpu {
 // This is implemented as a regular shared_ptr to reduce implementation
 // cost.  Since it's internal we don't mind if it's a little clunky to use.
 //
-// In Caffe2, this was previously implemented directly as a std::shared_ptr.  Doing
-// it this means that realloc is not possible because a std::shared_ptr only
-// records the free() pointer.
-//
 // TODO: Consider making it possible to allocate CPUStorageImpl in the same block as a CPUTensor, so that
 // allocating a tensor is only one dynamic allocation rather than two
 //
@@ -33,6 +29,7 @@ namespace c10 { namespace cpu {
 class CPUStorageImpl {
   // smessmer to @ezyang: We might want to use folly::Function instead.
   //                      The folly::Function header is quite self contained, i.e. can be copied here without the rest of folly.
+  // NB: The reason to use folly::Function is that it allows functions to be moved, rather than only copied
   using data_t = std::unique_ptr<void, std::function<void(void*)>>;
 
   // NB: THAllocator is axed; instead, all you can pass now is a custom deleter,
