@@ -26,7 +26,8 @@ namespace c10 {
 //      - We originally had a null pointer in ATen, but this meant that when we
 //        incorrectly attempted to use such a null pointer, we would segfault and
 //        crash, which is very unfriendly for our Python users.  Using an guts::UndefinedTensorImpl
-//        as our default constructor is much better for us.
+//        as our default constructor is much better for us. This approach is similar to
+//        allowing nullptr dispatch in Obj-C
 // - Fixed the mismatch between PyTorch and C++ methods
 //      - sizes() is now size()
 //
@@ -66,12 +67,15 @@ public:
   // the generic dispatch mechanism.
 
   // The definitions of these live in TensorMethods.h
+  // dzhulgakov: nit - is it widely used? I'd prefer ndimension as below or rank. In C2 it's a function returning particular dimension
   inline int64_t dim() const;
+  // dzhulgakov: nit - why `size` and not `sizes`? In C2 the size is number of elements - I bet it will cause confusion
   inline ArrayRef<int64_t> size() const;
   inline ArrayRef<int64_t> stride() const;
   inline void* data_ptr() const;
   inline int64_t ndimension() const;
 
+  // dzhulgakov: what are the semantics of it? i.e. how do I change type of the elements stored in a tensor? Or is it passed only in the constructor?
   template<typename T>
   inline T *data() const;
 

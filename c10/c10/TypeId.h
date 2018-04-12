@@ -21,6 +21,10 @@ namespace c10 {
 // TODO: Does this also contain per Tensor properties, like contiguity?
 //
 // NB: NO default constructor
+//
+// dzhulgakov: have we considered just reusing TypeMeta directly? It allows for
+// extensible backends more easily and is a pretty battle-tested piece of code.
+}
 class TypeId final {
   const int64_t id_;
 

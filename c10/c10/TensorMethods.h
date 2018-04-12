@@ -36,6 +36,8 @@ inline int64_t Tensor::ndimension() const {
 
 template<typename T>
 inline T *Tensor::data() const {
+// dzhulgakov: we definitely need a mechanism to type check here and have another typeid for element types. I'd suggest we lift it to the parent Tensor or TensorImpl class as it's going to be accessed often
+// also, if tensor doesn't support raw pointers - is it expected to throw?
   return static_cast<T *>(data_ptr());
 }
 

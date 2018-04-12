@@ -22,7 +22,7 @@ DimVector contiguous_strides(ArrayRef<int64_t> size) {
 // TODO: Refactor this into a utility header file
 std::pair<ssize_t, ssize_t> compute_extent(ArrayRef<int64_t> size, ArrayRef<int64_t> stride) {
   // Watermarks are inclusive.  NB: watermarks can be negative! Careful!
-  ssize_t high_watermark = 0;
+  ssize_t high_watermark = 0;n
   ssize_t low_watermark = 0;
   for (ssize_t d = size.size() - 1; d >= 0; d--) {
     if (stride[d] >= 0) {
@@ -39,6 +39,8 @@ std::pair<ssize_t, ssize_t> compute_extent(ArrayRef<int64_t> size, ArrayRef<int6
 // up the compiler about size_t conversions from standard library.
 
 class CPUTensorImpl final : public guts::TensorImpl {
+  // dzhulgakov: I'd strongly suggest to keep around actual type, not just size to do type checking. Please look at TypeMeta - it solves a lot of issues
+  // dzhulgakov: Caffe2 now supports fancy stuff like Tensor of std::string (or other types), TF too. I think we should handle it which requires some TypeMeta-like care to call constructors at right places. We can reuse it verbatim
   ssize_t element_size_bytes_;
   // Note: storage->size() may be greater than the recorded size of the tensor
   // ezyang to @smessmer: Maybe we should consider using a never-null pointer.
@@ -60,7 +62,7 @@ class CPUTensorImpl final : public guts::TensorImpl {
   // NB: reserved from Caffe2 axed; as there are TWO sizes, we can easily
   // implement the reserved pattern by having the storage be larger than the
   // size recorded in a Tensor.  Hooray!
-
+  // dzhulgakov: superlike! :)
   // TODO: Move this to the parent class
   // Reminder: The way stride works is:
   //    size[0]*stride[0] + size[1]*stride[1] + ...
@@ -70,6 +72,7 @@ class CPUTensorImpl final : public guts::TensorImpl {
   //    size[i] == 0 (useful to maintain size information!)
   //    stride[i] % size[i-1] != 0 (rolling window strides / not "embeddable")
   //    len(size) == 0 (scalars)
+  // dzhulgakov: how much "stride analysis" do implementations usually do in TH?
   // See also https://ezyang.github.io/stride-visualizer/index.html
   DimVector stride_;
 public:
