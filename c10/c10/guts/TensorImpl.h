@@ -26,6 +26,8 @@ namespace c10 { namespace guts {
 // ezyang to @smessmer: You need some sort of way to cast from TensorImpl to RetainableImpl, otherwise
 // the wrapper doesn't seem to work???
 class TensorImpl : public RetainableImpl {
+  // TODO: Is this OK to be protected
+protected:
   // Used for dispatch on the object
   const TypeId type_id_;
 

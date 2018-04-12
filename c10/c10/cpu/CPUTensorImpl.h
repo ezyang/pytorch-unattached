@@ -32,6 +32,7 @@ class CPUTensorImpl final : public guts::TensorImpl {
   //    size[i] == 0 (useful to maintain size information!)
   //    stride[i] % size[i-1] != 0 (rolling window strides / not "embeddable")
   //    len(size) == 0 (scalars)
+  // See also https://ezyang.github.io/stride-visualizer/index.html
   SmallVector<int64_t> stride_;
 public:
   CPUTensorImpl(std::size_t element_size, const CPUStorage& storage)
@@ -55,9 +56,13 @@ public:
 
   // Channeling THTensor_(resizeNd)
   // NB: This code is GENERIC for all strided tensors.
-  void HACK_resize_(ArrayRef<int64_t> size, c10::optional<ArrayRef<int64_t>> stride) override {
-    C10_ASSERT(stride && size.size() == stride->size());
-    auto do_nothing = true;
+  // When stride is not set, it is assumed you wanted to preserve the original stride
+  void HACK_resize_(ArrayRef<int64_t> new_size, c10::optional<ArrayRef<int64_t>> new_stride) override {
+    C10_ASSERT(new_stride && new_size.size() == new_stride->size());
+    // My achey achey Haskell heart (where's the Maybe monad when you need it...)
+    bool unchanged = new_size.equals(size()) && (!new_stride || new_stride->equals(stride()));
+    if (unchanged) return;
+    //size_ = new_size;
   }
 };
 
