@@ -3,10 +3,10 @@
 #include "c10/Optional.h"
 
 #include "CPUStorage.h"
-#include "CPUAllocator.h"
 
 namespace c10 { namespace cpu {
 
+// Return the strides corresponding to a contiguous layout of size.
 DimVector contiguous_strides(ArrayRef<int64_t> size) {
   DimVector v(size.size());
   ssize_t total_size = 1;
@@ -17,6 +17,8 @@ DimVector contiguous_strides(ArrayRef<int64_t> size) {
   return v;  // RVO
 }
 
+// Given size and strides, return the lowest and highest indices (inclusive) which may
+// be accessed with them.
 // TODO: Refactor this into a utility header file
 std::pair<ssize_t, ssize_t> compute_extent(ArrayRef<int64_t> size, ArrayRef<int64_t> stride) {
   // Watermarks are inclusive.  NB: watermarks can be negative! Careful!
@@ -87,6 +89,9 @@ public:
   }
 
   // Channeling THTensor_(resizeNd)
+  // If aggressive = true, we will always try to free up old memory (this means
+  // we always have to do a reallocation).  Torch default behavior was to
+  // keep the old data around; Caffe2's behavior is to do a full reallocate.
   // NB: This code is GENERIC for all strided tensors.
   // When stride is not set, it is assumed you wanted to preserve the original stride
   // NB: resizeNd used to accept NULL stride, in which case contiguous strides are
@@ -99,7 +104,6 @@ public:
   // incorrectly assume the original tensor was
   // contiguously strided for every negative index, even when it was not.
   // See also https://github.com/pytorch/pytorch/issues/229
-  // NB: This does NOT deallocate memory when you resize to something smaller.
   void HACK_resize_(ArrayRef<int64_t> new_size, ArrayRef<int64_t> new_stride) override {
     C10_ASSERT(new_size.size() == new_stride.size());
     bool unchanged = new_size.equals(size()) && new_stride.equals(stride());

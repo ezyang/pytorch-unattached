@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CPUContext.h"
 #include "CPUAllocator.h"
 #include "c10/guts/Retainable.h"
 
@@ -91,7 +92,7 @@ public:
   {}
 
   CPUStorageImpl(ssize_t size)
-  : data_(getCPUAllocator()->malloc(size))
+  : data_(getGlobalCPUContext().getCPUAllocator()->malloc(size))
   , size_(size)
   , resizable_(true)
   {}
@@ -148,7 +149,7 @@ public:
     if (size_ == 0) {
       data_ = nullptr;
     } else {
-      data_ = getCPUAllocator()->malloc(new_size);
+      data_ = getGlobalCPUContext().getCPUAllocator()->malloc(new_size);
     }
     size_ = new_size;
     if (old_data != nullptr && keep_data) {

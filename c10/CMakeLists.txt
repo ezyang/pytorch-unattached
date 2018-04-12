@@ -40,7 +40,7 @@ add_library(c10 SHARED
         c10/cpu/CPUAllocator.h
         c10/cpu/CPUTensorImpl.cpp
         c10/cpu/CPUTensorImpl.h
-        c10/TensorMethods.h c10/SmallVector.cpp c10/SmallVector.h c10/DimVector.h)
+        c10/TensorMethods.h c10/SmallVector.cpp c10/SmallVector.h c10/DimVector.h c10/cpu/CPUContext.cpp c10/cpu/CPUContext.h)
 target_include_directories(c10 PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<INSTALL_INTERFACE:${C10_INSTALL_INCLUDE_SUBDIR}>
