@@ -567,6 +567,7 @@ class Tensor<CPUContext> {
    * call dim() instead.
    */
   inline int dim32(const int i) const {
+    // dzhulgakov: @ezyang - just fyi, this is a super useful trick for debugging in graph mode. Basically it preserves pointer to *this inside the exception so that surroinding code can correlate it with graph-known input/output. It's like a free substitute for tensor names. We should consider using it throughout the library. (you can do the same through gdb / stack unwinding, but it's simpler)
     #ifndef NDEBUG
     CAFFE_ENFORCE_LT_WITH_CALLER(i, dims_.size(), "Exceeding ndim limit");
     CAFFE_ENFORCE_GE_WITH_CALLER(i, 0, "Cannot have negative dimension index");

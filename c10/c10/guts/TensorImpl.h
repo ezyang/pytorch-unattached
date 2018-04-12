@@ -16,6 +16,7 @@ namespace c10 {
 }
 
 // NB: It's called guts because it's short and gets the point across :)
+// dzhulgakov: it's cool, less creative and longer version is "detail"
 namespace c10 { namespace guts {
 
 // For now: try using empty tensors for type (I think we'll probably add a Type
@@ -45,6 +46,7 @@ public:
   // doing so.
   // NB: This was ported in from the TH backend (which we normally defer to.)
   // smessmer to @ezyang: Do we need this in here? Seems like something that can live as a non-member.
+  // dzhulgakov: it should be a member imho and might be nice to cache it indeed
   int64_t numel() const {
     int64_t r = 1;
     for (auto s : size()) r *= s;
@@ -56,6 +58,7 @@ public:
   }
 
   virtual int64_t dim() const {
+    // dzhulgakov: this line is exactly why `size` is a bad name :)
     return static_cast<int64_t>(size().size());
   }
 

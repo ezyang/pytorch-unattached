@@ -24,18 +24,22 @@ namespace c10 { namespace cpu {
 //
 // TODO: Consider making it possible to allocate CPUStorageImpl in the same block as a CPUTensor, so that
 // allocating a tensor is only one dynamic allocation rather than two
+// dzhulgakov: while I appreciate this approach - it's tricky as we'd need to override free/realloc functions and probably have higher cost.
 //
 // Roughly corresponds to THStorage from old ATen
+// dzhulgakov: enabled_shared_from_this ?
 class CPUStorageImpl {
   // smessmer to @ezyang: We might want to use folly::Function instead.
   //                      The folly::Function header is quite self contained, i.e. can be copied here without the rest of folly.
   // NB: The reason to use folly::Function is that it allows functions to be moved, rather than only copied
+  // dzhulgakov: std::function is 32 bytes, we can be paranoid and probably optimize it to a single pointer as a common case is no custom deleter imho (just default to the context one)
   using data_t = std::unique_ptr<void, std::function<void(void*)>>;
 
   // NB: THAllocator is axed; instead, all you can pass now is a custom deleter,
   // which is enough tod o the important things.
   data_t data_;
 
+  // dzhulgakov: do we ever need a flag to see whether storage is shared among several views or not? if we add enabled_shared_from_this then we can just use shared_ptr::use_count()
   ssize_t size_; // in bytes
 
   // Is this storage resizable?  If it comes externally, or has been shared to some external system, it may not be.
@@ -67,6 +71,9 @@ class CPUStorageImpl {
   // unresizable, ALL views on that tensor need to reject further resizes.  So the correct place to store
   // this information is indeed in Storage.  This is not an operation you'd ever need to actually do,
   // but it makes clear where this information semantically belongs.
+  //
+  // dzhulgakov: omg, do we have to support this behavior? sounds kind of too fancy - do people rely on it often? In my mind if one resizes the storage all views are de-facto invalidated - I'd basically just allocate the new storage instead.
+  // dzhulgakov: we should document this behavior if we keep it - it's pretty non-obvious
   //
   // TODO: pack this boolean flag?
   bool resizable_;
@@ -138,12 +145,13 @@ public:
 
   // Meditation of THStorage_(resize)
   // Caffe2 behavior is when keep_data == false
+  // dzhulgakov: Caffe2 has Reserve()/Extend() which is basically keep_data = true. I'd suggest to limit this behavior as much as possible, for example: allow only incremental growth and call it something more uncommon than 'resize'
   void resize_(ssize_t new_size, bool keep_data = true) {
     if (!resizable_) throw std::runtime_error("trying to resize storage that is not resizable");
     // TODO: Consider bringing back the old realloc path from TH?
     data_t old_data = std::move(data_);
     ssize_t old_size = size_;
-    if (size_ == 0) {
+    if (new_size == 0) {
       data_ = nullptr;
     } else {
       data_ = globalCPUContext().getCPUAllocator()->malloc(new_size);
