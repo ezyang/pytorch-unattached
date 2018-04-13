@@ -35,8 +35,17 @@ protected:
 
   DimVector size_;
 
+  // dzhulgakov: I'd strongly suggest to keep around actual type, not just size to do type checking. Please look at TypeMeta - it solves a lot of issues
+  // dzhulgakov: Caffe2 now supports fancy stuff like Tensor of std::string (or other types), TF too. I think we should handle it which requires some TypeMeta-like care to call constructors at right places. We can reuse it verbatim
+  int64_t element_size_bytes_;
+
 public:
-  explicit TensorImpl(TypeId type_id) : RetainableImpl(), type_id_(type_id), size_() {};
+  explicit TensorImpl(TypeId type_id, int64_t element_size_bytes)
+      : RetainableImpl()
+      , type_id_(type_id)
+      , size_()
+      , element_size_bytes_(element_size_bytes)
+  {};
 
   ArrayRef<int64_t> size() const {
     return size_;
@@ -84,7 +93,7 @@ public:
 //      instead of an error, which should have happened.  It just seems morally wrong to privilege empty CPU
 //      tensors in this way.  Also, you don't get reliable pointer equality tests anymore.
 class UndefinedTensorImpl final : public TensorImpl {
-  UndefinedTensorImpl() : TensorImpl(TypeIds::Undefined) {};
+  UndefinedTensorImpl() : TensorImpl(TypeIds::Undefined, 0) {};
 public:
   int64_t dim() const override {
     throw std::runtime_error("UndefinedTensorImpl::dim()");

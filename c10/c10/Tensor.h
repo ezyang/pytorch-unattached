@@ -94,8 +94,11 @@ public:
   inline ArrayRef<int64_t> stride() const;
   inline void* data_ptr() const;
   inline int64_t ndimension() const;
+  int64_t storage_offset() const;
 
   // dzhulgakov: what are the semantics of it? i.e. how do I change type of the elements stored in a tensor? Or is it passed only in the constructor?
+  // ezyang: invocation of data() is only well-defined if the type T matches the internal type T of the tensor.
+  // This function has nothing to do with casting.
   template<typename T>
   inline T *data() const;
 

@@ -39,9 +39,6 @@ std::pair<int64_t, int64_t> compute_extent(ArrayRef<int64_t> size, ArrayRef<int6
 // up the compiler about size_t conversions from standard library.
 
 class CPUTensorImpl final : public guts::TensorImpl {
-  // dzhulgakov: I'd strongly suggest to keep around actual type, not just size to do type checking. Please look at TypeMeta - it solves a lot of issues
-  // dzhulgakov: Caffe2 now supports fancy stuff like Tensor of std::string (or other types), TF too. I think we should handle it which requires some TypeMeta-like care to call constructors at right places. We can reuse it verbatim
-  int64_t element_size_bytes_;
   // Note: storage->size() may be greater than the recorded size of the tensor
   // ezyang to @smessmer: Maybe we should consider using a never-null pointer.
   // If you do that a number of "is null" tests can be deleted.
@@ -77,8 +74,7 @@ class CPUTensorImpl final : public guts::TensorImpl {
   DimVector stride_;
 public:
   CPUTensorImpl(int64_t element_size_bytes, const CPUStorage& storage)
-  : TensorImpl(TypeIds::CPUTensor)
-      , element_size_bytes_(element_size_bytes)
+  : TensorImpl(TypeIds::CPUTensor, element_size_bytes)
       , storage_(storage)
   {};
 
@@ -144,6 +140,12 @@ public:
       }
     }
   }
+
+  /*
+  void HACK_copy_(Tensor src) {
+    if (src)
+  }
+   */
 };
 
 }} // namespace c10::cpu

@@ -30,6 +30,11 @@ inline void *Tensor::data_ptr() const {
   return impl_->data_ptr();
 }
 
+inline int64_t Tensor::storage_offset() const {
+  return 0; // TODO
+  //return impl_->storage_offset();
+}
+
 inline int64_t Tensor::ndimension() const {
   return dim();
 }
