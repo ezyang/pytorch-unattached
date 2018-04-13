@@ -1,10 +1,10 @@
 #pragma once
 
-#include "c10/TypeId.h"
 #include "c10/ArrayRef.h"
 #include "c10/Tensor.h"
 #include "c10/SmallVector.h"
 #include "c10/Optional.h"
+#include "c10/TypeId.h"
 
 #include "Retainable.h"
 
