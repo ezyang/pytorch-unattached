@@ -46,7 +46,7 @@ add_library(c10 SHARED
         c10/DimVector.h
         c10/cpu/CPUContext.cpp
         c10/cpu/CPUContext.h
-        c10/c10.h c10/guts/ScalarType.cpp c10/guts/ScalarType.h)
+        c10/c10.h c10/ScalarType.cpp c10/ScalarType.h)
 target_include_directories(c10 PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<INSTALL_INTERFACE:${C10_INSTALL_INCLUDE_SUBDIR}>

@@ -7,6 +7,7 @@
 #include "c10/TypeId.h"
 
 #include "Retainable.h"
+#include "c10/ScalarType.h"
 
 #include <vector>
 #include <c10/DimVector.h>
@@ -32,6 +33,8 @@ class TensorImpl : public RetainableImpl {
 protected:
   // Used for dispatch on the object
   const TypeId type_id_;
+
+  ScalarType* scalar_type_;
 
   DimVector size_;
 

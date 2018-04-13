@@ -89,10 +89,10 @@ C10_FORALL_SCALAR_TYPES(DEFINE_STATIC)
   constexpr ScalarType String(sizeof(std::string), "String", _Ctor<std::string>, _Copy<std::string>, _Dtor<std::string>);
 }
 
-template <typename T> const ScalarType* mkScalarType();
+template <typename T> constexpr const ScalarType* mkScalarType();
 #define DEFINE_TEMPLATE(ctype,name,_1) \
 template <> \
-const ScalarType* mkScalarType<ctype>() { \
+constexpr const ScalarType* mkScalarType<ctype>() { \
   return &ScalarTypes::name; \
 }
 
