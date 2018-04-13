@@ -24,7 +24,6 @@ namespace c10 {
 //
 // dzhulgakov: have we considered just reusing TypeMeta directly? It allows for
 // extensible backends more easily and is a pretty battle-tested piece of code.
-}
 class TypeId final {
   const int64_t id_;
 
@@ -42,4 +41,4 @@ public:
   static constexpr TypeId CUDATensor = TypeId(2);
 };
 
-}
+} // namespace c10
