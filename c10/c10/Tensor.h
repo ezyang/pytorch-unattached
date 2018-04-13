@@ -48,9 +48,9 @@ namespace c10 {
 //    - long is still 32-bit on 64-bit Windows systems
 //    - ptrdiff_t is allowed to have 2**15-1 as its max value in C
 //
-// So, we have two choices: (1) we could define our OWN integer type (synonym
-// to ptrdiff_t), or (2) we can always use int64_t and eat the performance cost on
-// 32-bit systems.  We have chosen (2).
+// So, we have two choices: (1) we could define our OWN integer type (typedef'ed
+// to be a sane thing on all platforms), or (2) we can always use int64_t and eat
+// the performance cost on 32-bit systems.  We have chosen (2).
 //
 // See also http://en.cppreference.com/w/cpp/language/types
 
