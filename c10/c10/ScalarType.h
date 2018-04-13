@@ -19,6 +19,7 @@ _(double,Double,d)
 
 // _(Half,Half,d) \
 
+// TODO: Passing around const ScalarType* is kind of annoying
 class ScalarType {
   // ezyang to @smessmer: Sorry, old school typedef ^^"
   typedef void (*PlacementNew)(void*, size_t);

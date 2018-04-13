@@ -73,8 +73,8 @@ class CPUTensorImpl final : public guts::TensorImpl {
   // See also https://ezyang.github.io/stride-visualizer/index.html
   DimVector stride_;
 public:
-  CPUTensorImpl(int64_t element_size_bytes, const CPUStorage& storage)
-  : TensorImpl(TypeIds::CPUTensor, element_size_bytes)
+  CPUTensorImpl(const ScalarType* scalar_type, const CPUStorage& storage)
+  : TensorImpl(TypeIds::CPUTensor, scalar_type)
       , storage_(storage)
   {};
 
@@ -85,9 +85,9 @@ public:
 
   // Hacked up operators
 
-  static Tensor HACK_tensor(std::size_t element_size, ArrayRef<int64_t> size, ArrayRef<int64_t> stride) {
+  static Tensor HACK_tensor(const ScalarType* scalar_type, ArrayRef<int64_t> size, ArrayRef<int64_t> stride) {
     auto storage = std::make_shared<CPUStorageImpl>();
-    Tensor r = Tensor::_fromImpl(new CPUTensorImpl(element_size, storage));
+    Tensor r = Tensor::_fromImpl(new CPUTensorImpl(scalar_type, storage));
     r.resize_(size, stride);
     return r;
   }

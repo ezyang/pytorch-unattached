@@ -34,7 +34,10 @@ protected:
   // Used for dispatch on the object
   const TypeId type_id_;
 
-  ScalarType* scalar_type_;
+  // The scalar type of elements stored in this tensor.  This contains
+  // important information like "what is the size of the scalar element."
+  // TODO: Pointer to scalar type means there's a possibly unnecessary indirection here!
+  const ScalarType* scalar_type_;
 
   DimVector size_;
 
@@ -43,15 +46,21 @@ protected:
   int64_t element_size_bytes_;
 
 public:
-  explicit TensorImpl(TypeId type_id, int64_t element_size_bytes)
+  explicit TensorImpl(TypeId type_id, const ScalarType* scalar_type)
       : RetainableImpl()
       , type_id_(type_id)
       , size_()
-      , element_size_bytes_(element_size_bytes)
+      , scalar_type_(scalar_type)
   {};
 
   ArrayRef<int64_t> size() const {
     return size_;
+  }
+
+  // Previously was type().scalarType() but I haven't committed to adding a Type object
+  // to the design yet.
+  const ScalarType* scalar_type() const {
+    return scalar_type_;
   }
 
   // NB: In Caffe2, this quantity is CACHED.  For simplicity, we don't cache it for now, but consider
