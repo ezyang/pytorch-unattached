@@ -37,7 +37,9 @@ protected:
   // The scalar type of elements stored in this tensor.  This contains
   // important information like "what is the size of the scalar element."
   // TODO: Pointer to scalar type means there's a possibly unnecessary indirection here!
-  const ScalarType* scalar_type_;
+  // TODO: This is going to be redundant with type_id_, so if we want to squeeze down size
+  // we can make this a computed property from type_id_.
+  ScalarType scalar_type_;
 
   DimVector size_;
 
@@ -46,7 +48,7 @@ protected:
   int64_t element_size_bytes_;
 
 public:
-  explicit TensorImpl(TypeId type_id, const ScalarType* scalar_type)
+  explicit TensorImpl(TypeId type_id, ScalarType scalar_type)
       : RetainableImpl()
       , type_id_(type_id)
       , size_()
@@ -59,7 +61,7 @@ public:
 
   // Previously was type().scalarType() but I haven't committed to adding a Type object
   // to the design yet.
-  const ScalarType* scalar_type() const {
+  ScalarType scalar_type() const {
     return scalar_type_;
   }
 

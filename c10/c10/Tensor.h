@@ -55,6 +55,13 @@ namespace c10 {
 // See also http://en.cppreference.com/w/cpp/language/types
 
 
+// Note [Cult of the dot]
+// ~~~~~~~~~~~~~~~~~~~~~
+// In C++ you have to remember if you have a pointery thing or a referency thing,
+// and use either dot or arrow, depending on which you are in.  This is dumb.
+// We use dot for everything.  Yes, that means you need to write wrapper classes.
+// Yes, it's a good thing.
+
 
 // SUMMING UP
 // 1. There will NOT be a retain/release on the Tensor class.  There might be
@@ -74,6 +81,11 @@ class Tensor final {
   Tensor(TensorBase impl) : impl_(impl) {};
 
 public:
+  // Steals the reference.  (In old ATen, there was an optional retain which also bumped
+  // the refcount while you were at it.)
+  // TODO: Figure out a safer way to expose this to relevant sites
+  // I've forgotten how to use this safely, so it's
+  // not a good API. :)
   static Tensor _fromImpl(guts::TensorImpl* impl) { return Tensor(TensorBase(impl)); };
 
   // Normal constructors
