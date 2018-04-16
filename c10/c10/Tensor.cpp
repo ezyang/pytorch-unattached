@@ -13,4 +13,12 @@ void Tensor::copy_(ScalarType s, const void* p, int64_t size_bytes) {
   impl_->HACK_copy_(s, p, size_bytes);
 }
 
+void Tensor::extend_(int64_t num, double growthPct) {
+  impl_->HACK_extend_(num, growthPct);
+}
+
+void Tensor::reserve_(ArrayRef<int64_t> new_size) {
+  impl_->HACK_reserve_(new_size);
+}
+
 }

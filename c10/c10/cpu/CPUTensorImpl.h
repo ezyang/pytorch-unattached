@@ -4,6 +4,9 @@
 
 #include "CPUStorage.h"
 
+#include <numeric>
+#include <cmath>
+
 namespace c10 { namespace cpu {
 
 // Return the strides corresponding to a contiguous layout of size.
@@ -17,19 +20,19 @@ DimVector contiguous_strides(ArrayRef<int64_t> size) {
   return v;  // RVO
 }
 
-// Given size and strides, return the lowest and highest indices (inclusive) which may
+// Given size and strides, return the lowest and highest indices (inclusive-exclusive) which may
 // be accessed with them.
 // TODO: Refactor this into a utility header file
 std::pair<int64_t, int64_t> compute_extent(ArrayRef<int64_t> size, ArrayRef<int64_t> stride) {
   // Watermarks are inclusive.  NB: watermarks can be negative! Careful!
-  // NB: when size is empty, we get high_watermark == low_watermark == 0; that is to say,
+  // NB: when size is empty, we get {0, 1}; that is to say,
   // there is ONE valid location.  This is correct!
-  int64_t high_watermark = 0;
-  int64_t low_watermark = 0;
+  int64_t low_watermark = 0; // inclusive
+  int64_t high_watermark = 1; // exclusive
   for (int64_t d = size.size() - 1; d >= 0; d--) {
     // TODO: This special case is so irritating.  But if we don't apply it,
-    // this function returns {0, 0} when you pass it size {0} stride {0}.
-    if (size[d] == 0) return {0, -1};
+    // this function returns {0, 1} when you pass it size {0} stride {0}.
+    if (size[d] == 0) return {0, 0};
     C10_ASSERT(size[d] > 0);
     if (stride[d] >= 0) {
       high_watermark += (size[d] - 1) * stride[d];
@@ -39,6 +42,23 @@ std::pair<int64_t, int64_t> compute_extent(ArrayRef<int64_t> size, ArrayRef<int6
   }
   return {low_watermark, high_watermark};
 };
+
+int64_t required_new_storage_size_bytes(
+    ScalarType scalar_type,
+    ArrayRef<int64_t> size,
+    ArrayRef<int64_t> stride,
+    int64_t storage_offset_bytes) {
+  int64_t low_watermark, high_watermark;
+  std::tie(low_watermark, high_watermark) = compute_extent(size, stride);
+  if (low_watermark * scalar_type.itemsize() + storage_offset_bytes < 0) {
+    throw std::runtime_error("Cannot resize past beginning of tensor");
+  }
+  return high_watermark * scalar_type.itemsize() + storage_offset_bytes;
+}
+
+int64_t product(ArrayRef<int64_t> xs) {
+  return std::accumulate(xs.begin(), xs.end(), 1, std::multiplies<int64_t>());
+}
 
 // Everything is int64_t to prevent us from accidentally doing a signed-unsigned operation
 // which is basically never what you want.  But using int64_t instead of int64_t shuts
@@ -82,7 +102,9 @@ public:
   CPUTensorImpl(ScalarType scalar_type, const CPUStorage& storage)
   : TensorImpl(TypeIds::CPUTensor, scalar_type)
       , storage_(storage)
-  {};
+  {
+    C10_ASSERT(storage);
+  };
 
   void *data_ptr() const override {
     if (!storage_) return nullptr;
@@ -151,33 +173,52 @@ public:
     C10_ASSERT(new_size.size() == new_stride.size());
     bool unchanged = new_size.equals(size()) && new_stride.equals(stride());
     if (unchanged) return;
-    int64_t low_watermark, high_watermark;
-    std::tie(low_watermark, high_watermark) = compute_extent(new_size, new_stride);
-    // NB: Actually, we should be able to support resizing the left-side of the tensor; we
-    // simply need to support the case when the pointer doesn't point to the beginning
-    // of the allocated region; this means we need to store an offset to "undo" the
-    // shift later.  Should be simple but we don't implement it for now.
-    if (low_watermark * element_size_bytes_ + storage_offset_bytes_ < 0) {
-      throw std::runtime_error("Cannot resize past beginning of tensor");
-    }
+    auto new_size_bytes = required_new_storage_size_bytes(scalar_type_, new_size, new_stride, storage_offset_bytes_);
     size_.assign(new_size.begin(), new_size.end());
     stride_.assign(new_stride.begin(), new_stride.end());
-    if (high_watermark * element_size_bytes_ + storage_offset_bytes_ > 0) {
-      if (!storage_) {
-        storage_ = std::make_shared<CPUStorageImpl>(scalar_type_);
-      }
-      auto new_size_bytes = high_watermark * element_size_bytes_ + storage_offset_bytes_;
-      bool needs_resize =
-          // not enough space, OR
-          new_size_bytes > storage_->sizeBytes() ||
-          // we're not allowed to keep the old storage on a shrink, OR
-          !globalCPUContext().keepOnShrink() ||
-          // we shrunk greater than the maximum "keep on shrink" bytes.
-          storage_->sizeBytes() - new_size_bytes > globalCPUContext().maxKeepOnShrinkBytes();
-      if (needs_resize) {
-        storage_->resize_(new_size_bytes, keep_data);
-      }
+    // NB: In the old TH code, it was permissible for Storage to be a nullptr at this point.
+    // We have tightened the internal invariants.  I put the ASSERT back in where the old
+    // test for storage_ being nullptr would have been.
+    C10_ASSERT(storage_);
+    bool needs_resize =
+        // not enough space, OR
+        new_size_bytes > storage_->sizeBytes() ||
+        // we're not allowed to keep the old storage on a shrink, OR
+        !globalCPUContext().keepOnShrink() ||
+        // we shrunk greater than the maximum "keep on shrink" bytes.
+        storage_->sizeBytes() - new_size_bytes > globalCPUContext().maxKeepOnShrinkBytes();
+    if (needs_resize) {
+      storage_->resize_(new_size_bytes, keep_data);
     }
+  }
+
+  // Channeling Caffe2 Tensor::Reserve(const std::vector<T>& newCapacity, ContextForCopy* context)
+  // TODO: Consider also having a direct "numels" variant.  Note that this version accounts
+  // correctly for strides
+  void HACK_reserve_(ArrayRef<int64_t> new_size) override {
+    auto new_size_bytes = required_new_storage_size_bytes(scalar_type_, new_size, stride(), storage_offset_bytes_);
+    if (new_size_bytes > storage_->sizeBytes()) {
+      // NB: Size of this tensor is unchanged!
+      storage_->resize_(new_size_bytes, true);
+    }
+  }
+
+  // Channeling Caffe2 Tensor::Extend(TIndex num, float growthPct, ContextForCopy* context)
+  void HACK_extend_(int64_t num, double growthPct) override {
+    C10_CHECK(dim() >= 1);
+    DimVector new_size{size()};
+    new_size[0] += num;
+    // NB: Do not need to test for storage_ == nullptr as it is assumed to
+    // have been initialized
+    auto tentative_new_size_bytes = required_new_storage_size_bytes(scalar_type_, new_size, stride(), storage_offset_bytes_);
+    if (tentative_new_size_bytes <= storage_->sizeBytes()) {
+      size_ = new_size;
+      return;
+    }
+    // Compute the true size increase, to ensure extend() amortizes correctly
+    new_size[0] = std::max(new_size[0], static_cast<int64_t>(std::ceil(size()[0] * (growthPct + 100) / 100)));
+    HACK_reserve_(new_size);
+    size_ = new_size;
   }
 
   /*

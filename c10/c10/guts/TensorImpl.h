@@ -102,6 +102,14 @@ public:
   virtual void HACK_copy_(ScalarType s, const void* p, int64_t size_bytes) {
     throw std::runtime_error("copy_");
   }
+
+  virtual void HACK_reserve_(ArrayRef<int64_t> size) {
+    throw std::runtime_error("reserve_");
+  }
+
+  virtual void HACK_extend_(int64_t num, double growthPct) {
+    throw std::runtime_error("extend_");
+  }
 };
 
 // See design notes on Tensor.h, where this is hardcoded a few times.

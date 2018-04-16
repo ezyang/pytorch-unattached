@@ -131,7 +131,9 @@ public:
   inline int64_t dim() const;
   // dzhulgakov: nit - why `size` and not `sizes`? In C2 the size is number of elements - I bet it will cause confusion
   inline ArrayRef<int64_t> size() const;
+  inline int64_t size(int64_t dim) const;
   inline ArrayRef<int64_t> stride() const;
+  inline int64_t stride(int64_t dim) const;
   inline void* data_ptr() const;
   inline int64_t ndimension() const;
   int64_t storage_offset() const;
@@ -158,6 +160,26 @@ public:
   void copy_(ArrayRef<T> arr) {
     copy_(c10::scalar_type<T>(), arr.data(), arr.size() * sizeof(T));
   }
+
+  /**
+   * @brief Extends the outer-most dimension of this tensor by num elements,
+   * preserving the existing data.
+   *
+   * The underlying data may be reallocated in order to accommodate the new
+   * elements, in which case this tensors' capacity is grown at a factor of
+   * growthPct. This ensures that Extend runs on an amortized O(1) time
+   * complexity.
+   *
+   * Comes from Caffe2.
+   *
+   * TODO: Possibly have a default growthPct?
+   *
+   * NB: Modified growthPct to be double rather than float, to follow ATen "double only" convention
+   * NB: growthPct is denominated in percent points!!!
+   */
+  void extend_(int64_t num, double growthPct);
+
+  void reserve_(ArrayRef<int64_t> new_size);
 
   // To be something like:
   // Tensor add(Tensor x, Tensor y) { guts::dispatch("add", x, y); }

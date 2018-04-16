@@ -21,6 +21,14 @@ inline ArrayRef<int64_t> Tensor::stride() const {
   return impl_->stride();
 }
 
+inline int64_t Tensor::size(int64_t dim) const {
+  return impl_->size().at(dim);
+}
+
+inline int64_t Tensor::stride(int64_t dim) const {
+  return impl_->stride().at(dim);
+}
+
 // smessmer to @ezyang: Do we want to try honoring const-ness for the underlying data?
 //          i.e. const T* data() const {} and T* data() {} ?
 //          not sure if it's a good idea, but we should consider it.
