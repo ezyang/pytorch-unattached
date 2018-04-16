@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <cstddef>
 #include <string>
+#include <functional>
+#include <algorithm>
 
 #define C10_FORALL_SCALAR_TYPES(_) \
 _(uint8_t,Byte,i) \
@@ -27,9 +29,12 @@ namespace c10 {
 
 
 // ezyang to @smessmer: Sorry, old school typedef ^^"
-typedef void (*PlacementNew)(void *, size_t);
-typedef void (*TypedCopy)(const void *, void *, size_t);
-typedef void (*TypedDestructor)(void *, size_t);
+// WARNING WARNING WARNING: this is number of elements, NOT number of bytes
+typedef void (*PlacementNew)(void *, int64_t numel);
+typedef void (*TypedCopy)(const void *, void *, int64_t numel);
+typedef void (*TypedDestructor)(void *, int64_t numel);
+
+class ScalarType;
 
 namespace guts {
 
@@ -37,7 +42,7 @@ namespace guts {
  * Placement new function for the type.
  */
 template<typename T>
-void _ctor(void *ptr, size_t n) {
+void _ctor(void *ptr, int64_t n) {
   T *typed_ptr = static_cast<T *>(ptr);
   for (int i = 0; i < n; ++i) {
     new(typed_ptr + i) T;
@@ -47,8 +52,9 @@ void _ctor(void *ptr, size_t n) {
 /**
  * Typed copy function for classes.
  */
+// TODO: This argument order is swapped versus memcpy! How confusing!!
 template<typename T>
-void _copy(const void *src, void *dst, size_t n) {
+void _copy(const void *src, void *dst, int64_t n) {
   const T *typed_src = static_cast<const T *>(src);
   T *typed_dst = static_cast<T *>(dst);
   for (int i = 0; i < n; ++i) {
@@ -60,7 +66,7 @@ void _copy(const void *src, void *dst, size_t n) {
  * Destructor for non-fundamental types.
  */
 template<typename T>
-void _dtor(void *ptr, size_t n) {
+void _dtor(void *ptr, int64_t n) {
   T *typed_ptr = static_cast<T *>(ptr);
   for (int i = 0; i < n; ++i) {
     typed_ptr[i].~T();
@@ -81,11 +87,11 @@ class ScalarTypeImpl {
   friend class ScalarTypeImpls;
 
 public:
-  constexpr int64_t itemsize() const { return itemsize_; }
-  constexpr PlacementNew ctor() const { return ctor_; }
-  constexpr TypedCopy copy() const { return copy_; }
-  constexpr TypedDestructor dtor() const { return dtor_; }
-  constexpr const char* name() const { return name_; }
+  constexpr int64_t itemsize() const noexcept { return itemsize_; }
+  constexpr PlacementNew ctor() const noexcept { return ctor_; }
+  constexpr TypedCopy copy() const noexcept { return copy_; }
+  constexpr TypedDestructor dtor() const noexcept { return dtor_; }
+  constexpr const char* name() const noexcept { return name_; }
 };
 
 // NB: This has to be in a separate class, because ScalarTypeImpl is not a complete type when
@@ -118,6 +124,8 @@ public:
   _ScalarType() = default;
   _ScalarType(const _ScalarType &rhs) = default;
   _ScalarType(_ScalarType &&rhs) noexcept = default;
+  _ScalarType& operator=(_ScalarType &&rhs) = default;
+  _ScalarType& operator=(const _ScalarType &rhs) = default;
 
   constexpr int64_t itemsize() const { return impl_->itemsize(); }
   constexpr PlacementNew ctor() const { return impl_->ctor(); }

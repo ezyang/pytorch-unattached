@@ -86,7 +86,7 @@ public:
   // Hacked up operators
 
   static Tensor HACK_tensor(ScalarType scalar_type, ArrayRef<int64_t> size, ArrayRef<int64_t> stride) {
-    auto storage = std::make_shared<CPUStorageImpl>();
+    auto storage = std::make_shared<CPUStorageImpl>(scalar_type);
     Tensor r = Tensor::_fromImpl(new CPUTensorImpl(scalar_type, storage));
     r.resize_(size, stride);
     return r;
@@ -125,7 +125,7 @@ public:
     stride_.assign(new_stride.begin(), new_stride.end());
     if (high_watermark * element_size_bytes_ + storage_offset_bytes_ > 0) {
       if (!storage_) {
-        storage_ = std::make_shared<CPUStorageImpl>();
+        storage_ = std::make_shared<CPUStorageImpl>(scalar_type_);
       }
       auto new_size_bytes = high_watermark * element_size_bytes_ + storage_offset_bytes_;
       bool needs_resize =
