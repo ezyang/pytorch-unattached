@@ -78,6 +78,10 @@ public:
     return scalar_type_;
   }
 
+  int64_t storage_offset() const {
+    return storage_offset_bytes_ / scalar_type_.itemsize();
+  }
+
   // NB: In Caffe2, this quantity is CACHED.  For simplicity, we don't cache it for now, but consider
   // doing so.
   // NB: This was ported in from the TH backend (which we normally defer to.)
