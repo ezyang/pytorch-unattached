@@ -96,7 +96,11 @@ public:
   // They're labeled with HACK in their name
 
   virtual void HACK_resize_(ArrayRef<int64_t> size, ArrayRef<int64_t> stride, bool keep_data = true) {
-    throw std::runtime_error("resize");
+    throw std::runtime_error("resize_");
+  }
+
+  virtual void HACK_copy_(ScalarType s, const void* p, int64_t size_bytes) {
+    throw std::runtime_error("copy_");
   }
 };
 

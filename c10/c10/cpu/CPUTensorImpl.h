@@ -92,13 +92,18 @@ public:
     return r;
   }
 
-  // Channeling Caffe2 Tensor(const vector<TIndex>& dims, const vector<T>& values, Context* context)
+  // Channeling Caffe2 Tensor::Tensor(const vector<TIndex>& dims, const vector<T>& values, Context* context)
   template <typename T>
   static Tensor HACK_tensor(ArrayRef<int64_t> size, std::vector<T> data) {
     auto r = HACK_tensor(c10::scalar_type<T>, size, contiguous_strides(size));
     C10_CHECK(r.numel() == data.size());
-    // TODO: finish
+    r.template copy_<T>(data);
     return r;
+  }
+
+  void HACK_copy_(ScalarType s, const void* p, int64_t size_bytes) override {
+    C10_CHECK(s == scalar_type_);
+    storage_->copy_(p, size_bytes);
   }
 
   // Channeling THTensor_(resizeNd)

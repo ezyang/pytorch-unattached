@@ -163,6 +163,16 @@ public:
     std::swap(*this, other);
   }
 
+  void copy_(const void* src, int64_t copy_size_bytes) {
+    if (copy_size_bytes <= 0) return;
+    if (auto copy = scalar_type_.copy()) {
+      // Swapped argument order?! How confusing!
+      copy(src, data_.get(), copy_size_bytes / scalar_type_.itemsize());
+    } else {
+      std::memcpy(data_.get(), src, static_cast<size_t>(copy_size_bytes));
+    }
+  }
+
   // NB: deleted newWithSizeN variants
   // NB: deleted setFlag/clearFlag
   // NB: deleted retain/free
@@ -213,14 +223,7 @@ public:
     size_bytes_ = new_size_bytes;
     if (old_data != nullptr && keep_data) {
       int64_t copy_size_bytes = std::min(new_size_bytes, size_bytes_);
-      if (copy_size_bytes > 0) {
-        if (auto copy = scalar_type_.copy()) {
-          // Swapped argument order?! How confusing!
-          copy(old_data.get(), data_.get(), copy_size_bytes / scalar_type_.itemsize());
-        } else {
-          std::memcpy(data_.get(), old_data.get(), static_cast<size_t>(copy_size_bytes));
-        }
-      }
+      copy_(old_data.get(), copy_size_bytes);
       old_data.reset();
     }
   }

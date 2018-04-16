@@ -2,6 +2,7 @@
 
 #include "guts/Retainable.h"
 #include "ArrayRef.h"
+#include "ScalarType.h"
 
 namespace c10 { namespace guts {
 
@@ -146,6 +147,17 @@ public:
   // implemented)
 
   void resize_(ArrayRef<int64_t> size, ArrayRef<int64_t> stride);
+
+  // Hmmmmm, does the void* violate our dispatch data model?  OTOH, we are probably going to
+  // need ways to create tensors from void* pointers
+  void copy_(ScalarType s, const void* p, int64_t size_bytes);
+
+  // NB: This is an instance of the design pattern, where we cannot (and will not) dispatch
+  // templated fucntions.  So you have to untemplate it first.
+  template <typename T>
+  void copy_(ArrayRef<T> arr) {
+    copy_(c10::scalar_type<T>(), arr.data(), arr.size() * sizeof(T));
+  }
 
   // To be something like:
   // Tensor add(Tensor x, Tensor y) { guts::dispatch("add", x, y); }

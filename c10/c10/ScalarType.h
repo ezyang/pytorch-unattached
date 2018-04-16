@@ -127,6 +127,8 @@ public:
   _ScalarType& operator=(_ScalarType &&rhs) = default;
   _ScalarType& operator=(const _ScalarType &rhs) = default;
 
+  inline bool operator==(const ScalarType& other);
+
   constexpr int64_t itemsize() const { return impl_->itemsize(); }
   constexpr PlacementNew ctor() const { return impl_->ctor(); }
   constexpr TypedCopy copy() const { return impl_->copy(); }
@@ -152,6 +154,10 @@ public:
   static constexpr _ScalarType String = {&guts::ScalarTypeImpls::String};
   static constexpr _ScalarType Undefined = {&guts::ScalarTypeImpls::Undefined};
 };
+
+bool guts::_ScalarType::operator==(const c10::ScalarType &other) {
+  return impl_ == other.impl_;
+}
 
 template <typename T> constexpr const ScalarType scalar_type();
 #define DEFINE_TEMPLATE(ctype,name,_1) \
