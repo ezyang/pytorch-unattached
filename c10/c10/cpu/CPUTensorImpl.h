@@ -98,6 +98,9 @@ class CPUTensorImpl final : public guts::TensorImpl {
   // dzhulgakov: how much "stride analysis" do implementations usually do in TH?
   // See also https://ezyang.github.io/stride-visualizer/index.html
   DimVector stride_;
+
+  // TODO: consider whether or not to inline cuda_device here.  Then we can change CPUStorage from
+  // an "is-a" to "has-a" relationship and inline the storage struct in Tensor.
 public:
   CPUTensorImpl(ScalarType scalar_type, const CPUStorage& storage)
   : TensorImpl(TypeIds::CPUTensor, scalar_type)
@@ -138,9 +141,12 @@ public:
   // Channeling Caffe2 Tensor::Tensor(const T& value, Context* context)
   // Create a scalar tensor from a single value
   // NB: this is generic
-  // NB: In Caffe2, there was a test that T is_scalar; this test seemed unnecessary so
-  // I got rid of it
-  template <typename T>
+  // NB: the test that T is_scalar prevents this template from clobbering other
+  // overloads (though, this may not be an issue in C10, since Context is no longer
+  // a templated argument, so C++'s rule of preferring a non-template function over
+  // a templated one might actually work.)
+  template <typename T,
+            typename = typename std::enable_if<std::is_scalar<T>::value>::type>
   static Tensor HACK_tensor(const T& value) {
     auto r = HACK_tensor(c10::scalar_type<T>, {}, {});
     r.template copy_<T>({&value, 1});
@@ -196,7 +202,7 @@ public:
   // TODO: Consider also having a direct "numels" variant.  Note that this version accounts
   // correctly for strides
   void HACK_reserve_(ArrayRef<int64_t> new_size) override {
-    auto new_size_bytes = required_new_storage_size_bytes(scalar_type_, new_size, stride(), storage_offset_bytes_);
+    auto new_size_bytes = required_new_storage_size_bytes(scalar_type(), new_size, stride(), storage_offset_bytes_);
     if (new_size_bytes > storage_->sizeBytes()) {
       // NB: Size of this tensor is unchanged!
       storage_->resize_(new_size_bytes, true);
@@ -217,8 +223,7 @@ public:
     }
     // Compute the true size increase, to ensure extend() amortizes correctly
     new_size[0] = std::max(new_size[0], static_cast<int64_t>(std::ceil(size()[0] * (growthPct + 100) / 100)));
-    HACK_reserve_(new_size);
-    size_ = new_size;
+    HACK_resize_(new_size, stride(), true);
   }
 
   /*
