@@ -8,6 +8,7 @@
 
 #include "Retainable.h"
 #include "c10/ScalarType.h"
+#include "Storage.h"
 
 #include <vector>
 #include <c10/DimVector.h>
@@ -47,12 +48,24 @@ protected:
   // dzhulgakov: Caffe2 now supports fancy stuff like Tensor of std::string (or other types), TF too. I think we should handle it which requires some TypeMeta-like care to call constructors at right places. We can reuse it verbatim
   int64_t element_size_bytes_;
 
+  // This lives here because we really want data_ptr() calculation to inline.
+  // Note: storage->size() may be greater than the recorded size of the tensor
+  // ezyang to @smessmer: Maybe we should consider using a never-null pointer.
+  // If you do that a number of "is null" tests can be deleted.
+  Storage storage_;
+
+  // Note: In Torch this can be nonzero, because we support views into the
+  // inside of tensors.  In historic Caffe2 this was always zero.
+  // NB: This is BYTES!!!  Different from TH historically, which was scalar size.
+  int64_t storage_offset_bytes_;
+
 public:
-  explicit TensorImpl(TypeId type_id, ScalarType scalar_type)
+  explicit TensorImpl(TypeId type_id, ScalarType scalar_type, Storage storage)
       : RetainableImpl()
       , type_id_(type_id)
       , size_()
       , scalar_type_(scalar_type)
+      , storage_(storage)
   {};
 
   ArrayRef<int64_t> size() const {
@@ -80,13 +93,14 @@ public:
     throw std::runtime_error("TensorImpl::stride()");
   }
 
-  virtual int64_t dim() const {
+  int64_t dim() const {
     // dzhulgakov: this line is exactly why `size` is a bad name :)
     return static_cast<int64_t>(size().size());
   }
 
-  virtual void *data_ptr() const {
-    throw std::runtime_error("TensorImpl::data_ptr()");
+  void *data_ptr() const {
+    if (!storage_) return nullptr;
+    return static_cast<void*>(static_cast<char*>(storage_->data_ptr()) + storage_offset_bytes_);
   }
 
   virtual ~TensorImpl() = default;
@@ -119,12 +133,8 @@ public:
 //      instead of an error, which should have happened.  It just seems morally wrong to privilege empty CPU
 //      tensors in this way.  Also, you don't get reliable pointer equality tests anymore.
 class UndefinedTensorImpl final : public TensorImpl {
-  UndefinedTensorImpl() : TensorImpl(TypeIds::Undefined, ScalarType::Undefined) {};
+  UndefinedTensorImpl() : TensorImpl(TypeIds::Undefined, ScalarType::Undefined, nullptr) {};
 public:
-  int64_t dim() const override {
-    throw std::runtime_error("UndefinedTensorImpl::dim()");
-  }
-
   static UndefinedTensorImpl *singleton() {
     // smessmer to @ezyang: Not sure this singleton is a good idea. If wrapped in Tensor, it is subject to ref counting and might get destructed.
     //          If we need this singleton, we should wrap it into a Tensor instance here to make sure the ref count is always positive.

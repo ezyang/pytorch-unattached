@@ -65,16 +65,6 @@ int64_t product(ArrayRef<int64_t> xs) {
 // up the compiler about size_t conversions from standard library.
 
 class CPUTensorImpl final : public guts::TensorImpl {
-  // Note: storage->size() may be greater than the recorded size of the tensor
-  // ezyang to @smessmer: Maybe we should consider using a never-null pointer.
-  // If you do that a number of "is null" tests can be deleted.
-  CPUStorage storage_;
-
-  // Note: In Torch this can be nonzero, because we support views into the
-  // inside of tensors.  In historic Caffe2 this was always zero.
-  // NB: This is BYTES!!!  Different from TH historically, which was scalar size.
-  int64_t storage_offset_bytes_;
-
   // NB: shares_data from Caffe2 was axed, because it is SOLELY used to determine
   // check what the overall tensor usage is.  We can rewrite that code to
   // keep a mapping of storage base pointers that it has seen (these all
@@ -101,18 +91,17 @@ class CPUTensorImpl final : public guts::TensorImpl {
 
   // TODO: consider whether or not to inline cuda_device here.  Then we can change CPUStorage from
   // an "is-a" to "has-a" relationship and inline the storage struct in Tensor.
+
+  CPUStorage cpu_storage() {
+    return std::static_pointer_cast<CPUStorageImpl>(storage_);
+  }
+
 public:
   CPUTensorImpl(ScalarType scalar_type, const CPUStorage& storage)
-  : TensorImpl(TypeIds::CPUTensor, scalar_type)
-      , storage_(storage)
+  : TensorImpl(TypeIds::CPUTensor, scalar_type, storage)
   {
     C10_ASSERT(storage);
   };
-
-  void *data_ptr() const override {
-    if (!storage_) return nullptr;
-    return static_cast<void*>(static_cast<char*>(storage_->data_ptr()) + storage_offset_bytes_);
-  }
 
   // Hacked up operators
 
@@ -156,7 +145,7 @@ public:
   // Channeling Caffe2 Tensor::Tensor(const T& value, Context* context)
   void HACK_copy_(ScalarType s, const void* p, int64_t size_bytes) override {
     C10_CHECK(s == scalar_type_);
-    storage_->copy_(p, size_bytes);
+    cpu_storage()->copy_(p, size_bytes);
   }
 
   // Channeling THTensor_(resizeNd)
@@ -194,7 +183,7 @@ public:
         // we shrunk greater than the maximum "keep on shrink" bytes.
         storage_->sizeBytes() - new_size_bytes > globalCPUContext().maxKeepOnShrinkBytes();
     if (needs_resize) {
-      storage_->resize_(new_size_bytes, keep_data);
+      cpu_storage()->resize_(new_size_bytes, keep_data);
     }
   }
 
@@ -205,7 +194,7 @@ public:
     auto new_size_bytes = required_new_storage_size_bytes(scalar_type(), new_size, stride(), storage_offset_bytes_);
     if (new_size_bytes > storage_->sizeBytes()) {
       // NB: Size of this tensor is unchanged!
-      storage_->resize_(new_size_bytes, true);
+      cpu_storage()->resize_(new_size_bytes, true);
     }
   }
 
