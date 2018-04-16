@@ -92,6 +92,15 @@ public:
     return r;
   }
 
+  // Channeling Caffe2 Tensor(const vector<TIndex>& dims, const vector<T>& values, Context* context)
+  template <typename T>
+  static Tensor HACK_tensor(ArrayRef<int64_t> size, std::vector<T> data) {
+    auto r = HACK_tensor(c10::scalar_type<T>, size, contiguous_strides(size));
+    C10_CHECK(r.numel() == data.size());
+    // TODO: finish
+    return r;
+  }
+
   // Channeling THTensor_(resizeNd)
   // If aggressive = true, we will always try to free up old memory (this means
   // we always have to do a reallocation).  Torch default behavior was to

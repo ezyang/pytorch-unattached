@@ -30,9 +30,14 @@ inline void *Tensor::data_ptr() const {
   return impl_->data_ptr();
 }
 
+// TODO: move storage_offset to TensorImpl and then call this
 inline int64_t Tensor::storage_offset() const {
-  return 0; // TODO
-  //return impl_->storage_offset();
+  return 0;
+  // return impl_->storage_offset();
+}
+
+inline int64_t Tensor::numel() const {
+  return impl_->numel();
 }
 
 inline int64_t Tensor::ndimension() const {
