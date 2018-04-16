@@ -153,7 +153,7 @@ public:
   void copy_(ScalarType s, const void* p, int64_t size_bytes);
 
   // NB: This is an instance of the design pattern, where we cannot (and will not) dispatch
-  // templated fucntions.  So you have to untemplate it first.
+  // templated functions.  So you have to untemplate it first.
   template <typename T>
   void copy_(ArrayRef<T> arr) {
     copy_(c10::scalar_type<T>(), arr.data(), arr.size() * sizeof(T));

@@ -22,9 +22,15 @@ DimVector contiguous_strides(ArrayRef<int64_t> size) {
 // TODO: Refactor this into a utility header file
 std::pair<int64_t, int64_t> compute_extent(ArrayRef<int64_t> size, ArrayRef<int64_t> stride) {
   // Watermarks are inclusive.  NB: watermarks can be negative! Careful!
+  // NB: when size is empty, we get high_watermark == low_watermark == 0; that is to say,
+  // there is ONE valid location.  This is correct!
   int64_t high_watermark = 0;
   int64_t low_watermark = 0;
   for (int64_t d = size.size() - 1; d >= 0; d--) {
+    // TODO: This special case is so irritating.  But if we don't apply it,
+    // this function returns {0, 0} when you pass it size {0} stride {0}.
+    if (size[d] == 0) return {0, -1};
+    C10_ASSERT(size[d] > 0);
     if (stride[d] >= 0) {
       high_watermark += (size[d] - 1) * stride[d];
     } else {
@@ -107,6 +113,19 @@ public:
     return r;
   }
 
+  // Channeling Caffe2 Tensor::Tensor(const T& value, Context* context)
+  // Create a scalar tensor from a single value
+  // NB: this is generic
+  // NB: In Caffe2, there was a test that T is_scalar; this test seemed unnecessary so
+  // I got rid of it
+  template <typename T>
+  static Tensor HACK_tensor(const T& value) {
+    auto r = HACK_tensor(c10::scalar_type<T>, {}, {});
+    r.template copy_<T>({&value, 1});
+    return r;
+  }
+
+  // Channeling Caffe2 Tensor::Tensor(const T& value, Context* context)
   void HACK_copy_(ScalarType s, const void* p, int64_t size_bytes) override {
     C10_CHECK(s == scalar_type_);
     storage_->copy_(p, size_bytes);
@@ -162,8 +181,11 @@ public:
   }
 
   /*
+  // Channeling Caffe2 Tensor::CopyFrom(const Tensor<SrcContext>& src, ContextForCopy* context)
+  // and Tensor::CopyFrom(const Tensor<SrcContext>& src)
+  // This function is deferred until multiple dispatch is online, as it can only be conveniently
+  // implemented inside the multiple dispatch framework
   void HACK_copy_(Tensor src) {
-    if (src)
   }
    */
 };
