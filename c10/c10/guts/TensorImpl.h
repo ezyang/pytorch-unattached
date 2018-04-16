@@ -107,7 +107,7 @@ public:
 //      instead of an error, which should have happened.  It just seems morally wrong to privilege empty CPU
 //      tensors in this way.  Also, you don't get reliable pointer equality tests anymore.
 class UndefinedTensorImpl final : public TensorImpl {
-  UndefinedTensorImpl() : TensorImpl(TypeIds::Undefined, 0) {};
+  UndefinedTensorImpl() : TensorImpl(TypeIds::Undefined, ScalarType::Undefined) {};
 public:
   int64_t dim() const override {
     throw std::runtime_error("UndefinedTensorImpl::dim()");

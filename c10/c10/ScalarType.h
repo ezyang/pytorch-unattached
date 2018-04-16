@@ -100,42 +100,55 @@ struct ScalarTypeImpls {
 
   static constexpr ScalarTypeImpl String = {sizeof(std::string), "String", _ctor<std::string>, _copy<std::string>,
                                             _dtor<std::string>};
+  // I'm not too sure about undefined scalar type, but I've put it in for now since ATen has it.
+  static constexpr ScalarTypeImpl Undefined = {0, "Undefined", nullptr, nullptr, nullptr};
 };
 
-} // namespace guts
-
-class ScalarType {
-  const guts::ScalarTypeImpl* impl_;
+// A little "pre-implementation" class, so that we can later add the actual static members.
+// If you see this type in an error, do note that it is implicitly convertible into a ScalarType,
+// which is the thing you actually want.
+class _ScalarType {
+  const ScalarTypeImpl* impl_;
+  friend class ScalarType;
 public:
   // Sigh, don't really want this to be public, but don't want to define another struct
   // to place ScalarType
-  constexpr ScalarType(const guts::ScalarTypeImpl* impl) : impl_(impl) {};
-  ScalarType() = default;
-  ScalarType(const ScalarType &rhs) = default;
-  ScalarType(ScalarType &&rhs) noexcept = default;
+  constexpr _ScalarType(const ScalarTypeImpl* impl) : impl_(impl) {};
+  _ScalarType() = default;
+  _ScalarType(const _ScalarType &rhs) = default;
+  _ScalarType(_ScalarType &&rhs) noexcept = default;
 
   constexpr int64_t itemsize() const { return impl_->itemsize(); }
   constexpr PlacementNew ctor() const { return impl_->ctor(); }
   constexpr TypedCopy copy() const { return impl_->copy(); }
   constexpr TypedDestructor dtor() const { return impl_->dtor(); }
   constexpr const char* name() const { return impl_->name(); }
+
+  // NB: if you ever add methods that return/take ScalarType, make sure to define
+  // them with ScalarType, not ScalarType_
 };
 
-// Top level namespace grab!!!  Using the ATen k-prefix convention
+} // namespace guts
+
+class ScalarType : public guts::_ScalarType {
+public:
+  /*implicit*/ constexpr ScalarType(guts::_ScalarType self) : _ScalarType(self) {}
 
 #define DEFINE_STATIC(_1,name,_3) \
-constexpr ScalarType k ## name(&guts::ScalarTypeImpls::name);
+  static constexpr _ScalarType name = {&guts::ScalarTypeImpls::name};
 
-C10_FORALL_SCALAR_TYPES(DEFINE_STATIC)
+  C10_FORALL_SCALAR_TYPES(DEFINE_STATIC)
 #undef DEFINE_STATIC
 
-constexpr ScalarType kString(&guts::ScalarTypeImpls::String);
+  static constexpr _ScalarType String = {&guts::ScalarTypeImpls::String};
+  static constexpr _ScalarType Undefined = {&guts::ScalarTypeImpls::Undefined};
+};
 
-template <typename T> constexpr const ScalarType mkScalarType();
+template <typename T> constexpr const ScalarType scalar_type();
 #define DEFINE_TEMPLATE(ctype,name,_1) \
 template <> \
-constexpr const ScalarType mkScalarType<ctype>() { \
-  return k##name; \
+constexpr const ScalarType scalar_type<ctype>() { \
+  return ScalarType::name; \
 }
 
 C10_FORALL_SCALAR_TYPES(DEFINE_TEMPLATE)

@@ -57,10 +57,35 @@ namespace c10 {
 
 // Note [Cult of the dot]
 // ~~~~~~~~~~~~~~~~~~~~~
-// In C++ you have to remember if you have a pointery thing or a referency thing,
-// and use either dot or arrow, depending on which you are in.  This is dumb.
-// We use dot for everything.  Yes, that means you need to write wrapper classes.
-// Yes, it's a good thing.
+// In Python, method invocation is very simple: you write x.f()
+// We wish to preserve this simplicity in C++.  To achieve this, most of our
+// classes are implemented in the PIMPL pattern (there is an implementation class,
+// TensorImpl, which actually contains the data and implementations of functions,
+// and a wrapper class Tensor, which is just a pointer to TensorImpl), where the
+// wrapper class is written to act as a pass-by-value pointer, with direct methods
+// which forward to the implementation.
+//
+// There are a few downsides to this strategy, which we enumerate here:
+//
+//   - It's difficult to do const-correctness in this regime, because doing so
+//     correctly requires *two* wrapper classes for the const and non-const
+//     version (const Tensor doesn't cut the mustard, because it says that the
+//     pointer is const, not that we have a (non-const) pointer to const data.)
+//     We have opted not introduce another Tensor type, but the meaning of
+//     const Tensor& is perpetually confusing to C++ experts who attempt to
+//     use our Tensor type.)
+//
+//   - Static members that used to be pointers don't work correctly.  In particular,
+//     you can't do something like this:
+//
+//        class Tensor {
+//          static const Tensor EMPTY = {...};
+//        }
+//
+//     At the time C++ is laying out the static member, Tensor is an incomplete type,
+//     so the static Tensor EMPTY declaration is illegal.
+//
+//     With a const declaration, you can
 
 
 // SUMMING UP

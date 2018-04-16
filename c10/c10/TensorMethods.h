@@ -43,8 +43,8 @@ template<typename T>
 inline T *Tensor::data() const {
   // dzhulgakov: also, if tensor doesn't support raw pointers - is it expected to throw?
   // ezyang: yes.  Not implemented yet.
-  // clion hates me (mkScalarType is ambiguous)
-  C10_ASSERT(mkScalarType<T>() == impl_->scalar_type());
+  // clion hates me (scalar_type is ambiguous)
+  C10_ASSERT(scalar_type<T>() == impl_->scalar_type());
   return static_cast<T *>(data_ptr());
 }
 
