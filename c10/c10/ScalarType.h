@@ -107,6 +107,7 @@ struct ScalarTypeImpls {
 // A little "pre-implementation" class, so that we can later add the actual static members.
 // If you see this type in an error, do note that it is implicitly convertible into a ScalarType,
 // which is the thing you actually want.
+// See Note [Cult of the dot]
 class _ScalarType {
   const ScalarTypeImpl* impl_;
   friend class ScalarType;

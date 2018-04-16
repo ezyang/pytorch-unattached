@@ -83,9 +83,11 @@ namespace c10 {
 //        }
 //
 //     At the time C++ is laying out the static member, Tensor is an incomplete type,
-//     so the static Tensor EMPTY declaration is illegal.
-//
-//     With a const declaration, you can
+//     so the static Tensor EMPTY declaration is illegal.  The workaround we employ
+//     in this codebase is to first predeclare a class that has all of the interesting
+//     members, and then inherit from it the actual class name that now has the static
+//     members (and we can implicitly convert from the pre-class.)  Not the prettiest,
+//     but it gets us the desired API.
 
 
 // SUMMING UP
