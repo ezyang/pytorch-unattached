@@ -85,14 +85,20 @@ public:
 
   // Hacked up operators
 
-  static Tensor HACK_tensor(ScalarType scalar_type, ArrayRef<int64_t> size, ArrayRef<int64_t> stride) {
+  static Tensor HACK_tensor(ScalarType scalar_type) {
     auto storage = std::make_shared<CPUStorageImpl>(scalar_type);
-    Tensor r = Tensor::_fromImpl(new CPUTensorImpl(scalar_type, storage));
+    return Tensor::_fromImpl(new CPUTensorImpl(scalar_type, storage));
+  }
+
+  // NB: this is generic (assuming you pass in the backend dispatcher)
+  static Tensor HACK_tensor(ScalarType scalar_type, ArrayRef<int64_t> size, ArrayRef<int64_t> stride) {
+    auto r = HACK_tensor(scalar_type);
     r.resize_(size, stride);
     return r;
   }
 
   // Channeling Caffe2 Tensor::Tensor(const vector<TIndex>& dims, const vector<T>& values, Context* context)
+  // NB: this is generic
   template <typename T>
   static Tensor HACK_tensor(ArrayRef<int64_t> size, std::vector<T> data) {
     auto r = HACK_tensor(c10::scalar_type<T>, size, contiguous_strides(size));
