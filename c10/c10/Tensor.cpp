@@ -12,28 +12,32 @@
 
 namespace c10 {
 
-void Tensor::resize_(ArrayRef<int64_t> size, ArrayRef<int64_t> stride, bool keep_data) {
+void Tensor::resize_(ArrayRef<int64_t> size, ArrayRef<int64_t> stride, bool keep_data) const {
   // TODO: Use the dynamic dispatcher instead
   cpu::op::resize_(*this, size, stride, keep_data);
 }
 
-void Tensor::copy_(DataType dtype, const void* p, int64_t size_bytes) {
+void Tensor::copy_(DataType dtype, const void* p, int64_t size_bytes) const {
   // TODO: Use the dynamic dispatcher instead
   cpu::op::copy_(*this, dtype, p, size_bytes);
 }
 
-void Tensor::extend_(int64_t num, double growthPct) {
+void Tensor::extend_(int64_t num, double growthPct) const {
   // TODO: Use the dynamic dispatcher instead
   cpu::op::extend_(*this, num, growthPct);
 }
 
-void Tensor::reserve_(ArrayRef<int64_t> new_size) {
+void Tensor::reserve_(ArrayRef<int64_t> new_size) const {
   // TODO: Use the dynamic dispatcher instead
   cpu::op::reserve_(*this, new_size);
 }
 
-void Tensor::shrink_(int64_t outer_dim_new_size) {
+void Tensor::shrink_(int64_t outer_dim_new_size) const {
   op::shrink_(*this, outer_dim_new_size);
+}
+
+void Tensor::resize_as_(c10::Tensor other) const {
+  op::resize_as_(*this, other);
 }
 
 }

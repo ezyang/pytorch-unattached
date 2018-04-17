@@ -97,6 +97,25 @@ namespace c10 {
 // NB: This is publically inherited, but only to conveniently bring the public methods
 // of Retainable into scope.  If this is causing bad error messages, make it private
 // again and explicitly 'using' each of the public methods you want to propagate.
+
+
+/**
+ * Tensor is a "generic" object holding a pointer to guts::TensorImpl, managing
+ * reference counts for it.  In this way, it is similar to boost::intrusive_ptr.
+ *
+ * For example:
+ *
+ *      void func(Tensor a) {
+ *          Tensor b = a;
+ *          ...
+ *      }
+ *
+ * In this example, when we say Tensor b = a, we are creating a new object that points to the
+ * same underlying guts::TensorImpl, and bumps its reference count. When b goes out of scope, the
+ * destructor decrements the reference count by calling release() on the guts::TensorImpl it points to.
+ * The existing constructors, operator overloads, etc. take care to implement the correct semantics.
+ * You are not expected to ever interact directly with guts::TensorImpl.
+ */
 class Tensor final {
   using TensorBase = guts::Retainable<guts::TensorImpl, guts::UndefinedTensorImpl>;
   TensorBase impl_;
@@ -196,41 +215,64 @@ public:
   // The "well known" Tensor functions will call into the dispatch mechanism (yet to be
   // implemented)
 
+  // NB: Const is a lie!  See also Note [Cult of the dot]
+
   // TODO: this is a sharp-edged API, which we are planning to replace
-  void resize_(ArrayRef<int64_t> size, ArrayRef<int64_t> stride, bool keep_data = true);
+  void resize_(ArrayRef<int64_t> size, ArrayRef<int64_t> stride, bool keep_data = true) const;
 
   // Hmmmmm, does the void* violate our dispatch data model?  OTOH, we are probably going to
   // need ways to create tensors from void* pointers
-  void copy_(DataType dtype, const void* p, int64_t size_bytes);
+  /**
+   * Copy the contents of a pointer into this tensor.
+   *
+   * @warning Prefer using the templated `copy_` instead, which is more type-safe.
+   *
+   * @param dtype       The type of the elements to be copied
+   * @param p           Pointer to the elements to be copied
+   * @param size_bytes  The size in bytes to copy
+   */
+  void copy_(DataType dtype, const void* p, int64_t size_bytes) const;
 
   // NB: This is an instance of the design pattern, where we cannot (and will not) dispatch
-  // templated functions.  So you have to untemplate it first.
+  // templated functions.  So this has an inline definition which goes straight to the
+  // actual implementation which is dynamically dispatched.
+  /**
+   * Copy the contents of an ArrayRef into this tensor.
+   *
+   * @tparam T      The type of the elements to be copied
+   * @param arr     The array of elements to be copied
+   */
   template <typename T>
-  void copy_(ArrayRef<T> arr) {
+  void copy_(ArrayRef<T> arr) const {
     copy_(c10::dtype<T>(), arr.data(), arr.size() * sizeof(T));
   }
 
   /**
-   * @brief Extends the outer-most dimension of this tensor by num elements,
+   * @brief Extends the outer-most dimension of this tensor by `num` elements,
    * preserving the existing data.
    *
    * The underlying data may be reallocated in order to accommodate the new
    * elements, in which case this tensors' capacity is grown at a factor of
-   * growthPct. This ensures that Extend runs on an amortized O(1) time
+   * `growthPct`. This ensures that extend runs on an amortized O(1) time
    * complexity.
    *
-   * Comes from Caffe2.
+   * @warning growthPct is denominated in percent points (so 20 is 20%)
    *
-   * TODO: Possibly have a default growthPct?
+   * @note Corresponds to Caffe2 `Tensor::Extend`, but `growthPct` is a double
+   * rather than a float, following ATen's conventions.
    *
-   * NB: Modified growthPct to be double rather than float, to follow ATen "double only" convention
-   * NB: growthPct is denominated in percent points!!!
+   * @todo Possibly give growthPct a default argument?
+   *
+   * @param num Size to extend the outer-most dimension by
+   * @param growthPct Minimum growth rate, to ensure amortized execution
    */
-  void extend_(int64_t num, double growthPct);
+  void extend_(int64_t num, double growthPct) const;
 
-  void reserve_(ArrayRef<int64_t> new_size);
+  void reserve_(ArrayRef<int64_t> new_size) const;
 
-  void shrink_(int64_t outer_dim_new_size);
+  void shrink_(int64_t outer_dim_new_size) const;
+
+  void resize_as_(Tensor other) const;
 
   // To be something like:
   // Tensor add(Tensor x, Tensor y) { guts::dispatch("add", x, y); }

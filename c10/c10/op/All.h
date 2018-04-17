@@ -17,5 +17,6 @@ namespace c10 { namespace op {
 
 Tensor tensor(DataType dtype, ArrayRef<int64_t> size, ArrayRef<int64_t> stride);
 void shrink_(const Tensor& self, int64_t outer_dim_new_size);
+void resize_as_(const Tensor& self, const Tensor& other);
 
 }} // namespace c10::op
