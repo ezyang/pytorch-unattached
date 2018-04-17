@@ -142,7 +142,8 @@ public:
   // Low level functions which should not be propagated to the Tensor class
 
   // TODO: Can we make it impossible to accidentally out-of-bound read when you set the
-  // sizes and strides?
+  // sizes and strides?  This is not necessarily the right API, but it is one that
+  // sort of works
   void _set_sizes_and_strides(ArrayRef<int64_t> sizes, ArrayRef<int64_t> strides) {
     sizes_.assign(sizes.begin(), sizes.end());
     strides_.assign(strides.begin(), strides.end());

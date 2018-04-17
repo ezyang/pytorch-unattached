@@ -28,4 +28,6 @@ struct SimpleCPUAllocator : public CPUAllocator {
   }
 };
 
+CPUAllocator* getSimpleCPUAllocator();
+
 }}

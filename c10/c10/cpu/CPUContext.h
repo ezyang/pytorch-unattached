@@ -21,6 +21,7 @@ class CPUContext final {
   bool keep_on_shrink_;
   int64_t max_keep_on_shrink_bytes_;
 public:
+  CPUContext() : allocator_(getSimpleCPUAllocator()) {}
   CPUAllocator *getCPUAllocator() { return allocator_; }
   void setCPUAllocator(CPUAllocator* allocator) { allocator_ = allocator; }
   bool keepOnShrink() { return keep_on_shrink_; }
