@@ -26,6 +26,11 @@ void copy_(const Tensor& self, DataType dtype, const void* p, int64_t size_bytes
   _cpu_impl(self)->cpu_storage()->copy_(p, size_bytes);
 }
 
+// TODO: There's some fishy business going on here, because the Caffe2 implementations
+// of these functions are backend independent.  These implementations are not independent,
+// but that's only because the storage methods are nonvirtual (so you have to be at the
+// correct type when you invoke them.)
+
 // Channeling THTensor_(resizeNd)
 // If aggressive = true, we will always try to free up old memory (this means
 // we always have to do a reallocation).  Torch default behavior was to
@@ -82,8 +87,6 @@ void reserve_(const Tensor& self, ArrayRef<int64_t> new_size) {
 }
 
 // Channeling Caffe2 Tensor::Extend(TIndex num, float growthPct, ContextForCopy* context)
-// TODO: Simplify this implementation to not rely on resize_, and instead be implemented
-// in terms of a reserve_() and then a Tensor sizes adjustment (?)
 void extend_(const Tensor& self, int64_t num, double growthPct) {
   C10_CHECK(self.dim() >= 1);
   DimVector new_size{self.sizes()};

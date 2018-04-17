@@ -230,6 +230,8 @@ public:
 
   void reserve_(ArrayRef<int64_t> new_size);
 
+  void shrink_(int64_t outer_dim_new_size);
+
   // To be something like:
   // Tensor add(Tensor x, Tensor y) { guts::dispatch("add", x, y); }
 

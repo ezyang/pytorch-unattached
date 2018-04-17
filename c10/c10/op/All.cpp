@@ -10,4 +10,8 @@ Tensor tensor(DataType dtype, ArrayRef<int64_t> size, ArrayRef<int64_t> stride) 
   return r;
 }
 
+void shrink_(const Tensor& self, int64_t outer_dim_new_size) {
+  self._to_impl()->_shrink(outer_dim_new_size);
+}
+
 }} // namespace c10::op
