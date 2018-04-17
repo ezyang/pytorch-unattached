@@ -109,10 +109,10 @@ public:
   // TODO: Figure out a safer way to expose this to relevant sites
   // I've forgotten how to use this safely, so it's
   // not a good API. :)
-  static Tensor _fromImpl(guts::TensorImpl* impl) { return Tensor(TensorBase(impl)); };
+  static Tensor _from_impl(guts::TensorImpl *impl) { return Tensor(TensorBase(impl)); };
 
   // TODO: Figure out a safer way to expose this to relevant sites
-  guts::TensorImpl* _toImpl() const { return impl_.get(); }
+  guts::TensorImpl* _to_impl() const { return impl_.get(); }
 
   // Normal constructors
   // TODO: I don't know if it's safe to replace this with = default here... godbolt time...

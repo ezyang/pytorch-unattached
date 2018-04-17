@@ -7,17 +7,17 @@ namespace c10 { namespace cpu { namespace op {
 
 // The actual implementations
 
-// Hmm... this is still a bit awkward...  using private _fromImpl to get
+// Hmm... this is still a bit awkward...  using private _from_impl to get
 // the implementation going???  How do we actually want to write this?
 Tensor tensor(DataType dtype) {
   auto storage = std::make_shared<CPUStorageImpl>(dtype);
-  return Tensor::_fromImpl(new CPUTensorImpl(dtype, storage));
+  return Tensor::_from_impl(new CPUTensorImpl(dtype, storage));
 }
 
 // PRIVATE PRIVATE PRIVATE!!!
 static CPUTensorImpl* _cpu_impl(const Tensor& self) {
   C10_ASSERT(self.type_id() == TypeIds::CPUTensor);
-  return static_cast<CPUTensorImpl*>(self._toImpl());
+  return static_cast<CPUTensorImpl*>(self._to_impl());
 }
 
 // Channeling Caffe2 Tensor::Tensor(const T& value, Context* context)
