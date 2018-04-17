@@ -1,0 +1,115 @@
+#include <c10/c10.h>
+
+#include "TensorShape.h"
+
+namespace c10 { namespace cpu { namespace ops {
+
+#if 0
+
+// The actual implementations
+
+Tensor tensor(DataType dtype) {
+  auto storage = std::make_shared<CPUStorageImpl>(scalar_type);
+  return Tensor::_fromImpl(new CPUTensorImpl(scalar_type, storage));
+}
+
+// Channeling Caffe2 Tensor::Tensor(const T& value, Context* context)
+// Create a scalar tensor from a single value
+// NB: this is generic
+// NB: the test that T is_scalar prevents this template from clobbering other
+// overloads (though, this may not be an issue in C10, since Context is no longer
+// a templated argument, so C++'s rule of preferring a non-template function over
+// a templated one might actually work.)
+template <typename T,
+    typename = typename std::enable_if<std::is_scalar<T>::value>::type>
+Tensor tensor(const T& value) {
+  auto r = tensor(c10::scalar_type<T>, {}, {});
+  r.template copy_<T>({&value, 1});
+  return r;
+}
+
+// Channeling Caffe2 Tensor::Tensor(const T& value, Context* context)
+void copy_(ScalarType s, const void* p, int64_t size_bytes) override {
+  C10_CHECK(s == scalar_type_);
+  cpu_storage()->copy_(p, size_bytes);
+}
+
+// Channeling THTensor_(resizeNd)
+// If aggressive = true, we will always try to free up old memory (this means
+// we always have to do a reallocation).  Torch default behavior was to
+// keep the old data around; Caffe2's behavior is to do a full reallocate.
+// NB: This code is GENERIC for all strided tensors.
+// When stride is not set, it is assumed you wanted to preserve the original stride
+// NB: resizeNd used to accept NULL stride, in which case contiguous strides are
+// assumed.  To keep this function simple, we FORCE the callee to pass new_stride;
+// it's a simple matter to compute what the appropriate contiguous strides for a
+// tensor are.
+// WARNING: BC-breaking change; previously a negative number was assumed to mean
+// "compute whatever the appropriate contiguous stride is."  But this didn't even
+// work in all cases; when determining if sizes/strides had changed, resizeNd would
+// incorrectly assume the original tensor was
+// contiguously strided for every negative index, even when it was not.
+// See also https://github.com/pytorch/pytorch/issues/229
+void resize_(ArrayRef<int64_t> new_size, ArrayRef<int64_t> new_stride, bool keep_data) override {
+  C10_ASSERT(new_size.size() == new_stride.size());
+  bool unchanged = new_size.equals(size()) && new_stride.equals(stride());
+  if (unchanged) return;
+  auto new_size_bytes = required_new_storage_size_bytes(scalar_type_, new_size, new_stride, storage_offset_bytes_);
+  size_.assign(new_size.begin(), new_size.end());
+  stride_.assign(new_stride.begin(), new_stride.end());
+  // NB: In the old TH code, it was permissible for Storage to be a nullptr at this point.
+  // We have tightened the internal invariants.  I put the ASSERT back in where the old
+  // test for storage_ being nullptr would have been.
+  C10_ASSERT(storage_);
+  bool needs_resize =
+      // not enough space, OR
+      new_size_bytes > storage_->sizeBytes() ||
+      // we're not allowed to keep the old storage on a shrink, OR
+      !globalCPUContext().keepOnShrink() ||
+      // we shrunk greater than the maximum "keep on shrink" bytes.
+      storage_->sizeBytes() - new_size_bytes > globalCPUContext().maxKeepOnShrinkBytes();
+  if (needs_resize) {
+    cpu_storage()->resize_(new_size_bytes, keep_data);
+  }
+}
+
+// Channeling Caffe2 Tensor::Reserve(const std::vector<T>& newCapacity, ContextForCopy* context)
+// TODO: Consider also having a direct "numels" variant.  Note that this version accounts
+// correctly for strides
+void reserve_(ArrayRef<int64_t> new_size) override {
+  auto new_size_bytes = required_new_storage_size_bytes(scalar_type(), new_size, stride(), storage_offset_bytes_);
+  if (new_size_bytes > storage_->sizeBytes()) {
+    // NB: Size of this tensor is unchanged!
+    cpu_storage()->resize_(new_size_bytes, true);
+  }
+}
+
+// Channeling Caffe2 Tensor::Extend(TIndex num, float growthPct, ContextForCopy* context)
+void extend_(int64_t num, double growthPct) override {
+  C10_CHECK(dim() >= 1);
+  DimVector new_size{size()};
+  new_size[0] += num;
+  // NB: Do not need to test for storage_ == nullptr as it is assumed to
+  // have been initialized
+  auto tentative_new_size_bytes = required_new_storage_size_bytes(scalar_type_, new_size, stride(), storage_offset_bytes_);
+  if (tentative_new_size_bytes <= storage_->sizeBytes()) {
+    size_ = new_size;
+    return;
+  }
+  // Compute the true size increase, to ensure extend() amortizes correctly
+  new_size[0] = std::max(new_size[0], static_cast<int64_t>(std::ceil(size()[0] * (growthPct + 100) / 100)));
+  HACK_resize_(new_size, stride(), true);
+}
+
+/*
+// Channeling Caffe2 Tensor::CopyFrom(const Tensor<SrcContext>& src, ContextForCopy* context)
+// and Tensor::CopyFrom(const Tensor<SrcContext>& src)
+// This function is deferred until multiple dispatch is online, as it can only be conveniently
+// implemented inside the multiple dispatch framework
+void HACK_copy_(Tensor src) {
+}
+ */
+
+#endif
+
+}}} // namespace c10::cpu::ops

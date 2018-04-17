@@ -6,14 +6,14 @@
 #include <functional>
 #include <algorithm>
 
-#define C10_FORALL_SCALAR_TYPES(_) \
-_(uint8_t,Byte,i) \
-_(int8_t,Char,i) \
-_(int16_t,Short,i) \
-_(int,Int,i) \
-_(int64_t,Long,i) \
-_(float,Float,d) \
-_(double,Double,d)
+#define C10_FORALL_BUILTIN_DATA_TYPES(_) \
+_(uint8_t,uint8,i) \
+_(int8_t,int8,i) \
+_(int16_t,int16,i) \
+_(int,int32,i) \
+_(int64_t,int64,i) \
+_(float,float32,d) \
+_(double,float64,d)
 // Not yet implemented
 // _(Half,Half,d) \
 
@@ -74,17 +74,17 @@ void _dtor(void *ptr, int64_t n) {
 }
 
 
-class ScalarTypeImpl {
+class DataTypeImpl {
   int64_t itemsize_;
   const char *name_;
   PlacementNew ctor_;
   TypedCopy copy_;
   TypedDestructor dtor_;
 
-  constexpr ScalarTypeImpl(int64_t itemsize, const char *name, PlacementNew ctor, TypedCopy copy, TypedDestructor dtor)
+  constexpr DataTypeImpl(int64_t itemsize, const char *name, PlacementNew ctor, TypedCopy copy, TypedDestructor dtor)
       : itemsize_(itemsize), name_(name), ctor_(ctor), copy_(copy), dtor_(dtor) {}
 
-  friend class ScalarTypeImpls;
+  friend class DataTypeImpls;
 
 public:
   constexpr int64_t itemsize() const noexcept { return itemsize_; }
@@ -94,40 +94,40 @@ public:
   constexpr const char* name() const noexcept { return name_; }
 };
 
-// NB: This has to be in a separate class, because ScalarTypeImpl is not a complete type when
-// defining static members of ScalarTypeImpl
+// NB: This has to be in a separate class, because DataTypeImpl is not a complete type when
+// defining static members of DataTypeImpl
 // NB: struct rather than namespace so we can friend it
-struct ScalarTypeImpls {
+struct DataTypeImpls {
 #define DEFINE_STATIC(ctype, name, _3) \
-  static constexpr ScalarTypeImpl name = {sizeof(ctype), #name, nullptr, nullptr, nullptr};
+  static constexpr DataTypeImpl name = {sizeof(ctype), #name, nullptr, nullptr, nullptr};
 
-  C10_FORALL_SCALAR_TYPES(DEFINE_STATIC)
+  C10_FORALL_BUILTIN_DATA_TYPES(DEFINE_STATIC)
 #undef DEFINE_STATIC
 
-  static constexpr ScalarTypeImpl String = {sizeof(std::string), "String", _ctor<std::string>, _copy<std::string>,
+  static constexpr DataTypeImpl string_dtype = {sizeof(std::string), "String", _ctor<std::string>, _copy<std::string>,
                                             _dtor<std::string>};
   // I'm not too sure about undefined scalar type, but I've put it in for now since ATen has it.
-  static constexpr ScalarTypeImpl Undefined = {0, "Undefined", nullptr, nullptr, nullptr};
+  static constexpr DataTypeImpl undefined_dtype = {0, "Undefined", nullptr, nullptr, nullptr};
 };
 
-// A little "pre-implementation" class, so that we can later add the actual static members.
-// If you see this type in an error, do note that it is implicitly convertible into a ScalarType,
-// which is the thing you actually want.
-// See Note [Cult of the dot]
-class _ScalarType {
-  const ScalarTypeImpl* impl_;
-  friend class ScalarType;
+} // namespace guts
+
+class DataType {
+  const guts::DataTypeImpl* impl_;
+  friend class DataType;
 public:
   // Sigh, don't really want this to be public, but don't want to define another struct
-  // to place ScalarType
-  constexpr _ScalarType(const ScalarTypeImpl* impl) : impl_(impl) {};
-  _ScalarType() = default;
-  _ScalarType(const _ScalarType &rhs) = default;
-  _ScalarType(_ScalarType &&rhs) noexcept = default;
-  _ScalarType& operator=(_ScalarType &&rhs) = default;
-  _ScalarType& operator=(const _ScalarType &rhs) = default;
+  // to place the DataType constants
+  constexpr DataType(const guts::DataTypeImpl* impl) : impl_(impl) {};
+  DataType() = default;
+  DataType(const DataType &rhs) = default;
+  DataType(DataType &&rhs) noexcept = default;
+  DataType& operator=(DataType &&rhs) = default;
+  DataType& operator=(const DataType &rhs) = default;
 
-  inline bool operator==(const ScalarType& other);
+  inline bool operator==(const DataType& other) {
+    return impl_ == other.impl_;
+  }
 
   constexpr int64_t itemsize() const { return impl_->itemsize(); }
   constexpr PlacementNew ctor() const { return impl_->ctor(); }
@@ -139,34 +139,24 @@ public:
   // them with ScalarType, not ScalarType_
 };
 
-} // namespace guts
-
-class ScalarType : public guts::_ScalarType {
-public:
-  /*implicit*/ constexpr ScalarType(guts::_ScalarType self) : _ScalarType(self) {}
-
 #define DEFINE_STATIC(_1,name,_3) \
-  static constexpr _ScalarType name = {&guts::ScalarTypeImpls::name};
+constexpr DataType name = {&guts::DataTypeImpls::name};
 
-  C10_FORALL_SCALAR_TYPES(DEFINE_STATIC)
+C10_FORALL_BUILTIN_DATA_TYPES(DEFINE_STATIC)
 #undef DEFINE_STATIC
 
-  static constexpr _ScalarType String = {&guts::ScalarTypeImpls::String};
-  static constexpr _ScalarType Undefined = {&guts::ScalarTypeImpls::Undefined};
-};
+// A little more wordy for these
+constexpr DataType string_dtype = {&guts::DataTypeImpls::string_dtype};
+constexpr DataType undefined_dtype = {&guts::DataTypeImpls::undefined_dtype};
 
-bool guts::_ScalarType::operator==(const c10::ScalarType &other) {
-  return impl_ == other.impl_;
-}
-
-template <typename T> constexpr const ScalarType scalar_type();
+template <typename T> constexpr const DataType dtype();
 #define DEFINE_TEMPLATE(ctype,name,_1) \
 template <> \
-constexpr const ScalarType scalar_type<ctype>() { \
-  return ScalarType::name; \
+constexpr const DataType dtype<ctype>() { \
+  return name; \
 }
 
-C10_FORALL_SCALAR_TYPES(DEFINE_TEMPLATE)
+C10_FORALL_BUILTIN_DATA_TYPES(DEFINE_TEMPLATE)
 #undef DEFINE_TEMPLATE
 
 }

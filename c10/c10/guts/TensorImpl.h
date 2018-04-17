@@ -7,7 +7,7 @@
 #include "c10/TypeId.h"
 
 #include "Retainable.h"
-#include "c10/ScalarType.h"
+#include "c10/DataType.h"
 #include "Storage.h"
 
 #include <vector>
@@ -40,7 +40,7 @@ protected:
   // TODO: Pointer to scalar type means there's a possibly unnecessary indirection here!
   // TODO: This is going to be redundant with type_id_, so if we want to squeeze down size
   // we can make this a computed property from type_id_.
-  ScalarType scalar_type_;
+  DataType dtype_;
 
   DimVector size_;
 
@@ -60,11 +60,11 @@ protected:
   int64_t storage_offset_bytes_;
 
 public:
-  explicit TensorImpl(TypeId type_id, ScalarType scalar_type, Storage storage)
+  explicit TensorImpl(TypeId type_id, DataType dtype, Storage storage)
       : RetainableImpl()
       , type_id_(type_id)
       , size_()
-      , scalar_type_(scalar_type)
+      , dtype_(dtype)
       , storage_(storage)
   {};
 
@@ -74,12 +74,12 @@ public:
 
   // Previously was type().scalarType() but I haven't committed to adding a Type object
   // to the design yet.
-  ScalarType scalar_type() const {
-    return scalar_type_;
+  DataType dtype() const {
+    return dtype_;
   }
 
   int64_t storage_offset() const {
-    return storage_offset_bytes_ / scalar_type_.itemsize();
+    return storage_offset_bytes_ / dtype_.itemsize();
   }
 
   // NB: In Caffe2, this quantity is CACHED.  For simplicity, we don't cache it for now, but consider
@@ -117,7 +117,7 @@ public:
     throw std::runtime_error("resize_");
   }
 
-  virtual void HACK_copy_(ScalarType s, const void* p, int64_t size_bytes) {
+  virtual void HACK_copy_(DataType s, const void* p, int64_t size_bytes) {
     throw std::runtime_error("copy_");
   }
 
@@ -137,7 +137,7 @@ public:
 //      instead of an error, which should have happened.  It just seems morally wrong to privilege empty CPU
 //      tensors in this way.  Also, you don't get reliable pointer equality tests anymore.
 class UndefinedTensorImpl final : public TensorImpl {
-  UndefinedTensorImpl() : TensorImpl(TypeIds::Undefined, ScalarType::Undefined, nullptr) {};
+  UndefinedTensorImpl() : TensorImpl(TypeIds::Undefined, c10::undefined_dtype, nullptr) {};
 public:
   static UndefinedTensorImpl *singleton() {
     // smessmer to @ezyang: Not sure this singleton is a good idea. If wrapped in Tensor, it is subject to ref counting and might get destructed.

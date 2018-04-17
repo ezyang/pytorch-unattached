@@ -9,7 +9,7 @@
 #include <utility>
 #include <c10/Assert.h>
 #include <algorithm>
-#include <c10/ScalarType.h>
+#include <c10/DataType.h>
 
 namespace c10 { namespace guts {
 
@@ -60,7 +60,7 @@ protected:
 
   // The scalar type of this storage.  We need this in case we need to do placement-new/placement-delete
   // after allocation
-  ScalarType scalar_type_;
+  DataType data_type_;
 
   // Is this storage resizable?  If it comes externally, or has been shared to some external system, it may not be.
   // Corresponds to TH_STORAGE_RESIZABLE.
@@ -112,13 +112,13 @@ protected:
   // because you will always actually have a CPUStorageImpl or something similar, and
   // so if you use the base class you will miss methods.
 
-  StorageImpl(ScalarType scalar_type)
-      : data_(nullptr), size_bytes_(0), scalar_type_(scalar_type), resizable_(true) {}
+  StorageImpl(DataType data_type)
+      : data_(nullptr), size_bytes_(0), data_type_(data_type), resizable_(true) {}
 
   // TODO: Make a more descriptive constructor for non-resizable things.  Note that since you're
   // using make_shared most of the time for storages, a static method won't cut it.
-  StorageImpl(ScalarType scalar_type, data_t &&data, int64_t size, bool resizable = true)
-      : data_(std::move(data)), size_bytes_(size), scalar_type_(scalar_type), resizable_(resizable) {}
+  StorageImpl(DataType data_type, data_t &&data, int64_t size, bool resizable = true)
+      : data_(std::move(data)), size_bytes_(size), data_type_(data_type), resizable_(resizable) {}
 
   // NB: Move constructor is legitimately used to destructively overwrite a storage, as in the case of a resize_()
   // TODO: explicitly declare permitted constructors.  (Consult my "rule of X" stuff...)

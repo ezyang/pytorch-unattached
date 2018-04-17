@@ -11,7 +11,7 @@
 #include <utility>
 #include <c10/Assert.h>
 #include <algorithm>
-#include <c10/ScalarType.h>
+#include <c10/DataType.h>
 #include <c10/guts/Storage.h>
 
 namespace c10 { namespace cpu {
@@ -24,11 +24,11 @@ public:
   // TODO: Permit allocator to be passed in through this function
   // TODO: Maybe ball up the allocator into a context
 
-  CPUStorageImpl(ScalarType scalar_type)
-      : StorageImpl(scalar_type)
+  CPUStorageImpl(DataType data_type)
+      : StorageImpl(data_type)
   {}
-  CPUStorageImpl(ScalarType scalar_type, int64_t size)
-      : StorageImpl(scalar_type, nullptr, size)
+  CPUStorageImpl(DataType data_type, int64_t size)
+      : StorageImpl(data_type, nullptr, size)
   {
     auto ptr_deleter = globalCPUContext().getCPUAllocator()->malloc(size);
     data_ = {ptr_deleter.first, ptr_deleter.second};
@@ -57,9 +57,9 @@ public:
 
   void copy_(const void* src, int64_t copy_size_bytes) {
     if (copy_size_bytes <= 0) return;
-    if (auto copy = scalar_type_.copy()) {
+    if (auto copy = data_type_.copy()) {
       // Swapped argument order?! How confusing!
-      copy(src, data_.get(), copy_size_bytes / scalar_type_.itemsize());
+      copy(src, data_.get(), copy_size_bytes / data_type_.itemsize());
     } else {
       std::memcpy(data_.get(), src, static_cast<size_t>(copy_size_bytes));
     }
@@ -79,8 +79,8 @@ public:
   //
   // NB: This has the logic for Caffe2-style placement-new/placement-delete
   void resize_(int64_t new_size_bytes, bool keep_data = true) {
-    C10_ASSERT(new_size_bytes % scalar_type_.itemsize() == 0);
-    auto new_size_elems = new_size_bytes / scalar_type_.itemsize();
+    C10_ASSERT(new_size_bytes % data_type_.itemsize() == 0);
+    auto new_size_elems = new_size_bytes / data_type_.itemsize();
     if (!resizable_) throw std::runtime_error("trying to resize storage that is not resizable");
     // TODO: Consider bringing back the old realloc path from TH?
     data_t old_data = std::move(data_);
@@ -93,7 +93,7 @@ public:
       std::tie(raw_data, deleter) = globalCPUContext().getCPUAllocator()->malloc(new_size_bytes);
       // TODO: Exception safety?!  If an exception happens before we allocate the unique_ptr
       // we will lose this data.
-      if (auto dtor = scalar_type_.dtor()) {
+      if (auto dtor = data_type_.dtor()) {
         // TODO: It is too bad we can't move capture 'deleter'; an unnecessary
         // copy happens here. (It also happened in the old Caffe2 version of this code)
         auto deleter_with_dtor = [dtor, deleter, new_size_elems](void* p) {
@@ -108,8 +108,8 @@ public:
       // TODO: Still exception safety?!?!  If an exception happens before we placement-new,
       // we will attempt to deallocate the data using the placement-deleter, which is obviously
       // not going to work
-      if (auto ctor = scalar_type_.ctor()) {
-        ctor(data_.get(), new_size_bytes / scalar_type_.itemsize());
+      if (auto ctor = data_type_.ctor()) {
+        ctor(data_.get(), new_size_bytes / data_type_.itemsize());
       }
     }
     size_bytes_ = new_size_bytes;

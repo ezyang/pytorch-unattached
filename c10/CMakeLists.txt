@@ -46,7 +46,7 @@ add_library(c10 SHARED
         c10/DimVector.h
         c10/cpu/CPUContext.cpp
         c10/cpu/CPUContext.h
-        c10/c10.h c10/ScalarType.cpp c10/ScalarType.h c10/guts/Storage.cpp c10/guts/Storage.h)
+        c10/c10.h c10/DataType.cpp c10/DataType.h c10/guts/Storage.cpp c10/guts/Storage.h c10/cpu/ops/TensorShape.cpp c10/cpu/ops/TensorShape.h c10/ops/Constructors.cpp c10/ops/Constructors.h c10/Utils.cpp c10/Utils.h c10/Functions.cpp c10/Functions.h c10/ThreadContext.cpp c10/ThreadContext.h)
 target_include_directories(c10 PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<INSTALL_INTERFACE:${C10_INSTALL_INCLUDE_SUBDIR}>

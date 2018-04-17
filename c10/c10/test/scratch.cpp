@@ -6,6 +6,8 @@ using namespace c10;
 
 // Just a scratch pad for running little programs
 int main() {
+  /* // TO BE REWRITTEN
   Tensor x = c10::cpu::CPUTensorImpl::HACK_tensor(ScalarType::Int, {3, 2}, {2, 1});
   x.resize_({5, 5}, {5, 1});
+   */
 }

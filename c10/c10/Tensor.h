@@ -2,7 +2,7 @@
 
 #include "guts/Retainable.h"
 #include "ArrayRef.h"
-#include "ScalarType.h"
+#include "DataType.h"
 
 namespace c10 { namespace guts {
 
@@ -152,13 +152,13 @@ public:
 
   // Hmmmmm, does the void* violate our dispatch data model?  OTOH, we are probably going to
   // need ways to create tensors from void* pointers
-  void copy_(ScalarType s, const void* p, int64_t size_bytes);
+  void copy_(DataType dtype, const void* p, int64_t size_bytes);
 
   // NB: This is an instance of the design pattern, where we cannot (and will not) dispatch
   // templated functions.  So you have to untemplate it first.
   template <typename T>
   void copy_(ArrayRef<T> arr) {
-    copy_(c10::scalar_type<T>(), arr.data(), arr.size() * sizeof(T));
+    copy_(c10::dtype<T>(), arr.data(), arr.size() * sizeof(T));
   }
 
   /**
