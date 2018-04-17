@@ -13,12 +13,6 @@ SET(C10_INSTALL_LIB_DIR "lib" CACHE PATH "AT install library subdirectory")
 SET(C10_INSTALL_INCLUDE_DIR "include" CACHE PATH "AT install include subdirectory")
 SET(C10_INSTALL_SHARE_DIR "share" CACHE PATH "AT install include subdirectory")
 
-# TODO: This is still in flux
-add_library(c10_cuda OBJECT
-        c10/cuda/CUDAStorage.cpp
-        c10/cuda/CUDAStorage.h
-        )
-
 add_library(c10 SHARED
         c10/Tensor.cpp
         c10/Tensor.h
