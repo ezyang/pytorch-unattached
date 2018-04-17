@@ -48,7 +48,8 @@ void resize_(const Tensor& self, ArrayRef<int64_t> new_size, ArrayRef<int64_t> n
   C10_ASSERT(new_size.size() == new_stride.size());
   bool unchanged = new_size.equals(self.sizes()) && new_stride.equals(self.strides());
   if (unchanged) return;
-  auto new_size_bytes = required_new_storage_size_bytes(self.dtype(), new_size, new_stride, self.storage_offset());
+  // TODO: This is an error-prone API call.  Might be safer to just pass self directly
+  auto new_size_bytes = required_new_storage_size_bytes(self.dtype(), new_size, new_stride, self.storage_offset() * self.dtype().itemsize());
   auto impl = _cpu_impl(self);
   impl->_set_sizes_and_strides(new_size, new_stride);
   // NB: In the old TH code, it was permissible for Storage to be a nullptr at this point.
@@ -68,34 +69,38 @@ void resize_(const Tensor& self, ArrayRef<int64_t> new_size, ArrayRef<int64_t> n
   }
 }
 
-#if 0
-
 // Channeling Caffe2 Tensor::Reserve(const std::vector<T>& newCapacity, ContextForCopy* context)
 // TODO: Consider also having a direct "numels" variant.  Note that this version accounts
 // correctly for strides
-void reserve_(ArrayRef<int64_t> new_size) override {
-  auto new_size_bytes = required_new_storage_size_bytes(scalar_type(), new_size, stride(), storage_offset_bytes_);
-  if (new_size_bytes > storage_->sizeBytes()) {
+void reserve_(const Tensor& self, ArrayRef<int64_t> new_size) {
+  auto new_size_bytes = required_new_storage_size_bytes(self.dtype(), new_size, self.strides(), self.storage_offset() * self.dtype().itemsize());
+  auto cpu_storage = _cpu_impl(self)->cpu_storage();
+  if (new_size_bytes > cpu_storage->sizeBytes()) {
     // NB: Size of this tensor is unchanged!
-    cpu_storage()->resize_(new_size_bytes, true);
+    cpu_storage->resize_(new_size_bytes, true);
   }
 }
 
 // Channeling Caffe2 Tensor::Extend(TIndex num, float growthPct, ContextForCopy* context)
-void extend_(int64_t num, double growthPct) override {
-  C10_CHECK(dim() >= 1);
-  DimVector new_size{size()};
+// TODO: Simplify this implementation to not rely on resize_, and instead be implemented
+// in terms of a reserve_() and then a Tensor sizes adjustment (?)
+void extend_(const Tensor& self, int64_t num, double growthPct) {
+  C10_CHECK(self.dim() >= 1);
+  DimVector new_size{self.sizes()};
   new_size[0] += num;
   // NB: Do not need to test for storage_ == nullptr as it is assumed to
   // have been initialized
-  auto tentative_new_size_bytes = required_new_storage_size_bytes(scalar_type_, new_size, strides(), storage_offset_bytes_);
-  if (tentative_new_size_bytes <= storage_->sizeBytes()) {
-    sizes_ = new_size;
+  auto tentative_new_size_bytes = required_new_storage_size_bytes(self.dtype(), new_size, self.strides(), self.storage_offset() * self.dtype().itemsize());
+  auto* impl =_cpu_impl(self);
+  auto cpu_storage = impl->cpu_storage();
+  if (tentative_new_size_bytes <= cpu_storage->sizeBytes()) {
+    impl->_set_sizes_and_strides(new_size, self.strides());
     return;
   }
   // Compute the true sizes increase, to ensure extend() amortizes correctly
-  new_size[0] = std::max(new_size[0], static_cast<int64_t>(std::ceil(sizes()[0] * (growthPct + 100) / 100)));
-  HACK_resize_(new_size, strides(), true);
+  new_size[0] = std::max(new_size[0], static_cast<int64_t>(std::ceil(self.sizes()[0] * (growthPct + 100) / 100)));
+  // Short-circuit dynamic dispatch.
+  resize_(self, new_size, self.strides(), true);
 }
 
 /*
@@ -106,7 +111,5 @@ void extend_(int64_t num, double growthPct) override {
 void HACK_copy_(Tensor src) {
 }
  */
-
-#endif
 
 }}} // namespace c10::cpu::op

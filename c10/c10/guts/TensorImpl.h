@@ -70,10 +70,6 @@ protected:
   // See also https://ezyang.github.io/stride-visualizer/index.html
   DimVector strides_;
 
-  // dzhulgakov: I'd strongly suggest to keep around actual type, not just sizes to do type checking. Please look at TypeMeta - it solves a lot of issues
-  // dzhulgakov: Caffe2 now supports fancy stuff like Tensor of std::string (or other types), TF too. I think we should handle it which requires some TypeMeta-like care to call constructors at right places. We can reuse it verbatim
-  int64_t element_size_bytes_;
-
   // This lives here because we really want data_ptr() calculation to inline.
   // Note: storage->sizes() may be greater than the recorded sizes of the tensor
   // ezyang to @smessmer: Maybe we should consider using a never-null pointer.
@@ -84,6 +80,8 @@ protected:
   // inside of tensors.  In historic Caffe2 this was always zero.
   // NB: This is BYTES!!!  Different from TH historically, which was scalar sizes.
   int64_t storage_offset_bytes_;
+
+  // TODO: need boolean flags to specify whether or not elements like strides and storage are valid.
 
   // TODO: consider whether or not to inline cuda_device here.  Then we can change CPUStorage from
   // an "is-a" to "has-a" relationship and inline the storage struct in Tensor.
