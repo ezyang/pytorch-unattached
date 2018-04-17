@@ -34,7 +34,7 @@ public:
     return data_.get();
   }
 
-  // THStorage_(size)
+  // THStorage_(sizes)
   inline std::size_t size() const {
     return size_;
   }
@@ -47,7 +47,7 @@ public:
 
   // THStorage_(swap)
   // This is used to implement resize, which needs to "replace" a Storage.
-  // NB: This can be used to cause memory unsafety, as size bounds stored in Tensors may become invalid.
+  // NB: This can be used to cause memory unsafety, as sizes bounds stored in Tensors may become invalid.
   // NB: if you have a CPUStorage x, this is NOT the same thing as x.swap(y).  All that does is twiddle
   // the shared pointers.  This actually swaps all the CONTENTS of the storage.  This is why I didn't call
   // it swap().

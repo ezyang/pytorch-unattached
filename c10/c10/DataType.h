@@ -149,6 +149,10 @@ C10_FORALL_BUILTIN_DATA_TYPES(DEFINE_STATIC)
 constexpr DataType string_dtype = {&guts::DataTypeImpls::string_dtype};
 constexpr DataType undefined_dtype = {&guts::DataTypeImpls::undefined_dtype};
 
+// TODO: this templated function interacts poorly with dtype() methods we have on
+// Tensor, and also the fact that conventionally DataType arguments are named
+// dtype.  Strongly consider renaming this, maybe to data_type.  Conventional way
+// to call this internally is to say c10::dtype<T>(); this will always be unambiguous.
 template <typename T> constexpr const DataType dtype();
 #define DEFINE_TEMPLATE(ctype,name,_1) \
 template <> \

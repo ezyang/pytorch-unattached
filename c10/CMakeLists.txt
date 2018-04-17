@@ -40,7 +40,6 @@ add_library(c10 SHARED
         c10/cpu/CPUAllocator.h
         c10/cpu/CPUTensorImpl.cpp
         c10/cpu/CPUTensorImpl.h
-        c10/TensorMethods.h
         c10/SmallVector.cpp
         c10/SmallVector.h
         c10/DimVector.h

@@ -23,7 +23,7 @@ namespace c10 {
 //        as our default constructor is much better for us. This approach is similar to
 //        allowing nullptr dispatch in Obj-C
 // - Fixed the mismatch between PyTorch and C++ methods
-//      - sizes() is now size()
+//      - sizes() is now sizes()
 //
 // Tensor x = ...;
 // Tensor y = x;  // NO COPY
@@ -111,6 +111,9 @@ public:
   // not a good API. :)
   static Tensor _fromImpl(guts::TensorImpl* impl) { return Tensor(TensorBase(impl)); };
 
+  // TODO: Figure out a safer way to expose this to relevant sites
+  guts::TensorImpl* _toImpl() const { return impl_.get(); }
+
   // Normal constructors
   // TODO: I don't know if it's safe to replace this with = default here... godbolt time...
   Tensor()  = default;
@@ -121,24 +124,72 @@ public:
   // via our implementation classes.  Most non-core methods should be implemented by
   // the generic dispatch mechanism.
 
-  // The definitions of these live in TensorMethods.h
   // dzhulgakov: nit - is it widely used? I'd prefer ndimension as below or rank. In C2 it's a function returning particular dimension
-  inline int64_t dim() const;
-  // dzhulgakov: nit - why `size` and not `sizes`? In C2 the size is number of elements - I bet it will cause confusion
-  inline ArrayRef<int64_t> size() const;
-  inline int64_t size(int64_t dim) const;
-  inline ArrayRef<int64_t> stride() const;
-  inline int64_t stride(int64_t dim) const;
-  inline void* data_ptr() const;
-  inline int64_t ndimension() const;
-  int64_t storage_offset() const;
-  int64_t numel() const;
+  int64_t dim() const {
+    return impl_->dim();
+  }
+
+  // NB: PyTorch Python API calls this size(), but this is confusing in C++ for two reasons:
+  //    - C++ conventionally has size() meaning "number of elements"
+  //    - Caffe2 has size() meaning "number of elements"
+  // We could also introduce shape() as a way to get at this name
+  ArrayRef<int64_t> sizes() const {
+    return impl_->sizes();
+  }
+
+  ArrayRef<int64_t> stride() const {
+    return impl_->stride();
+  }
+
+  int64_t size(int64_t dim) const {
+    return impl_->sizes().at(dim);
+  }
+
+  int64_t stride(int64_t dim) const {
+    return impl_->stride().at(dim);
+  }
+
+  // smessmer to @ezyang: Do we want to try honoring const-ness for the underlying data?
+  //          i.e. const T* data() const {} and T* data() {} ?
+  //          not sure if it's a good idea, but we should consider it.
+  // ezyang to @smessmer: This is difficult to do without adding more user-visible 'Tensor' types.
+  //          Back story is at https://github.com/zdevito/ATen/issues/27
+  void *data_ptr() const {
+    return impl_->data_ptr();
+  }
+
+  int64_t storage_offset() const {
+    return impl_->storage_offset();
+  }
+
+  int64_t numel() const {
+    return impl_->numel();
+  }
+
+  int64_t ndimension() const {
+    return dim();
+  }
+
+  DataType dtype() const {
+    return impl_->dtype();
+  }
+
+  // TODO: Not sure about this method.
+  TypeId type_id() const {
+    return impl_->type_id();
+  }
 
   // dzhulgakov: what are the semantics of it? i.e. how do I change type of the elements stored in a tensor? Or is it passed only in the constructor?
   // ezyang: invocation of data() is only well-defined if the type T matches the internal type T of the tensor.
   // This function has nothing to do with casting.
   template<typename T>
-  inline T *data() const;
+  inline T *data() const {
+    // dzhulgakov: also, if tensor doesn't support raw pointers - is it expected to throw?
+    // ezyang: yes.  Not implemented yet.
+    // clion hates me (scalar_type is ambiguous)
+    C10_ASSERT(c10::dtype<T>() == impl_->dtype());
+    return static_cast<T *>(data_ptr());
+  }
 
   // The "well known" Tensor functions will call into the dispatch mechanism (yet to be
   // implemented)

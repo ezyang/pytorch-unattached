@@ -50,12 +50,12 @@ protected:
   // fairly rare, since it's not an operation that is all that useful for internal implementation
   // inside CPUStorageImpl
 
-  // ezyang: In the original draft of this class, size was recorded in bytes because storage was content
+  // ezyang: In the original draft of this class, sizes was recorded in bytes because storage was content
   // agnostic.  Now that we may possibly need to placement-new/placement-delete when storage resize, storage
-  // must be content-aware, and now it is less clear if the size should be counted in bytes or number of
+  // must be content-aware, and now it is less clear if the sizes should be counted in bytes or number of
   // elements.  (Bytes is more likely to be the number you need, but number of elements reduces the number
   // of unrepresentable states.)  For reference, TH used to count the number of elements, but it also
-  // created a copy of the struct per data type, so the size of the element was statically known.
+  // created a copy of the struct per data type, so the sizes of the element was statically known.
   int64_t size_bytes_; // in bytes
 
   // The scalar type of this storage.  We need this in case we need to do placement-new/placement-delete
@@ -76,13 +76,13 @@ protected:
   // 1
   // 2
   // 1
-  // [torch.LongTensor of size (4,)]
+  // [torch.LongTensor of sizes (4,)]
   //
   // >>> x[0] = 4      # Modify the resized tensor
   // >>> y
   //
   // 4
-  // [torch.LongTensor of size (1,)]
+  // [torch.LongTensor of sizes (1,)]
   //
   // First, notice that the only way to actually implement this behavior is to modify the actual underlying
   // storage: in general, if we resize a block of memory, it means that the pointer to that memory updates.

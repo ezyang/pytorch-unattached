@@ -33,32 +33,42 @@ namespace c10 { namespace guts {
 class TensorImpl : public RetainableImpl {
   // TODO: Is this OK to be protected
 protected:
+  // NB: shares_data from Caffe2 was axed, because it is SOLELY used to determine
+  // check what the overall tensor usage is.  We can rewrite that code to
+  // keep a mapping of storage base pointers that it has seen (these all
+  // "count" the same), and perhaps add a bit to storage which tells us if
+  // it is "external" or "internal" (external storages don't count for accounting
+  // purposes.)
+
   // Used for dispatch on the object
   const TypeId type_id_;
 
   // The scalar type of elements stored in this tensor.  This contains
-  // important information like "what is the size of the scalar element."
+  // important information like "what is the sizes of the scalar element."
   // TODO: Pointer to scalar type means there's a possibly unnecessary indirection here!
-  // TODO: This is going to be redundant with type_id_, so if we want to squeeze down size
+  // TODO: This is going to be redundant with type_id_, so if we want to squeeze down sizes
   // we can make this a computed property from type_id_.
   DataType dtype_;
 
   DimVector size_;
 
-  // dzhulgakov: I'd strongly suggest to keep around actual type, not just size to do type checking. Please look at TypeMeta - it solves a lot of issues
+  // dzhulgakov: I'd strongly suggest to keep around actual type, not just sizes to do type checking. Please look at TypeMeta - it solves a lot of issues
   // dzhulgakov: Caffe2 now supports fancy stuff like Tensor of std::string (or other types), TF too. I think we should handle it which requires some TypeMeta-like care to call constructors at right places. We can reuse it verbatim
   int64_t element_size_bytes_;
 
   // This lives here because we really want data_ptr() calculation to inline.
-  // Note: storage->size() may be greater than the recorded size of the tensor
+  // Note: storage->sizes() may be greater than the recorded sizes of the tensor
   // ezyang to @smessmer: Maybe we should consider using a never-null pointer.
   // If you do that a number of "is null" tests can be deleted.
   Storage storage_;
 
   // Note: In Torch this can be nonzero, because we support views into the
   // inside of tensors.  In historic Caffe2 this was always zero.
-  // NB: This is BYTES!!!  Different from TH historically, which was scalar size.
+  // NB: This is BYTES!!!  Different from TH historically, which was scalar sizes.
   int64_t storage_offset_bytes_;
+
+  // TODO: consider whether or not to inline cuda_device here.  Then we can change CPUStorage from
+  // an "is-a" to "has-a" relationship and inline the storage struct in Tensor.
 
 public:
   explicit TensorImpl(TypeId type_id, DataType dtype, Storage storage)
@@ -69,7 +79,12 @@ public:
       , storage_(storage)
   {};
 
-  ArrayRef<int64_t> size() const {
+  // TODO: Not sure about this...
+  TypeId type_id() const {
+    return type_id_;
+  }
+
+  ArrayRef<int64_t> sizes() const {
     return size_;
   }
 
@@ -90,7 +105,7 @@ public:
   // dzhulgakov: it should be a member imho and might be nice to cache it indeed
   int64_t numel() const {
     int64_t r = 1;
-    for (auto s : size()) r *= s;
+    for (auto s : sizes()) r *= s;
     return r;
   }
 
@@ -99,8 +114,8 @@ public:
   }
 
   int64_t dim() const {
-    // dzhulgakov: this line is exactly why `size` is a bad name :)
-    return static_cast<int64_t>(size().size());
+    // dzhulgakov: this line is exactly why `sizes` is a bad name :)
+    return static_cast<int64_t>(sizes().size());
   }
 
   void *data_ptr() const {

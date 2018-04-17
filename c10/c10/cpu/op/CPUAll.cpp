@@ -14,28 +14,19 @@ Tensor tensor(DataType dtype) {
   return Tensor::_fromImpl(new CPUTensorImpl(dtype, storage));
 }
 
+// PRIVATE PRIVATE PRIVATE!!!
+CPUTensorImpl* _cpu_impl(const Tensor& self) {
+  C10_ASSERT(self.type_id() == TypeIds::CPUTensor);
+  return static_cast<CPUTensorImpl*>(self._toImpl());
+}
+
+// Channeling Caffe2 Tensor::Tensor(const T& value, Context* context)
+void copy_(Tensor self, DataType dtype, const void* p, int64_t size_bytes) {
+  C10_CHECK(dtype == self.dtype());
+  _cpu_impl(self)->cpu_storage()->copy_(p, size_bytes);
+}
+
 #if 0
-
-// Channeling Caffe2 Tensor::Tensor(const T& value, Context* context)
-// Create a scalar tensor from a single value
-// NB: this is generic
-// NB: the test that T is_scalar prevents this template from clobbering other
-// overloads (though, this may not be an issue in C10, since Context is no longer
-// a templated argument, so C++'s rule of preferring a non-template function over
-// a templated one might actually work.)
-template <typename T,
-    typename = typename std::enable_if<std::is_scalar<T>::value>::type>
-Tensor tensor(const T& value) {
-  auto r = tensor(c10::scalar_type<T>, {}, {});
-  r.template copy_<T>({&value, 1});
-  return r;
-}
-
-// Channeling Caffe2 Tensor::Tensor(const T& value, Context* context)
-void copy_(ScalarType s, const void* p, int64_t size_bytes) override {
-  C10_CHECK(s == scalar_type_);
-  cpu_storage()->copy_(p, size_bytes);
-}
 
 // Channeling THTensor_(resizeNd)
 // If aggressive = true, we will always try to free up old memory (this means
@@ -99,8 +90,8 @@ void extend_(int64_t num, double growthPct) override {
     size_ = new_size;
     return;
   }
-  // Compute the true size increase, to ensure extend() amortizes correctly
-  new_size[0] = std::max(new_size[0], static_cast<int64_t>(std::ceil(size()[0] * (growthPct + 100) / 100)));
+  // Compute the true sizes increase, to ensure extend() amortizes correctly
+  new_size[0] = std::max(new_size[0], static_cast<int64_t>(std::ceil(sizes()[0] * (growthPct + 100) / 100)));
   HACK_resize_(new_size, stride(), true);
 }
 

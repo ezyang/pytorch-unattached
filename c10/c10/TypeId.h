@@ -30,6 +30,8 @@ class TypeId final {
   explicit constexpr TypeId(int64_t id) noexcept : id_(id) {}
 
   friend class TypeIds;
+public:
+  bool operator ==(TypeId other) { return id_ == other.id_; }
 };
 
 class TypeIds final {
