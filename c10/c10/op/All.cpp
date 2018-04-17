@@ -1,17 +1,18 @@
 #include <c10/c10.h>
 
-#include "Constructors.h"
+#include "All.h"
 
 namespace c10 { namespace ops {
 
-#if 0
-
 // NB: this is generic (assuming you pass in the backend dispatcher)
-Tensor tensor(ScalarType scalar_type, ArrayRef<int64_t> size, ArrayRef<int64_t> stride) {
-  auto r = tensor(scalar_type);
+Tensor tensor(DataType dtype, ArrayRef<int64_t> size, ArrayRef<int64_t> stride) {
+  auto r = c10::tensor(dtype);
   r.resize_(size, stride);
   return r;
 }
+
+#if 0
+
 
 // Channeling Caffe2 Tensor::Tensor(const vector<TIndex>& dims, const vector<T>& values, Context* context)
 // NB: this is generic
@@ -24,4 +25,4 @@ Tensor tensor(ArrayRef<int64_t> size, std::vector<T> data) {
 }
 #endif
 
-}} // namespace c10::ops
+}} // namespace c10::op

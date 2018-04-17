@@ -1,17 +1,20 @@
 #include <c10/c10.h>
 
-#include "TensorShape.h"
+#include <c10/cpu/CPUTensorImpl.h>
+#include "CPUAll.h"
 
-namespace c10 { namespace cpu { namespace ops {
-
-#if 0
+namespace c10 { namespace cpu { namespace op {
 
 // The actual implementations
 
+// Hmm... this is still a bit awkward...  using private _fromImpl to get
+// the implementation going???  How do we actually want to write this?
 Tensor tensor(DataType dtype) {
-  auto storage = std::make_shared<CPUStorageImpl>(scalar_type);
-  return Tensor::_fromImpl(new CPUTensorImpl(scalar_type, storage));
+  auto storage = std::make_shared<CPUStorageImpl>(dtype);
+  return Tensor::_fromImpl(new CPUTensorImpl(dtype, storage));
 }
+
+#if 0
 
 // Channeling Caffe2 Tensor::Tensor(const T& value, Context* context)
 // Create a scalar tensor from a single value
@@ -112,4 +115,4 @@ void HACK_copy_(Tensor src) {
 
 #endif
 
-}}} // namespace c10::cpu::ops
+}}} // namespace c10::cpu::op
