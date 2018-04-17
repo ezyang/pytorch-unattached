@@ -1,5 +1,11 @@
 #include "Tensor.h"
 
+// TODO: Strictly temporary: these polymorphic functions should still go through the dispatcher
+#include "c10/op/All.h"
+
+// TODO: Strictly temporary, hardcoded CPU
+#include "c10/cpu/op/CPUAll.h"
+
 namespace c10 {
 
 void Tensor::resize_(ArrayRef<int64_t> size, ArrayRef<int64_t> stride) {
@@ -7,7 +13,7 @@ void Tensor::resize_(ArrayRef<int64_t> size, ArrayRef<int64_t> stride) {
 }
 
 void Tensor::copy_(DataType dtype, const void* p, int64_t size_bytes) {
-  //impl_->HACK_copy_(dtype, p, size_bytes);
+  cpu::op::copy_(*this, dtype, p, size_bytes);
 }
 
 void Tensor::extend_(int64_t num, double growthPct) {

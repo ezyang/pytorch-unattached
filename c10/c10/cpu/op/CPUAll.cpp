@@ -15,13 +15,13 @@ Tensor tensor(DataType dtype) {
 }
 
 // PRIVATE PRIVATE PRIVATE!!!
-CPUTensorImpl* _cpu_impl(const Tensor& self) {
+static CPUTensorImpl* _cpu_impl(const Tensor& self) {
   C10_ASSERT(self.type_id() == TypeIds::CPUTensor);
   return static_cast<CPUTensorImpl*>(self._toImpl());
 }
 
 // Channeling Caffe2 Tensor::Tensor(const T& value, Context* context)
-void copy_(Tensor self, DataType dtype, const void* p, int64_t size_bytes) {
+void copy_(const Tensor& self, DataType dtype, const void* p, int64_t size_bytes) {
   C10_CHECK(dtype == self.dtype());
   _cpu_impl(self)->cpu_storage()->copy_(p, size_bytes);
 }
