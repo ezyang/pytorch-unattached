@@ -200,6 +200,40 @@ public:
     return impl_->type_id();
   }
 
+  /**
+   * Is the tensor contiguous?
+   *
+   * Contiguous memory layout is often referred to as "C order."
+   *
+   * @note It is easy to compute a canonical set of contiguous strides
+   * given some tensor size, but it is not always the case that this
+   * equation holds:
+   *
+   *        x.strides() == contiguous_strides(x.sizes())
+   *
+   * This is because tensors with dimensions of zero or one size have
+   * unlimited degrees of freedom in strides while maintaining contiguity
+   * (since the stride "never matters" in this case.)
+   *
+   * @return true if the tensor is contiguous, false otherwise
+   */
+  bool is_contiguous() const {
+    return impl_->is_contiguous();
+  }
+
+  /**
+   * Set this tensor to share storage with another tensor, at a given offset, size and stride.
+   *
+   * @param src Tensor to share storage with.  Must be contiguous and have same dtype and type_id.
+   * @param storage_offset
+   * @param size
+   * @param stride
+   */
+  void set_(const Tensor& src, int64_t storage_offset, ArrayRef<int64_t> size, ArrayRef<int64_t> stride) const {
+    // TODO: TensorImpl*? Really??
+    return impl_->_set(src._to_impl(), storage_offset, size, stride);
+  }
+
   // dzhulgakov: what are the semantics of it? i.e. how do I change type of the elements stored in a tensor? Or is it passed only in the constructor?
   // ezyang: invocation of data() is only well-defined if the type T matches the internal type T of the tensor.
   // This function has nothing to do with casting.
@@ -284,6 +318,8 @@ public:
   void shrink_(int64_t outer_dim_new_size) const;
 
   void resize_as_(Tensor other) const;
+
+  void view_(ArrayRef<int64_t> size) const;
 
   // To be something like:
   // Tensor add(Tensor x, Tensor y) { guts::dispatch("add", x, y); }

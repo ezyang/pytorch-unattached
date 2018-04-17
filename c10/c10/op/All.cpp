@@ -23,18 +23,26 @@ void resize_as_(const Tensor& self, const Tensor& other) {
 }
 
 // Caffe2 Tensor::Reshape (out-of-place)
-// PyTorch view
+// PyTorch "in-place" view
 //
 // Should this be called view() or reshape()?  There is some funny business
 // going on here when the input tensor is not necessarily contiguous.
-// Numpy reshape() ALWAYS works; if it can't figure out how
-Tensor view(const Tensor& self, ArrayRef<int64_t> new_size) {
-  //return reshape(self, new_size);
+// Numpy reshape() ALWAYS works; if it can't figure out how to restride so
+// that no allocation occurs, it just reallocates the thing.  view() in
+// Torch-land will never do this: it will restride, or raise an error.
+void view_(const Tensor& self, ArrayRef<int64_t> new_sizes) {
+  // TODO: Generalize this to work on more stride situations.  I don't
+  // need this for Caffe2, which is the current thrust, so I didn't
+  // implement it
+  C10_CHECK(self.is_contiguous());
+  C10_CHECK(self.numel() == product(new_sizes));
+  auto* impl = self._to_impl();
+  impl->_set_sizes_and_strides(new_sizes, contiguous_strides(new_sizes));
 }
 
+// TODO
 // THTensor_(reshape)
 // Numpy reshape
-// Renaming authorized by sgross in https://discuss.pytorch.org/t/equivalent-of-np-reshape-in-pytorch/144
 /*
 void reshape(const Tensor& self, ArrayRef<int64_t> new_size) {
 

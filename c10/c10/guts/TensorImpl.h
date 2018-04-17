@@ -139,14 +139,35 @@ public:
     return static_cast<void*>(static_cast<char*>(storage_->data_ptr()) + storage_offset_bytes_);
   }
 
+  // TODO: precompute this value
+  bool is_contiguous() const {
+    int64_t z = 1;
+    for (int64_t d = dim()-1; d >= 0; d++) {
+      // NB: Strides don't affect contiguity when size is zero or one,
+      // because you never multiply against the stride with a nonzero index.
+      // Historical Torch had a more stringent requirement, but @SsnL changed it.
+      if (sizes()[d] <= 1) continue;
+      if (strides()[d] != z) return false;
+      z *= sizes()[d];
+    }
+    return true;
+  }
+
   // Low level functions which should not be propagated to the Tensor class
 
   // TODO: Can we make it impossible to accidentally out-of-bound read when you set the
   // sizes and strides?  This is not necessarily the right API, but it is one that
   // sort of works
-  void _set_sizes_and_strides(ArrayRef<int64_t> sizes, ArrayRef<int64_t> strides) {
-    sizes_.assign(sizes.begin(), sizes.end());
-    strides_.assign(strides.begin(), strides.end());
+  void _set_sizes_and_strides(ArrayRef<int64_t> new_sizes_ref, ArrayRef<int64_t> new_strides_ref) {
+    // Extra copy here to make sure bad things don't happen when new_sizes_ref aliases sizes.
+    // Hypothetically we could test for aliasing by doing some pointer comparisons but
+    // I am not sure if this is defined behavior in C.
+    // Note that you WILL run into this problem in practice, because SmallVector's assign implementation clears the
+    // SmallVector first
+    DimVector new_sizes(new_sizes_ref);
+    sizes_.swap(new_sizes);
+    DimVector new_strides(new_strides_ref);
+    strides_.swap(new_strides);
   }
 
   // Channeling Caffe2 Tensor::Shrink
@@ -155,6 +176,26 @@ public:
     C10_CHECK(sizes().size() >= 0);
     C10_CHECK(outer_dim_new_size < sizes().at(0));
     sizes_[0] = outer_dim_new_size;
+  }
+
+  // TODO: This is hella unsafe.  Part of PyTorch public API (but it accepted a storage rather than a Tensor)
+  // A more flexible version of Caffe2 Tensor::ShareData
+  void _set(TensorImpl* src, int64_t storage_offset, ArrayRef<int64_t> new_sizes, ArrayRef<int64_t> new_strides) {
+    // In principle we could allow the non-contiguous case, but the original API accepted storages
+    // (which were guaranteed to contiguous); thus shall we.
+    C10_CHECK(src->is_contiguous());
+    C10_CHECK(type_id() == src->type_id());
+    C10_CHECK(dtype() == src->dtype());
+    if (src != this) storage_ = src->storage_;
+    // NB: The storage_offset is relative!  This means you can't just translate
+    //    x.set_(y.storage(), ...)
+    // into
+    //    x.set_(y, ...)
+    // because the first call would have "lost" the offset in y, but second call preserves it.
+    // Really, what you need is for y.storage() to return a contiguous, 1D tensor that spans
+    // all of storage, then no translation necessary.  TODO: implement this
+    storage_offset_bytes_ = src->storage_offset_bytes_ + storage_offset * dtype_.itemsize();
+    _set_sizes_and_strides(new_sizes, new_strides);
   }
 
   virtual ~TensorImpl() = default;
