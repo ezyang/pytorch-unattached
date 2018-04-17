@@ -1,17 +1,18 @@
 #pragma once
 
+// NB: NO dependency on Tensor.h!!!
+
 #include "c10/ArrayRef.h"
-#include "c10/Tensor.h"
 #include "c10/SmallVector.h"
 #include "c10/Optional.h"
 #include "c10/TypeId.h"
+#include "c10/DataType.h"
+#include <c10/DimVector.h>
 
 #include "Retainable.h"
-#include "c10/DataType.h"
 #include "Storage.h"
 
 #include <vector>
-#include <c10/DimVector.h>
 
 namespace c10 {
   class Tensor;
@@ -108,26 +109,6 @@ public:
   }
 
   virtual ~TensorImpl() = default;
-
-  // The following virtual functions TEMPORARILY live here.  When the
-  // dispatcher comes online, they will become dispatched by that mechanism.
-  // They're labeled with HACK in their name
-
-  virtual void HACK_resize_(ArrayRef<int64_t> size, ArrayRef<int64_t> stride, bool keep_data = true) {
-    throw std::runtime_error("resize_");
-  }
-
-  virtual void HACK_copy_(DataType s, const void* p, int64_t size_bytes) {
-    throw std::runtime_error("copy_");
-  }
-
-  virtual void HACK_reserve_(ArrayRef<int64_t> size) {
-    throw std::runtime_error("reserve_");
-  }
-
-  virtual void HACK_extend_(int64_t num, double growthPct) {
-    throw std::runtime_error("extend_");
-  }
 };
 
 // See design notes on Tensor.h, where this is hardcoded a few times.

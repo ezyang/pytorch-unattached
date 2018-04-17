@@ -1,15 +1,10 @@
 #pragma once
 
 #include "guts/Retainable.h"
+#include "guts/TensorImpl.h"
+
 #include "ArrayRef.h"
 #include "DataType.h"
-
-namespace c10 { namespace guts {
-
-  class TensorImpl;
-  class UndefinedTensorImpl;
-
-}}
 
 namespace c10 {
 
