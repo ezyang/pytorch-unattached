@@ -268,6 +268,17 @@ public:
    */
   void extend_(int64_t num, double growthPct) const;
 
+  /**
+   * Reserve enough space to hold a tensor of `new_size` in the underlying storage
+   *
+   * If the current reserved space (in storage) is insufficient, a reallocation
+   * will occur.  This operation no-ops if the reservation request is equal to
+   * or smaller than the current reserved space.
+   *
+   * @note Corresponds to Caffe2 `Tensor::Reserve`
+   *
+   * @param new_size Size to reserve enough space to hold.
+   */
   void reserve_(ArrayRef<int64_t> new_size) const;
 
   void shrink_(int64_t outer_dim_new_size) const;
