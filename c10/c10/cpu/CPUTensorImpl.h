@@ -15,23 +15,6 @@ namespace c10 { namespace cpu {
 
 class CPUTensorImpl final : public guts::TensorImpl {
 
-  // NB: reserved from Caffe2 axed; as there are TWO sizes, we can easily
-  // implement the reserved pattern by having the storage be larger than the
-  // sizes recorded in a Tensor.  Hooray!
-  // dzhulgakov: superlike! :)
-  // TODO: Move this to the parent class
-  // Reminder: The way strides works is:
-  //    sizes[0]*strides[0] + sizes[1]*strides[1] + ...
-  // This means you can end up in weird situations.  Make sure to think about:
-  //    strides[i] == 0 (broadcasting)
-  //    strides[i] < 0 (negative strides)
-  //    sizes[i] == 0 (useful to maintain sizes information!)
-  //    strides[i] % sizes[i-1] != 0 (rolling window strides / not "embeddable")
-  //    len(sizes) == 0 (scalars)
-  // dzhulgakov: how much "strides analysis" do implementations usually do in TH?
-  // See also https://ezyang.github.io/stride-visualizer/index.html
-  DimVector stride_;
-
 public:
   CPUTensorImpl(DataType dtype, const CPUStorage& storage)
   : TensorImpl(TypeIds::CPUTensor, dtype, storage)

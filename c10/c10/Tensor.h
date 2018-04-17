@@ -141,6 +141,8 @@ public:
     return impl_->strides();
   }
 
+  // TODO: This is inconsistent with ATen naming, which uses the overload sizes(int64_t) and strides(int64_t)
+
   int64_t size(int64_t dim) const {
     return impl_->sizes().at(dim);
   }
@@ -194,7 +196,8 @@ public:
   // The "well known" Tensor functions will call into the dispatch mechanism (yet to be
   // implemented)
 
-  void resize_(ArrayRef<int64_t> size, ArrayRef<int64_t> stride);
+  // TODO: this is a sharp-edged API, which we are planning to replace
+  void resize_(ArrayRef<int64_t> size, ArrayRef<int64_t> stride, bool keep_data = true);
 
   // Hmmmmm, does the void* violate our dispatch data model?  OTOH, we are probably going to
   // need ways to create tensors from void* pointers

@@ -8,8 +8,8 @@
 
 namespace c10 {
 
-void Tensor::resize_(ArrayRef<int64_t> size, ArrayRef<int64_t> stride) {
-  //impl_->HACK_resize_(sizes, strides);
+void Tensor::resize_(ArrayRef<int64_t> size, ArrayRef<int64_t> stride, bool keep_data) {
+  cpu::op::resize_(*this, size, stride, keep_data);
 }
 
 void Tensor::copy_(DataType dtype, const void* p, int64_t size_bytes) {

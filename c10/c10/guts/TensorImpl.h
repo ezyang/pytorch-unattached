@@ -52,6 +52,24 @@ protected:
 
   DimVector sizes_;
 
+  // TODO: This is not always valid, and needs to be treated accordingly
+  // NB: reserved from Caffe2 axed; as there are TWO sizes, we can easily
+  // implement the reserved pattern by having the storage be larger than the
+  // sizes recorded in a Tensor.  Hooray!
+  // dzhulgakov: superlike! :)
+  // TODO: Move this to the parent class
+  // Reminder: The way strides works is:
+  //    sizes[0]*strides[0] + sizes[1]*strides[1] + ...
+  // This means you can end up in weird situations.  Make sure to think about:
+  //    strides[i] == 0 (broadcasting)
+  //    strides[i] < 0 (negative strides)
+  //    sizes[i] == 0 (useful to maintain sizes information!)
+  //    strides[i] % sizes[i-1] != 0 (rolling window strides / not "embeddable")
+  //    len(sizes) == 0 (scalars)
+  // dzhulgakov: how much "strides analysis" do implementations usually do in TH?
+  // See also https://ezyang.github.io/stride-visualizer/index.html
+  DimVector strides_;
+
   // dzhulgakov: I'd strongly suggest to keep around actual type, not just sizes to do type checking. Please look at TypeMeta - it solves a lot of issues
   // dzhulgakov: Caffe2 now supports fancy stuff like Tensor of std::string (or other types), TF too. I think we should handle it which requires some TypeMeta-like care to call constructors at right places. We can reuse it verbatim
   int64_t element_size_bytes_;
@@ -121,6 +139,15 @@ public:
   void *data_ptr() const {
     if (!storage_) return nullptr;
     return static_cast<void*>(static_cast<char*>(storage_->data_ptr()) + storage_offset_bytes_);
+  }
+
+  // Low level functions which should not be propagated to the Tensor class
+
+  // TODO: Can we make it impossible to accidentally out-of-bound read when you set the
+  // sizes and strides?
+  void _set_sizes_and_strides(ArrayRef<int64_t> sizes, ArrayRef<int64_t> strides) {
+    sizes_.assign(sizes.begin(), sizes.end());
+    strides_.assign(strides.begin(), strides.end());
   }
 
   virtual ~TensorImpl() = default;

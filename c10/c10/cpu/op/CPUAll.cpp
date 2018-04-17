@@ -42,30 +42,30 @@ void copy_(const Tensor& self, DataType dtype, const void* p, int64_t size_bytes
 // incorrectly assume the original tensor was
 // contiguously strided for every negative index, even when it was not.
 // See also https://github.com/pytorch/pytorch/issues/229
+//
+// TODO: This will probably be deprecated in favor of safer APIs
 void resize_(const Tensor& self, ArrayRef<int64_t> new_size, ArrayRef<int64_t> new_stride, bool keep_data) {
   C10_ASSERT(new_size.size() == new_stride.size());
   bool unchanged = new_size.equals(self.sizes()) && new_stride.equals(self.strides());
   if (unchanged) return;
   auto new_size_bytes = required_new_storage_size_bytes(self.dtype(), new_size, new_stride, self.storage_offset());
   auto impl = _cpu_impl(self);
-  /*
-  impl->sizes_.assign(new_size.begin(), new_size.end());
-  impl->stride_.assign(new_stride.begin(), new_stride.end());
+  impl->_set_sizes_and_strides(new_size, new_stride);
   // NB: In the old TH code, it was permissible for Storage to be a nullptr at this point.
   // We have tightened the internal invariants.  I put the ASSERT back in where the old
   // test for storage_ being nullptr would have been.
-  C10_ASSERT(storage_);
+  auto cpu_storage = impl->cpu_storage();
+  C10_ASSERT(cpu_storage);
   bool needs_resize =
       // not enough space, OR
-      new_size_bytes > storage_->sizeBytes() ||
+      new_size_bytes > cpu_storage->sizeBytes() ||
       // we're not allowed to keep the old storage on a shrink, OR
       !globalCPUContext().keepOnShrink() ||
       // we shrunk greater than the maximum "keep on shrink" bytes.
-      storage_->sizeBytes() - new_size_bytes > globalCPUContext().maxKeepOnShrinkBytes();
+      cpu_storage->sizeBytes() - new_size_bytes > globalCPUContext().maxKeepOnShrinkBytes();
   if (needs_resize) {
-    cpu_storage()->resize_(new_size_bytes, keep_data);
+    cpu_storage->resize_(new_size_bytes, keep_data);
   }
-   */
 }
 
 #if 0
