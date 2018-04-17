@@ -137,8 +137,8 @@ public:
     return impl_->sizes();
   }
 
-  ArrayRef<int64_t> stride() const {
-    return impl_->stride();
+  ArrayRef<int64_t> strides() const {
+    return impl_->strides();
   }
 
   int64_t size(int64_t dim) const {
@@ -146,7 +146,7 @@ public:
   }
 
   int64_t stride(int64_t dim) const {
-    return impl_->stride().at(dim);
+    return impl_->strides().at(dim);
   }
 
   // smessmer to @ezyang: Do we want to try honoring const-ness for the underlying data?

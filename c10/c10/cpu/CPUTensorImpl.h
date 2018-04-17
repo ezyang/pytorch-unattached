@@ -20,15 +20,15 @@ class CPUTensorImpl final : public guts::TensorImpl {
   // sizes recorded in a Tensor.  Hooray!
   // dzhulgakov: superlike! :)
   // TODO: Move this to the parent class
-  // Reminder: The way stride works is:
-  //    sizes[0]*stride[0] + sizes[1]*stride[1] + ...
+  // Reminder: The way strides works is:
+  //    sizes[0]*strides[0] + sizes[1]*strides[1] + ...
   // This means you can end up in weird situations.  Make sure to think about:
-  //    stride[i] == 0 (broadcasting)
-  //    stride[i] < 0 (negative strides)
+  //    strides[i] == 0 (broadcasting)
+  //    strides[i] < 0 (negative strides)
   //    sizes[i] == 0 (useful to maintain sizes information!)
-  //    stride[i] % sizes[i-1] != 0 (rolling window strides / not "embeddable")
+  //    strides[i] % sizes[i-1] != 0 (rolling window strides / not "embeddable")
   //    len(sizes) == 0 (scalars)
-  // dzhulgakov: how much "stride analysis" do implementations usually do in TH?
+  // dzhulgakov: how much "strides analysis" do implementations usually do in TH?
   // See also https://ezyang.github.io/stride-visualizer/index.html
   DimVector stride_;
 

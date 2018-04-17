@@ -50,7 +50,7 @@ protected:
   // we can make this a computed property from type_id_.
   DataType dtype_;
 
-  DimVector size_;
+  DimVector sizes_;
 
   // dzhulgakov: I'd strongly suggest to keep around actual type, not just sizes to do type checking. Please look at TypeMeta - it solves a lot of issues
   // dzhulgakov: Caffe2 now supports fancy stuff like Tensor of std::string (or other types), TF too. I think we should handle it which requires some TypeMeta-like care to call constructors at right places. We can reuse it verbatim
@@ -74,7 +74,7 @@ public:
   explicit TensorImpl(TypeId type_id, DataType dtype, Storage storage)
       : RetainableImpl()
       , type_id_(type_id)
-      , size_()
+      , sizes_()
       , dtype_(dtype)
       , storage_(storage)
   {};
@@ -85,7 +85,7 @@ public:
   }
 
   ArrayRef<int64_t> sizes() const {
-    return size_;
+    return sizes_;
   }
 
   // Previously was type().scalarType() but I haven't committed to adding a Type object
@@ -109,8 +109,8 @@ public:
     return r;
   }
 
-  virtual ArrayRef<int64_t> stride() const {
-    throw std::runtime_error("TensorImpl::stride()");
+  virtual ArrayRef<int64_t> strides() const {
+    throw std::runtime_error("TensorImpl::strides()");
   }
 
   int64_t dim() const {

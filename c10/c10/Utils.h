@@ -33,7 +33,7 @@ inline std::pair<int64_t, int64_t> compute_extent(ArrayRef<int64_t> size, ArrayR
   int64_t high_watermark = 1; // exclusive
   for (int64_t d = size.size() - 1; d >= 0; d--) {
     // TODO: This special case is so irritating.  But if we don't apply it,
-    // this function returns {0, 1} when you pass it sizes {0} stride {0}.
+    // this function returns {0, 1} when you pass it sizes {0} strides {0}.
     if (size[d] == 0) return {0, 0};
     C10_ASSERT(size[d] > 0);
     if (stride[d] >= 0) {
