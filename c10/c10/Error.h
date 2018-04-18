@@ -91,7 +91,7 @@ class C10_API Error : public std::exception {
 public:
   Error(SourceLocation source_location, std::string err)
     : what_without_backtrace_(err)
-    , what_(str(err, " (", source_location, ")\n", get_backtrace(/*frames_to_skip=*/1)))
+    , what_(str("\n", err, " (", source_location, ")\n", get_backtrace(/*frames_to_skip=*/2)))
   {}
 
   /// Returns the complete error message, including the source location.

@@ -191,8 +191,9 @@ inline std::ostream& operator<<(std::ostream & out, ArrayRef<T> xs) {
   out << "[";
   bool first = true;
   for (const auto& x : xs) {
-    if (!first)
-      out << x;
+    if (!first) out << ", ";
+    out << x;
+    first = false;
   }
   out << "]";
   return out;
