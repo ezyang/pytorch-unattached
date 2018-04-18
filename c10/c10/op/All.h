@@ -19,5 +19,6 @@ Tensor tensor(DataType dtype, ArrayRef<int64_t> size, ArrayRef<int64_t> stride);
 void shrink_(const Tensor& self, int64_t outer_dim_new_size);
 void resize_as_(const Tensor& self, const Tensor& other);
 void view_(const Tensor& self, ArrayRef<int64_t> new_sizes);
+Tensor clone(const Tensor& self);
 
 }} // namespace c10::op

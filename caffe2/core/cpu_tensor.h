@@ -49,6 +49,12 @@ class Tensor<CPUContext> {
     CopyFrom(src);
   }
 
+  template <>
+  explicit Tensor(const Tensor<CPUContext>& src)
+    : tensor_(src.tensor_.clone()) {
+    CopyFrom(src);
+  }
+
   /**
    * @brief Creates a tensor, and fills its contents with the given values.
    */
@@ -56,9 +62,11 @@ class Tensor<CPUContext> {
   Tensor(const vector<TIndex>& dims, const vector<T>& values, CPUContext* context)
       : meta_(TypeMeta::Make<T>())
       , tensor_(c10::tensor<T>(dims, values)) {
+    // BEGIN OLD STUFF
     Resize(dims);
     CAFFE_ENFORCE_EQ_WITH_CALLER(values.size(), size_);
     context->template Copy<T, CPUContext, CPUContext>(size_, values.data(), mutable_data<T>());
+    // END OLD STUFF
   }
 
   /**
@@ -66,9 +74,12 @@ class Tensor<CPUContext> {
    */
   template <typename T,
             typename = typename std::enable_if<std::is_scalar<T>::value>::type>
-  Tensor(const T& value, CPUContext* context) {
+  Tensor(const T& value, CPUContext* context)
+    : tensor_(c10::tensor<T>(value)) {
+    // BEGIN OLD STUFF
     Resize(vector<TIndex>{});
     context->template Copy<T, CPUContext, CPUContext>(size_, &value, mutable_data<T>());
+    // END OLD STUFF
   }
 
   /**

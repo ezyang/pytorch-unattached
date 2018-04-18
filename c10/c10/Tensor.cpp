@@ -44,4 +44,8 @@ void Tensor::view_(c10::ArrayRef<int64_t> size) const {
   op::view_(*this, size);
 }
 
+void Tensor::clone() const {
+  op::clone(*this);
+}
+
 }

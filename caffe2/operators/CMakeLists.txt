@@ -19,8 +19,8 @@ exclude(Caffe2_GPU_SRCS "${Caffe2_GPU_SRCS}" ${tmp})
 
 # ---[ CPU files.
 file(GLOB tmp *.cc)
-set(Caffe2_CPU_SRCS ${Caffe2_CPU_SRCS} ${tmp})
-#set(Caffe2_CPU_SRCS ${Caffe2_CPU_SRCS} operators/conv_op_shared.cc)
+#set(Caffe2_CPU_SRCS ${Caffe2_CPU_SRCS} ${tmp})
+set(Caffe2_CPU_SRCS ${Caffe2_CPU_SRCS} operators/conv_op_shared.cc)
 # exclude test files and gpu files
 file(GLOB tmp *_test.cc)
 exclude(Caffe2_CPU_SRCS "${Caffe2_CPU_SRCS}" ${tmp})

@@ -321,6 +321,8 @@ public:
 
   void view_(ArrayRef<int64_t> size) const;
 
+  void clone() const;
+
   // To be something like:
   // Tensor add(Tensor x, Tensor y) { guts::dispatch("add", x, y); }
 
