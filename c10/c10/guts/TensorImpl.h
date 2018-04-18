@@ -13,6 +13,7 @@
 #include "Storage.h"
 
 #include <vector>
+#include <cinttypes>
 
 namespace c10 {
   class Tensor;
@@ -173,8 +174,10 @@ public:
   // Channeling Caffe2 Tensor::Shrink
   // TODO: Should this really be defined here?  Something more general?
   void _shrink(int64_t outer_dim_new_size) {
-    C10_CHECK(sizes().size() >= 1);
-    C10_CHECK(outer_dim_new_size < sizes().at(0));
+    C10_CHECK(sizes().size() >= 1, "shrink: tensor is 0D (scalar), but expected at least 1D tensor");
+    C10_CHECK(outer_dim_new_size < sizes().at(0),
+              "shrink: new outer dimension size %" PRId64 " must be smaller than current size %" PRId64,
+              outer_dim_new_size, sizes().at(0));
     sizes_[0] = outer_dim_new_size;
   }
 
@@ -183,9 +186,12 @@ public:
   void _set(TensorImpl* src, int64_t storage_offset, ArrayRef<int64_t> new_sizes, ArrayRef<int64_t> new_strides) {
     // In principle we could allow the non-contiguous case, but the original API accepted storages
     // (which were guaranteed to contiguous); thus shall we.
-    C10_CHECK(src->is_contiguous());
-    C10_CHECK(type_id() == src->type_id());
-    C10_CHECK(dtype() == src->dtype());
+    C10_CHECK(src->is_contiguous(), "set: src tensor must be contiguous");
+    // TODO: I guess if type_id() has refinements this check is no longer correct
+    C10_CHECK(type_id() == src->type_id(),
+              "src tensor has type ", src->type_id(), ", but expected ", type_id(), " (from destination tensor)");
+    C10_CHECK(dtype() == src->dtype(),
+              "src tensor has dtype ", src->dtype(), ", but expected dtype ", dtype(), " (from destination tensor)");
     if (src != this) storage_ = src->storage_;
     // NB: The storage_offset is relative!  This means you can't just translate
     //    x.set_(y.storage(), ...)

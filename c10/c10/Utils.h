@@ -1,6 +1,7 @@
 #pragma once
 
 #include <numeric>
+#include <cinttypes>
 #include "DimVector.h"
 #include "ArrayRef.h"
 #include "DataType.h"
@@ -35,7 +36,7 @@ inline std::pair<int64_t, int64_t> compute_extent(ArrayRef<int64_t> size, ArrayR
     // TODO: This special case is so irritating.  But if we don't apply it,
     // this function returns {0, 1} when you pass it sizes {0} strides {0}.
     if (size[d] == 0) return {0, 0};
-    C10_ASSERT(size[d] > 0);
+    C10_ASSERT(size[d] > 0, "size = ", size);
     if (stride[d] >= 0) {
       high_watermark += (size[d] - 1) * stride[d];
     } else {

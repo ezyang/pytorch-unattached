@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <ostream>
 
 namespace c10 {
 
@@ -26,21 +27,30 @@ namespace c10 {
 // extensible backends more easily and is a pretty battle-tested piece of code.
 class TypeId final {
   const int64_t id_;
+  const char* name_;
 
-  explicit constexpr TypeId(int64_t id) noexcept : id_(id) {}
+  explicit constexpr TypeId(int64_t id, const char* name) noexcept : id_(id), name_(name) {}
 
   friend class TypeIds;
 public:
   bool operator ==(TypeId other) { return id_ == other.id_; }
+  const char* name() const {
+    return name_;
+  }
 };
+
+inline std::ostream& operator<<(std::ostream& out, TypeId id) {
+  out << id.name();
+  return out;
+}
 
 class TypeIds final {
 public:
   // These are just here for illustrative purposes
   // NB: In C++11 you have to add these in TypeId.cpp too
-  static constexpr TypeId Undefined = TypeId(0);
-  static constexpr TypeId CPUTensor = TypeId(1);
-  static constexpr TypeId CUDATensor = TypeId(2);
+  static constexpr TypeId Undefined = TypeId(0, "Undefined");
+  static constexpr TypeId CPUTensor = TypeId(1, "CPUTensor");
+  static constexpr TypeId CUDATensor = TypeId(2, "CUDATensor");
 };
 
 } // namespace c10

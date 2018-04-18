@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include "Assert.h"
+#include "Error.h"
 #include "SmallVector.h"
 
 #include <array>
@@ -138,7 +138,7 @@ public:
   /// elements in the array.
   // C++14 only
   /*constexpr*/ ArrayRef<T> slice(size_t N, size_t M) const {
-    C10_ASSERT(N+M <= size(), "Invalid specifier");
+    C10_ASSERT(N+M <= size(), "N = ", N, "; M = ", M, "; size = ", size());
     return ArrayRef<T>(data()+N, M);
   }
 
@@ -155,7 +155,7 @@ public:
   /// Vector compatibility
   // C++14 only
   /*constexpr*/ const T &at(size_t Index) const {
-    C10_ASSERT(Index < Length, "Invalid index!");
+    C10_ASSERT(Index < Length, "Index = ", Index, "; Length = ", Length);
     return Data[Index];
   }
 
@@ -184,5 +184,18 @@ public:
 
   /// @}
 };
+
+// Maybe move this to ArrayRef?
+template <typename T>
+inline std::ostream& operator<<(std::ostream & out, ArrayRef<T> xs) {
+  out << "[";
+  bool first = true;
+  for (const auto& x : xs) {
+    if (!first)
+      out << x;
+  }
+  out << "]";
+  return out;
+}
 
 } // end namespace c10

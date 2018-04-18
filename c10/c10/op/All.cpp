@@ -34,8 +34,10 @@ void view_(const Tensor& self, ArrayRef<int64_t> new_sizes) {
   // TODO: Generalize this to work on more stride situations.  I don't
   // need this for Caffe2, which is the current thrust, so I didn't
   // implement it
-  C10_CHECK(self.is_contiguous());
-  C10_CHECK(self.numel() == product(new_sizes));
+  C10_CHECK(self.is_contiguous(), "cannot view on non-contiguous tensors (TODO: this is too restrictive)");
+  C10_CHECK(self.numel() == product(new_sizes),
+            "number of elements in original size ", self.sizes(), " and new size ", new_sizes,
+            " must have same number of elements (", self.numel(), " != ", product(new_sizes), ")");
   auto* impl = self._to_impl();
   impl->_set_sizes_and_strides(new_sizes, contiguous_strides(new_sizes));
 }

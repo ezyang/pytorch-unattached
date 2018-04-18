@@ -8,7 +8,7 @@
 #include <cstdlib>
 #include <utility>
 #include <cstring>
-#include <c10/Assert.h>
+#include <c10/Error.h>
 #include <algorithm>
 #include <c10/DataType.h>
 

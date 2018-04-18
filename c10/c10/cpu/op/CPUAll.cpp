@@ -16,7 +16,7 @@ Tensor tensor(DataType dtype) {
 
 // PRIVATE PRIVATE PRIVATE!!!
 static CPUTensorImpl* _cpu_impl(const Tensor& self) {
-  C10_ASSERT(self.type_id() == TypeIds::CPUTensor);
+  C10_ASSERT(self.type_id() == TypeIds::CPUTensor, "type_id = ", self.type_id());
   return static_cast<CPUTensorImpl*>(self._to_impl());
 }
 
@@ -50,7 +50,7 @@ void copy_(const Tensor& self, DataType dtype, const void* p, int64_t size_bytes
 //
 // TODO: This will probably be deprecated in favor of safer APIs
 void resize_(const Tensor& self, ArrayRef<int64_t> new_size, ArrayRef<int64_t> new_stride, bool keep_data) {
-  C10_ASSERT(new_size.size() == new_stride.size());
+  C10_ASSERT(new_size.size() == new_stride.size(), "new_size = ", new_size, "; new_stride = ", new_stride);
   bool unchanged = new_size.equals(self.sizes()) && new_stride.equals(self.strides());
   if (unchanged) return;
   // TODO: This is an error-prone API call.  Might be safer to just pass self directly
@@ -61,7 +61,7 @@ void resize_(const Tensor& self, ArrayRef<int64_t> new_size, ArrayRef<int64_t> n
   // We have tightened the internal invariants.  I put the ASSERT back in where the old
   // test for storage_ being nullptr would have been.
   auto cpu_storage = impl->cpu_storage();
-  C10_ASSERT(cpu_storage);
+  C10_ASSERT(cpu_storage, "cpu_storage is null");
   bool needs_resize =
       // not enough space, OR
       new_size_bytes > cpu_storage->sizeBytes() ||

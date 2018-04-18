@@ -242,7 +242,9 @@ public:
     // dzhulgakov: also, if tensor doesn't support raw pointers - is it expected to throw?
     // ezyang: yes.  Not implemented yet.
     // clion hates me (scalar_type is ambiguous)
-    C10_ASSERT(c10::dtype<T>() == impl_->dtype());
+    C10_ASSERT(c10::dtype<T>() == impl_->dtype(),
+               "data: requested dtype ", c10::dtype<T>(),
+               " via template parameter does not match dtype of tensor ", impl_->dtype());
     return static_cast<T *>(data_ptr());
   }
 

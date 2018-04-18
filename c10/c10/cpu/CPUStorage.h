@@ -9,10 +9,11 @@
 #include <functional>
 #include <cstdlib>
 #include <utility>
-#include <c10/Assert.h>
+#include <c10/Error.h>
 #include <algorithm>
 #include <c10/DataType.h>
 #include <c10/guts/Storage.h>
+#include <cinttypes>
 
 namespace c10 { namespace cpu {
 
@@ -79,7 +80,9 @@ public:
   //
   // NB: This has the logic for Caffe2-style placement-new/placement-delete
   void resize_(int64_t new_size_bytes, bool keep_data = true) {
-    C10_ASSERT(new_size_bytes % data_type_.itemsize() == 0);
+    C10_ASSERT(new_size_bytes % data_type_.itemsize() == 0,
+      "requested new size of ", new_size_bytes, " bytes is not a multiple of ",
+      data_type_.itemsize(), "(aka, the item size of dtype ", data_type_, ")");
     auto new_size_elems = new_size_bytes / data_type_.itemsize();
     if (!resizable_) throw std::runtime_error("trying to resize storage that is not resizable");
     // TODO: Consider bringing back the old realloc path from TH?

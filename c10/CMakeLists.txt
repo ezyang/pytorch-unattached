@@ -20,8 +20,8 @@ add_library(c10 SHARED
         c10/ArrayRef.h
         c10/TypeId.cpp
         c10/TypeId.h
-        c10/Assert.cpp
-        c10/Assert.h
+        c10/Error.cpp
+        c10/Error.h
         c10/Optional.h
         c10/AlignOf.h
         c10/guts/TensorImpl.cpp
@@ -39,7 +39,7 @@ add_library(c10 SHARED
         c10/DimVector.h
         c10/cpu/CPUContext.cpp
         c10/cpu/CPUContext.h
-        c10/c10.h c10/DataType.cpp c10/DataType.h c10/guts/Storage.cpp c10/guts/Storage.h c10/cpu/op/CPUAll.cpp c10/cpu/op/CPUAll.h c10/op/All.cpp c10/op/All.h c10/Utils.cpp c10/Utils.h c10/Functions.cpp c10/Functions.h c10/ThreadContext.cpp c10/ThreadContext.h)
+        c10/c10.h c10/DataType.cpp c10/DataType.h c10/guts/Storage.cpp c10/guts/Storage.h c10/cpu/op/CPUAll.cpp c10/cpu/op/CPUAll.h c10/op/All.cpp c10/op/All.h c10/Utils.cpp c10/Utils.h c10/Functions.cpp c10/Functions.h c10/ThreadContext.cpp c10/ThreadContext.h c10/General.cpp c10/General.h)
 target_include_directories(c10 PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<INSTALL_INTERFACE:${C10_INSTALL_INCLUDE_SUBDIR}>
@@ -57,6 +57,8 @@ install(EXPORT c10_targets DESTINATION share/cmake/c10
   FILE c10_targets.cmake
   COMPONENT dev)
 
+# TODO: I don't really want the tests to build if someone is building the library. It's a waste
+# of time
 add_executable(c10_basic
         test/basic.cpp)
 target_link_libraries(c10_basic c10)

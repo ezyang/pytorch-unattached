@@ -27,7 +27,10 @@ inline Tensor tensor(DataType dtype, ArrayRef<int64_t> size, ArrayRef<int64_t> s
 template<typename T>
 inline Tensor tensor(ArrayRef<int64_t> size, ArrayRef<T> data) {
   auto r = tensor(c10::dtype<T>(), size, contiguous_strides(size));
-  C10_CHECK(r.numel() == data.size());
+  C10_CHECK(r.numel() == data.size(),
+            "tensor: tensor to be constructed is declared to have size ", size,
+            " (and thus would contain ", r.numel(), " elements), but size of source data is ", data.size()
+  );
   r.template copy_<T>(data);
   return r;
 }

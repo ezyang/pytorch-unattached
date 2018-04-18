@@ -146,6 +146,11 @@ public:
   constexpr const char* name() const { return impl_->name(); }
 };
 
+inline std::ostream& operator<<(std::ostream& out, DataType d) {
+  out << std::string(d.name());
+  return out;
+}
+
 #define DEFINE_STATIC(_1,name,_3) \
 constexpr DataType name = {&guts::DataTypeImpls::name};
 

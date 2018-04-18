@@ -18,9 +18,7 @@ class CPUTensorImpl final : public guts::TensorImpl {
 public:
   CPUTensorImpl(DataType dtype, const CPUStorage& storage)
   : TensorImpl(TypeIds::CPUTensor, dtype, storage)
-  {
-    C10_ASSERT(storage);
-  };
+  {};
 
 
   CPUStorage cpu_storage() {
