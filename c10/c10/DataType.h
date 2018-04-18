@@ -19,20 +19,29 @@ _(double,float64,d)
 
 namespace c10 {
 
-// Desired API:
-// ScalarType x = scalar_type<int>;
-// if (x == scalar_type<float>) ...
-// ScalarType::Byte
-// x.itemsize()
-
-// Poor man's TypeMeta
-
-
 // ezyang to @smessmer: Sorry, old school typedef ^^"
-// WARNING WARNING WARNING: this is number of elements, NOT number of bytes
-typedef void (*PlacementNew)(void *, int64_t numel);
-typedef void (*TypedCopy)(const void *, void *, int64_t numel);
-typedef void (*TypedDestructor)(void *, int64_t numel);
+// WARNING WARNING WARNING: these functions take number of elements, NOT number of bytes
+
+/**
+ * Function type for vectorized placement new.  A function of this type will apply placement
+ * new for numel elements in the memory pointed at by p.
+ */
+typedef void (*PlacementNew)(void * p, int64_t numel);
+
+/**
+ * Function type for vectorized copy-assignment.  A function of this type will apply copy assignment
+ * for numel elements from the memory pointed at by `src` to the memory pointed at `dst`.
+ *
+ * @todo This is argument signature is swapped versus `std::memcpy`, which is confusing.  We inherited
+ * this ordering from Caffe2.
+ */
+typedef void (*TypedCopy)(const void * src, void * dst, int64_t numel);
+
+/**
+ * Function type for vectorized placement delete.  A function of this type will apply placement
+ * delete for `numel` elements from the memory pointed at by `p`.
+ */
+typedef void (*TypedDestructor)(void * p, int64_t numel);
 
 class ScalarType;
 

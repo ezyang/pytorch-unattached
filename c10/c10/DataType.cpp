@@ -2,7 +2,8 @@
 
 namespace c10 {
 
-// Appease the linker
+// These constexpr stubs are not necessary in C++17
+//    see https://stackoverflow.com/a/43194989/23845
 
 #define DEFINE_STATIC(_1,name,_3) \
   constexpr guts::DataTypeImpl guts::DataTypeImpls::name; \
