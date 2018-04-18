@@ -7,6 +7,7 @@
 #include <functional>
 #include <cstdlib>
 #include <utility>
+#include <cstring>
 #include <c10/Assert.h>
 #include <algorithm>
 #include <c10/DataType.h>

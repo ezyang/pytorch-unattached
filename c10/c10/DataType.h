@@ -43,8 +43,6 @@ typedef void (*TypedCopy)(const void * src, void * dst, int64_t numel);
  */
 typedef void (*TypedDestructor)(void * p, int64_t numel);
 
-class ScalarType;
-
 namespace guts {
 
 /**
@@ -123,7 +121,6 @@ struct DataTypeImpls {
 
 class DataType {
   const guts::DataTypeImpl* impl_;
-  friend class DataType;
 public:
   // Sigh, don't really want this to be public, but don't want to define another struct
   // to place the DataType constants
@@ -143,9 +140,6 @@ public:
   constexpr TypedCopy copy() const { return impl_->copy(); }
   constexpr TypedDestructor dtor() const { return impl_->dtor(); }
   constexpr const char* name() const { return impl_->name(); }
-
-  // NB: if you ever add methods that return/take ScalarType, make sure to define
-  // them with ScalarType, not ScalarType_
 };
 
 #define DEFINE_STATIC(_1,name,_3) \
