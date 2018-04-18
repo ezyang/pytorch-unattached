@@ -57,7 +57,6 @@ install(EXPORT c10_targets DESTINATION share/cmake/c10
   FILE c10_targets.cmake
   COMPONENT dev)
 
-# TODO: Put this in the subdirectory
-add_executable(c10_scratch
-        c10/test/scratch.cpp)
-target_link_libraries(c10_scratch c10)
+add_executable(c10_basic
+        test/basic.cpp)
+target_link_libraries(c10_basic c10)
