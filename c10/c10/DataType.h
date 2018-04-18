@@ -46,7 +46,11 @@ typedef void (*TypedDestructor)(void * p, int64_t numel);
 namespace guts {
 
 /**
- * Placement new function for the type.
+ * Default placement new function for the type T.
+ *
+ * @tparam T   Type to perform placement-new with
+ * @param ptr  Pointer to region of memory to placement-new
+ * @param n    How many elements at ptr to placement new.
  */
 template<typename T>
 void _ctor(void *ptr, int64_t n) {
