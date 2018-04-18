@@ -54,7 +54,8 @@ class Tensor<CPUContext> {
    */
   template <typename T>
   Tensor(const vector<TIndex>& dims, const vector<T>& values, CPUContext* context)
-      : meta_(TypeMeta::Make<T>()) {
+      : meta_(TypeMeta::Make<T>())
+      , tensor_(c10::tensor<T>(dims, values)) {
     Resize(dims);
     CAFFE_ENFORCE_EQ_WITH_CALLER(values.size(), size_);
     context->template Copy<T, CPUContext, CPUContext>(size_, values.data(), mutable_data<T>());
@@ -590,6 +591,7 @@ class Tensor<CPUContext> {
   }
 
  protected:
+  // NB: Preserve dims_, we need it too
   vector<TIndex> dims_;
   TIndex size_ = -1;
   TypeMeta meta_;

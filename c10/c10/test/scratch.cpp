@@ -6,4 +6,6 @@ using namespace c10;
 int main() {
   Tensor x = tensor(float32, {3, 2}, {2, 1});
   x.resize_({5, 5}, {5, 1});
+
+  Tensor y = tensor<std::string>({3,2}, {});
 }

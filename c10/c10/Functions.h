@@ -25,8 +25,8 @@ inline Tensor tensor(DataType dtype, ArrayRef<int64_t> size, ArrayRef<int64_t> s
 // NB: this is generic
 // Because this is templated, it's implementation must live in a header
 template<typename T>
-inline Tensor tensor(ArrayRef<int64_t> size, std::vector<T> data) {
-  auto r = tensor(c10::dtype<T>, size, contiguous_strides(size));
+inline Tensor tensor(ArrayRef<int64_t> size, ArrayRef<T> data) {
+  auto r = tensor(c10::dtype<T>(), size, contiguous_strides(size));
   C10_CHECK(r.numel() == data.size());
   r.template copy_<T>(data);
   return r;

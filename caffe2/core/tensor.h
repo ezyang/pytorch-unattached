@@ -9,7 +9,7 @@
 #include <typeinfo>
 #include <vector>
 
-#include <c10/Tensor.h>
+#include <c10/c10.h>
 
 #include "caffe2/core/common.h"
 #include "caffe2/core/flags.h"

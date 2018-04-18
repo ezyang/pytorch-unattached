@@ -166,4 +166,6 @@ constexpr const DataType dtype<ctype>() { \
 C10_FORALL_BUILTIN_DATA_TYPES(DEFINE_TEMPLATE)
 #undef DEFINE_TEMPLATE
 
+template <> constexpr const DataType dtype<std::string>() { return string_dtype; }
+
 }
