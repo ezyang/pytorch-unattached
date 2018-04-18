@@ -1,4 +1,4 @@
-#include <c10/c10.h>
+#include <c10.h>
 
 using namespace c10;
 

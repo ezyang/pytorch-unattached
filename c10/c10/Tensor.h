@@ -319,11 +319,13 @@ public:
 
   void shrink_(int64_t outer_dim_new_size) const;
 
-  void resize_as_(Tensor other) const;
+  void resize_as_(const Tensor& other) const;
 
   void view_(ArrayRef<int64_t> size) const;
 
   void clone() const;
+
+  bool equal(const Tensor& other) const;
 
   // To be something like:
   // Tensor add(Tensor x, Tensor y) { guts::dispatch("add", x, y); }

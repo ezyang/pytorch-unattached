@@ -45,7 +45,7 @@ add_library(c10 SHARED
         c10/DimVector.h
         c10/cpu/CPUContext.cpp
         c10/cpu/CPUContext.h
-        c10/c10.h
+    c10.h
         c10/DataType.cpp
         c10/DataType.h
         c10/guts/Storage.cpp
@@ -102,7 +102,10 @@ if (BUILD_TEST)
   add_subdirectory(${PROJECT_SOURCE_DIR}/../third_party/googletest googletest)
   include_directories(${PROJECT_SOURCE_DIR}/../third_party/googletest/googletest/include)
 
-  foreach(test_src c10/DataType_test.cpp)
+  foreach(test_src
+      c10/DataType_test.cpp
+      c10/op/All_test.cpp
+      )
     # Without directory or longest extension
     get_filename_component(test_name "${test_src}" NAME_WE)
     add_executable("${test_name}" "${test_src}")

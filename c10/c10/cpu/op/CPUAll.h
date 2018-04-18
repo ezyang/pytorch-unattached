@@ -14,5 +14,6 @@ void copy_(const Tensor& self, DataType dtype, const void* p, int64_t size_bytes
 void resize_(const Tensor& self, ArrayRef<int64_t> new_size, ArrayRef<int64_t> new_stride, bool keep_data);
 void reserve_(const Tensor& self, ArrayRef<int64_t> new_size);
 void extend_(const Tensor& self, int64_t num, double growthPct);
+bool equal(const Tensor& self, const Tensor& other);
 
 }}} // namespace c10::cpu::op

@@ -36,12 +36,16 @@ void Tensor::shrink_(int64_t outer_dim_new_size) const {
   op::shrink_(*this, outer_dim_new_size);
 }
 
-void Tensor::resize_as_(c10::Tensor other) const {
+void Tensor::resize_as_(const Tensor& other) const {
   op::resize_as_(*this, other);
 }
 
-void Tensor::view_(c10::ArrayRef<int64_t> size) const {
+void Tensor::view_(ArrayRef<int64_t> size) const {
   op::view_(*this, size);
+}
+
+bool Tensor::equal(const Tensor& other) const {
+  return cpu::op::equal(*this, other);
 }
 
 void Tensor::clone() const {

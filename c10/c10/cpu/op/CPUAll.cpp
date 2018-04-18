@@ -1,4 +1,4 @@
-#include <c10/c10.h>
+#include <c10.h>
 
 #include <c10/cpu/CPUTensorImpl.h>
 #include "CPUAll.h"
@@ -104,6 +104,21 @@ void extend_(const Tensor& self, int64_t num, double growthPct) {
   new_size[0] = std::max(new_size[0], static_cast<int64_t>(std::ceil(self.sizes()[0] * (growthPct + 100) / 100)));
   // Short-circuit dynamic dispatch.
   resize_(self, new_size, self.strides(), true);
+}
+
+
+// THTensor_(equal)
+bool equal(const Tensor& self, const Tensor& other) {
+  C10_ASSERT(self.type_id() == TypeIds::CPUTensor, "self.type_id() = ", self.type_id());
+  C10_ASSERT(other.type_id() == TypeIds::CPUTensor, "other.type_id() = ", other.type_id());
+  C10_ASSERT(self.dtype() == other.dtype(), "self.dtype() = ", self.dtype(), "; other.dtype() = ", other.dtype())
+  if (self.sizes().equals(other.sizes())) return false;
+  if (self.is_contiguous() && other.is_contiguous()) {
+    // TODO: This is WRONG for floating point
+    return std::memcmp(self.data_ptr(), other.data_ptr(), static_cast<size_t>(self.numel() * self.dtype().itemsize())) == 0;
+  } else {
+    C10_ASSERT(false, "non-contiguous equality not supported yet");
+  }
 }
 
 /*
