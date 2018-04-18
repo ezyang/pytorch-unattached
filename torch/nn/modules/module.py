@@ -4,7 +4,6 @@ import functools
 import torch
 from ..backends.thnn import backend as thnn_backend
 from ..parameter import Parameter
-from torch.autograd import Variable
 import torch.utils.hooks as hooks
 
 
@@ -123,9 +122,9 @@ class Module(object):
                             .format(torch.typename(param), name))
         elif param.grad_fn:
             raise ValueError(
-                "Cannot assign non-leaf Variable to parameter '{0}'. Model "
+                "Cannot assign non-leaf Tensor to parameter '{0}'. Model "
                 "parameters must be created explicitly. To express '{0}' "
-                "as a function of another variable, compute the value in "
+                "as a function of another Tensor, compute the value in "
                 "the forward() method.".format(name))
         else:
             self._parameters[name] = param
@@ -153,7 +152,7 @@ class Module(object):
 
         for param in self._parameters.values():
             if param is not None:
-                # Variables stored in modules are graph leaves, and we don't
+                # Tensors stored in modules are graph leaves, and we don't
                 # want to create copy nodes, so we have to unpack the data.
                 param.data = fn(param.data)
                 if param._grad is not None:
@@ -272,6 +271,96 @@ class Module(object):
         """
         return self._apply(lambda t: t.half() if t.is_floating_point() else t)
 
+    def to(self, *args, **kwargs):
+        r"""Moves and/or casts the parameters and buffers.
+
+        This can be called with a :attr:`device` argument and/or a :attr:`dtype`
+        argument, and has the exact signature as :meth:`torch.Tensor.to`, except
+        that this method only takes in floating point :attr:`dtype`, and will
+        only cast the floating point parameters and buffers to :attr:`dtype`. It
+        will still move the integral parameters and buffers to :attr:`device`,
+        if that is given. See below for examples.
+
+        Returns:
+            Module: self
+
+        Example::
+
+            >>> linear = nn.Linear(2, 2)
+            >>> linear.weight
+
+            -0.1106  0.0493
+             0.1250 -0.5175
+            [torch.FloatTensor of size (2,2)]
+
+            >>> linear.to(torch.double)
+            Linear(in_features=2, out_features=2, bias=True)
+            >>> linear.weight
+
+            -0.1106  0.0493
+             0.1250 -0.5175
+            [torch.DoubleTensor of size (2,2)]
+
+            >>> linear.to(torch.device("cuda"), dtype=torch.half)
+            Linear(in_features=2, out_features=2, bias=True)
+            >>> linear.weight
+
+            -0.1107  0.0493
+             0.1250 -0.5176
+            [torch.cuda.HalfTensor of size (2,2) (GPU 0)]
+
+            >>> linear.to("cpu")  # can also use string to represent device
+            Linear(in_features=2, out_features=2, bias=True)
+            >>> linear.weight
+
+            -0.1107  0.0493
+             0.1250 -0.5176
+            [torch.HalfTensor of size (2,2)]
+
+        """
+        def arg_error():
+            arg_reprs = list(repr(arg) for arg in args)
+            for key, val in kwargs.items():
+                arg_reprs.append("{}={}".format(key, val))
+            return ValueError('module.to expects .to(device), .to(dtype) or '
+                              '.to(device, dtype), where dtype is a floating '
+                              'point type, but got .to({})'
+                              .format(", ".join(arg_reprs)))
+
+        nargs = len(args) + len(kwargs)
+        device = dtype = None
+        if nargs < 1 or nargs > 2:
+            raise arg_error()
+        else:
+            for key, val in kwargs.items():
+                if key == 'dtype':
+                    dtype = kwargs['dtype']
+                elif 'device' in kwargs:
+                    device = kwargs['device']
+                else:
+                    raise arg_error()
+            for arg in args:
+                if isinstance(arg, torch.dtype):
+                    if dtype is not None:
+                        raise arg_error()
+                    dtype = arg
+                else:
+                    if device is not None:
+                        raise arg_error()
+                    device = arg
+
+        if dtype is not None:
+            if not dtype.is_floating_point:
+                raise arg_error()
+
+            if device is None:
+                return self._apply(lambda t: t.to(dtype) if t.is_floating_point() else t)
+            else:
+                return self._apply(lambda t: t.to(device, dtype) if t.is_floating_point() else t.to(device))
+
+        else:
+            return self._apply(lambda t: t.to(device))
+
     def register_backward_hook(self, hook):
         r"""Registers a backward hook on the module.
 
@@ -343,7 +432,7 @@ class Module(object):
         return None
 
     def _slow_forward(self, *input, **kwargs):
-        input_vars = tuple(torch.autograd.function._iter_variables(input))
+        input_vars = tuple(torch.autograd.function._iter_tensors(input))
         tracing_state = torch.jit.get_tracing_state(input_vars)
         if not tracing_state:
             return self.forward(*input, **kwargs)
@@ -377,9 +466,9 @@ class Module(object):
                     "didn't return None".format(hook))
         if len(self._backward_hooks) > 0:
             var = result
-            while not isinstance(var, Variable):
+            while not isinstance(var, torch.Tensor):
                 if isinstance(var, dict):
-                    var = next((v for v in var.values() if isinstance(v, Variable)))
+                    var = next((v for v in var.values() if isinstance(v, torch.Tensor)))
                 else:
                     var = var[0]
             grad_fn = var.grad_fn
@@ -447,7 +536,7 @@ class Module(object):
             else:
                 buffers = self.__dict__.get('_buffers')
                 if buffers is not None and name in buffers:
-                    if value is not None and not torch.is_tensor(value):
+                    if value is not None and not isinstance(value, torch.Tensor):
                         raise TypeError("cannot assign '{}' as buffer '{}' "
                                         "(torch.Tensor or None expected)"
                                         .format(torch.typename(value), name))
@@ -471,7 +560,7 @@ class Module(object):
         Both parameters and persistent buffers (e.g. running averages) are
         included. Keys are corresponding parameter and buffer names.
 
-        When keep_vars is ``True``, it returns a Variable for each parameter
+        When keep_vars is ``True``, it returns a Tensor for each parameter
         (rather than a Tensor).
 
         Args:
@@ -480,7 +569,7 @@ class Module(object):
                 Default: None
             prefix (string, optional): Adds a prefix to the key (name) of every
                 parameter and buffer in the result dictionary. Default: ''
-            keep_vars (bool, optional): if ``True``, returns a Variable for each
+            keep_vars (bool, optional): if ``True``, returns a Tensor for each
                 parameter. If ``False``, returns a Tensor for each parameter.
                 Default: ``False``
 

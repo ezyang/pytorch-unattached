@@ -54,11 +54,11 @@ def export(model, args, f, export_params=True, verbose=False, training=False,
         model (torch.nn.Module): the model to be exported.
         args (tuple of arguments): the inputs to
             the model, e.g., such that ``model(*args)`` is a valid
-            invocation of the model.  Any non-Variable arguments will
-            be hard-coded into the exported model; any Variable arguments
+            invocation of the model.  Any non-Tensor arguments will
+            be hard-coded into the exported model; any Tensor arguments
             will become inputs of the exported model, in the order they
-            occur in args.  If args is a Variable, this is equivalent
-            to having called it with a 1-ary tuple of that Variable.
+            occur in args.  If args is a Tensor, this is equivalent
+            to having called it with a 1-ary tuple of that Tensor.
             (Note: passing keyword arguments to the model is not currently
             supported.  Give us a shout if you need it.)
         f: a file-like object (has to implement fileno that returns a file descriptor)
@@ -84,31 +84,32 @@ def export(model, args, f, export_params=True, verbose=False, training=False,
     _export(model, args, f, export_params, verbose, training, input_names, output_names)
 
 
-def _optimize_trace(trace, aten):
+def _optimize_graph(graph, aten):
     # run dce first to eliminate dead parts of the graph that might have been
     # left behind by things like symbolic_override
-    torch._C._jit_pass_dce(trace)
-    torch._C._jit_pass_lint(trace)
+    torch._C._jit_pass_dce(graph)
+    torch._C._jit_pass_lint(graph)
 
-    torch._C._jit_pass_peephole(trace)
-    torch._C._jit_pass_lint(trace)
-    torch._C._jit_pass_onnx(trace, aten)
-    torch._C._jit_pass_lint(trace)
-    torch._C._jit_pass_onnx_peephole(trace)
-    torch._C._jit_pass_lint(trace)
-    torch._C._jit_pass_dce(trace)
-    torch._C._jit_pass_lint(trace)
-    torch._C._jit_pass_canonicalize(trace)
-    torch._C._jit_pass_lint(trace)
+    torch._C._jit_pass_peephole(graph)
+    torch._C._jit_pass_lint(graph)
+    graph = torch._C._jit_pass_onnx(graph, aten)
+    torch._C._jit_pass_lint(graph)
+    torch._C._jit_pass_onnx_peephole(graph)
+    torch._C._jit_pass_lint(graph)
+    torch._C._jit_pass_dce(graph)
+    torch._C._jit_pass_lint(graph)
+    graph = torch._C._jit_pass_canonicalize(graph)
+    torch._C._jit_pass_lint(graph)
+    return graph
 
 
 def _trace(func, args, return_outs=False, aten=False):
-    # Special case for common case of passing a single Variable
-    if isinstance(args, torch.autograd.Variable):
+    # Special case for common case of passing a single Tensor
+    if isinstance(args, torch.Tensor):
         args = (args, )
 
     trace, torch_out = torch.jit.get_trace_graph(func, args)
-    _optimize_trace(trace, aten)
+    trace.set_graph(_optimize_graph(trace.graph(), aten))
     if return_outs:
         return trace, torch_out
     return trace
@@ -116,8 +117,8 @@ def _trace(func, args, return_outs=False, aten=False):
 
 def _export(model, args, f, export_params=True, verbose=False, training=False,
             input_names=None, output_names=None, aten=False, export_type=ExportTypes.PROTOBUF_FILE):
-    # Special case for common case of passing a single Variable
-    if isinstance(args, torch.autograd.Variable):
+    # Special case for common case of passing a single Tensor
+    if isinstance(args, torch.Tensor):
         args = (args, )
 
     # A basic sanity check: make sure the state_dict keys are the same
@@ -136,7 +137,7 @@ def _export(model, args, f, export_params=True, verbose=False, training=False,
         raise RuntimeError("state_dict changed after running the tracer; "
                            "something weird is happening in your model!")
 
-    _optimize_trace(trace, aten)
+    trace.set_graph(_optimize_graph(trace.graph(), aten))
 
     _set_input_and_output_names(trace.graph(), input_names, output_names)
 
@@ -219,7 +220,9 @@ def _run_symbolic_method(op_name, symbolic_fn, args):
 
 
 def _is_onnx_list(value):
-    if not isinstance(value, string_classes) and not torch.is_tensor(value) and isinstance(value, collections.Iterable):
+    if not isinstance(value, string_classes) and \
+            not isinstance(value, torch.Tensor) and \
+            isinstance(value, collections.Iterable):
         return True
     return False
 
@@ -235,7 +238,7 @@ def _add_attribute(node, key, value, aten):
     if _is_onnx_list(value):
         kind += "s"
     if aten:
-        if torch.is_tensor(value):
+        if isinstance(value, torch.Tensor):
             # Caffe2 proto does not support tensor attribute.
             if value.numel() > 1:
                 raise ValueError("Should not pass tensor attribute")

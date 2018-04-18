@@ -161,10 +161,9 @@ class RNNBase(Module):
 
         if hx is None:
             num_directions = 2 if self.bidirectional else 1
-            hx = torch.autograd.Variable(input.data.new(self.num_layers *
-                                                        num_directions,
-                                                        max_batch_size,
-                                                        self.hidden_size).zero_(), requires_grad=False)
+            hx = input.new_zeros(self.num_layers * num_directions,
+                                 max_batch_size, self.hidden_size,
+                                 requires_grad=False)
             if self.mode == 'LSTM':
                 hx = (hx, hx)
 
@@ -246,10 +245,10 @@ class RNN(RNNBase):
 
         h_t = \tanh(w_{ih} x_t + b_{ih}  +  w_{hh} h_{(t-1)} + b_{hh})
 
-    where :math:`h_t` is the hidden state at time `t`, and :math:`x_t` is
-    the hidden state of the previous layer at time `t` or :math:`input_t`
-    for the first layer. If :attr:`nonlinearity`='relu', then `ReLU` is used instead
-    of `tanh`.
+    where :math:`h_t` is the hidden state at time `t`, :math:`x_t` is
+    the input at time `t`, and :math:`h_{(t-1)}` is the hidden state of the
+    previous layer at time `t` or the initial hidden state for the first layer.
+    If :attr:`nonlinearity`='relu', then `ReLU` is used instead of `tanh`.
 
     Args:
         input_size: The number of expected features in the input `x`
