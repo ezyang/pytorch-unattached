@@ -115,10 +115,10 @@ struct DataTypeImpls {
   C10_FORALL_BUILTIN_DATA_TYPES(DEFINE_STATIC)
 #undef DEFINE_STATIC
 
-  static constexpr DataTypeImpl string_dtype = {sizeof(std::string), "String", _ctor<std::string>, _copy<std::string>,
+  static constexpr DataTypeImpl string_dtype = {sizeof(std::string), "string", _ctor<std::string>, _copy<std::string>,
                                             _dtor<std::string>};
   // I'm not too sure about undefined scalar type, but I've put it in for now since ATen has it.
-  static constexpr DataTypeImpl undefined_dtype = {0, "Undefined", nullptr, nullptr, nullptr};
+  static constexpr DataTypeImpl undefined_dtype = {0, "undefined", nullptr, nullptr, nullptr};
 };
 
 } // namespace guts
@@ -135,7 +135,7 @@ public:
   DataType& operator=(DataType &&rhs) = default;
   DataType& operator=(const DataType &rhs) = default;
 
-  inline bool operator==(const DataType& other) {
+  inline bool operator==(const DataType& other) const {
     return impl_ == other.impl_;
   }
 
