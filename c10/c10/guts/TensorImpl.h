@@ -173,7 +173,7 @@ public:
   // Channeling Caffe2 Tensor::Shrink
   // TODO: Should this really be defined here?  Something more general?
   void _shrink(int64_t outer_dim_new_size) {
-    C10_CHECK(sizes().size() >= 0);
+    C10_CHECK(sizes().size() >= 1);
     C10_CHECK(outer_dim_new_size < sizes().at(0));
     sizes_[0] = outer_dim_new_size;
   }
