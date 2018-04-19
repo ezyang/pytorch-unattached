@@ -52,6 +52,9 @@ Tensor tensor(const void* data, ArrayRef<int64_t> sizes, DataType dtype) {
 // but that's only because the storage methods are nonvirtual (so you have to be at the
 // correct type when you invoke them.)
 
+// This function implements, bug-for-bug, the resize logic of PyTorch resize_
+// a.k.a. THTensor_(resizeNd)
+//
 // TODO: Try to deprecate this as much as possible...
 // Channeling THTensor_(resizeNd)
 // If aggressive = true, we will always try to free up old memory (this means
@@ -69,30 +72,40 @@ Tensor tensor(const void* data, ArrayRef<int64_t> sizes, DataType dtype) {
 // incorrectly assume the original tensor was
 // contiguously strided for every negative index, even when it was not.
 // See also https://github.com/pytorch/pytorch/issues/229
-//
-// TODO: This will probably be deprecated in favor of safer APIs
-void resize_(const Tensor& self, ArrayRef<int64_t> new_size, ArrayRef<int64_t> new_stride, bool keep_data) {
+void legacy_pytorch_resize_(const Tensor &self, ArrayRef<int64_t> new_size, ArrayRef<int64_t> new_stride) {
   C10_ASSERT(new_size.size() == new_stride.size(), "new_size = ", new_size, "; new_stride = ", new_stride);
   bool unchanged = new_size.equals(self.sizes()) && new_stride.equals(self.strides());
   if (unchanged) return;
   // TODO: This is an error-prone API call.  Might be safer to just pass self directly
   auto new_size_bytes = required_new_storage_size_bytes(self.dtype(), new_size, new_stride, self.storage_offset() * self.dtype().itemsize());
   auto impl = _cpu_impl(self);
-  impl->_set_sizes_and_strides(new_size, new_stride);
-  // NB: In the old TH code, it was permissible for Storage to be a nullptr at this point.
-  // We have tightened the internal invariants.  I put the ASSERT back in where the old
-  // test for storage_ being nullptr would have been.
   auto cpu_storage = impl->cpu_storage();
-  C10_ASSERT(cpu_storage, "cpu_storage is null");
+  if (new_size_bytes > cpu_storage->size_bytes() ) {
+    cpu_storage->resize_(new_size_bytes, true);
+  }
+  impl->_set_sizes_and_strides(new_size, new_stride);
+}
+
+void legacy_resize_caffe2_(const Tensor& self, ArrayRef<int64_t> new_size) {
+  C10_CHECK(self.is_contiguous(), "Caffe2-style resize not supported for non-contiguous tensors");
+  if (new_size.equals(self.sizes())) return;
+  // TODO: This is an error-prone API call.  Might be safer to just pass self directly
+  auto new_stride = contiguous_strides(new_size);
+  auto new_size_bytes = required_new_storage_size_bytes(self.dtype(), new_size, new_stride, self.storage_offset() * self.dtype().itemsize());
+  auto impl = _cpu_impl(self);
+  auto cpu_storage = impl->cpu_storage();
   bool needs_resize =
       // not enough space, OR
       new_size_bytes > cpu_storage->size_bytes() ||
       // we shrunk greater than the maximum "keep on shrink" bytes.
       cpu_storage->size_bytes() - new_size_bytes > globalCPUContext().maxKeepOnShrinkBytes().value_or(INT64_MAX);
   if (needs_resize) {
-    cpu_storage->resize_(new_size_bytes, keep_data);
+    // Caffe2 resize never keeps data
+    cpu_storage->resize_(new_size_bytes, /* keep data */ false);
   }
+  impl->_set_sizes_and_strides(new_size, new_stride);
 }
+
 
 // Channeling Caffe2 Tensor::Reserve(const std::vector<T>& newCapacity, ContextForCopy* context)
 // TODO: Consider also having a direct "numels" variant.

@@ -16,7 +16,7 @@
 namespace c10 { namespace op {
 
 void shrink_(const Tensor& self, int64_t outer_dim_new_size);
-void resize_as_(const Tensor& self, const Tensor& other);
+void legacy_pytorch_resize_as_(const Tensor& self, const Tensor& other);
 void view_(const Tensor& self, ArrayRef<int64_t> new_sizes);
 Tensor clone(const Tensor& self);
 

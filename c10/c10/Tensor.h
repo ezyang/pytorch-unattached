@@ -256,11 +256,13 @@ public:
   // NB: Const is a lie!  See also Note [Cult of the dot]
 
   // TODO: this is a sharp-edged API, which we are planning to replace
-  void resize_(ArrayRef<int64_t> size, ArrayRef<int64_t> stride, bool keep_data = true) const;
-  // TODO: Pondering about overloads...
-  void resize_(ArrayRef<int64_t> size, bool keep_data = true) const {
-    resize_(size, contiguous_strides(size), keep_data);
+  void legacy_pytorch_resize_(ArrayRef<int64_t> size, ArrayRef<int64_t> stride) const;
+  void legacy_pytorch_resize_(ArrayRef<int64_t> size) const {
+    legacy_pytorch_resize_(size, contiguous_strides(size));
   }
+  void legacy_pytorch_resize_as_(const Tensor& other) const;
+
+  void legacy_caffe2_resize_(ArrayRef<int64_t> size) const;
 
   void zero_() const;
 
@@ -326,8 +328,6 @@ public:
   void reserve_(ArrayRef<int64_t> new_size) const;
 
   void shrink_(int64_t outer_dim_new_size) const;
-
-  void resize_as_(const Tensor& other) const;
 
   void view_(ArrayRef<int64_t> size) const;
 

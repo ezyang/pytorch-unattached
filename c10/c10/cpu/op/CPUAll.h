@@ -23,7 +23,8 @@ Tensor tensor(const void* data, ArrayRef<int64_t> sizes, DataType dtype);
 
 // Caffe2's in-place operations
 void copy_(const Tensor& self, DataType dtype, const void* p, int64_t size_bytes);
-void resize_(const Tensor& self, ArrayRef<int64_t> new_size, ArrayRef<int64_t> new_stride, bool keep_data);
+void legacy_pytorch_resize_(const Tensor &self, ArrayRef<int64_t> new_size, ArrayRef<int64_t> new_stride);
+void legacy_resize_caffe2_(const Tensor& self, ArrayRef<int64_t> new_size);
 void reserve_(const Tensor& self, ArrayRef<int64_t> new_size);
 void extend_(const Tensor& self, int64_t num, double growthPct);
 

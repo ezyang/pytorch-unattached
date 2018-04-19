@@ -12,9 +12,14 @@
 
 namespace c10 {
 
-void Tensor::resize_(ArrayRef<int64_t> size, ArrayRef<int64_t> stride, bool keep_data) const {
+void Tensor::legacy_pytorch_resize_(ArrayRef<int64_t> size, ArrayRef<int64_t> stride) const {
   // TODO: Use the dynamic dispatcher instead
-  cpu::op::resize_(*this, size, stride, keep_data);
+  cpu::op::legacy_pytorch_resize_(*this, size, stride);
+}
+
+void Tensor::legacy_caffe2_resize_(ArrayRef<int64_t> size) const {
+  // TODO: Use the dynamic dispatcher instead
+  cpu::op::legacy_resize_caffe2_(*this, size);
 }
 
 void Tensor::copy_(DataType dtype, const void* p, int64_t size_bytes) const {
@@ -37,9 +42,9 @@ void Tensor::shrink_(int64_t outer_dim_new_size) const {
   op::shrink_(*this, outer_dim_new_size);
 }
 
-void Tensor::resize_as_(const Tensor& other) const {
+void Tensor::legacy_pytorch_resize_as_(const Tensor& other) const {
   // TODO: Use the dynamic dispatcher instead
-  op::resize_as_(*this, other);
+  op::legacy_pytorch_resize_as_(*this, other);
 }
 
 void Tensor::view_(ArrayRef<int64_t> size) const {

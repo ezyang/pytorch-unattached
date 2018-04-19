@@ -8,12 +8,14 @@ void shrink_(const Tensor& self, int64_t outer_dim_new_size) {
   self._to_impl()->_shrink(outer_dim_new_size);
 }
 
+// TODO:
 // Caffe2 Tensor::ResizeLike
+
 // PyTorch resize_as_
 // NB: This DESTROYS stride information and resizes as if it were
 // contiguous
-void resize_as_(const Tensor& self, const Tensor& other) {
-  self.resize_(other.sizes(), contiguous_strides(other.sizes()));
+void legacy_pytorch_resize_as_(const Tensor& self, const Tensor& other) {
+  self.legacy_pytorch_resize_(other.sizes(), contiguous_strides(other.sizes()));
 }
 
 // Caffe2 Tensor::Reshape (out-of-place)
@@ -46,6 +48,7 @@ Tensor clone(const Tensor& self) {
   r.copy_(self);
   return r;
   */
+  C10_ASSERT(0, "not yet implemented");
 }
 
 // TODO
