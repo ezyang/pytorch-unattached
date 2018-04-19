@@ -124,8 +124,8 @@ public:
     return r;
   }
 
-  virtual ArrayRef<int64_t> strides() const {
-    throw std::runtime_error("TensorImpl::strides()");
+  ArrayRef<int64_t> strides() const {
+    return strides_;
   }
 
   int64_t dim() const {
@@ -140,7 +140,7 @@ public:
   // TODO: precompute this value
   bool is_contiguous() const {
     int64_t z = 1;
-    for (int64_t d = dim()-1; d >= 0; d++) {
+    for (int64_t d = dim()-1; d >= 0; d--) {
       // NB: Strides don't affect contiguity when size is zero or one,
       // because you never multiply against the stride with a nonzero index.
       // Historical Torch had a more stringent requirement, but @SsnL changed it.

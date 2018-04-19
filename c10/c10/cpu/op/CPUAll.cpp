@@ -15,7 +15,7 @@ static CPUTensorImpl* _cpu_impl(const Tensor& self) {
 
 void zero_(const Tensor& self) {
   // TODO: This is wrong
-  C10_ASSERT(self.is_contiguous(), "TODO: non-contiguous not supported yet")
+  C10_ASSERT(self.is_contiguous(), "TODO: non-contiguous not supported yet (sizes = ", self.sizes(), ", strides = ", self.strides(), ")")
   std::memset(self.data_ptr(), 0, self.numel() * self.dtype().itemsize());
 }
 

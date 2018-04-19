@@ -138,6 +138,8 @@ public:
   Tensor() = default;
   Tensor(const Tensor &rhs) = default;
   Tensor(Tensor &&rhs) noexcept = default;
+  Tensor& operator=(const Tensor &rhs) = default;
+  Tensor& operator=(Tensor &&rhs) = default;
 
   // These methods are SO important, they are currently implemented via virtual dispatch
   // via our implementation classes.  Most non-core methods should be implemented by
