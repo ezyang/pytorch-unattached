@@ -33,22 +33,32 @@ void Tensor::reserve_(ArrayRef<int64_t> new_size) const {
 }
 
 void Tensor::shrink_(int64_t outer_dim_new_size) const {
+  // TODO: Use the dynamic dispatcher instead
   op::shrink_(*this, outer_dim_new_size);
 }
 
 void Tensor::resize_as_(const Tensor& other) const {
+  // TODO: Use the dynamic dispatcher instead
   op::resize_as_(*this, other);
 }
 
 void Tensor::view_(ArrayRef<int64_t> size) const {
+  // TODO: Use the dynamic dispatcher instead
   op::view_(*this, size);
 }
 
 bool Tensor::equal(const Tensor& other) const {
+  // TODO: Use the dynamic dispatcher instead
   return cpu::op::equal(*this, other);
 }
 
+void Tensor::zero_() const {
+  // TODO: Use the dynamic dispatcher instead
+  return cpu::op::zero_(*this);
+}
+
 void Tensor::clone() const {
+  // TODO: Use the dynamic dispatcher instead
   op::clone(*this);
 }
 

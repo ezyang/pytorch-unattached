@@ -1,18 +1,11 @@
-#include <c10.h>
+#include <c10/cpu/op/CPUAll.h>
 
+#include <c10.h>
 #include <c10/cpu/CPUTensorImpl.h>
-#include "CPUAll.h"
 
 namespace c10 { namespace cpu { namespace op {
 
 // The actual implementations
-
-// Hmm... this is still a bit awkward...  using private _from_impl to get
-// the implementation going???  How do we actually want to write this?
-Tensor tensor(DataType dtype) {
-  auto storage = std::make_shared<CPUStorageImpl>(dtype);
-  return Tensor::_from_impl(new CPUTensorImpl(dtype, storage));
-}
 
 // PRIVATE PRIVATE PRIVATE!!!
 static CPUTensorImpl* _cpu_impl(const Tensor& self) {
@@ -20,10 +13,34 @@ static CPUTensorImpl* _cpu_impl(const Tensor& self) {
   return static_cast<CPUTensorImpl*>(self._to_impl());
 }
 
+void zero_(const Tensor& self) {
+  // TODO: This is wrong
+  C10_ASSERT(self.is_contiguous(), "TODO: non-contiguous not supported yet")
+  std::memset(self.data_ptr(), 0, self.numel() * self.dtype().itemsize());
+}
+
+Tensor empty(ArrayRef<int64_t> sizes, DataType dtype) {
+  auto r = Tensor::_from_impl(new CPUTensorImpl(dtype));
+  r.resize_(sizes);
+  return r;
+}
+
+Tensor zeros(ArrayRef<int64_t> sizes, DataType dtype) {
+  auto r = op::empty(sizes, dtype);  // nonvirtual
+  r.zero_();
+  return r;
+}
+
 // Channeling Caffe2 Tensor::Tensor(const T& value, Context* context)
 void copy_(const Tensor& self, DataType dtype, const void* p, int64_t size_bytes) {
   C10_CHECK(dtype == self.dtype());
   _cpu_impl(self)->cpu_storage()->copy_(p, size_bytes);
+}
+
+Tensor tensor(void* data, ArrayRef<int64_t> sizes, DataType dtype) {
+  auto r = op::empty(sizes, dtype); // nonvirtual
+  op::copy_(r, dtype, data, r.numel() * dtype.itemsize()); // nonvirtual
+  return r;
 }
 
 // TODO: There's some fishy business going on here, because the Caffe2 implementations

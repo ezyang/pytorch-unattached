@@ -1,38 +1,58 @@
 #pragma once
 
-#include "Tensor.h"
-#include "Utils.h"
+#include <c10/Tensor.h>
+#include <c10/Utils.h>
 
-// TODO: Strictly temporary: these polymorphic functions should still go through the dispatcher
-#include "c10/op/All.h"
-
-// TODO: Strictly temporary, hardcoded CPU
-#include "c10/cpu/op/CPUAll.h"
+// TODO: Strictly temporary, because the dispatch is hardcoded to go to CPU at the moment
+#include <c10/cpu/op/CPUAll.h>
 
 namespace c10 {
 
-inline Tensor tensor(DataType dtype) {
-  // TODO: This should go through dispatcher, instead of hardcoding CPU
-  return cpu::op::tensor(dtype);
+// TODO: Work out how the other overloads are going to work.  We only do dtype for now because
+// that's the only backend being fleshed out right now.
+
+/**
+ * Returns a tensor filled with uninitialized data, with the shape defined by the argument `sizes`.
+ *
+ * @param sizes A sequence of integers defining the shape of the output tensor
+ * @param dtype The desired data type of returned tensor
+ */
+inline Tensor empty(ArrayRef<int64_t> sizes, DataType dtype) {
+  return cpu::op::empty(sizes, dtype);
 }
 
-inline Tensor tensor(DataType dtype, ArrayRef<int64_t> size, ArrayRef<int64_t> stride) {
-  // TODO: This should go through dispatcher, instead of hardcoding the polymorphic operator
-  return op::tensor(dtype, size, stride);
+/**
+ * Returns a tensor filled with the scalar value 0, with the shape defined by the argument `sizes`.
+ *
+ * @param sizes A sequence of integers defining the shape of the output tensor
+ * @param dtype The desired data type of returned tensor
+ */
+inline Tensor zeros(ArrayRef<int64_t> size, DataType dtype) {
+  return cpu::op::zeros(size, dtype);
+}
+
+inline Tensor tensor(void* data, ArrayRef<int64_t> size, DataType dtype) {
+  return cpu::op::tensor(data, size, dtype);
 }
 
 // Channeling Caffe2 Tensor::Tensor(const vector<TIndex>& dims, const vector<T>& values, Context* context)
 // NB: this is generic
 // Because this is templated, it's implementation must live in a header
+//
+// This is similar to the tensor constructor in PyTorch, but because multidimensional arrays are a pain
+// in vanilla C++, we instead let the user specify what size they want.
 template<typename T>
-inline Tensor tensor(ArrayRef<int64_t> size, ArrayRef<T> data) {
-  auto r = tensor(c10::dtype<T>(), size, contiguous_strides(size));
-  C10_CHECK(r.numel() == data.size(),
+inline Tensor tensor(ArrayRef<T> data, ArrayRef<int64_t> size) {
+  C10_CHECK(product(size) == data.size(),
             "tensor: tensor to be constructed is declared to have size ", size,
-            " (and thus would contain ", r.numel(), " elements), but size of source data is ", data.size()
+            " (and thus would contain ", product(size), " elements), but size of source data is ", data.size()
   );
-  r.template copy_<T>(data);
-  return r;
+  return tensor(data.data(), size, c10::dtype<T>());
+}
+
+template<typename T>
+inline Tensor tensor(ArrayRef<T> data) {
+  return tensor<T>(data, {data.size()});
 }
 
 // Channeling Caffe2 Tensor::Tensor(const T& value, Context* context)
@@ -44,11 +64,8 @@ inline Tensor tensor(ArrayRef<int64_t> size, ArrayRef<T> data) {
 // a templated one might actually work.)
 template <typename T,
           typename = typename std::enable_if<std::is_scalar<T>::value>::type>
-Tensor tensor(const T& value) {
-  auto r = tensor(c10::dtype<T>, {}, {});
-  r.template copy_<T>({&value, 1});
-  return r;
+inline Tensor tensor(const T& value) {
+  return tensor<T>(ArrayRef<T>(&value, 1), {});
 }
-
 
 }

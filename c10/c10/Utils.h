@@ -1,10 +1,11 @@
 #pragma once
 
+#include <c10/DimVector.h>
+#include <c10/ArrayRef.h>
+#include <c10/DataType.h>
+
 #include <numeric>
 #include <cinttypes>
-#include "DimVector.h"
-#include "ArrayRef.h"
-#include "DataType.h"
 
 // Sin bin to dump functions which we don't have good places to put yet
 
@@ -54,7 +55,9 @@ inline int64_t required_new_storage_size_bytes(
   int64_t low_watermark, high_watermark;
   std::tie(low_watermark, high_watermark) = compute_extent(size, stride);
   if (low_watermark * dtype.itemsize() + storage_offset_bytes < 0) {
-    throw std::runtime_error("Cannot resize past beginning of tensor");
+    C10_CHECK(0, "The given size ", size, " and stride ", stride, " can result in a negative index ",
+    "as large as ", low_watermark, ", but this could result in an underflow as your storage ",
+    "begins at element ", storage_offset_bytes / dtype.itemsize());
   }
   return high_watermark * dtype.itemsize() + storage_offset_bytes;
 }

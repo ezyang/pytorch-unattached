@@ -88,12 +88,14 @@ protected:
   // an "is-a" to "has-a" relationship and inline the storage struct in Tensor.
 
 public:
-  explicit TensorImpl(TypeId type_id, DataType dtype, Storage storage)
+  explicit TensorImpl(TypeId type_id, DataType dtype, ArrayRef<int64_t> sizes, ArrayRef<int64_t> strides, Storage storage, int64_t storage_offset_bytes)
       : RetainableImpl()
       , type_id_(type_id)
-      , sizes_()
+      , sizes_(sizes)
+      , strides_(strides)
       , dtype_(dtype)
       , storage_(storage)
+      , storage_offset_bytes_(storage_offset_bytes)
   {};
 
   // TODO: Not sure about this...
@@ -214,7 +216,7 @@ public:
 //      instead of an error, which should have happened.  It just seems morally wrong to privilege empty CPU
 //      tensors in this way.  Also, you don't get reliable pointer equality tests anymore.
 class UndefinedTensorImpl final : public TensorImpl {
-  UndefinedTensorImpl() : TensorImpl(TypeIds::Undefined, c10::undefined_dtype, nullptr) {};
+  UndefinedTensorImpl() : TensorImpl(TypeIds::Undefined, c10::undefined_dtype, {}, {}, nullptr, 0) {};
 public:
   static UndefinedTensorImpl *singleton() {
     // smessmer to @ezyang: Not sure this singleton is a good idea. If wrapped in Tensor, it is subject to ref counting and might get destructed.

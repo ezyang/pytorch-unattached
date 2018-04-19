@@ -5,6 +5,7 @@
 
 #include "ArrayRef.h"
 #include "DataType.h"
+#include "Utils.h"
 
 namespace c10 {
 
@@ -134,8 +135,7 @@ public:
   guts::TensorImpl* _to_impl() const { return impl_.get(); }
 
   // Normal constructors
-  // TODO: I don't know if it's safe to replace this with = default here... godbolt time...
-  Tensor()  = default;
+  Tensor() = default;
   Tensor(const Tensor &rhs) = default;
   Tensor(Tensor &&rhs) noexcept = default;
 
@@ -255,6 +255,12 @@ public:
 
   // TODO: this is a sharp-edged API, which we are planning to replace
   void resize_(ArrayRef<int64_t> size, ArrayRef<int64_t> stride, bool keep_data = true) const;
+  // TODO: Pondering about overloads...
+  void resize_(ArrayRef<int64_t> size, bool keep_data = true) const {
+    resize_(size, contiguous_strides(size), keep_data);
+  }
+
+  void zero_() const;
 
   // Hmmmmm, does the void* violate our dispatch data model?  OTOH, we are probably going to
   // need ways to create tensors from void* pointers
