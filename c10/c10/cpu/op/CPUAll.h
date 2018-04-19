@@ -19,7 +19,7 @@ namespace c10 { namespace cpu { namespace op {
 Tensor empty(ArrayRef<int64_t> sizes, DataType dtype);
 Tensor zeros(ArrayRef<int64_t> sizes, DataType dtype);
 void zero_(const Tensor& self);
-Tensor tensor(void* data, ArrayRef<int64_t> sizes, DataType dtype);
+Tensor tensor(const void* data, ArrayRef<int64_t> sizes, DataType dtype);
 
 // Caffe2's in-place operations
 void copy_(const Tensor& self, DataType dtype, const void* p, int64_t size_bytes);

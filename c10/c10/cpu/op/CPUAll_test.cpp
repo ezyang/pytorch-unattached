@@ -34,3 +34,25 @@ TEST_P(CPUAll_zeros_test, int32) {
   }
 }
 INSTANTIATE_TEST_CASE_P(CPUAll_zeros_test_shapes, CPUAll_zeros_test, shapes);
+
+TEST(CPUAll_zero_test, int32) {
+  Tensor x = zeros({2,2}, int32);
+  Tensor y = empty({2,2}, int32);
+  cpu::op::zero_(y);
+  ASSERT_TRUE(x.equal(y));
+}
+
+TEST(CPUAll_tensor_test, int32_zeros) {
+  std::initializer_list<int32_t> data = {0,0,0,0};
+  Tensor x = cpu::op::tensor(data.begin(), {2,2}, int32);
+  ASSERT_TRUE(x.equal(zeros({2,2}, int32)));
+}
+
+TEST(CPUAll_tensor_test, int32_indexed) {
+  std::initializer_list<int32_t> data = {0, 1, 2, 3};
+  Tensor x = cpu::op::tensor(data.begin(), {2, 2}, int32);
+  auto *p = x.data<int32_t>();
+  for (int i = 0; i < x.numel(); i++) {
+    ASSERT_EQ(p[i], data.begin()[i]);
+  }
+}

@@ -16,7 +16,7 @@ static CPUTensorImpl* _cpu_impl(const Tensor& self) {
 void zero_(const Tensor& self) {
   // TODO: This is wrong
   C10_ASSERT(self.is_contiguous(), "TODO: non-contiguous not supported yet (sizes = ", self.sizes(), ", strides = ", self.strides(), ")")
-  std::memset(self.data_ptr(), 0, self.numel() * self.dtype().itemsize());
+  std::memset(self.data_ptr(), 0, static_cast<size_t>(self.numel() * self.dtype().itemsize()));
 }
 
 Tensor empty(ArrayRef<int64_t> sizes, DataType dtype) {
@@ -37,7 +37,7 @@ void copy_(const Tensor& self, DataType dtype, const void* p, int64_t size_bytes
   _cpu_impl(self)->cpu_storage()->copy_(p, size_bytes);
 }
 
-Tensor tensor(void* data, ArrayRef<int64_t> sizes, DataType dtype) {
+Tensor tensor(const void* data, ArrayRef<int64_t> sizes, DataType dtype) {
   auto r = op::empty(sizes, dtype); // nonvirtual
   op::copy_(r, dtype, data, r.numel() * dtype.itemsize()); // nonvirtual
   return r;
@@ -127,7 +127,7 @@ bool equal(const Tensor& self, const Tensor& other) {
   C10_ASSERT(self.type_id() == TypeIds::CPUTensor, "self.type_id() = ", self.type_id());
   C10_ASSERT(other.type_id() == TypeIds::CPUTensor, "other.type_id() = ", other.type_id());
   C10_ASSERT(self.dtype() == other.dtype(), "self.dtype() = ", self.dtype(), "; other.dtype() = ", other.dtype())
-  if (self.sizes().equals(other.sizes())) return false;
+  if (!self.sizes().equals(other.sizes())) return false;
   if (self.is_contiguous() && other.is_contiguous()) {
     // TODO: This is WRONG for floating point
     return std::memcmp(self.data_ptr(), other.data_ptr(), static_cast<size_t>(self.numel() * self.dtype().itemsize())) == 0;
