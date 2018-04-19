@@ -86,7 +86,7 @@ void legacy_pytorch_resize_(const Tensor &self, ArrayRef<int64_t> new_size, Arra
   impl->_set_sizes_and_strides(new_size, new_stride);
 }
 
-void legacy_resize_caffe2_(const Tensor& self, ArrayRef<int64_t> new_size) {
+void legacy_caffe2_resize_(const Tensor &self, ArrayRef<int64_t> new_size) {
   C10_CHECK(self.is_contiguous(), "Caffe2-style resize not supported for non-contiguous tensors");
   if (new_size.equals(self.sizes())) return;
   // TODO: This is an error-prone API call.  Might be safer to just pass self directly

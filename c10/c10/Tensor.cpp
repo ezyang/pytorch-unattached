@@ -19,7 +19,7 @@ void Tensor::legacy_pytorch_resize_(ArrayRef<int64_t> size, ArrayRef<int64_t> st
 
 void Tensor::legacy_caffe2_resize_(ArrayRef<int64_t> size) const {
   // TODO: Use the dynamic dispatcher instead
-  cpu::op::legacy_resize_caffe2_(*this, size);
+  cpu::op::legacy_caffe2_resize_(*this, size);
 }
 
 void Tensor::copy_(DataType dtype, const void* p, int64_t size_bytes) const {
