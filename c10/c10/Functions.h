@@ -31,7 +31,7 @@ inline Tensor zeros(ArrayRef<int64_t> size, DataType dtype) {
   return cpu::op::zeros(size, dtype);
 }
 
-inline Tensor tensor(void* data, ArrayRef<int64_t> size, DataType dtype) {
+inline Tensor tensor(const void* data, ArrayRef<int64_t> size, DataType dtype) {
   return cpu::op::tensor(data, size, dtype);
 }
 
@@ -41,6 +41,9 @@ inline Tensor tensor(void* data, ArrayRef<int64_t> size, DataType dtype) {
 //
 // This is similar to the tensor constructor in PyTorch, but because multidimensional arrays are a pain
 // in vanilla C++, we instead let the user specify what size they want.
+//
+// TODO: Because this is templated, we don't get conversions to ArrayRef.  Add some more overloads
+// to help the matcher out.
 template<typename T>
 inline Tensor tensor(ArrayRef<T> data, ArrayRef<int64_t> size) {
   C10_CHECK(product(size) == data.size(),

@@ -56,3 +56,11 @@ TEST(CPUAll_tensor_test, int32_indexed) {
     ASSERT_EQ(p[i], data.begin()[i]);
   }
 }
+
+TEST(CPUAll_copy, int32) {
+  std::initializer_list<int32_t> data = {0, 1, 2, 3};
+  Tensor x = tensor(ArrayRef<int32_t>{data}, {2, 2});
+  Tensor y = empty({2,2}, int32);
+  cpu::op::copy_(y, int32, data.begin(), data.size() * int32.itemsize());
+  ASSERT_TRUE(x.equal(y));
+}
