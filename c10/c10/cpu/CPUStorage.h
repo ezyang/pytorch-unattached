@@ -1,18 +1,18 @@
 #pragma once
 
-#include "CPUContext.h"
-#include "CPUAllocator.h"
-#include "c10/guts/Retainable.h"
+#include <c10/cpu/CPUContext.h>
+#include <c10/cpu/CPUAllocator.h>
+#include <c10/guts/Retainable.h>
+#include <c10/guts/Storage.h>
+#include <c10/Error.h>
+#include <c10/DataType.h>
 
 #include <cstddef>
 #include <memory>
 #include <functional>
 #include <cstdlib>
 #include <utility>
-#include <c10/Error.h>
 #include <algorithm>
-#include <c10/DataType.h>
-#include <c10/guts/Storage.h>
 #include <cinttypes>
 
 namespace c10 { namespace cpu {
@@ -20,10 +20,14 @@ namespace c10 { namespace cpu {
 // TODO: Consider making it possible to allocate CPUStorageImpl in the same block as a CPUTensor, so that
 // allocating a tensor is only one dynamic allocation rather than two
 // dzhulgakov: while I appreciate this approach - it's tricky as we'd need to override free/realloc functions and probably have higher cost.
+
+/**
+ * Storage of a CPU tensor.  Multiple CPU tensors can have the same storage (meaning that they
+ * share data.)
+ */
 class CPUStorageImpl final : public guts::StorageImpl {
 public:
   // TODO: Permit allocator to be passed in through this function
-  // TODO: Maybe ball up the allocator into a context
 
   CPUStorageImpl(DataType data_type)
       : StorageImpl(data_type)

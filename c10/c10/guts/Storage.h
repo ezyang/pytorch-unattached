@@ -1,6 +1,8 @@
 #pragma once
 
-#include "c10/guts/Retainable.h"
+#include <c10/guts/Retainable.h>
+#include <c10/Error.h>
+#include <c10/DataType.h>
 
 #include <cstddef>
 #include <memory>
@@ -8,21 +10,17 @@
 #include <cstdlib>
 #include <utility>
 #include <cstring>
-#include <c10/Error.h>
 #include <algorithm>
-#include <c10/DataType.h>
 
 namespace c10 { namespace guts {
 
-// Storage is NOT part of the public API
-//
-// Every Tensor is backed by a storage; multiple tensors may share the same storage
-// (which is why we need an indirection.)  We have a base class for storage so
-// that we can compute the data pointer without a virtual dispatch.
-//
-// This is implemented as a regular shared_ptr to reduce implementation
-// cost.  Since it's internal we don't mind if it's a little clunky to use.
-//
+/**
+ * Every Tensor is backed by a storage; multiple tensors may share the same storage
+ * (which is why we need an indirection.)  We have a base class for storage so
+ * that we can compute the data pointer without a virtual dispatch.
+ *
+ * Storage is NOT part of the public API.  Don't add it to methods in Tensor.
+ */
 // dzhulgakov: enabled_shared_from_this ?
 // NB: Feel free to add enable_shared_from_this if you need it
 //
@@ -106,8 +104,6 @@ protected:
   // NB: I axed TH_STORAGE_REFCOUNTED; it seems to always be turned on.  If we do want
   // this, it would be a good fit for the Retainable class.
 
-  // TODO: Permit allocator to be passed in through this function
-
   // NB: the constructors are protected because you shouldn't be allowed to use them
   // if you're a generic end-user; in general, operating on a StorageImpl won't work
   // because you will always actually have a CPUStorageImpl or something similar, and
@@ -117,7 +113,8 @@ protected:
       : data_(nullptr), size_bytes_(0), data_type_(data_type), resizable_(true) {}
 
   // TODO: Make a more descriptive constructor for non-resizable things.  Note that since you're
-  // using make_shared most of the time for storages, a static method won't cut it.
+  // using make_shared most of the time for storages, you probably just want to make another
+  // top-level 'make' function.
   StorageImpl(DataType data_type, data_t &&data, int64_t size, bool resizable = true)
       : data_(std::move(data)), size_bytes_(size), data_type_(data_type), resizable_(resizable) {}
 
@@ -125,15 +122,14 @@ protected:
   // TODO: explicitly declare permitted constructors.  (Consult my "rule of X" stuff...)
 
   // Rule of Five
-  StorageImpl(const StorageImpl&) = default;
   StorageImpl(StorageImpl&&) = default;
   ~StorageImpl() = default;
-  StorageImpl& operator=(const StorageImpl&) = default;
   StorageImpl& operator=(StorageImpl&&) = default;
 
 public:
 
-  // Straight up reimplementation of the ATen CPUStorage API
+  StorageImpl(const StorageImpl&) = delete;
+  StorageImpl& operator=(const StorageImpl&) = delete;
 
   const void *data_ptr() const {
     return data_.get();
@@ -143,7 +139,7 @@ public:
     return data_.get();
   }
 
-  int64_t sizeBytes() const {
+  int64_t size_bytes() const {
     return size_bytes_;
   }
 };

@@ -5,7 +5,9 @@
 
 namespace c10 { namespace guts {
 
-// Base for intrusive refcounting
+/**
+ * Base class for intrusive refcounting.
+ */
 class RetainableImpl {
   std::atomic<int> refcount_;
 

@@ -81,9 +81,9 @@ void resize_(const Tensor& self, ArrayRef<int64_t> new_size, ArrayRef<int64_t> n
   C10_ASSERT(cpu_storage, "cpu_storage is null");
   bool needs_resize =
       // not enough space, OR
-      new_size_bytes > cpu_storage->sizeBytes() ||
+      new_size_bytes > cpu_storage->size_bytes() ||
       // we shrunk greater than the maximum "keep on shrink" bytes.
-      cpu_storage->sizeBytes() - new_size_bytes > globalCPUContext().maxKeepOnShrinkBytes().value_or(INT64_MAX);
+      cpu_storage->size_bytes() - new_size_bytes > globalCPUContext().maxKeepOnShrinkBytes().value_or(INT64_MAX);
   if (needs_resize) {
     cpu_storage->resize_(new_size_bytes, keep_data);
   }
@@ -95,7 +95,7 @@ void resize_(const Tensor& self, ArrayRef<int64_t> new_size, ArrayRef<int64_t> n
 void reserve_(const Tensor& self, ArrayRef<int64_t> new_size) {
   auto new_size_bytes = required_new_storage_size_bytes(self.dtype(), new_size, self.strides(), self.storage_offset() * self.dtype().itemsize());
   auto cpu_storage = _cpu_impl(self)->cpu_storage();
-  if (new_size_bytes > cpu_storage->sizeBytes()) {
+  if (new_size_bytes > cpu_storage->size_bytes()) {
     // NB: Size of this tensor is unchanged!
     cpu_storage->resize_(new_size_bytes, true);
   }
@@ -111,7 +111,7 @@ void extend_(const Tensor& self, int64_t num, double growthPct) {
   auto tentative_new_size_bytes = required_new_storage_size_bytes(self.dtype(), new_size, self.strides(), self.storage_offset() * self.dtype().itemsize());
   auto* impl =_cpu_impl(self);
   auto cpu_storage = impl->cpu_storage();
-  if (tentative_new_size_bytes <= cpu_storage->sizeBytes()) {
+  if (tentative_new_size_bytes <= cpu_storage->size_bytes()) {
     impl->_set_sizes_and_strides(new_size, self.strides());
     return;
   }
