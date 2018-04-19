@@ -146,6 +146,4 @@ public:
 
 using Storage = std::shared_ptr<StorageImpl>;
 
-// TODO: perfect forwarding helper constructor for make_shared
-
 }} // namespace c10::guts

@@ -2,11 +2,11 @@
 
 // NB: NO dependency on Tensor.h!!!
 
-#include "c10/ArrayRef.h"
-#include "c10/SmallVector.h"
-#include "c10/Optional.h"
-#include "c10/TypeId.h"
-#include "c10/DataType.h"
+#include <c10/ArrayRef.h>
+#include <c10/SmallVector.h>
+#include <c10/Optional.h>
+#include <c10/TypeId.h>
+#include <c10/DataType.h>
 #include <c10/DimVector.h>
 
 #include "Retainable.h"
@@ -14,10 +14,6 @@
 
 #include <vector>
 #include <cinttypes>
-
-namespace c10 {
-  class Tensor;
-}
 
 // NB: It's called guts because it's short and gets the point across :)
 // dzhulgakov: it's cool, less creative and longer version is "detail"
@@ -133,7 +129,6 @@ public:
   }
 
   int64_t dim() const {
-    // dzhulgakov: this line is exactly why `sizes` is a bad name :)
     return static_cast<int64_t>(sizes().size());
   }
 
