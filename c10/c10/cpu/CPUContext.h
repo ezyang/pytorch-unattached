@@ -1,6 +1,7 @@
 #pragma once
 
-#include "CPUAllocator.h"
+#include <c10/cpu/CPUAllocator.h>
+#include <c10/Optional.h>
 
 namespace c10 { namespace cpu {
 
@@ -13,21 +14,38 @@ namespace c10 { namespace cpu {
 // If CPUAllocator were a struct of functions we could embed it directly
 // into CPUContext, eliminating one cache line pull
 
+/**
+ * A set of global state associated with the CPU backend.  These settings are global to
+ * all threads.
+ *
+ * Some discussion can be found at https://fb.quip.com/w9G9AlEXbPlq
+ */
 class CPUContext final {
   CPUAllocator* allocator_;
-  // TODO: condense booleans into a bitmask
-  // These come from Caffe2; correspond to FLAGS_caffe2_keep_on_shrink
+
+  // This comes from Caffe2; it corresponds to FLAGS_caffe2_keep_on_shrink
   // and FLAGS_caffe2_max_keep_on_shrink_memory
-  bool keep_on_shrink_;
-  int64_t max_keep_on_shrink_bytes_;
+  // TODO: Put in global context, probably
+  optional<int64_t> max_keep_on_shrink_bytes_ = nullopt;
+
 public:
   CPUContext() : allocator_(getSimpleCPUAllocator()) {}
+
+  /**
+   * The CPU allocator, from which you can `malloc()` data.
+   */
   CPUAllocator *getCPUAllocator() { return allocator_; }
   void setCPUAllocator(CPUAllocator* allocator) { allocator_ = allocator; }
-  bool keepOnShrink() { return keep_on_shrink_; }
-  void setKeepOnShrink(bool b) { keep_on_shrink_ = b; }
-  size_t maxKeepOnShrinkBytes() { return max_keep_on_shrink_bytes_; }
-  void setMaxKeepOnShrinkBytes(int64_t s) { max_keep_on_shrink_bytes_ = s; }
+
+  /**
+   * Controls reallocation behavior when a memory resize shrinks a tensor.
+   *
+   * If `nullopt`, resizes which reduce the size of a tensor never reallocate
+   * the tensor.  Otherwise, a reallocation occurs if the amount of memory that
+   * would be freed is greater than the recorded `maxKeepOnShrinkBytes`.
+   */
+  optional<int64_t> maxKeepOnShrinkBytes() { return max_keep_on_shrink_bytes_; }
+  void setMaxKeepOnShrinkBytes(optional<int64_t> s) { max_keep_on_shrink_bytes_ = s; }
 };
 
 CPUContext &globalCPUContext();

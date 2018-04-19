@@ -82,10 +82,8 @@ void resize_(const Tensor& self, ArrayRef<int64_t> new_size, ArrayRef<int64_t> n
   bool needs_resize =
       // not enough space, OR
       new_size_bytes > cpu_storage->sizeBytes() ||
-      // we're not allowed to keep the old storage on a shrink, OR
-      !globalCPUContext().keepOnShrink() ||
       // we shrunk greater than the maximum "keep on shrink" bytes.
-      cpu_storage->sizeBytes() - new_size_bytes > globalCPUContext().maxKeepOnShrinkBytes();
+      cpu_storage->sizeBytes() - new_size_bytes > globalCPUContext().maxKeepOnShrinkBytes().value_or(INT64_MAX);
   if (needs_resize) {
     cpu_storage->resize_(new_size_bytes, keep_data);
   }
