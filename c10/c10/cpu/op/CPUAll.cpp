@@ -7,7 +7,7 @@ namespace c10 { namespace cpu { namespace op {
 
 // The actual implementations
 
-// PRIVATE PRIVATE PRIVATE!!!
+// TCB
 static CPUTensorImpl* _cpu_impl(const Tensor& self) {
   C10_ASSERT(self.type_id() == TypeIds::CPUTensor, "type_id = ", self.type_id());
   return static_cast<CPUTensorImpl*>(self._to_impl());
@@ -19,9 +19,13 @@ void zero_(const Tensor& self) {
   std::memset(self.data_ptr(), 0, static_cast<size_t>(self.numel() * self.dtype().itemsize()));
 }
 
+// TCB
 Tensor empty(ArrayRef<int64_t> sizes, DataType dtype) {
   auto r = Tensor::_from_impl(new CPUTensorImpl(dtype));
-  r.resize_(sizes);
+  // Please do not copy paste the line below, it relies on the invariant that
+  // a fresh storage was allocated
+  _cpu_impl(r)->cpu_storage()->resize_(product(sizes) * dtype.itemsize(), /*keep data*/ false);
+  _cpu_impl(r)->_set_sizes_and_strides(sizes, contiguous_strides(sizes));
   return r;
 }
 
@@ -48,6 +52,7 @@ Tensor tensor(const void* data, ArrayRef<int64_t> sizes, DataType dtype) {
 // but that's only because the storage methods are nonvirtual (so you have to be at the
 // correct type when you invoke them.)
 
+// TODO: Try to deprecate this as much as possible...
 // Channeling THTensor_(resizeNd)
 // If aggressive = true, we will always try to free up old memory (this means
 // we always have to do a reallocation).  Torch default behavior was to
@@ -90,8 +95,8 @@ void resize_(const Tensor& self, ArrayRef<int64_t> new_size, ArrayRef<int64_t> n
 }
 
 // Channeling Caffe2 Tensor::Reserve(const std::vector<T>& newCapacity, ContextForCopy* context)
-// TODO: Consider also having a direct "numels" variant.  Note that this version accounts
-// correctly for strides
+// TODO: Consider also having a direct "numels" variant.
+// Note that this version accounts correctly for strides
 void reserve_(const Tensor& self, ArrayRef<int64_t> new_size) {
   auto new_size_bytes = required_new_storage_size_bytes(self.dtype(), new_size, self.strides(), self.storage_offset() * self.dtype().itemsize());
   auto cpu_storage = _cpu_impl(self)->cpu_storage();
@@ -104,21 +109,25 @@ void reserve_(const Tensor& self, ArrayRef<int64_t> new_size) {
 // Channeling Caffe2 Tensor::Extend(TIndex num, float growthPct, ContextForCopy* context)
 void extend_(const Tensor& self, int64_t num, double growthPct) {
   C10_CHECK(self.dim() >= 1);
-  DimVector new_size{self.sizes()};
-  new_size[0] += num;
-  // NB: Do not need to test for storage_ == nullptr as it is assumed to
-  // have been initialized
-  auto tentative_new_size_bytes = required_new_storage_size_bytes(self.dtype(), new_size, self.strides(), self.storage_offset() * self.dtype().itemsize());
+
   auto* impl =_cpu_impl(self);
   auto cpu_storage = impl->cpu_storage();
+
+  // Compute initialize size increase
+  DimVector new_size{self.sizes()};
+  new_size[0] += num;
+  auto tentative_new_size_bytes = required_new_storage_size_bytes(self.dtype(), new_size, self.strides(), self.storage_offset() * self.dtype().itemsize());
   if (tentative_new_size_bytes <= cpu_storage->size_bytes()) {
+    // Cheap! Do the quick and easy thing
     impl->_set_sizes_and_strides(new_size, self.strides());
     return;
   }
-  // Compute the true sizes increase, to ensure extend() amortizes correctly
+
+  // Compute the true size increase, to ensure extend() amortizes correctly
   new_size[0] = std::max(new_size[0], static_cast<int64_t>(std::ceil(self.sizes()[0] * (growthPct + 100) / 100)));
-  // Short-circuit dynamic dispatch.
-  resize_(self, new_size, self.strides(), true);
+  auto new_size_bytes = required_new_storage_size_bytes(self.dtype(), new_size, self.strides(), self.storage_offset() * self.dtype().itemsize());
+  cpu_storage->resize_(new_size_bytes, /* keep data */ true);
+  impl->_set_sizes_and_strides(new_size, self.strides());
 }
 
 

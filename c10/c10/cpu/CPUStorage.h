@@ -32,12 +32,6 @@ public:
   CPUStorageImpl(DataType data_type)
       : StorageImpl(data_type)
   {}
-  CPUStorageImpl(DataType data_type, int64_t size)
-      : StorageImpl(data_type, nullptr, size)
-  {
-    auto ptr_deleter = globalCPUContext().getCPUAllocator()->malloc(size);
-    data_ = {ptr_deleter.first, ptr_deleter.second};
-  }
 
   // Rule of Five (make these constructors public)
   CPUStorageImpl(const CPUStorageImpl&) = default;
