@@ -67,17 +67,26 @@ target_include_directories(c10 PUBLIC
     $<INSTALL_INTERFACE:${C10_INSTALL_INCLUDE_SUBDIR}>
     )
 
+# Temporarily dev CPU only
+set(NO_CUDA ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(AT_LINK_STYLE STATIC)
+add_subdirectory(${PROJECT_SOURCE_DIR}/../aten aten EXCLUDE_FROM_ALL)
+target_link_libraries(c10 ATen)
+
 install(DIRECTORY c10 DESTINATION "${C10_INSTALL_INCLUDE_SUBDIR}"
   FILES_MATCHING PATTERN "*.h")
 
-install(TARGETS c10 EXPORT c10_targets
-  RUNTIME DESTINATION "${C10_INSTALL_BIN_DIR}"
-  LIBRARY DESTINATION "${C10_INSTALL_LIB_DIR}"
-  ARCHIVE DESTINATION "${C10_INSTALL_LIB_DIR}")
+# With ATen, this doesn't work
+#
+# install(TARGETS c10 EXPORT c10_targets
+#   RUNTIME DESTINATION "${C10_INSTALL_BIN_DIR}"
+#   LIBRARY DESTINATION "${C10_INSTALL_LIB_DIR}"
+#   ARCHIVE DESTINATION "${C10_INSTALL_LIB_DIR}")
 
-install(EXPORT c10_targets DESTINATION share/cmake/c10
-  FILE c10_targets.cmake
-  COMPONENT dev)
+# install(EXPORT c10_targets DESTINATION share/cmake/c10
+#   FILE c10_targets.cmake
+#   COMPONENT dev)
 
 # TODO: I don't really want the tests to build if someone is building the library. It's a waste
 # of time
