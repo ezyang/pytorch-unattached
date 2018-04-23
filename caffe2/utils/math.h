@@ -127,6 +127,16 @@ CAFFE2_DECLARE_BINARY_OP(Div);
 
 #undef CAFFE2_DECLARE_BINARY_OP
 
+namespace internal {
+
+// Increase the index digits by one based on dims.
+void IncreaseIndexInDims(const int n, const int* dims, int* index);
+
+// Get index value from dims and index digits.
+int GetIndexFromDims(const int n, const int* dims, const int* index);
+
+} // namespace internal
+
 template <typename T, class Context>
 void ReduceMin(
     const int N,
@@ -141,6 +151,28 @@ void ReduceMax(
     T* y,
     Tensor<Context>* scratch_ptr,
     Context* context);
+
+template <typename T, class Context>
+void ReduceMin(
+    const int num_dims,
+    const int* dims,
+    const int num_axes,
+    const int* axes,
+    const T* X,
+    T* Y,
+    Context* context,
+    Tensor<Context>* scratch_ptr = nullptr);
+
+template <typename T, class Context>
+void ReduceMax(
+    const int num_dims,
+    const int* dims,
+    const int num_axes,
+    const int* axes,
+    const T* X,
+    T* Y,
+    Context* context,
+    Tensor<Context>* scratch_ptr = nullptr);
 
 template <typename T, class Context>
 void ReduceSum(
@@ -174,6 +206,18 @@ void Broadcast(
     const T* X,
     T* Y,
     Context* context);
+
+template <typename T, class Context>
+void Moments(
+    const int num_dims,
+    const int* dims,
+    const int num_axes,
+    const int* axes,
+    const T* X,
+    T* mean,
+    T* variance,
+    Context* context,
+    Tensor<Context>* scratch_ptr = nullptr);
 
 // Adds batch sub-tensors elementwise to output. Stripe is the stripe length
 // and N is the number of elements to add (size of Y).

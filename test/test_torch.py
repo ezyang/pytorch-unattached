@@ -924,40 +924,42 @@ class TestTorch(TestCase):
         self.assertEqual(res1, res2)
 
     def test_remainder(self):
-        # Check the Floating point case
-        m1 = torch.Tensor(10, 10).uniform_(-10., 10.)
-        res1 = m1.clone()
-        res2 = m1.clone()
-        qs = torch.arange(-5.1, 4.1)
-        # Check the case where the divisor is a simple float
-        for col_idx, q in enumerate(qs):
-            # Reference
-            for i in range(m1.size(0)):
-                res2[i, col_idx] = res2[i, col_idx] % q
-            # To test
-            res1[:, col_idx].remainder_(q)
-        self.assertEqual(res1, res2)
-        # Check the case where the divisor is a tensor
-        res1 = m1.clone()
-        res1.remainder_(qs.unsqueeze(0).expand_as(res1))
-        self.assertEqual(res1, res2)
+        # Check the Floating point case, both tensor and scalar overloads
+        for use_item in [True, False]:
+            m1 = torch.Tensor(10, 10).uniform_(-10., 10.)
+            res1 = m1.clone()
+            res2 = m1.clone()
+            qs = torch.arange(-5.1, 4.1)
+            # Check the case where the divisor is a simple float
+            for col_idx, q in enumerate(qs):
+                # Reference
+                for i in range(m1.size(0)):
+                    res2[i, col_idx] = res2[i, col_idx] % q
+                # To test
+                res1[:, col_idx].remainder_(q if not use_item else q.item())
+            self.assertEqual(res1, res2)
+            # Check the case where the divisor is a tensor
+            res1 = m1.clone()
+            res1.remainder_(qs.unsqueeze(0).expand_as(res1))
+            self.assertEqual(res1, res2)
 
-        # Check the LongTensor case
-        long_m1 = torch.LongTensor(10, 10).random_(-10, 10)
-        long_res1 = long_m1.clone()
-        long_res2 = long_m1.clone()
-        long_qs = torch.arange(-5, 5).long()
-        long_qs[5] = 5  # Can't handle the divisor=0 case
-        for col_idx, long_q in enumerate(long_qs):
-            # Reference
-            for i in range(long_m1.size(0)):
-                long_res2[i, col_idx] = long_res2[i, col_idx] % long_q
-            # To test
-            long_res1[:, col_idx].remainder_(long_q)
-        self.assertEqual(long_res1, long_res2)
-        # Divisor is a tensor case
-        long_res1 = long_m1.clone()
-        long_res1.remainder_(long_qs.unsqueeze(0).expand_as(long_res1))
+        # Check the LongTensor case, both tensor and scalar overloads
+        for use_item in [True, False]:
+            long_m1 = torch.LongTensor(10, 10).random_(-10, 10)
+            long_res1 = long_m1.clone()
+            long_res2 = long_m1.clone()
+            long_qs = torch.arange(-5, 5).long()
+            long_qs[5] = 5  # Can't handle the divisor=0 case
+            for col_idx, long_q in enumerate(long_qs):
+                # Reference
+                for i in range(long_m1.size(0)):
+                    long_res2[i, col_idx] = long_res2[i, col_idx] % long_q
+                # To test
+                long_res1[:, col_idx].remainder_(long_q if not use_item else long_q.item())
+            self.assertEqual(long_res1, long_res2)
+            # Divisor is a tensor case
+            long_res1 = long_m1.clone()
+            long_res1.remainder_(long_qs.unsqueeze(0).expand_as(long_res1))
 
     @staticmethod
     def _test_remainder_overflow(self, dtype, device):
@@ -1371,20 +1373,63 @@ class TestTorch(TestCase):
 
     @unittest.skipIf(not TEST_NUMPY, 'Numpy not found')
     def test_sum_dim(self):
-        def check_sum_dim(tensor, dim):
-            expected = tensor.numpy().sum(dim)
-            actual = tensor.sum(dim)
-            self.assertEqual(expected.shape, actual.shape)
-            self.assertTrue(np.allclose(expected, actual.numpy()))
+        def check_sum_dim(tensors, dim):
+            for tensor in tensors:
+                expected = tensor.numpy().sum(dim)
+                actual = tensor.sum(dim)
+                self.assertEqual(expected.shape, actual.shape)
+                if actual.dtype == torch.float:
+                    self.assertTrue(np.allclose(expected, actual.numpy(), rtol=1e-03, atol=1e-05))
+                else:
+                    self.assertTrue(np.allclose(expected, actual.numpy()))
 
-        check_sum_dim(torch.randn(3, 5, 7), 0)
-        check_sum_dim(torch.randn(3, 5, 7), 1)
-        check_sum_dim(torch.randn(3, 5, 7), 2)
-        check_sum_dim(torch.randn(100000), -1)
-        check_sum_dim(torch.randn(5, 400000), 1)
-        check_sum_dim(torch.randn(50, 50, 50), 0)
-        check_sum_dim(torch.randn(50, 50, 50), 1)
-        check_sum_dim(torch.randn(50, 50, 50), 2)
+        float_types = [torch.double,
+                       torch.float]
+        int_types = [torch.int64,
+                     torch.int32,
+                     torch.int16]
+
+        def make_contiguous(shape, dtype):
+            if dtype in float_types:
+                return torch.randn(*shape, dtype=dtype)
+            result = torch.zeros(*shape, dtype=dtype)
+            result.apply_(lambda x: random.randint(-100, 100))
+            return result
+
+        def make_non_contiguous(shape, dtype):
+            contig = make_contiguous(shape, dtype)
+            non_contig = torch.empty(shape + (2,), dtype=dtype)[..., 0]
+            non_contig.copy_(contig)
+            self.assertFalse(non_contig.is_contiguous())
+            return non_contig
+
+        def make_tensors(*shape):
+            tensors = []
+            for dtype in float_types + int_types:
+                tensors.append(make_contiguous(shape, dtype))
+                tensors.append(make_non_contiguous(shape, dtype))
+            return tensors
+
+        check_sum_dim(make_tensors(5, 400000), 1)
+        check_sum_dim(make_tensors(3, 5, 7), 0)
+        check_sum_dim(make_tensors(3, 5, 7), 1)
+        check_sum_dim(make_tensors(3, 5, 7), 2)
+        check_sum_dim(make_tensors(100000), -1)
+        check_sum_dim(make_tensors(50, 50, 50), 0)
+        check_sum_dim(make_tensors(50, 50, 50), 1)
+        check_sum_dim(make_tensors(50, 50, 50), 2)
+
+        def make_contiguous_slice(size, dtype):
+            contig = make_contiguous((1, size), dtype)
+            non_contig = contig[:1, 1:size - 1]
+            self.assertTrue(non_contig.is_contiguous())
+            return contig
+
+        for dtype in float_types + int_types:
+            check_sum_dim(make_contiguous_slice(5, dtype), 0)
+            check_sum_dim(make_contiguous_slice(50, dtype), 0)
+            check_sum_dim(make_contiguous_slice(500, dtype), 0)
+            check_sum_dim(make_contiguous_slice(100000, dtype), 0)
 
     def test_sum_out(self):
         x = torch.rand(100, 100)
@@ -4556,8 +4601,8 @@ class TestTorch(TestCase):
                 return npt
 
             def assert_get_eq(tensor, indexer):
-                self.assertEqual(reference[indexer],
-                                 conv_fn(get_numpy(reference, indexer)))
+                self.assertEqual(tensor[indexer],
+                                 conv_fn(get_numpy(tensor, indexer)))
 
             def assert_set_eq(tensor, indexer, val):
                 pyt = tensor.clone()
@@ -4611,11 +4656,9 @@ class TestTorch(TestCase):
                 [slice(None), [0, 2, 3], [1, 3, 4]],
                 [slice(None), [0], [1, 2, 4]],
                 [slice(None), [0, 1, 3], [4]],
-                [slice(None), [[0, 1], [1, 0]], [[2, 3], [3, 0]]],
                 [slice(None), [[0, 1], [1, 0]], [[2, 3]]],
                 [slice(None), [[0, 1], [2, 3]], [[0]]],
                 [slice(None), [[5, 6]], [[0, 3], [4, 4]]],
-                [slice(None), [[2]], [[0, 3], [4, 4]]],
                 [[0, 2, 3], [1, 3, 4], slice(None)],
                 [[0], [1, 2, 4], slice(None)],
                 [[0, 1, 3], [4], slice(None)],
@@ -5438,6 +5481,13 @@ class TestTorch(TestCase):
             self.assertEqual(split.size(), target_size)
             self.assertEqual(tensor.narrow(dim, start, target_size[dim]), split, 0)
             start = start + target_size[dim]
+
+        # Invalid chunk sizes
+        error_regex = 'chunk expects.*greater than 0'
+        with self.assertRaisesRegex(RuntimeError, error_regex):
+            tensor.chunk(0)
+        with self.assertRaisesRegex(RuntimeError, error_regex):
+            tensor.chunk(-2)
 
     def test_tolist(self):
         list0D = []
