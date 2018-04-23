@@ -129,7 +129,7 @@ public:
   // Sigh, don't really want this to be public, but don't want to define another struct
   // to place the DataType constants
   constexpr DataType(const guts::DataTypeImpl* impl) : impl_(impl) {};
-  DataType() = default;
+  DataType() : impl_(&guts::DataTypeImpls::undefined_dtype) {};
   DataType(const DataType &rhs) = default;
   DataType(DataType &&rhs) noexcept = default;
   DataType& operator=(DataType &&rhs) = default;

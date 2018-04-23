@@ -61,7 +61,7 @@ add_library(c10 SHARED
     c10/ThreadContext.cpp
     c10/ThreadContext.h
     c10/General.cpp
-    c10/General.h)
+    c10/General.h c10/KeywordArgs.cpp c10/KeywordArgs.h)
 target_include_directories(c10 PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:${C10_INSTALL_INCLUDE_SUBDIR}>
