@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.2)
 project(c10)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 option(BUILD_TEST "Build C++ test binaries (need gtest)" ON)
 
@@ -35,12 +35,20 @@ add_library(c10 SHARED
     c10/guts/TensorImpl.h
     c10/guts/Retainable.cpp
     c10/guts/Retainable.h
+    c10/guts/Metaprogramming.cpp
+    c10/guts/C++17.h
     c10/cpu/CPUStorage.cpp
     c10/cpu/CPUStorage.h
     c10/cpu/CPUAllocator.cpp
     c10/cpu/CPUAllocator.h
     c10/cpu/CPUTensorImpl.cpp
     c10/cpu/CPUTensorImpl.h
+    c10/dispatch/Dispatcher.cpp
+    c10/dispatch/DispatcherExample.cpp
+    c10/dispatch/DispatchKey.cpp
+    c10/dispatch/DispatchTypeId.cpp
+    c10/dispatch/OpId.cpp
+    c10/dispatch/OpSchema.cpp
     c10/SmallVector.cpp
     c10/SmallVector.h
     c10/DimVector.h
