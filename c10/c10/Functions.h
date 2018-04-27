@@ -2,6 +2,7 @@
 
 #include <c10/Tensor.h>
 #include <c10/Utils.h>
+#include <c10/Context.h>
 
 // TODO: Strictly temporary, because the dispatch is hardcoded to go to CPU at the moment
 #include <c10/cpu/op/CPUAll.h>

@@ -13,7 +13,7 @@ namespace c10 {
 class Dispatcher final {
 public:
   template<class OpSchemaDef, size_t num_tensor_args>
-  void registerOp(typename OpSchema<OpSchemaDef>::func_type* func, const DispatchTypeId (&tensorTypeIds)[num_tensor_args]) {
+  void registerOp(typename OpSchema<OpSchemaDef>::func_type* func, const TypeId (&tensorTypeIds)[num_tensor_args]) {
     static_assert(OpSchema<OpSchemaDef>::num_tensor_args == num_tensor_args, "Operator registration failed. Number of tensor type ids must match the number of tensor arguments in the operator signature.");
     DispatchKey dispatchKey = OpSchema<OpSchemaDef>::dispatchKey(guts::to_std_array(tensorTypeIds));
     ops_.emplace(dispatchKey, (void*)func);
@@ -21,14 +21,14 @@ public:
 
   // overload for ops with zero tensor arguments (C arrays with size zero are invalid in C++)
   template<class OpSchemaDef>
-  void registerOp(typename OpSchema<OpSchemaDef>::func_type* func, std::array<DispatchTypeId, 0>) {
+  void registerOp(typename OpSchema<OpSchemaDef>::func_type* func, std::array<TypeId, 0>) {
     static_assert(OpSchema<OpSchemaDef>::num_tensor_args == 0, "Operator registration failed. Number of tensor type ids must match the number of tensor arguments in the operator signature.");
     DispatchKey dispatchKey = OpSchema<OpSchemaDef>::dispatchKey({});
     ops_.emplace(dispatchKey, (void*)func);
   }
 
   template<class OpSchemaDef, class... Args>
-  typename OpSchema<OpSchemaDef>::return_type call(Args... args) {
+  typename OpSchema<OpSchemaDef>::return_type call(Args... args) const {
     // TODO Perfect forwarding of arguments
     using Schema = OpSchema<OpSchemaDef>;
     static_assert(std::is_same<typename Schema::return_type (Args...), typename Schema::func_type>::value, "Argument types don't match operator signature");

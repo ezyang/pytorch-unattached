@@ -2,18 +2,9 @@
 
 #include "DispatchKey.h"
 #include <c10/guts/Metaprogramming.h>
+#include <c10/Tensor.h>
 
 namespace c10 {
-
-// TODO Replace with actual Tensor class
-struct Tensor final {
-  DispatchTypeId dispatch_key_;
-  int value_;
-
-  DispatchTypeId dispatch_key() const {
-    return dispatch_key_;
-  }
-};
 
 namespace details {
 template<class Arg> using is_valid_tensor_arg = std::is_same<Tensor, Arg>;
@@ -41,23 +32,23 @@ namespace details {
 template<class Enable, class... Args> struct getTensorTypeIds__;
 template<class Head, class... Tail>
 struct getTensorTypeIds__<std::enable_if_t<!is_valid_tensor_arg<Head>::value>, Head, Tail...> final {
-  static void call(std::vector<DispatchTypeId>::iterator result, const Head& head, const Tail&... tail) {
+  static void call(std::vector<TypeId>::iterator result, const Head& head, const Tail&... tail) {
     getTensorTypeIds__<void, Tail...>::call(result, tail...);
   }
 };
 template<class Head, class... Tail>
 struct getTensorTypeIds__<std::enable_if_t<is_valid_tensor_arg<Head>::value>, Head, Tail...> final {
-  static void call(std::vector<DispatchTypeId>::iterator result, const Head& head, const Tail&... tail) {
-    *result = head.dispatch_key();
+  static void call(std::vector<TypeId>::iterator result, const Head& head, const Tail&... tail) {
+    *result = head.type_id();
     getTensorTypeIds__<void, Tail...>::call(result + 1, tail...);
   }
 };
 template<>
 struct getTensorTypeIds__<void> final {
-  static void call(std::vector<DispatchTypeId>::iterator result) {}
+  static void call(std::vector<TypeId>::iterator result) {}
 };
 
-template<class... Args> void getTensorTypeIds_(std::vector<DispatchTypeId>::iterator result, const Args&... args) {
+template<class... Args> void getTensorTypeIds_(std::vector<TypeId>::iterator result, const Args&... args) {
   getTensorTypeIds__<void, Args...>::call(result, args...);
 }
 
@@ -85,7 +76,7 @@ public:
     // TODO pass to OpSchemaDef::dispatchKey if defined
 
     static_assert(std::is_same<guts::typelist::typelist<Args...>, argument_types>::value, "Invalid argument types passed to OpSchema::dispatchKey()");
-    std::vector<DispatchTypeId> dispatchTypeIds(num_tensor_args);
+    std::vector<TypeId> dispatchTypeIds(num_tensor_args);
     details::getTensorTypeIds_(dispatchTypeIds.begin(), args...);
     return DispatchKey {
       OpSchemaDef::op_id(),
@@ -93,11 +84,11 @@ public:
     };
   }
 
-  static inline DispatchKey dispatchKey(const std::array<DispatchTypeId, num_tensor_args>& tensorTypeIds) {
+  static inline DispatchKey dispatchKey(const std::array<TypeId, num_tensor_args>& tensorTypeIds) {
     // TODO pass to OpSchemaDef::dispatchKey if defined
     return DispatchKey {
       OpSchemaDef::op_id(),
-      std::vector<DispatchTypeId>(tensorTypeIds.begin(), tensorTypeIds.end())
+      std::vector<TypeId>(tensorTypeIds.begin(), tensorTypeIds.end())
     };
   }
 };

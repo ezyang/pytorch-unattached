@@ -197,7 +197,6 @@ public:
     return impl_->dtype();
   }
 
-  // TODO: Not sure about this method.
   TypeId type_id() const {
     return impl_->type_id();
   }

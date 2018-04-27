@@ -1,7 +1,7 @@
 #pragma once
 
-#include "DispatchTypeId.h"
 #include "OpId.h"
+#include <c10/TypeId.h>
 
 #include <vector>
 #include <functional>
@@ -12,7 +12,7 @@ namespace c10 {
 struct DispatchKey final {
   // TODO
   OpId opId_;
-  std::vector<DispatchTypeId> argTypes_;
+  std::vector<TypeId> argTypes_;
 };
 
 inline bool operator==(const DispatchKey &lhs, const DispatchKey& rhs) {
@@ -29,7 +29,7 @@ namespace std {
       size_t hash = std::hash<c10::OpId>()(obj.opId_);
       for (const auto& typeId : obj.argTypes_) {
         hash *= 10883; // prime
-        hash += std::hash<c10::DispatchTypeId>()(typeId);
+        hash += std::hash<c10::TypeId>()(typeId);
       }
       return hash;
     }

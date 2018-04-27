@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <ostream>
+#include <functional>
 
 namespace c10 {
 
@@ -26,18 +27,29 @@ namespace c10 {
 // dzhulgakov: have we considered just reusing TypeMeta directly? It allows for
 // extensible backends more easily and is a pretty battle-tested piece of code.
 class TypeId final {
-  const int64_t id_;
+  int64_t id_;
   const char* name_;
 
   explicit constexpr TypeId(int64_t id, const char* name) noexcept : id_(id), name_(name) {}
 
   friend class TypeIds;
 public:
-  bool operator ==(TypeId other) { return id_ == other.id_; }
-  const char* name() const {
+  // TODO: Not sure if this is done exactly correctly
+  constexpr TypeId() noexcept : id_(0), name_("Undefined") {}
+  constexpr TypeId(const TypeId& other) noexcept : id_(other.id_), name_(other.name_) {}
+  constexpr TypeId(TypeId&& other) noexcept : id_(other.id_), name_(other.name_) {}
+  constexpr TypeId& operator=(const TypeId& other) { id_ = other.id_; name_ = other.name_; return *this; }
+  constexpr TypeId& operator=(TypeId&& other) { id_ = other.id_; name_ = other.name_; return *this; }
+
+  constexpr int64_t id() const {
+    return id_;
+  }
+  constexpr const char* name() const {
     return name_;
   }
 };
+
+constexpr inline bool operator ==(TypeId self, TypeId other) { return self.id() == other.id(); };
 
 inline std::ostream& operator<<(std::ostream& out, TypeId id) {
   out << id.name();
@@ -54,3 +66,12 @@ public:
 };
 
 } // namespace c10
+
+namespace std {
+template<>
+struct hash<c10::TypeId> final {
+  size_t operator()(c10::TypeId obj) const {
+    return std::hash<decltype(obj.id())>()(obj.id());
+  }
+};
+}
