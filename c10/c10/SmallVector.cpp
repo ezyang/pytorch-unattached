@@ -42,9 +42,9 @@ void SmallVectorBase::grow_pod(void *FirstEl, size_t MinSizeInBytes,
       throw std::bad_alloc();
   }
 
-  this->EndX = (char*)NewElts+CurSizeBytes;
+  this->EndX = static_cast<char*>(NewElts)+CurSizeBytes;
   this->BeginX = NewElts;
-  this->CapacityX = (char*)this->BeginX + NewCapacityInBytes;
+  this->CapacityX = static_cast<char*>(this->BeginX) + NewCapacityInBytes;
 }
 
 }

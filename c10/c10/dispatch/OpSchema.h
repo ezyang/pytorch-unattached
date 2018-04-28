@@ -32,7 +32,7 @@ namespace details {
 template<class Enable, class... Args> struct getTensorTypeIds__;
 template<class Head, class... Tail>
 struct getTensorTypeIds__<std::enable_if_t<!is_valid_tensor_arg<Head>::value>, Head, Tail...> final {
-  static void call(std::vector<TypeId>::iterator result, const Head& head, const Tail&... tail) {
+  static void call(std::vector<TypeId>::iterator result, const Head& /*head*/, const Tail&... tail) {
     getTensorTypeIds__<void, Tail...>::call(result, tail...);
   }
 };
@@ -45,7 +45,7 @@ struct getTensorTypeIds__<std::enable_if_t<is_valid_tensor_arg<Head>::value>, He
 };
 template<>
 struct getTensorTypeIds__<void> final {
-  static void call(std::vector<TypeId>::iterator result) {}
+  static void call(std::vector<TypeId>::iterator /*result*/) {}
 };
 
 template<class... Args> void getTensorTypeIds_(std::vector<TypeId>::iterator result, const Args&... args) {

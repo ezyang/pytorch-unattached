@@ -17,9 +17,9 @@ namespace c10 {
 inline DimVector contiguous_strides(ArrayRef<int64_t> size) {
   DimVector v(size.size());
   int64_t total_size = 1;
-  for (int64_t d = size.size() - 1; d >= 0; d--) {
-    v[d] = total_size;
-    total_size *= size[d];
+  for (int64_t d = static_cast<int64_t>(size.size()) - 1; d >= 0; d--) {
+    v[static_cast<size_t>(d)] = total_size;
+    total_size *= size[static_cast<size_t>(d)];
   }
   return v;  // RVO
 }
@@ -33,15 +33,15 @@ inline std::pair<int64_t, int64_t> compute_extent(ArrayRef<int64_t> size, ArrayR
   // there is ONE valid location.  This is correct!
   int64_t low_watermark = 0; // inclusive
   int64_t high_watermark = 1; // exclusive
-  for (int64_t d = size.size() - 1; d >= 0; d--) {
+  for (int64_t d = static_cast<int64_t>(size.size()) - 1; d >= 0; d--) {
     // TODO: This special case is so irritating.  But if we don't apply it,
     // this function returns {0, 1} when you pass it sizes {0} strides {0}.
-    if (size[d] == 0) return {0, 0};
-    C10_ASSERT(size[d] > 0, "size = ", size);
-    if (stride[d] >= 0) {
-      high_watermark += (size[d] - 1) * stride[d];
+    if (size[static_cast<size_t>(d)] == 0) return {0, 0};
+    C10_ASSERT(size[static_cast<size_t>(d)] > 0, "size = ", size);
+    if (stride[static_cast<size_t>(d)] >= 0) {
+      high_watermark += (size[static_cast<size_t>(d)] - 1) * stride[static_cast<size_t>(d)];
     } else {
-      low_watermark += (size[d] - 1) * stride[d];
+      low_watermark += (size[static_cast<size_t>(d)] - 1) * stride[static_cast<size_t>(d)];
     }
   }
   return {low_watermark, high_watermark};

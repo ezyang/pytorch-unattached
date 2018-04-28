@@ -15,7 +15,7 @@ _(int64_t,int64,i) \
 _(float,float32,d) \
 _(double,float64,d)
 // Not yet implemented
-// _(Half,Half,d) \
+// _(Half,Half,d)
 
 namespace c10 {
 
@@ -95,7 +95,7 @@ class DataTypeImpl {
   constexpr DataTypeImpl(int64_t itemsize, const char *name, PlacementNew ctor, TypedCopy copy, TypedDestructor dtor)
       : itemsize_(itemsize), name_(name), ctor_(ctor), copy_(copy), dtor_(dtor) {}
 
-  friend class DataTypeImpls;
+  friend struct DataTypeImpls;
 
 public:
   constexpr int64_t itemsize() const noexcept { return itemsize_; }

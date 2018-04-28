@@ -23,7 +23,7 @@ template<class T, size_t N, size_t IHead, size_t... ITail> struct eq__<T, N, IHe
  }
 };
 template<class T, size_t N> struct eq__<T, N> final {
- static constexpr bool call(std::array<T, N> lhs, std::array<T, N> rhs) {
+ static constexpr bool call(std::array<T, N> /*lhs*/, std::array<T, N> /*rhs*/) {
    return true;
  }
 };
@@ -41,7 +41,7 @@ namespace details {
 template<class T, size_t N, size_t... I>
 constexpr inline std::array<T, N-1> tail_(std::array<T, N> arg, std::index_sequence<I...>) {
   static_assert(sizeof...(I) == N-1, "invariant");
-  return {std::get<I+1>(arg)...};
+  return {{std::get<I+1>(arg)...}};
 }
 }
 template<class T, size_t N>
@@ -53,7 +53,7 @@ constexpr inline std::array<T, N-1> tail(std::array<T, N> arg) {
 namespace details {
 template<class T, size_t N, size_t... I>
 constexpr inline std::array<T, N+1> prepend_(T head, std::array<T, N> tail, std::index_sequence<I...>) {
-  return {head, std::get<I>(tail)...};
+  return {{head, std::get<I>(tail)...}};
 }
 }
 template<class T, size_t N>
@@ -63,16 +63,16 @@ constexpr inline std::array<T, N+1> prepend(T head, std::array<T, N> tail) {
 
 // TODO Move to test cases
 namespace test_eq {
-static_assert(eq(std::array<int, 3>{2, 3, 4}, std::array<int, 3>{2, 3, 4}), "test");
-static_assert(!eq(std::array<int, 3>{2, 3, 4}, std::array<int, 3>{2, 5, 4}), "test");
+static_assert(eq(std::array<int, 3>{{2, 3, 4}}, std::array<int, 3>{{2, 3, 4}}), "test");
+static_assert(!eq(std::array<int, 3>{{2, 3, 4}}, std::array<int, 3>{{2, 5, 4}}), "test");
 }
 namespace test_tail {
-static_assert(eq(std::array<int, 2>{3, 4}, tail(std::array<int, 3>{2, 3, 4})), "test");
-static_assert(eq(std::array<int, 0>{}, tail(std::array<int, 1>{3})), "test");
+static_assert(eq(std::array<int, 2>{{3, 4}}, tail(std::array<int, 3>{{2, 3, 4}})), "test");
+static_assert(eq(std::array<int, 0>{{}}, tail(std::array<int, 1>{{3}})), "test");
 }
 namespace test_prepend {
-static_assert(eq(std::array<int, 3>{2, 3, 4}, prepend(2, std::array<int, 2>{3, 4})), "test");
-static_assert(eq(std::array<int, 1>{3}, prepend(3, std::array<int, 0>{})), "test");
+static_assert(eq(std::array<int, 3>{{2, 3, 4}}, prepend(2, std::array<int, 2>{{3, 4}})), "test");
+static_assert(eq(std::array<int, 1>{{3}}, prepend(3, std::array<int, 0>{{}})), "test");
 }
 
 /*
@@ -118,8 +118,8 @@ constexpr std::array<T, N> to_std_array(const T (&arr)[N]) {
 
 namespace test_to_std_array {
 constexpr int obj2[3] = {3, 5, 6};
-static_assert(eq(std::array<int, 3>{3, 5, 6}, to_std_array(obj2)), "test");
-static_assert(eq(std::array<int, 3>{3, 5, 6}, to_std_array({3, 5, 6})), "test");
+static_assert(eq(std::array<int, 3>{{3, 5, 6}}, to_std_array(obj2)), "test");
+static_assert(eq(std::array<int, 3>{{3, 5, 6}}, to_std_array({3, 5, 6})), "test");
 }
 
 }}

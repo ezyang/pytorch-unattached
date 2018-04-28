@@ -87,9 +87,9 @@ public:
   explicit TensorImpl(TypeId type_id, DataType dtype, ArrayRef<int64_t> sizes, ArrayRef<int64_t> strides, Storage storage, int64_t storage_offset_bytes)
       : RetainableImpl()
       , type_id_(type_id)
+      , dtype_(dtype)
       , sizes_(sizes)
       , strides_(strides)
-      , dtype_(dtype)
       , storage_(storage)
       , storage_offset_bytes_(storage_offset_bytes)
   {};
@@ -144,9 +144,9 @@ public:
       // NB: Strides don't affect contiguity when size is zero or one,
       // because you never multiply against the stride with a nonzero index.
       // Historical Torch had a more stringent requirement, but @SsnL changed it.
-      if (sizes()[d] <= 1) continue;
-      if (strides()[d] != z) return false;
-      z *= sizes()[d];
+      if (sizes()[static_cast<size_t>(d)] <= 1) continue;
+      if (strides()[static_cast<size_t>(d)] != z) return false;
+      z *= sizes()[static_cast<size_t>(d)];
     }
     return true;
   }

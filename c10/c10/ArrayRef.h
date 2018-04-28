@@ -94,7 +94,7 @@ public:
 
   /// Construct an ArrayRef from a std::initializer_list.
   /*implicit*/ constexpr ArrayRef(const std::initializer_list<T> &Vec)
-  : Data(Vec.begin() == Vec.end() ? (T*)nullptr : Vec.begin()),
+  : Data(Vec.begin() == Vec.end() ? static_cast<T*>(nullptr) : Vec.begin()),
     Length(Vec.size()) {}
 
   /// @}

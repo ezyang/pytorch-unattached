@@ -130,7 +130,11 @@ template <class T> inline constexpr typename std::remove_reference<T>::type&& co
 #if defined NDEBUG
 # define TR2_OPTIONAL_ASSERTED_EXPRESSION(CHECK, EXPR) (EXPR)
 #else
-# define TR2_OPTIONAL_ASSERTED_EXPRESSION(CHECK, EXPR) ((CHECK) ? (EXPR) : ([]{assert(!#CHECK);}(), (EXPR)))
+# define TR2_OPTIONAL_ASSERTED_EXPRESSION(CHECK, EXPR)        \
+  _Pragma("GCC diagnostic push")                              \
+  _Pragma("GCC diagnostic ignored \"-Wstring-conversion\"")   \
+  ((CHECK) ? (EXPR) : ([]{assert(!#CHECK);}(), (EXPR)))       \
+  _Pragma("GCC diagnostic pop")
 #endif
 
 

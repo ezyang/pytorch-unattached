@@ -63,7 +63,7 @@ protected:
 
 protected:
   SmallVectorBase(void *FirstEl, size_t Size)
-    : BeginX(FirstEl), EndX(FirstEl), CapacityX((char*)FirstEl+Size) {}
+    : BeginX(FirstEl), EndX(FirstEl), CapacityX(static_cast<char*>(FirstEl)+Size) {}
 
   /// This is an implementation of the grow() method which only works
   /// on POD-like data types and is out of line to reduce code duplication.
@@ -72,12 +72,12 @@ protected:
 public:
   /// This returns size()*sizeof(T).
   size_t size_in_bytes() const {
-    return size_t((char*)EndX - (char*)BeginX);
+    return size_t(static_cast<char*>(EndX) - static_cast<char*>(BeginX));
   }
 
   /// capacity_in_bytes - This returns capacity()*sizeof(T).
   size_t capacity_in_bytes() const {
-    return size_t((char*)CapacityX - (char*)BeginX);
+    return size_t(static_cast<char*>(CapacityX) - static_cast<char*>(BeginX));
   }
 
   bool empty() const { return BeginX == EndX; }
@@ -134,14 +134,14 @@ public:
   using const_pointer = const T *;
 
   // forward iterator creation methods.
-  iterator begin() { return (iterator)this->BeginX; }
-  const_iterator begin() const { return (const_iterator)this->BeginX; }
-  iterator end() { return (iterator)this->EndX; }
-  const_iterator end() const { return (const_iterator)this->EndX; }
+  iterator begin() { return static_cast<iterator>(this->BeginX); }
+  const_iterator begin() const { return static_cast<const_iterator>(this->BeginX); }
+  iterator end() { return static_cast<iterator>(this->EndX); }
+  const_iterator end() const { return static_cast<const_iterator>(this->EndX); }
 
 protected:
-  iterator capacity_ptr() { return (iterator)this->CapacityX; }
-  const_iterator capacity_ptr() const { return (const_iterator)this->CapacityX;}
+  iterator capacity_ptr() { return static_cast<iterator>(this->CapacityX); }
+  const_iterator capacity_ptr() const { return static_cast<const_iterator>(this->CapacityX);}
 
 public:
   // reverse iterator creation methods.
@@ -150,11 +150,11 @@ public:
   reverse_iterator rend()              { return reverse_iterator(begin()); }
   const_reverse_iterator rend() const { return const_reverse_iterator(begin());}
 
-  size_type size() const { return end()-begin(); }
+  size_type size() const { return static_cast<size_type>(end()-begin()); }
   size_type max_size() const { return size_type(-1) / sizeof(T); }
 
   /// Return the total number of elements in the currently allocated buffer.
-  size_t capacity() const { return capacity_ptr() - begin(); }
+  size_t capacity() const { return static_cast<size_t>(capacity_ptr() - begin()); }
 
   /// Return a pointer to the vector's buffer, even if empty().
   pointer data() { return pointer(begin()); }
@@ -227,14 +227,14 @@ public:
   void push_back(const T &Elt) {
     if (this->EndX >= this->CapacityX)
       this->grow();
-    ::new ((void*) this->end()) T(Elt);
+    ::new (static_cast<void*>(this->end())) T(Elt);
     this->setEnd(this->end()+1);
   }
 
   void push_back(T &&Elt) {
     if (this->EndX >= this->CapacityX)
       this->grow();
-    ::new ((void*) this->end()) T(::std::move(Elt));
+    ::new (static_cast<void*>(this->end())) T(::std::move(Elt));
     this->setEnd(this->end()+1);
   }
 
@@ -311,7 +311,7 @@ protected:
     // use memcpy here. Note that I and E are iterators and thus might be
     // invalid for memcpy if they are equal.
     if (I != E)
-      memcpy(Dest, I, (E - I) * sizeof(T));
+      memcpy(Dest, I, static_cast<size_t>(E - I) * sizeof(T));
   }
 
   /// Double the size of the allocated memory, guaranteeing space for at
@@ -412,7 +412,7 @@ public:
                 typename std::iterator_traits<in_iter>::iterator_category,
                 std::input_iterator_tag>::value>::type>
   void append(in_iter in_start, in_iter in_end) {
-    size_type NumInputs = std::distance(in_start, in_end);
+    size_type NumInputs = static_cast<size_type>(std::distance(in_start, in_end));
     // Grow allocated space if needed.
     if (NumInputs > size_type(this->capacity_ptr()-this->end()))
       this->grow(this->size()+NumInputs);
@@ -510,7 +510,7 @@ public:
       I = this->begin()+EltNo;
     }
 
-    ::new ((void*) this->end()) T(::std::move(this->back()));
+    ::new (static_cast<void*>(this->end())) T(::std::move(this->back()));
     // Push everything else over.
     std::move_backward(I, this->end()-1, this->end());
     this->setEnd(this->end()+1);
@@ -539,7 +539,7 @@ public:
       this->grow();
       I = this->begin()+EltNo;
     }
-    ::new ((void*) this->end()) T(std::move(this->back()));
+    ::new (static_cast<void*>(this->end())) T(std::move(this->back()));
     // Push everything else over.
     std::move_backward(I, this->end()-1, this->end());
     this->setEnd(this->end()+1);
@@ -672,7 +672,7 @@ public:
   template <typename... ArgTypes> void emplace_back(ArgTypes &&... Args) {
     if (this->EndX >= this->CapacityX)
       this->grow();
-    ::new ((void *)this->end()) T(std::forward<ArgTypes>(Args)...);
+    ::new (static_cast<void *>(this->end())) T(std::forward<ArgTypes>(Args)...);
     this->setEnd(this->end() + 1);
   }
 

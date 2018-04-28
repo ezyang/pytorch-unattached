@@ -132,7 +132,7 @@ std::string get_backtrace(size_t frames_to_skip, size_t maximum_number_of_frames
   // backtrace() gives us a list of return addresses in the current call stack.
   // NOTE: As per man (3) backtrace it can never fail
   // (http://man7.org/linux/man-pages/man3/backtrace.3.html).
-  auto number_of_frames = ::backtrace(callstack.data(), callstack.size());
+  auto number_of_frames = ::backtrace(callstack.data(), static_cast<int>(callstack.size()));
 
   // Skip as many frames as requested. This is not efficient, but the sizes here
   // are small and it makes the code nicer and safer.
@@ -144,7 +144,7 @@ std::string get_backtrace(size_t frames_to_skip, size_t maximum_number_of_frames
   // `number_of_frames` is strictly less than the current capacity of
   // `callstack`, so this is just a pointer subtraction and makes the subsequent
   // code safer.
-  callstack.resize(number_of_frames);
+  callstack.resize(static_cast<size_t>(number_of_frames));
 
   // `backtrace_symbols` takes the return addresses obtained from `backtrace()`
   // and fetches string representations of each stack. Unfortunately it doesn't
@@ -153,7 +153,7 @@ std::string get_backtrace(size_t frames_to_skip, size_t maximum_number_of_frames
   // by `backtrace_symbols` is malloc'd and must be manually freed, but not the
   // strings inside the array.
   std::unique_ptr<char*, std::function<void(char**)>> raw_symbols(
-      ::backtrace_symbols(callstack.data(), callstack.size()),
+      ::backtrace_symbols(callstack.data(), static_cast<int>(callstack.size())),
       /*deleter=*/free);
   const std::vector<std::string> symbols(
       raw_symbols.get(), raw_symbols.get() + callstack.size());

@@ -42,7 +42,7 @@ void view_(const Tensor& self, ArrayRef<int64_t> new_sizes) {
 // NB: this is not an "exact" clone, because the resulting tensor is contiguous.
 // However, if you just wanted a contiguous tensor, you should use contiguous()
 // instead.
-Tensor clone(const Tensor& self) {
+Tensor clone(const Tensor& /*self*/) {
   /*
   auto r = self.tensor(self.sizes(), contiguous_strides(self.sizes()));
   r.copy_(self);

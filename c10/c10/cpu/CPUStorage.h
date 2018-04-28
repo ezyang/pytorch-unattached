@@ -85,7 +85,6 @@ public:
     if (!resizable_) throw std::runtime_error("trying to resize storage that is not resizable");
     // TODO: Consider bringing back the old realloc path from TH?
     data_t old_data = std::move(data_);
-    int64_t old_size = size_bytes_;
     if (new_size_bytes == 0) {
       data_ = nullptr;
     } else {

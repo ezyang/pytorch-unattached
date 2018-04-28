@@ -165,11 +165,11 @@ public:
   // TODO: This is inconsistent with ATen naming, which uses the overload sizes(int64_t) and strides(int64_t)
 
   int64_t size(int64_t dim) const {
-    return impl_->sizes().at(dim);
+    return impl_->sizes().at(static_cast<size_t>(dim));
   }
 
   int64_t stride(int64_t dim) const {
-    return impl_->strides().at(dim);
+    return impl_->strides().at(static_cast<size_t>(dim));
   }
 
   // smessmer to @ezyang: Do we want to try honoring const-ness for the underlying data?

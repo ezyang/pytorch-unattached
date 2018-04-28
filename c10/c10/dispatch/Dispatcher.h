@@ -16,7 +16,7 @@ public:
   void registerOp(typename OpSchema<OpSchemaDef>::func_type* func, const TypeId (&tensorTypeIds)[num_tensor_args]) {
     static_assert(OpSchema<OpSchemaDef>::num_tensor_args == num_tensor_args, "Operator registration failed. Number of tensor type ids must match the number of tensor arguments in the operator signature.");
     DispatchKey dispatchKey = OpSchema<OpSchemaDef>::dispatchKey(guts::to_std_array(tensorTypeIds));
-    ops_.emplace(dispatchKey, (void*)func);
+    ops_.emplace(dispatchKey, reinterpret_cast<void*>(func));
   }
 
   // overload for ops with zero tensor arguments (C arrays with size zero are invalid in C++, so they can't use the method above)
@@ -24,7 +24,7 @@ public:
   void registerOp(typename OpSchema<OpSchemaDef>::func_type* func, std::array<TypeId, 0>) {
     static_assert(OpSchema<OpSchemaDef>::num_tensor_args == 0, "Operator registration failed. Number of tensor type ids must match the number of tensor arguments in the operator signature.");
     DispatchKey dispatchKey = OpSchema<OpSchemaDef>::dispatchKey({});
-    ops_.emplace(dispatchKey, (void*)func);
+    ops_.emplace(dispatchKey, reinterpret_cast<void*>(func));
   }
 
   template<class OpSchemaDef, class... Args>
