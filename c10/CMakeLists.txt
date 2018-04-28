@@ -20,54 +20,38 @@ set(C10_INSTALL_INCLUDE_DIR "include" CACHE PATH "AT install include subdirector
 set(C10_INSTALL_SHARE_DIR "share" CACHE PATH "AT install include subdirectory")
 
 add_library(c10 SHARED
-    c10.h
+    c10.cpp
     c10/Tensor.cpp
-    c10/Tensor.h
     c10/ArrayRef.cpp
-    c10/ArrayRef.h
     c10/TypeId.cpp
-    c10/TypeId.h
     c10/Error.cpp
-    c10/Error.h
-    c10/Optional.h
-    c10/AlignOf.h
+    c10/Optional.cpp
+    c10/AlignOf.cpp
     c10/guts/TensorImpl.cpp
-    c10/guts/TensorImpl.h
     c10/guts/Retainable.cpp
-    c10/guts/Retainable.h
     c10/guts/Metaprogramming.cpp
-    c10/guts/C++17.h
+    c10/guts/C++17.cpp
     c10/cpu/CPUStorage.cpp
-    c10/cpu/CPUStorage.h
     c10/cpu/CPUAllocator.cpp
-    c10/cpu/CPUAllocator.h
     c10/cpu/CPUTensorImpl.cpp
-    c10/cpu/CPUTensorImpl.h
     c10/dispatch/Dispatcher.cpp
     c10/dispatch/DispatchKey.cpp
     c10/dispatch/OpId.cpp
     c10/dispatch/OpSchema.cpp
     c10/SmallVector.cpp
-    c10/SmallVector.h
-    c10/DimVector.h
+    c10/DimVector.cpp
     c10/cpu/CPUContext.cpp
-    c10/cpu/CPUContext.h
     c10/DataType.cpp
-    c10/DataType.h
     c10/guts/Storage.cpp
-    c10/guts/Storage.h
     c10/cpu/op/CPUAll.cpp
-    c10/cpu/op/CPUAll.h
     c10/op/All.cpp
-    c10/op/All.h
     c10/Utils.cpp
-    c10/Utils.h
     c10/Functions.cpp
-    c10/Functions.h
     c10/ThreadContext.cpp
-    c10/ThreadContext.h
     c10/General.cpp
-    c10/General.h c10/KeywordArgs.cpp c10/KeywordArgs.h c10/Context.cpp c10/Context.h)
+    c10/KeywordArgs.cpp
+    c10/Context.cpp
+)
 target_include_directories(c10 PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:${C10_INSTALL_INCLUDE_SUBDIR}>
