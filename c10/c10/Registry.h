@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-#include <c10/Utils.h>
+#include <c10/Error.h>
 
 namespace c10 {
 
@@ -176,7 +176,7 @@ class Registerer {
       key,                                                                    \
       RegistryName(),                                                         \
       Registerer##RegistryName::DefaultCreator<__VA_ARGS__>,                  \
-      demangle_type<__VA_ARGS__>());                                           \
+      detail::demangle_type<__VA_ARGS__>());                                  \
   }
 
 // C10_DECLARE_REGISTRY and C10_DEFINE_REGISTRY are hard-wired to use std::string
