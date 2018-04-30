@@ -30,7 +30,7 @@ int main() {
   Dispatcher d;
   d.registerOp<ops::conditional>(&conditional_op, {TypeIds::CPUTensor, TypeIds::CPUTensor});
   d.registerOp<ops::add_notensor>(&add_notensor_op, {});
-  
+
   Tensor t1 = tensor<int>({5});
   Tensor t2 = tensor<int>({10});
   Tensor t3 = d.call<ops::conditional>(false, t1, t2);

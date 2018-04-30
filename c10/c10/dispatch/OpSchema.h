@@ -54,11 +54,30 @@ template<class... Args> void getTensorTypeIds_(std::vector<TypeId>::iterator res
 
 // TODO Test getTensorTypeIds_
 
+template<class T>
+struct is_operator_function_type final : std::false_type {};
+template<class Result, class... Args>
+struct is_operator_function_type<Result (Args...)> final : std::true_type {};
+
+// TODO Test is_operator_function_type
+
+template<class T, typename = void>
+struct has_signature_defined final : std::false_type {};
+template<class T>
+struct has_signature_defined<T, guts::void_t<
+  typename T::Signature
+>> final : std::true_type {};
+
+// TODO Test has_signature_defined
+
 }
 
 
 template<class OpSchemaDef> class OpSchema final {
 private:
+  static_assert(details::has_signature_defined<OpSchemaDef>::value, "Given operator schema doesn't define a valid Signature member type.");
+  static_assert(details::is_operator_function_type<typename OpSchemaDef::Signature>::value, "Signature member of operator schema must be a function type.");
+
   using signature_traits = guts::function_traits<typename OpSchemaDef::Signature>;
 public:
   using func_type = typename signature_traits::func_type;

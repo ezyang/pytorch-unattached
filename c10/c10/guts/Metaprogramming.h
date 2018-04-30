@@ -81,7 +81,9 @@ static_assert(eq(std::array<int, 1>{{3}}, prepend(3, std::array<int, 0>{{}})), "
  * using A = function_traits<int (float, double)>::return_type // A == int
  * using A = function_traits<int (float, double)>::argument_typle_type // A == tuple<float, double>
  */
-template<class Func> struct function_traits;
+template<class Func> struct function_traits {
+  static_assert(!std::is_same<Func, Func>::value, "Can only use function_traits on function types");
+};
 template<class Result, class... Args>
 struct function_traits<Result (Args...)> final {
   using func_type = Result (Args...);
