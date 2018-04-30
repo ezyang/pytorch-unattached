@@ -1,6 +1,6 @@
 #pragma once
 
-#include <c10/guts/Retainable.h>
+#include <c10/guts/IntrusivePtr.h>
 #include <c10/Error.h>
 #include <c10/DataType.h>
 
@@ -102,7 +102,7 @@ protected:
   // NB: I axed TH_STORAGE_VIEW; it makes things complicated for not a good enough
   // reason
   // NB: I axed TH_STORAGE_REFCOUNTED; it seems to always be turned on.  If we do want
-  // this, it would be a good fit for the Retainable class.
+  // this, it would be a good fit for the IntrusivePtr class.
 
   // NB: the constructors are protected because you shouldn't be allowed to use them
   // if you're a generic end-user; in general, operating on a StorageImpl won't work

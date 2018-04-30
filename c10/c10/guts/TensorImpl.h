@@ -9,7 +9,7 @@
 #include <c10/DataType.h>
 #include <c10/DimVector.h>
 
-#include "Retainable.h"
+#include "IntrusivePtr.h"
 #include "Storage.h"
 
 #include <vector>
@@ -25,9 +25,9 @@ namespace c10 { namespace guts {
 // NB: Use of virtual functions means that this is NOT a plain old data class.
 // This means that we don't get inlineable C API functions which access the representation
 // directly
-// ezyang to @smessmer: You need some sort of way to cast from TensorImpl to RetainableImpl, otherwise
+// ezyang to @smessmer: You need some sort of way to cast from TensorImpl to IntrusivePtrTarget, otherwise
 // the wrapper doesn't seem to work???
-class TensorImpl : public RetainableImpl {
+class TensorImpl : public IntrusivePtrTarget {
   // TODO: Is this OK to be protected
 protected:
   // NB: shares_data from Caffe2 was axed, because it is SOLELY used to determine
@@ -85,7 +85,7 @@ protected:
 
 public:
   explicit TensorImpl(TypeId type_id, DataType dtype, ArrayRef<int64_t> sizes, ArrayRef<int64_t> strides, Storage storage, int64_t storage_offset_bytes)
-      : RetainableImpl()
+      : IntrusivePtrTarget()
       , type_id_(type_id)
       , dtype_(dtype)
       , sizes_(sizes)

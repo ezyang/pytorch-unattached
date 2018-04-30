@@ -2,7 +2,6 @@
 
 #include <c10/cpu/CPUContext.h>
 #include <c10/cpu/CPUAllocator.h>
-#include <c10/guts/Retainable.h>
 #include <c10/guts/Storage.h>
 #include <c10/Error.h>
 #include <c10/DataType.h>

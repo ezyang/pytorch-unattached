@@ -1,6 +1,6 @@
 #pragma once
 
-#include "guts/Retainable.h"
+#include "guts/IntrusivePtr.h"
 #include "guts/TensorImpl.h"
 
 #include "ArrayRef.h"
@@ -96,7 +96,7 @@ namespace c10 {
 // 4. Because of ArrayRef, we will need to define code style guide (ArrayRef disagrees)
 
 // NB: This is publically inherited, but only to conveniently bring the public methods
-// of Retainable into scope.  If this is causing bad error messages, make it private
+// of IntrusivePtr into scope.  If this is causing bad error messages, make it private
 // again and explicitly 'using' each of the public methods you want to propagate.
 
 
@@ -118,7 +118,7 @@ namespace c10 {
  * You are not expected to ever interact directly with guts::TensorImpl.
  */
 class Tensor final {
-  using TensorBase = guts::Retainable<guts::TensorImpl, guts::UndefinedTensorImpl>;
+  using TensorBase = guts::IntrusivePtr<guts::TensorImpl, guts::UndefinedTensorImpl>;
   TensorBase impl_;
 
   Tensor(TensorBase impl) : impl_(impl) {};

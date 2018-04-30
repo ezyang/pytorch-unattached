@@ -28,7 +28,7 @@ add_library(c10 SHARED
     c10/Optional.cpp
     c10/AlignOf.cpp
     c10/guts/TensorImpl.cpp
-    c10/guts/Retainable.cpp
+    c10/guts/IntrusivePtr.cpp
     c10/guts/Metaprogramming.cpp
     c10/guts/C++17.cpp
     c10/cpu/CPUStorage.cpp
