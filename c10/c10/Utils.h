@@ -11,6 +11,25 @@
 
 namespace c10 {
 
+// Utility to demangle a function name
+std::string demangle(const char* name);
+
+/**
+ * Returns the printable name of the type.
+ *
+ * Works for all types, not only the ones registered with CAFFE_KNOWN_TYPE
+ */
+template <typename T>
+static const char* demangle_type() {
+#ifdef __GXX_RTTI
+  static const std::string name = demangle(typeid(T).name());
+  return name.c_str();
+#else // __GXX_RTTI
+  return "(RTTI disabled, cannot show name)";
+#endif // __GXX_RTTI
+}
+
+
 // TODO: These shouldn't actually be inline; the inline is just here to appease the linker
 
 // Return the strides corresponding to a contiguous layout of sizes.

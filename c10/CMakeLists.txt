@@ -98,6 +98,7 @@ if (BUILD_TEST)
       c10/op/All_test.cpp
       c10/cpu/op/CPUAll_test.cpp
       c10/dispatch/DispatcherExample.cpp
+      c10/Registry_test.cpp
       )
     # Without directory or longest extension
     get_filename_component(test_name "${test_src}" NAME_WE)
