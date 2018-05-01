@@ -1,5 +1,6 @@
 #include "Dispatcher.h"
 #include <c10.h>
+#include <c10/cpu/CPUTensorImpl.h>
 
 using namespace c10;
 
@@ -28,8 +29,9 @@ int add_notensor_op(int lhs, int rhs) {
 
 int main() {
   Dispatcher d;
-  d.registerOp<ops::conditional>(&conditional_op, {TypeIds::CPUTensor, TypeIds::CPUTensor});
-  d.registerOp<ops::add_notensor>(&add_notensor_op, {});
+  auto CPUTensor = c10::cpu::CPU_TENSOR();
+  d.registerOp<ops::conditional>(&conditional_op, {CPUTensor, CPUTensor});
+  d.registerOp<ops::add_notensor>(&add_notensor_op);
 
   Tensor t1 = tensor<int>({5});
   Tensor t2 = tensor<int>({10});

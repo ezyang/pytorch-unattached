@@ -1,25 +1,15 @@
 #pragma once
 
-#include <functional>
+#include <c10/guts/IdWrapper.h>
 
 namespace c10 {
 
-// TODO Implement OpId in a better way
-struct OpId final {
-  int id_;
+class OpId final : public guts::IdWrapper<OpId, uint32_t> {
+public:
+  // TODO Don't allow public constructor
+  constexpr explicit OpId(uint32_t id): IdWrapper(id) {}
 };
 
-inline bool operator==(OpId lhs, OpId rhs) {
-  return lhs.id_ == rhs.id_;
 }
 
-}
-
-namespace std {
-  template<>
-  struct hash<c10::OpId> final {
-    size_t operator()(c10::OpId obj) const {
-      return std::hash<decltype(obj.id_)>()(obj.id_);
-    }
-  };
-}
+C10_DEFINE_HASH_FOR_IDWRAPPER(c10::OpId);

@@ -23,7 +23,6 @@ add_library(c10 SHARED
     c10.cpp
     c10/Tensor.cpp
     c10/ArrayRef.cpp
-    c10/TypeId.cpp
     c10/Error.cpp
     c10/Optional.cpp
     c10/AlignOf.cpp
@@ -31,6 +30,7 @@ add_library(c10 SHARED
     c10/guts/IntrusivePtr.cpp
     c10/guts/Metaprogramming.cpp
     c10/guts/C++17.cpp
+    c10/guts/IdWrapper.cpp
     c10/cpu/CPUStorage.cpp
     c10/cpu/CPUAllocator.cpp
     c10/cpu/CPUTensorImpl.cpp
@@ -38,6 +38,7 @@ add_library(c10 SHARED
     c10/dispatch/DispatchKey.cpp
     c10/dispatch/OpId.cpp
     c10/dispatch/OpSchema.cpp
+    c10/dispatch/TensorTypeId.cpp
     c10/SmallVector.cpp
     c10/DimVector.cpp
     c10/cpu/CPUContext.cpp
@@ -57,6 +58,9 @@ target_include_directories(c10 PUBLIC
     $<INSTALL_INTERFACE:${C10_INSTALL_INCLUDE_SUBDIR}>
     )
 target_compile_options(c10 PRIVATE -Wall -Wextra -Weffc++ -Wold-style-cast -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-include-dirs -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-promo -Wstrict-overflow=5 -Wundef -fdiagnostics-show-option -Wconversion -Wpedantic -Wno-gnu-zero-variadic-macro-arguments -Werror)
+
+add_executable(c10_dispatch_example c10/dispatch/DispatcherExample.cpp)
+target_link_libraries(c10_dispatch_example c10)
 
 install(DIRECTORY c10 DESTINATION "${C10_INSTALL_INCLUDE_SUBDIR}"
   FILES_MATCHING PATTERN "*.h")

@@ -5,9 +5,9 @@
 #include <c10/ArrayRef.h>
 #include <c10/SmallVector.h>
 #include <c10/Optional.h>
-#include <c10/TypeId.h>
 #include <c10/DataType.h>
 #include <c10/DimVector.h>
+#include <c10/dispatch/TensorTypeId.h>
 
 #include "IntrusivePtr.h"
 #include "Storage.h"
@@ -38,7 +38,7 @@ protected:
   // purposes.)
 
   // Used for dispatch on the object
-  const TypeId type_id_;
+  const TensorTypeId type_id_;
 
   // The scalar type of elements stored in this tensor.  This contains
   // important information like "what is the sizes of the scalar element."
@@ -84,7 +84,7 @@ protected:
   // an "is-a" to "has-a" relationship and inline the storage struct in Tensor.
 
 public:
-  explicit TensorImpl(TypeId type_id, DataType dtype, ArrayRef<int64_t> sizes, ArrayRef<int64_t> strides, Storage storage, int64_t storage_offset_bytes)
+  explicit TensorImpl(TensorTypeId type_id, DataType dtype, ArrayRef<int64_t> sizes, ArrayRef<int64_t> strides, Storage storage, int64_t storage_offset_bytes)
       : IntrusivePtrTarget()
       , type_id_(type_id)
       , dtype_(dtype)
@@ -95,7 +95,7 @@ public:
   {};
 
   // TODO: Not sure about this...
-  TypeId type_id() const {
+  TensorTypeId type_id() const {
     return type_id_;
   }
 
@@ -211,7 +211,7 @@ public:
 //      instead of an error, which should have happened.  It just seems morally wrong to privilege empty CPU
 //      tensors in this way.  Also, you don't get reliable pointer equality tests anymore.
 class UndefinedTensorImpl final : public TensorImpl {
-  UndefinedTensorImpl() : TensorImpl(TypeIds::Undefined, c10::undefined_dtype, {}, {}, nullptr, 0) {};
+  UndefinedTensorImpl() : TensorImpl(TensorTypeIds::undefined(), c10::undefined_dtype, {}, {}, nullptr, 0) {};
 public:
   static UndefinedTensorImpl *singleton() {
     // smessmer to @ezyang: Not sure this singleton is a good idea. If wrapped in Tensor, it is subject to ref counting and might get destructed.

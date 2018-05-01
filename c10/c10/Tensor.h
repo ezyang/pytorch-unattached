@@ -197,10 +197,6 @@ public:
     return impl_->dtype();
   }
 
-  TypeId type_id() const {
-    return impl_->type_id();
-  }
-
   /**
    * Is the tensor contiguous?
    *

@@ -9,7 +9,7 @@ namespace c10 { namespace cpu { namespace op {
 
 // TCB
 static CPUTensorImpl* _cpu_impl(const Tensor& self) {
-  C10_ASSERT(self.type_id() == TypeIds::CPUTensor, "type_id = ", self.type_id());
+  C10_ASSERT(self._to_impl()->type_id() == CPU_TENSOR(), "type_id = ", self._to_impl()->type_id());
   return static_cast<CPUTensorImpl*>(self._to_impl());
 }
 
@@ -146,8 +146,8 @@ void extend_(const Tensor& self, int64_t num, double growthPct) {
 
 // THTensor_(equal)
 bool equal(const Tensor& self, const Tensor& other) {
-  C10_ASSERT(self.type_id() == TypeIds::CPUTensor, "self.type_id() = ", self.type_id());
-  C10_ASSERT(other.type_id() == TypeIds::CPUTensor, "other.type_id() = ", other.type_id());
+  C10_ASSERT(self._to_impl()->type_id() == CPU_TENSOR(), "self.type_id() = ", self._to_impl()->type_id());
+  C10_ASSERT(other._to_impl()->type_id() == CPU_TENSOR(), "other.type_id() = ", other._to_impl()->type_id());
   C10_ASSERT(self.dtype() == other.dtype(), "self.dtype() = ", self.dtype(), "; other.dtype() = ", other.dtype())
   if (!self.sizes().equals(other.sizes())) return false;
   if (self.is_contiguous() && other.is_contiguous()) {

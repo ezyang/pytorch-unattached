@@ -28,28 +28,33 @@ static_assert(is_valid_arg<Tensor>::value, "");
 }
 
 namespace details {
-  // TODO Without Head1/Head2 split? Move Enable to first arg for example?
-template<class Enable, class... Args> struct getTensorTypeIds__;
-template<class Head, class... Tail>
-struct getTensorTypeIds__<std::enable_if_t<!is_valid_tensor_arg<Head>::value>, Head, Tail...> final {
-  static void call(std::vector<TypeId>::iterator result, const Head& /*head*/, const Tail&... tail) {
-    getTensorTypeIds__<void, Tail...>::call(result, tail...);
+template<size_t index, class Enable, class... Args> struct getTensorTypeId__;
+template<size_t index, class Head, class... Tail>
+struct getTensorTypeId__<index, std::enable_if_t<!is_valid_tensor_arg<Head>::value>, Head, Tail...> final {
+  static TensorTypeId call(const Head& /*head*/, const Tail&... tail) {
+    return getTensorTypeId__<index, void, Tail...>::call(tail...);
   }
 };
-template<class Head, class... Tail>
-struct getTensorTypeIds__<std::enable_if_t<is_valid_tensor_arg<Head>::value>, Head, Tail...> final {
-  static void call(std::vector<TypeId>::iterator result, const Head& head, const Tail&... tail) {
-    *result = head.type_id();
-    getTensorTypeIds__<void, Tail...>::call(result + 1, tail...);
+template<size_t index, class Head, class... Tail>
+struct getTensorTypeId__<index, std::enable_if_t<is_valid_tensor_arg<Head>::value && index != 0>, Head, Tail...> final {
+  static TensorTypeId call(const Head& /*head*/, const Tail&... tail) {
+    return getTensorTypeId__<index - 1, void, Tail...>::call(tail...);
   }
 };
-template<>
-struct getTensorTypeIds__<void> final {
-  static void call(std::vector<TypeId>::iterator /*result*/) {}
+template<size_t index, class Head, class... Tail>
+struct getTensorTypeId__<index, std::enable_if_t<is_valid_tensor_arg<Head>::value && index == 0>, Head, Tail...> final {
+  static TensorTypeId call(const Head& head, const Tail&... /*tail*/) {
+    return head._to_impl()->type_id();
+  }
 };
 
-template<class... Args> void getTensorTypeIds_(std::vector<TypeId>::iterator result, const Args&... args) {
-  getTensorTypeIds__<void, Args...>::call(result, args...);
+template<class... Args, size_t... I> std::vector<TensorTypeId> getTensorTypeIds__(std::index_sequence<I...>, const Args&... args) {
+  return { getTensorTypeId__<I, void, Args...>::call(args...)... };
+}
+
+template<class... Args> std::vector<TensorTypeId> getTensorTypeIds_(const Args&... args) {
+  static constexpr size_t num_tensor_args = guts::typelist::count_if<is_valid_tensor_arg, guts::typelist::typelist<Args...>>::value;
+  return getTensorTypeIds__(std::make_index_sequence<num_tensor_args>(), args...);
 }
 
 // TODO Test getTensorTypeIds_
@@ -95,19 +100,26 @@ public:
     // TODO pass to OpSchemaDef::dispatchKey if defined
 
     static_assert(std::is_same<guts::typelist::typelist<Args...>, argument_types>::value, "Invalid argument types passed to OpSchema::dispatchKey()");
-    std::vector<TypeId> dispatchTypeIds(num_tensor_args);
-    details::getTensorTypeIds_(dispatchTypeIds.begin(), args...);
+    std::vector<TensorTypeId> dispatchTypeIds = details::getTensorTypeIds_(args...);
     return DispatchKey {
       OpSchemaDef::op_id(),
       std::move(dispatchTypeIds)
     };
   }
 
-  static inline DispatchKey dispatchKey(const std::array<TypeId, num_tensor_args>& tensorTypeIds) {
+  static inline DispatchKey dispatchKey() {
+    static_assert(OpSchema<OpSchemaDef>::num_tensor_args == 0, "DispatchKey can only be generated without tensor arguments if the OpSchemaDef doesn't have tensor arguments.");
+    return DispatchKey {
+      OpSchemaDef::op_id(),
+      {}
+    };
+  }
+
+  static inline DispatchKey dispatchKey(const std::array<TensorTypeId, num_tensor_args>& tensorTypeIds) {
     // TODO pass to OpSchemaDef::dispatchKey if defined
     return DispatchKey {
       OpSchemaDef::op_id(),
-      std::vector<TypeId>(tensorTypeIds.begin(), tensorTypeIds.end())
+      std::vector<TensorTypeId>(tensorTypeIds.begin(), tensorTypeIds.end())
     };
   }
 };

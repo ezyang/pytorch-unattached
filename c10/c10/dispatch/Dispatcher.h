@@ -7,22 +7,23 @@
 #include <c10/guts/Metaprogramming.h>
 #include "DispatchKey.h"
 #include "OpSchema.h"
+#include "TensorTypeId.h"
 
 namespace c10 {
 
 class Dispatcher final {
 public:
   template<class OpSchemaDef, size_t num_tensor_args>
-  void registerOp(typename OpSchema<OpSchemaDef>::func_type* func, const TypeId (&tensorTypeIds)[num_tensor_args]) {
+  void registerOp(typename OpSchema<OpSchemaDef>::func_type* func, const TensorTypeId (&tensorTypeIds)[num_tensor_args]) {
     static_assert(OpSchema<OpSchemaDef>::num_tensor_args == num_tensor_args, "Operator registration failed. Number of tensor type ids must match the number of tensor arguments in the operator signature.");
     registerOp_<OpSchemaDef>(func, OpSchema<OpSchemaDef>::dispatchKey(guts::to_std_array(tensorTypeIds)));
   }
 
   // overload for ops with zero tensor arguments (C arrays with size zero are invalid in C++, so they can't use the method above)
   template<class OpSchemaDef>
-  void registerOp(typename OpSchema<OpSchemaDef>::func_type* func, std::array<TypeId, 0>) {
+  void registerOp(typename OpSchema<OpSchemaDef>::func_type* func) {
     static_assert(OpSchema<OpSchemaDef>::num_tensor_args == 0, "Operator registration failed. Number of tensor type ids must match the number of tensor arguments in the operator signature.");
-    registerOp_<OpSchemaDef>(func, OpSchema<OpSchemaDef>::dispatchKey({}));
+    registerOp_<OpSchemaDef>(func, OpSchema<OpSchemaDef>::dispatchKey());
   }
 
   template<class OpSchemaDef, class... Args>
@@ -39,6 +40,10 @@ public:
     return func(std::forward<Args>(args)...);
   }
 
+  TensorTypeId createTensorTypeId() {
+    return tensorTypeIds_.create();
+  }
+
 private:
   template<class OpSchemaDef>
   void registerOp_(typename OpSchema<OpSchemaDef>::func_type* func, const DispatchKey& dispatchKey) {
@@ -48,8 +53,12 @@ private:
     }
   }
 
+
+  TensorTypeIds tensorTypeIds_;
   // TODO Use better hash map
   std::unordered_map<DispatchKey, void*> ops_;
 };
+
+Dispatcher& dispatch();
 
 }

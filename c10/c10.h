@@ -3,7 +3,7 @@
 #include "c10/Tensor.h"
 #include "c10/Functions.h"
 #include "c10/DataType.h"
-#include "c10/TypeId.h"
+#include "c10/dispatch/TensorTypeId.h"
 
 #include "c10/ThreadContext.h"
 

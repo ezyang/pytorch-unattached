@@ -100,9 +100,8 @@ static_assert(std::is_same<typelist::typelist<int, float>, typename function_tra
 
 namespace details {
 template<class T, size_t N, size_t... I>
-constexpr void assign_(std::array<T, N>& result, const T (&arr)[N], std::index_sequence<I...>) {
-  // This is a trick to do "for each i: result[i] = arr[i]" at compile time.
-  (void)std::initializer_list<int>{(std::get<I>(result) = arr[I], 0)...};
+constexpr std::array<T, N> to_std_array_(const T (&arr)[N], std::index_sequence<I...>) {
+  return {{arr[I]...}};
 }
 }
 
@@ -111,11 +110,7 @@ constexpr void assign_(std::array<T, N>& result, const T (&arr)[N], std::index_s
  */
 template<class T, size_t N>
 constexpr std::array<T, N> to_std_array(const T (&arr)[N]) {
-  std::array<T, N> result{};
-
-  details::assign_(result, arr, std::make_index_sequence<N>());
-
-  return result;
+  return details::to_std_array_(arr, std::make_index_sequence<N>());
 }
 
 namespace test_to_std_array {
