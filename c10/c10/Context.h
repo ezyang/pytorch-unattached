@@ -5,12 +5,6 @@
 namespace c10 {
 
 class Context {
-  Dispatcher dispatcher_;
-
-public:
-
-  Dispatcher& getMutDispatcher() { return dispatcher_ ;}
-  const Dispatcher& getDispatcher() const { return dispatcher_ ;}
 
 };
 
