@@ -40,8 +40,8 @@ public:
     return func(std::forward<Args>(args)...);
   }
 
-  TensorTypeId createTensorTypeId() {
-    return tensorTypeIds_.create();
+  TensorTypeIdRegistrar createAndRegisterTensorTypeId() {
+    return tensorTypeIds_.createAndRegister();
   }
 
 private:

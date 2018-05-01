@@ -2,6 +2,6 @@
 
 namespace c10 {
 
-constexpr TensorTypeId TensorTypeIds::max_id_;
+constexpr TensorTypeId TensorTypeIdCreator::max_id_;
 
 }
