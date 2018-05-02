@@ -28,26 +28,13 @@ private:
   friend std::ostream& operator<<(std::ostream&, TensorTypeId);
 };
 
-inline std::ostream& operator<<(std::ostream& str, TensorTypeId rhs) {
-  return str << rhs.underlyingId();
-}
-
 }
 C10_DEFINE_HASH_FOR_IDWRAPPER(c10::TensorTypeId);
 namespace c10 {
 
 class TensorTypeIdCreator final {
 public:
-  TensorTypeId create() {
-    auto id = TensorTypeId(++next_id_);
-
-    if (id == max_id_) {
-      // If this happens in prod, we have to change details::_tensorTypeId_underlyingType to uint16_t.
-      throw std::logic_error("Tried to define more than " + std::to_string(std::numeric_limits<details::_tensorTypeId_underlyingType>::max()-1) + " tensor types, which is unsupported");
-    }
-
-    return id;
-  }
+  TensorTypeId create();
 
   static constexpr TensorTypeId undefined() {
     return TensorTypeId(0);
@@ -60,15 +47,8 @@ private:
 
 class TensorTypeIdRegistry final {
 public:
-  void registerId(TensorTypeId id) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    registeredTypeIds_.emplace(id);
-  }
-
-  void deregisterId(TensorTypeId id) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    registeredTypeIds_.erase(id);
-  }
+  void registerId(TensorTypeId id);
+  void deregisterId(TensorTypeId id);
 
 private:
   // TODO Something faster than unordered_set?
@@ -76,54 +56,45 @@ private:
   std::mutex mutex_;
 };
 
-class TensorTypeIdRegistrar final {
-public:
-  TensorTypeIdRegistrar(TensorTypeId id, TensorTypeIdRegistry* registry)
-  : id_(id), registry_(registry) {
-    registry_->registerId(id);
-  }
-
-  ~TensorTypeIdRegistrar() {
-    if (registry_ != nullptr) {
-      registry_->deregisterId(id_);
-    }
-  }
-
-  // copy assignment/constructor would break RAII promise
-  TensorTypeIdRegistrar(const TensorTypeIdRegistrar&) = delete;
-  TensorTypeIdRegistrar& operator=(const TensorTypeIdRegistrar&) = delete;
-
-  TensorTypeIdRegistrar(TensorTypeIdRegistrar&& rhs)
-  : id_(rhs.id_), registry_(rhs.registry_) {
-    rhs.registry_ = nullptr;
-  }
-  // move assignment not needed currently, can be added if needed.
-  TensorTypeIdRegistrar& operator=(TensorTypeIdRegistrar&&) = delete;
-
-  TensorTypeId id() const {
-    return id_;
-  }
-
-private:
-  TensorTypeId id_;
-  TensorTypeIdRegistry* registry_;
-};
-
 class TensorTypeIds final {
 public:
-  TensorTypeIdRegistrar createAndRegister() {
-    TensorTypeId id = creator_.create();
-    return TensorTypeIdRegistrar(id, &registry_);
-  }
+  static TensorTypeIds& singleton();
 
-  static constexpr TensorTypeId undefined() {
-    return TensorTypeIdCreator::undefined();
-  }
+  TensorTypeId createAndRegister();
+  void deregister(TensorTypeId id);
+
+  static constexpr TensorTypeId undefined();
 
 private:
+  TensorTypeIds();
+
   TensorTypeIdCreator creator_;
   TensorTypeIdRegistry registry_;
 };
+
+inline constexpr TensorTypeId TensorTypeIds::undefined() {
+  return TensorTypeIdCreator::undefined();
+}
+
+class TensorTypeIdRegistrar final {
+public:
+  TensorTypeIdRegistrar();
+  ~TensorTypeIdRegistrar();
+
+  TensorTypeIdRegistrar(const TensorTypeIdRegistrar&) = delete;
+  TensorTypeIdRegistrar& operator=(const TensorTypeIdRegistrar&) = delete;
+  TensorTypeIdRegistrar(TensorTypeIdRegistrar&& rhs) = delete;
+  TensorTypeIdRegistrar& operator=(TensorTypeIdRegistrar&&) = delete;
+
+  TensorTypeId id() const;
+
+private:
+  TensorTypeId id_;
+};
+
+inline TensorTypeId TensorTypeIdRegistrar::id() const {
+  return id_;
+}
 
 }
 
@@ -132,6 +103,6 @@ private:
 
 #define C10_DEFINE_TENSOR_TYPE(TensorName)                                       \
   TensorTypeId TensorName() {                                                    \
-    static auto registration_raii = dispatch().createAndRegisterTensorTypeId();  \
+    static TensorTypeIdRegistrar registration_raii;                              \
     return registration_raii.id();                                               \
   }                                                                              \

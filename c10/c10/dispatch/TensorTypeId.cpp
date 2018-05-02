@@ -4,4 +4,55 @@ namespace c10 {
 
 constexpr TensorTypeId TensorTypeIdCreator::max_id_;
 
+std::ostream& operator<<(std::ostream& str, TensorTypeId rhs) {
+  return str << rhs.underlyingId();
+}
+
+TensorTypeIds::TensorTypeIds()
+: creator_(), registry_() {}
+
+TensorTypeIds& TensorTypeIds::singleton() {
+  static TensorTypeIds singleton;
+  return singleton;
+}
+
+TensorTypeId TensorTypeIdCreator::create() {
+  auto id = TensorTypeId(++next_id_);
+
+  if (id == max_id_) {
+    // If this happens in prod, we have to change details::_tensorTypeId_underlyingType to uint16_t.
+    throw std::logic_error("Tried to define more than " + std::to_string(std::numeric_limits<details::_tensorTypeId_underlyingType>::max()-1) + " tensor types, which is unsupported");
+  }
+
+  return id;
+}
+
+void TensorTypeIdRegistry::registerId(TensorTypeId id) {
+  std::lock_guard<std::mutex> lock(mutex_);
+  registeredTypeIds_.emplace(id);
+}
+
+void TensorTypeIdRegistry::deregisterId(TensorTypeId id) {
+  std::lock_guard<std::mutex> lock(mutex_);
+  registeredTypeIds_.erase(id);
+}
+
+TensorTypeId TensorTypeIds::createAndRegister() {
+  TensorTypeId id = creator_.create();
+  registry_.registerId(id);
+  return id;
+}
+
+void TensorTypeIds::deregister(TensorTypeId id) {
+  registry_.deregisterId(id);
+}
+
+TensorTypeIdRegistrar::TensorTypeIdRegistrar()
+: id_(TensorTypeIds::singleton().createAndRegister()) {
+}
+
+TensorTypeIdRegistrar::~TensorTypeIdRegistrar() {
+  TensorTypeIds::singleton().deregister(id_);
+}
+
 }

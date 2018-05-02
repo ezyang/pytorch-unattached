@@ -40,10 +40,6 @@ public:
     return func(std::forward<Args>(args)...);
   }
 
-  TensorTypeIdRegistrar createAndRegisterTensorTypeId() {
-    return tensorTypeIds_.createAndRegister();
-  }
-
 private:
   template<class OpSchemaDef>
   void registerOp_(typename OpSchema<OpSchemaDef>::func_type* func, const DispatchKey& dispatchKey) {
@@ -53,8 +49,6 @@ private:
     }
   }
 
-
-  TensorTypeIds tensorTypeIds_;
   // TODO Use better hash map
   std::unordered_map<DispatchKey, void*> ops_;
 };
