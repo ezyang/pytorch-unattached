@@ -5,6 +5,7 @@
 #include <iostream>
 #include <mutex>
 #include <unordered_set>
+#include <c10/guts/Macros.h>
 
 namespace c10 {
 
@@ -41,34 +42,28 @@ public:
   static constexpr TensorTypeId undefined() {
     return TensorTypeId(0);
   }
+
 private:
-
-  TensorTypeIdCreator(const TensorTypeIdCreator&) = delete;
-  TensorTypeIdCreator& operator=(const TensorTypeIdCreator&) = delete;
-  TensorTypeIdCreator(TensorTypeIdCreator&& rhs) = delete;
-  TensorTypeIdCreator& operator=(TensorTypeIdCreator&&) = delete;
-
   std::atomic<details::_tensorTypeId_underlyingType> last_id_;
 
   static constexpr TensorTypeId max_id_ = TensorTypeId(std::numeric_limits<details::_tensorTypeId_underlyingType>::max());
+
+  DISALLOW_COPY_AND_ASSIGN(TensorTypeIdCreator);
 };
 
 class TensorTypeIdRegistry final {
 public:
   TensorTypeIdRegistry();
-  
+
   void registerId(TensorTypeId id);
   void deregisterId(TensorTypeId id);
 
 private:
-  TensorTypeIdRegistry(const TensorTypeIdRegistry&) = delete;
-  TensorTypeIdRegistry& operator=(const TensorTypeIdRegistry&) = delete;
-  TensorTypeIdRegistry(TensorTypeIdRegistry&& rhs) = delete;
-  TensorTypeIdRegistry& operator=(TensorTypeIdRegistry&&) = delete;
-
   // TODO Something faster than unordered_set?
   std::unordered_set<TensorTypeId> registeredTypeIds_;
   std::mutex mutex_;
+
+  DISALLOW_COPY_AND_ASSIGN(TensorTypeIdRegistry);
 };
 
 class TensorTypeIds final {
@@ -82,13 +77,11 @@ public:
 
 private:
   TensorTypeIds();
-  TensorTypeIds(const TensorTypeIds&) = delete;
-  TensorTypeIds& operator=(const TensorTypeIds&) = delete;
-  TensorTypeIds(TensorTypeIds&& rhs) = delete;
-  TensorTypeIds& operator=(TensorTypeIds&&) = delete;
 
   TensorTypeIdCreator creator_;
   TensorTypeIdRegistry registry_;
+
+  DISALLOW_COPY_AND_ASSIGN(TensorTypeIds);
 };
 
 inline constexpr TensorTypeId TensorTypeIds::undefined() {
@@ -100,15 +93,12 @@ public:
   TensorTypeIdRegistrar();
   ~TensorTypeIdRegistrar();
 
-  TensorTypeIdRegistrar(const TensorTypeIdRegistrar&) = delete;
-  TensorTypeIdRegistrar& operator=(const TensorTypeIdRegistrar&) = delete;
-  TensorTypeIdRegistrar(TensorTypeIdRegistrar&& rhs) = delete;
-  TensorTypeIdRegistrar& operator=(TensorTypeIdRegistrar&&) = delete;
-
   TensorTypeId id() const;
 
 private:
   TensorTypeId id_;
+
+  DISALLOW_COPY_AND_ASSIGN(TensorTypeIdRegistrar);
 };
 
 inline TensorTypeId TensorTypeIdRegistrar::id() const {
