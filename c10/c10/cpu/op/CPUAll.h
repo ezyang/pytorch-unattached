@@ -29,6 +29,6 @@ void reserve_(const Tensor& self, ArrayRef<int64_t> new_size);
 void extend_(const Tensor& self, int64_t num, double growthPct);
 
 // Minimal operations we needed for testing
-bool equal(const Tensor& self, const Tensor& other);
+bool equal(Tensor self, Tensor other);
 
 }}} // namespace c10::cpu::op

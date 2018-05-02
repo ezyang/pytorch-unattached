@@ -38,6 +38,7 @@ add_library(c10 SHARED
     c10/dispatch/Dispatcher.cpp
     c10/dispatch/DispatchKey.cpp
     c10/dispatch/OpId.cpp
+    c10/dispatch/OpRegistration.cpp
     c10/dispatch/OpSchema.cpp
     c10/dispatch/TensorTypeId.cpp
     c10/dispatch/TensorTypeIdRegistration.cpp
@@ -48,6 +49,7 @@ add_library(c10 SHARED
     c10/guts/Storage.cpp
     c10/cpu/op/CPUAll.cpp
     c10/op/All.cpp
+    c10/op/OpSchemaDefs.cpp
     c10/Utils.cpp
     c10/Functions.cpp
     c10/ThreadContext.cpp

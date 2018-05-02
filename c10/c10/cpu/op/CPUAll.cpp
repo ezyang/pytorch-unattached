@@ -2,6 +2,8 @@
 
 #include <c10.h>
 #include <c10/cpu/CPUTensorImpl.h>
+#include <c10/op/OpSchemaDefs.h>
+#include <c10/dispatch/OpRegistration.h>
 
 namespace c10 { namespace cpu { namespace op {
 
@@ -34,6 +36,8 @@ Tensor zeros(ArrayRef<int64_t> sizes, DataType dtype) {
   r.zero_();
   return r;
 }
+
+C10_REGISTER_OP().define<c10::ops::zeros>(&zeros);
 
 // Channeling Caffe2 Tensor::Tensor(const T& value, Context* context)
 void copy_(const Tensor& self, DataType dtype, const void* p, int64_t size_bytes) {
@@ -145,7 +149,7 @@ void extend_(const Tensor& self, int64_t num, double growthPct) {
 
 
 // THTensor_(equal)
-bool equal(const Tensor& self, const Tensor& other) {
+bool equal(Tensor self, Tensor other) {
   C10_ASSERT(self._to_impl()->type_id() == CPU_TENSOR(), "self.type_id() = ", self._to_impl()->type_id());
   C10_ASSERT(other._to_impl()->type_id() == CPU_TENSOR(), "other.type_id() = ", other._to_impl()->type_id());
   C10_ASSERT(self.dtype() == other.dtype(), "self.dtype() = ", self.dtype(), "; other.dtype() = ", other.dtype())
@@ -157,6 +161,8 @@ bool equal(const Tensor& self, const Tensor& other) {
     C10_ASSERT(false, "non-contiguous equality not supported yet");
   }
 }
+
+C10_REGISTER_OP().define<c10::ops::equals>(&equal, {CPU_TENSOR(), CPU_TENSOR()});
 
 /*
 // Channeling Caffe2 Tensor::CopyFrom(const Tensor<SrcContext>& src, ContextForCopy* context)
