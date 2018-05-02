@@ -34,23 +34,38 @@ namespace c10 {
 
 class TensorTypeIdCreator final {
 public:
+  TensorTypeIdCreator();
+
   TensorTypeId create();
 
   static constexpr TensorTypeId undefined() {
     return TensorTypeId(0);
   }
 private:
-  std::atomic<details::_tensorTypeId_underlyingType> next_id_;
+
+  TensorTypeIdCreator(const TensorTypeIdCreator&) = delete;
+  TensorTypeIdCreator& operator=(const TensorTypeIdCreator&) = delete;
+  TensorTypeIdCreator(TensorTypeIdCreator&& rhs) = delete;
+  TensorTypeIdCreator& operator=(TensorTypeIdCreator&&) = delete;
+
+  std::atomic<details::_tensorTypeId_underlyingType> last_id_;
 
   static constexpr TensorTypeId max_id_ = TensorTypeId(std::numeric_limits<details::_tensorTypeId_underlyingType>::max());
 };
 
 class TensorTypeIdRegistry final {
 public:
+  TensorTypeIdRegistry();
+  
   void registerId(TensorTypeId id);
   void deregisterId(TensorTypeId id);
 
 private:
+  TensorTypeIdRegistry(const TensorTypeIdRegistry&) = delete;
+  TensorTypeIdRegistry& operator=(const TensorTypeIdRegistry&) = delete;
+  TensorTypeIdRegistry(TensorTypeIdRegistry&& rhs) = delete;
+  TensorTypeIdRegistry& operator=(TensorTypeIdRegistry&&) = delete;
+
   // TODO Something faster than unordered_set?
   std::unordered_set<TensorTypeId> registeredTypeIds_;
   std::mutex mutex_;
@@ -67,6 +82,10 @@ public:
 
 private:
   TensorTypeIds();
+  TensorTypeIds(const TensorTypeIds&) = delete;
+  TensorTypeIds& operator=(const TensorTypeIds&) = delete;
+  TensorTypeIds(TensorTypeIds&& rhs) = delete;
+  TensorTypeIds& operator=(TensorTypeIds&&) = delete;
 
   TensorTypeIdCreator creator_;
   TensorTypeIdRegistry registry_;

@@ -16,8 +16,11 @@ TensorTypeIds& TensorTypeIds::singleton() {
   return singleton;
 }
 
+TensorTypeIdCreator::TensorTypeIdCreator()
+: last_id_(0) {}
+
 TensorTypeId TensorTypeIdCreator::create() {
-  auto id = TensorTypeId(++next_id_);
+  auto id = TensorTypeId(++last_id_);
 
   if (id == max_id_) {
     // If this happens in prod, we have to change details::_tensorTypeId_underlyingType to uint16_t.
@@ -26,6 +29,9 @@ TensorTypeId TensorTypeIdCreator::create() {
 
   return id;
 }
+
+TensorTypeIdRegistry::TensorTypeIdRegistry()
+: registeredTypeIds_(), mutex_() {}
 
 void TensorTypeIdRegistry::registerId(TensorTypeId id) {
   std::lock_guard<std::mutex> lock(mutex_);
