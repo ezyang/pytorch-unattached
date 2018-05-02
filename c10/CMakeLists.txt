@@ -40,6 +40,7 @@ add_library(c10 SHARED
     c10/dispatch/OpId.cpp
     c10/dispatch/OpSchema.cpp
     c10/dispatch/TensorTypeId.cpp
+    c10/dispatch/TensorTypeIdRegistration.cpp
     c10/SmallVector.cpp
     c10/DimVector.cpp
     c10/cpu/CPUContext.cpp

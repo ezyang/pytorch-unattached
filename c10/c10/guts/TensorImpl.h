@@ -7,7 +7,7 @@
 #include <c10/Optional.h>
 #include <c10/DataType.h>
 #include <c10/DimVector.h>
-#include <c10/dispatch/TensorTypeId.h>
+#include <c10/dispatch/TensorTypeIdRegistration.h>
 
 #include "IntrusivePtr.h"
 #include "Storage.h"

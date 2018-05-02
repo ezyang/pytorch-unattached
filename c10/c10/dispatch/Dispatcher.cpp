@@ -2,7 +2,10 @@
 
 namespace c10 {
 
-Dispatcher& dispatch() {
+Dispatcher::Dispatcher()
+: ops_() {}
+
+Dispatcher& Dispatcher::singleton() {
   static Dispatcher singleton;
   return singleton;
 }

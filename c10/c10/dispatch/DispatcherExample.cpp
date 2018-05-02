@@ -27,10 +27,11 @@ int add_notensor_op(int lhs, int rhs) {
   return lhs + rhs;
 }
 
+using c10::cpu::CPU_TENSOR;
+
 int main() {
-  Dispatcher d;
-  auto CPUTensor = c10::cpu::CPU_TENSOR();
-  d.registerOp<ops::conditional>(&conditional_op, {CPUTensor, CPUTensor});
+  Dispatcher& d = Dispatcher::singleton();
+  d.registerOp<ops::conditional>(&conditional_op, {CPU_TENSOR(), CPU_TENSOR()});
   d.registerOp<ops::add_notensor>(&add_notensor_op);
 
   Tensor t1 = tensor<int>({5});

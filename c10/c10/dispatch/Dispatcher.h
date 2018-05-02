@@ -13,6 +13,8 @@ namespace c10 {
 
 class Dispatcher final {
 public:
+  static Dispatcher& singleton();
+
   template<class OpSchemaDef, size_t num_tensor_args>
   void registerOp(typename OpSchema<OpSchemaDef>::func_type* func, const TensorTypeId (&tensorTypeIds)[num_tensor_args]) {
     static_assert(OpSchema<OpSchemaDef>::num_tensor_args == num_tensor_args, "Operator registration failed. Number of tensor type ids must match the number of tensor arguments in the operator signature.");
@@ -41,6 +43,8 @@ public:
   }
 
 private:
+  Dispatcher();
+  
   template<class OpSchemaDef>
   void registerOp_(typename OpSchema<OpSchemaDef>::func_type* func, const DispatchKey& dispatchKey) {
     auto emplaced = ops_.emplace(dispatchKey, reinterpret_cast<void*>(func));
@@ -52,7 +56,5 @@ private:
   // TODO Use better hash map
   std::unordered_map<DispatchKey, void*> ops_;
 };
-
-Dispatcher& dispatch();
 
 }
