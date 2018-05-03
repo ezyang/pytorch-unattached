@@ -79,6 +79,9 @@ public:
   using return_type = typename signature_traits::return_type;
   using argument_types = typename signature_traits::argument_types;
 
+  // TODO using dispatch_key_type = typename OpSchema::DispatchKey;
+  using dispatch_key_type = DispatchKey;
+
   static constexpr size_t num_args = argument_types::size;
   static constexpr size_t num_tensor_args = guts::typelist::count_if<details::is_tensor_arg, argument_types>::value;
 

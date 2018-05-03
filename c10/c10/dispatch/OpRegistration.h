@@ -18,7 +18,7 @@ public:
 
   template<class... Args>
   static OpRegistrar create(Args&&... args) {
-    Dispatcher::singleton().registerOp<OpSchemaDef>(std::forward<Args>(args)...);
+    Dispatcher::registerOp<OpSchemaDef>(std::forward<Args>(args)...);
     return OpRegistrar();
   }
 

@@ -36,12 +36,14 @@ add_library(c10 SHARED
     c10/cpu/CPUAllocator.cpp
     c10/cpu/CPUTensorImpl.cpp
     c10/dispatch/Dispatcher.cpp
+    c10/dispatch/impl/DispatchTable.cpp
     c10/dispatch/DispatchKey.cpp
     c10/dispatch/OpId.cpp
     c10/dispatch/OpRegistration.cpp
     c10/dispatch/OpSchema.cpp
     c10/dispatch/TensorTypeId.cpp
     c10/dispatch/TensorTypeIdRegistration.cpp
+    c10/dispatch/OpSchemaRegistration.cpp
     c10/SmallVector.cpp
     c10/DimVector.cpp
     c10/cpu/CPUContext.cpp
