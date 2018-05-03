@@ -14,6 +14,11 @@ namespace details {
 }
 
 class TensorTypeId final : public guts::IdWrapper<TensorTypeId, details::_tensorTypeId_underlyingType> {
+public:
+  TensorTypeId(): IdWrapper(0) {
+    // Unfortunately, a default constructor needs to be defined because of https://reviews.llvm.org/D41223
+    throw std::logic_error("You should never construct a TensorTypeId yourself.");
+  }
 private:
   constexpr explicit TensorTypeId(details::_tensorTypeId_underlyingType id): IdWrapper(id) {}
 

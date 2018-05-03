@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DispatchKey.h"
+#include "impl/DispatchKey.h"
 #include <c10/guts/Metaprogramming.h>
 #include <c10/Tensor.h>
 
@@ -38,11 +38,12 @@ struct getTensorTypeId__<index, std::enable_if_t<is_tensor_arg<Head>::value && i
   }
 };
 
-template<class... Args, size_t... I> std::vector<TensorTypeId> getTensorTypeIds__(std::index_sequence<I...>, const Args&... args) {
-  return { getTensorTypeId__<I, void, Args...>::call(args...)... };
+template<class... Args, size_t... I> auto getTensorTypeIds__(std::index_sequence<I...>, const Args&... args) {
+  static constexpr size_t num_tensor_args = guts::typelist::count_if<is_tensor_arg, guts::typelist::typelist<Args...>>::value;
+  return std::array<TensorTypeId, num_tensor_args>{ getTensorTypeId__<I, void, Args...>::call(args...)... };
 }
 
-template<class... Args> std::vector<TensorTypeId> getTensorTypeIds_(const Args&... args) {
+template<class... Args> auto getTensorTypeIds_(const Args&... args) {
   static constexpr size_t num_tensor_args = guts::typelist::count_if<is_tensor_arg, guts::typelist::typelist<Args...>>::value;
   return getTensorTypeIds__(std::make_index_sequence<num_tensor_args>(), args...);
 }
@@ -79,14 +80,14 @@ public:
   using return_type = typename signature_traits::return_type;
   using argument_types = typename signature_traits::argument_types;
 
-  // TODO using dispatch_key_type = typename OpSchema::DispatchKey;
-  using dispatch_key_type = DispatchKey;
-
   static constexpr size_t num_args = argument_types::size;
   static constexpr size_t num_tensor_args = guts::typelist::count_if<details::is_tensor_arg, argument_types>::value;
 
+  // TODO using dispatch_key_type = typename OpSchema::DispatchKey;
+  using dispatch_key_type = DispatchKey<num_tensor_args>;
+
   template<class... Args>
-  static inline DispatchKey dispatchKey(const Args&... args) {
+  static inline DispatchKey<num_tensor_args> dispatchKey(const Args&... args) {
     // TODO pass to OpSchemaDef::dispatchKey if defined
     using guts::typelist::map_t;
     using guts::typelist::typelist;
@@ -94,26 +95,21 @@ public:
       map_t<std::remove_cv_t, map_t<std::remove_reference_t, typelist<Args...>>>,
       map_t<std::remove_cv_t, map_t<std::remove_reference_t, argument_types>>
       >::value, "Invalid argument types passed to OpSchema::dispatchKey()");
-    std::vector<TensorTypeId> dispatchTypeIds = details::getTensorTypeIds_(args...);
-    return DispatchKey {
-      OpSchemaDef::op_id(),
-      std::move(dispatchTypeIds)
+    return DispatchKey<num_tensor_args> {
+      details::getTensorTypeIds_(args...)
     };
   }
 
-  static inline DispatchKey dispatchKey() {
+  static inline DispatchKey<num_tensor_args> dispatchKey() {
     static_assert(OpSchema<OpSchemaDef>::num_tensor_args == 0, "DispatchKey can only be generated without tensor arguments if the OpSchemaDef doesn't have tensor arguments.");
-    return DispatchKey {
-      OpSchemaDef::op_id(),
-      {}
+    return DispatchKey<num_tensor_args> {
     };
   }
 
-  static inline DispatchKey dispatchKey(const std::array<TensorTypeId, num_tensor_args>& tensorTypeIds) {
+  static inline constexpr DispatchKey<num_tensor_args> dispatchKey(const std::array<TensorTypeId, num_tensor_args>& tensorTypeIds) {
     // TODO pass to OpSchemaDef::dispatchKey if defined
-    return DispatchKey {
-      OpSchemaDef::op_id(),
-      std::vector<TensorTypeId>(tensorTypeIds.begin(), tensorTypeIds.end())
+    return DispatchKey<num_tensor_args> {
+      std::move(tensorTypeIds)
     };
   }
 };

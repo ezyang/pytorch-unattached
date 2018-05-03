@@ -37,7 +37,7 @@ add_library(c10 SHARED
     c10/cpu/CPUTensorImpl.cpp
     c10/dispatch/Dispatcher.cpp
     c10/dispatch/impl/DispatchTable.cpp
-    c10/dispatch/DispatchKey.cpp
+    c10/dispatch/impl/DispatchKey.cpp
     c10/dispatch/OpId.cpp
     c10/dispatch/OpRegistration.cpp
     c10/dispatch/OpSchema.cpp

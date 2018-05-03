@@ -43,7 +43,7 @@ private:
 
   template<class... Args>
   typename Schema::func_type* lookupOp_(const Args&... args) const {
-    DispatchKey dispatchKey = Schema::dispatchKey(args...);
+    auto dispatchKey = Schema::dispatchKey(args...);
     auto found = ops_.find(dispatchKey);
     if (found == ops_.end()) {
       throw std::logic_error("Didn't find operator to dispatch to");
@@ -51,7 +51,7 @@ private:
     return reinterpret_cast<typename Schema::func_type*>(found->second);
   }
 
-  void registerOp_(typename Schema::func_type* func, const DispatchKey& dispatchKey) {
+  void registerOp_(typename Schema::func_type* func, const typename Schema::dispatch_key_type& dispatchKey) {
     auto emplaced = ops_.emplace(dispatchKey, reinterpret_cast<void*>(func));
     if (!emplaced.second) {
       throw std::logic_error("Tried to register conflicting operators to the dispatcher.");

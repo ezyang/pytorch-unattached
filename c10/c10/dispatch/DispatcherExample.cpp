@@ -9,11 +9,9 @@ using c10::cpu::CPU_TENSOR;
 
 namespace ops {
 struct conditional final {
-  static constexpr OpId op_id() {return OpId{1000}; }
   using Signature = Tensor(bool, const Tensor&, Tensor);
 };
 struct add_notensor final {
-  static constexpr OpId op_id() {return OpId{1001};}
   using Signature = int(int, int);
 };
 }
