@@ -95,4 +95,13 @@ static_assert(true_for_each_type<std::is_reference, typelist<int&, const float&&
 static_assert(!true_for_each_type<std::is_reference, typelist<int&, const float, const MyClass&>>::value, "test");
 }
 
+
+template<template <class> class Mapper, class TypeList> struct map;
+template<template <class> class Mapper, class... Types>
+struct map<Mapper, typelist<Types...>> final {
+  using type = typelist<Mapper<Types>...>;
+};
+template<template <class> class Mapper, class TypeList>
+using map_t = typename map<Mapper, TypeList>::type;
+
 }}}

@@ -29,22 +29,27 @@ public:
   }
 
   template<class OpSchemaDef, class... Args>
-  typename OpSchema<OpSchemaDef>::return_type call(Args... args) const {
-    // TODO Perfect forwarding of arguments
+  typename OpSchema<OpSchemaDef>::return_type call(Args&&... args) const {
+    // TODO Better error message, but need to take care that reference arguments match non-reference arguments and so on.
+    //      static_assert(std::is_same<typename Schema::return_type (Args...), typename Schema::func_type>::value, "Argument types don't match operator signature");
+    auto operator_func = lookupOp_<OpSchemaDef>(args...);
+    return operator_func(std::forward<Args>(args)...);
+  }
+
+private:
+  Dispatcher();
+
+  template<class OpSchemaDef, class... Args>
+  typename OpSchema<OpSchemaDef>::func_type* lookupOp_(const Args&... args) const {
     using Schema = OpSchema<OpSchemaDef>;
-    static_assert(std::is_same<typename Schema::return_type (Args...), typename Schema::func_type>::value, "Argument types don't match operator signature");
     DispatchKey dispatchKey = Schema::dispatchKey(args...);
     auto found = ops_.find(dispatchKey);
     if (found == ops_.end()) {
       throw std::logic_error("Didn't find operator to dispatch to");
     }
-    typename Schema::func_type* func = reinterpret_cast<typename Schema::func_type*>(found->second);
-    return func(std::forward<Args>(args)...);
+    return reinterpret_cast<typename Schema::func_type*>(found->second);
   }
 
-private:
-  Dispatcher();
-  
   template<class OpSchemaDef>
   void registerOp_(typename OpSchema<OpSchemaDef>::func_type* func, const DispatchKey& dispatchKey) {
     auto emplaced = ops_.emplace(dispatchKey, reinterpret_cast<void*>(func));

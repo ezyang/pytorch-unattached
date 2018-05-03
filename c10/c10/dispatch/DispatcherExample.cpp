@@ -9,7 +9,7 @@ using c10::cpu::CPU_TENSOR;
 namespace ops {
 struct conditional final {
   static constexpr OpId op_id() {return OpId{1000}; }
-  using Signature = Tensor(bool, Tensor, Tensor);
+  using Signature = Tensor(bool, const Tensor&, Tensor);
 };
 struct add_notensor final {
   static constexpr OpId op_id() {return OpId{1001};}
@@ -17,7 +17,8 @@ struct add_notensor final {
 };
 }
 
-Tensor conditional_op(bool condition, Tensor thenTensor, Tensor elseTensor) {
+// TODO Need some test case that tensors can be passed as ref and by value
+Tensor conditional_op(bool condition, const Tensor& thenTensor, Tensor elseTensor) {
   if (condition) {
     return thenTensor;
   } else {

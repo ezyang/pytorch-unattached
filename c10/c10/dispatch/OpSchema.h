@@ -7,42 +7,32 @@
 namespace c10 {
 
 namespace details {
-template<class Arg> using is_valid_tensor_arg = std::is_same<Tensor, Arg>;
-template<class Arg> using is_valid_nontensor_arg = guts::conjunction<
-  guts::negation<is_valid_tensor_arg<Arg>>,
-  std::is_same<std::remove_cv_t<std::remove_reference_t<Arg>>, Arg>
->;
-template<class Arg> using is_valid_arg = guts::disjunction<
-  is_valid_tensor_arg<Arg>,
-  is_valid_nontensor_arg<Arg>
->;
+template<class Arg> using is_tensor_arg = std::is_same<Tensor, std::remove_cv_t<std::remove_reference_t<Arg>>>;
 
-namespace test_is_valid_arg {
-static_assert(is_valid_tensor_arg<Tensor>::value, "");
-static_assert(!is_valid_tensor_arg<int>::value, "");
-static_assert(!is_valid_nontensor_arg<Tensor>::value, "");
-static_assert(is_valid_nontensor_arg<int>::value, "");
-static_assert(is_valid_arg<int>::value, "");
-static_assert(is_valid_arg<Tensor>::value, "");
+namespace test_is_tensor_arg {
+static_assert(is_tensor_arg<Tensor>::value, "");
+static_assert(is_tensor_arg<const Tensor&>::value, "");
+static_assert(is_tensor_arg<Tensor&&>::value, "");
+static_assert(!is_tensor_arg<int>::value, "");
 }
 }
 
 namespace details {
 template<size_t index, class Enable, class... Args> struct getTensorTypeId__;
 template<size_t index, class Head, class... Tail>
-struct getTensorTypeId__<index, std::enable_if_t<!is_valid_tensor_arg<Head>::value>, Head, Tail...> final {
+struct getTensorTypeId__<index, std::enable_if_t<!is_tensor_arg<Head>::value>, Head, Tail...> final {
   static TensorTypeId call(const Head& /*head*/, const Tail&... tail) {
     return getTensorTypeId__<index, void, Tail...>::call(tail...);
   }
 };
 template<size_t index, class Head, class... Tail>
-struct getTensorTypeId__<index, std::enable_if_t<is_valid_tensor_arg<Head>::value && index != 0>, Head, Tail...> final {
+struct getTensorTypeId__<index, std::enable_if_t<is_tensor_arg<Head>::value && index != 0>, Head, Tail...> final {
   static TensorTypeId call(const Head& /*head*/, const Tail&... tail) {
     return getTensorTypeId__<index - 1, void, Tail...>::call(tail...);
   }
 };
 template<size_t index, class Head, class... Tail>
-struct getTensorTypeId__<index, std::enable_if_t<is_valid_tensor_arg<Head>::value && index == 0>, Head, Tail...> final {
+struct getTensorTypeId__<index, std::enable_if_t<is_tensor_arg<Head>::value && index == 0>, Head, Tail...> final {
   static TensorTypeId call(const Head& head, const Tail&... /*tail*/) {
     return head._to_impl()->type_id();
   }
@@ -53,7 +43,7 @@ template<class... Args, size_t... I> std::vector<TensorTypeId> getTensorTypeIds_
 }
 
 template<class... Args> std::vector<TensorTypeId> getTensorTypeIds_(const Args&... args) {
-  static constexpr size_t num_tensor_args = guts::typelist::count_if<is_valid_tensor_arg, guts::typelist::typelist<Args...>>::value;
+  static constexpr size_t num_tensor_args = guts::typelist::count_if<is_tensor_arg, guts::typelist::typelist<Args...>>::value;
   return getTensorTypeIds__(std::make_index_sequence<num_tensor_args>(), args...);
 }
 
@@ -90,16 +80,17 @@ public:
   using argument_types = typename signature_traits::argument_types;
 
   static constexpr size_t num_args = argument_types::size;
-  static constexpr size_t num_tensor_args = guts::typelist::count_if<details::is_valid_tensor_arg, argument_types>::value;
-
-  static_assert(guts::typelist::true_for_each_type<details::is_valid_arg, argument_types>::value, "Invalid argument type in operator signature. Arguments must be passed by value.");
-  static_assert(details::is_valid_arg<return_type>::value, "Invalid result type in operator signature. Must return by value.");
+  static constexpr size_t num_tensor_args = guts::typelist::count_if<details::is_tensor_arg, argument_types>::value;
 
   template<class... Args>
   static inline DispatchKey dispatchKey(const Args&... args) {
     // TODO pass to OpSchemaDef::dispatchKey if defined
-
-    static_assert(std::is_same<guts::typelist::typelist<Args...>, argument_types>::value, "Invalid argument types passed to OpSchema::dispatchKey()");
+    using guts::typelist::map_t;
+    using guts::typelist::typelist;
+    static_assert(std::is_same<
+      map_t<std::remove_cv_t, map_t<std::remove_reference_t, typelist<Args...>>>,
+      map_t<std::remove_cv_t, map_t<std::remove_reference_t, argument_types>>
+      >::value, "Invalid argument types passed to OpSchema::dispatchKey()");
     std::vector<TensorTypeId> dispatchTypeIds = details::getTensorTypeIds_(args...);
     return DispatchKey {
       OpSchemaDef::op_id(),
