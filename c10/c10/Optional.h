@@ -131,7 +131,7 @@ template <class T> inline constexpr typename std::remove_reference<T>::type&& co
 # define TR2_OPTIONAL_ASSERTED_EXPRESSION(CHECK, EXPR) (EXPR)
 #else
 # define TR2_OPTIONAL_ASSERTED_EXPRESSION(CHECK, EXPR)        \
-  ((CHECK) ? (EXPR) : ([]{assert((#CHECK, false));}(), (EXPR)))
+  ((CHECK) ? (EXPR) : ([]{assert(((void)#CHECK, false));}(), (EXPR)))
 #endif
 
 

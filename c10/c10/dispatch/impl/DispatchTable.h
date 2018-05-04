@@ -67,4 +67,4 @@ private:
  * It has an implementation for each op schema def in a cpp file, because
  * we can't rely on the one-definition-rule.
  */
-template<class OpSchemaDef> static c10::DispatchTable<OpSchemaDef>& c10_dispatch_table();
+template<class OpSchemaDef> c10::DispatchTable<OpSchemaDef>& c10_dispatch_table();
