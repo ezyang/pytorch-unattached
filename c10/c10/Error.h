@@ -1,7 +1,7 @@
 #pragma once
 
-#include "General.h"
-#include "Optional.h"
+#include <c10/General.h> // for C10_API
+#include <c10/Optional.h>
 
 #include <cstdint>
 #include <cstdio>
