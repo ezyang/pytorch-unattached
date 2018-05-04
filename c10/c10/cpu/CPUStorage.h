@@ -111,9 +111,10 @@ public:
         ctor(data_.get(), new_size_bytes / data_type_.itemsize());
       }
     }
+    auto old_size_bytes = size_bytes_;
     size_bytes_ = new_size_bytes;
     if (old_data != nullptr && keep_data) {
-      int64_t copy_size_bytes = std::min(new_size_bytes, size_bytes_);
+      int64_t copy_size_bytes = std::min(new_size_bytes, old_size_bytes);
       copy_(old_data.get(), copy_size_bytes);
       old_data.reset();
     }
