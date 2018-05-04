@@ -16,7 +16,7 @@ private:
   using Schema = OpSchema<OpSchemaDef>;
 
 public:
-  static DispatchTable& singleton();
+  DispatchTable(): ops_() {}
 
   template<size_t num_tensor_args>
   void registerOp(typename Schema::func_type* func, const TensorTypeId (&tensorTypeIds)[num_tensor_args]) {
@@ -39,8 +39,6 @@ public:
   }
 
 private:
-  DispatchTable(): ops_() {}
-
   template<class... Args>
   typename Schema::func_type* lookupOp_(const Args&... args) const {
     auto dispatchKey = Schema::dispatchKey(args...);
@@ -63,3 +61,10 @@ private:
 };
 
 }
+
+/*
+ * Use this to access the dispatch table singleton for a given op schema.
+ * It has an implementation for each op schema def in a cpp file, because
+ * we can't rely on the one-definition-rule.
+ */
+template<class OpSchemaDef> static c10::DispatchTable<OpSchemaDef>& c10_dispatch_table();

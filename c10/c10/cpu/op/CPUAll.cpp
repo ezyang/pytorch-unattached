@@ -41,7 +41,7 @@ C10_REGISTER_OP().define<c10::ops::zeros>(&zeros);
 
 // Channeling Caffe2 Tensor::Tensor(const T& value, Context* context)
 void copy_(const Tensor& self, DataType dtype, const void* p, int64_t size_bytes) {
-  C10_CHECK(dtype == self.dtype());
+  C10_CHECK(dtype == self.dtype(), "");
   _cpu_impl(self)->cpu_storage()->copy_(p, size_bytes);
 }
 
@@ -125,7 +125,7 @@ void reserve_(const Tensor& self, ArrayRef<int64_t> new_size) {
 
 // Channeling Caffe2 Tensor::Extend(TIndex num, float growthPct, ContextForCopy* context)
 void extend_(const Tensor& self, int64_t num, double growthPct) {
-  C10_CHECK(self.dim() >= 1);
+  C10_CHECK(self.dim() >= 1, "");
 
   auto* impl =_cpu_impl(self);
   auto cpu_storage = impl->cpu_storage();
