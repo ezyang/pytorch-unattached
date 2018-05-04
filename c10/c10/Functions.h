@@ -3,9 +3,12 @@
 #include <c10/Tensor.h>
 #include <c10/Utils.h>
 #include <c10/Context.h>
+#include <c10/dispatch/Dispatcher.h>
 
 // TODO: Strictly temporary, because the dispatch is hardcoded to go to CPU at the moment
 #include <c10/cpu/op/CPUAll.h>
+
+#include <c10/op/OpSchemaDefs.h>
 
 namespace c10 {
 
