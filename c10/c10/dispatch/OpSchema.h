@@ -41,6 +41,19 @@ struct has_signature_defined<T, guts::void_t<
 
 // TODO Test has_signature_defined
 
+template<class OpSchemaDef, class Enable = void> struct get_dispatch_key_type final {
+  // General case. Operator doesn't overwrite DispatchKey type. Use default.
+private:
+  static constexpr size_t num_tensor_args = guts::typelist::count_if<details::is_tensor_arg, typename guts::function_traits<typename OpSchemaDef::Signature>::argument_types>::value;
+public:
+  using type = DispatchKey<num_tensor_args>;
+};
+template<class OpSchemaDef>
+struct get_dispatch_key_type<OpSchemaDef, guts::void_t<typename OpSchemaDef::DispatchKey>> final {
+  // Special case. Operator overwrites DispatchKey type. Use that.
+  using type = typename OpSchemaDef::DispatchKey;
+};
+
 }
 
 
@@ -58,8 +71,7 @@ public:
   static constexpr size_t num_args = argument_types::size;
   static constexpr size_t num_tensor_args = guts::typelist::count_if<details::is_tensor_arg, argument_types>::value;
 
-  // TODO using dispatch_key_type = typename OpSchema::DispatchKey;
-  using dispatch_key_type = DispatchKey<num_tensor_args>;
+  using dispatch_key_type = typename details::get_dispatch_key_type<OpSchemaDef>::type;
 
   template<class... Args>
   static inline DispatchKey<num_tensor_args> dispatchKey(const Args&... args) {
