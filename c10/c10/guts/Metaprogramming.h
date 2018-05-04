@@ -119,4 +119,82 @@ static_assert(eq(std::array<int, 3>{{3, 5, 6}}, to_std_array(obj2)), "test");
 static_assert(eq(std::array<int, 3>{{3, 5, 6}}, to_std_array({3, 5, 6})), "test");
 }
 
+/**
+ * Use extract_arg_by_filtered_index to return the i-th argument whose
+ * type fulfills a given type trait. The argument itself is perfectly forwarded.
+ *
+ * Example:
+ * std::string arg1 = "Hello";
+ * std::string arg2 = "World";
+ * std::string&& result = extract_arg_by_filtered_index<is_string, 1>(0, arg1, 2.0, std::move(arg2));
+ */
+namespace details {
+template<template <class> class Condition, size_t index, class Enable, class... Args> struct extract_arg_by_filtered_index_;
+template<template <class> class Condition, size_t index, class Head, class... Tail>
+struct extract_arg_by_filtered_index_<Condition, index, std::enable_if_t<!Condition<Head>::value>, Head, Tail...> final {
+  static decltype(auto) call(Head&& /*head*/, Tail&&... tail) {
+    return extract_arg_by_filtered_index_<Condition, index, void, Tail...>::call(std::forward<Tail>(tail)...);
+  }
+};
+template<template <class> class Condition, size_t index, class Head, class... Tail>
+struct extract_arg_by_filtered_index_<Condition, index, std::enable_if_t<Condition<Head>::value && index != 0>, Head, Tail...> final {
+  static decltype(auto) call(Head&& /*head*/, Tail&&... tail) {
+    return extract_arg_by_filtered_index_<Condition, index-1, void, Tail...>::call(std::forward<Tail>(tail)...);
+  }
+};
+template<template <class> class Condition, size_t index>
+struct extract_arg_by_filtered_index_<Condition, index, void> final {
+  static decltype(auto) call() {
+    static_assert(index != index, "extract_arg_by_filtered_index out of range.");
+  }
+};
+template<template <class> class Condition, size_t index, class Head, class... Tail>
+struct extract_arg_by_filtered_index_<Condition, index, std::enable_if_t<Condition<Head>::value && index == 0>, Head, Tail...> final {
+  static decltype(auto) call(Head&& head, Tail&&... /*tail*/) {
+    return std::forward<Head>(head);
+  }
+};
+}
+template<template <class> class Condition, size_t index, class... Args>
+decltype(auto) extract_arg_by_filtered_index(Args&&... args) {
+  return details::extract_arg_by_filtered_index_<Condition, index, void, Args...>::call(std::forward<Args>(args)...);
+}
+
+// TODO Test extract_arg_by_filtered_index
+// TODO Also test perfect forwarding
+
+/**
+ * Use filter_map to map a subset of the arguments to values.
+ * The subset is defined by type traits, and will be evaluated at compile time.
+ * At runtime, it will just loop over the pre-filtered arguments to create an std::array.
+ *
+ * Example:
+ *  std::array<double, 2> result = filter_map<double, std::is_integral>([] (auto a) {return (double)a;}, 3, "bla", 4);
+ *  // result == {3.0, 4.0}
+ */
+ // TODO call syntax with double parentheses?
+
+namespace details {
+
+template<class ResultType, size_t num_results> struct filter_map_ final {
+   template<template <class> class Condition, class Mapper, class... Args, size_t... I>
+   static std::array<ResultType, num_results> call(const Mapper& mapper, std::index_sequence<I...>, Args&&... args) {
+     return std::array<ResultType, num_results> { mapper(extract_arg_by_filtered_index<Condition, I>(std::forward<Args>(args)...))... };
+   }
+};
+template<class ResultType> struct filter_map_<ResultType, 0> final {
+  template<template <class> class Condition, class Mapper, class... Args, size_t... I>
+  static std::array<ResultType, 0> call(const Mapper& /*mapper*/, std::index_sequence<I...>, Args&&... /*args*/) {
+    return std::array<ResultType, 0> { };
+  }
+};
+}
+
+template<class ResultType, template <class> class Condition, class Mapper, class... Args> auto filter_map(const Mapper& mapper, Args&&... args) {
+  static constexpr size_t num_results = typelist::count_if<Condition, typelist::typelist<Args...>>::value;
+  return details::filter_map_<ResultType, num_results>::template call<Condition, Mapper, Args...>(mapper, std::make_index_sequence<num_results>(), std::forward<Args>(args)...);
+}
+
+// TODO Test filter_map
+
 }}

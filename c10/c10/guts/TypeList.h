@@ -104,4 +104,14 @@ struct map<Mapper, typelist<Types...>> final {
 template<template <class> class Mapper, class TypeList>
 using map_t = typename map<Mapper, TypeList>::type;
 
+// TODO Test map_t
+
+template<class TypeList> struct head;
+template<class Head, class... Tail> struct head<typelist<Head, Tail...>> final {
+  using type = Head;
+};
+template<class TypeList> using head_t = typename head<TypeList>::type;
+
+// TODO Test head_t
+
 }}}

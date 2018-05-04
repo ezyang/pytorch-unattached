@@ -18,34 +18,9 @@ static_assert(!is_tensor_arg<int>::value, "");
 }
 
 namespace details {
-template<size_t index, class Enable, class... Args> struct getTensorTypeId__;
-template<size_t index, class Head, class... Tail>
-struct getTensorTypeId__<index, std::enable_if_t<!is_tensor_arg<Head>::value>, Head, Tail...> final {
-  static TensorTypeId call(const Head& /*head*/, const Tail&... tail) {
-    return getTensorTypeId__<index, void, Tail...>::call(tail...);
-  }
-};
-template<size_t index, class Head, class... Tail>
-struct getTensorTypeId__<index, std::enable_if_t<is_tensor_arg<Head>::value && index != 0>, Head, Tail...> final {
-  static TensorTypeId call(const Head& /*head*/, const Tail&... tail) {
-    return getTensorTypeId__<index - 1, void, Tail...>::call(tail...);
-  }
-};
-template<size_t index, class Head, class... Tail>
-struct getTensorTypeId__<index, std::enable_if_t<is_tensor_arg<Head>::value && index == 0>, Head, Tail...> final {
-  static TensorTypeId call(const Head& head, const Tail&... /*tail*/) {
-    return head._to_impl()->type_id();
-  }
-};
-
-template<class... Args, size_t... I> auto getTensorTypeIds__(std::index_sequence<I...>, const Args&... args) {
-  static constexpr size_t num_tensor_args = guts::typelist::count_if<is_tensor_arg, guts::typelist::typelist<Args...>>::value;
-  return std::array<TensorTypeId, num_tensor_args>{ getTensorTypeId__<I, void, Args...>::call(args...)... };
-}
 
 template<class... Args> auto getTensorTypeIds_(const Args&... args) {
-  static constexpr size_t num_tensor_args = guts::typelist::count_if<is_tensor_arg, guts::typelist::typelist<Args...>>::value;
-  return getTensorTypeIds__(std::make_index_sequence<num_tensor_args>(), args...);
+  return guts::filter_map<TensorTypeId, is_tensor_arg>([] (const Tensor& t) { return t._to_impl()->type_id(); }, args...);
 }
 
 // TODO Test getTensorTypeIds_
@@ -103,6 +78,7 @@ public:
   static inline DispatchKey<num_tensor_args> dispatchKey() {
     static_assert(OpSchema<OpSchemaDef>::num_tensor_args == 0, "DispatchKey can only be generated without tensor arguments if the OpSchemaDef doesn't have tensor arguments.");
     return DispatchKey<num_tensor_args> {
+      std::array<TensorTypeId, 0>{}
     };
   }
 
