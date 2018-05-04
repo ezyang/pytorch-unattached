@@ -63,8 +63,8 @@ public:
     : Data(&OneElt), Length(1) {}
 
   /// Construct an ArrayRef from a pointer and length.
-  constexpr ArrayRef(const T *data, size_t length)
-    : Data(data), Length(length) {}
+  constexpr ArrayRef(const T *data_, size_t length)
+    : Data(data_), Length(length) {}
 
   /// Construct an ArrayRef from a range.
   constexpr ArrayRef(const T *begin, const T *end)

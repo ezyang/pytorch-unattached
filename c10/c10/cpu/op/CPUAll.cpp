@@ -141,7 +141,7 @@ void extend_(const Tensor& self, int64_t num, double growthPct) {
   }
 
   // Compute the true size increase, to ensure extend() amortizes correctly
-  new_size[0] = std::max(new_size[0], static_cast<int64_t>(std::ceil(self.sizes()[0] * (growthPct + 100) / 100)));
+  new_size[0] = std::max(new_size[0], static_cast<int64_t>(std::ceil(static_cast<double>(self.sizes()[0]) * (growthPct + 100.0) / 100.0)));
   auto new_size_bytes = required_new_storage_size_bytes(self.dtype(), new_size, self.strides(), self.storage_offset() * self.dtype().itemsize());
   cpu_storage->resize_(new_size_bytes, /* keep data */ true);
   impl->_set_sizes_and_strides(new_size, self.strides());

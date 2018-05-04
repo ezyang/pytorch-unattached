@@ -25,12 +25,12 @@ namespace std {
   struct hash<c10::DispatchKey<num_tensor_args>> final {
     // TODO constexpr hashing
     size_t operator()(const c10::DispatchKey<num_tensor_args>& obj) const {
-      size_t hash = 0;
+      size_t hash_value = 0;
       for (const auto& typeId : obj.argTypes) {
-        hash *= 10883; // prime
-        hash += std::hash<c10::TensorTypeId>()(typeId);
+        hash_value *= 10883; // prime
+        hash_value += std::hash<c10::TensorTypeId>()(typeId);
       }
-      return hash;
+      return hash_value;
     }
   };
 }

@@ -131,10 +131,7 @@ template <class T> inline constexpr typename std::remove_reference<T>::type&& co
 # define TR2_OPTIONAL_ASSERTED_EXPRESSION(CHECK, EXPR) (EXPR)
 #else
 # define TR2_OPTIONAL_ASSERTED_EXPRESSION(CHECK, EXPR)        \
-  _Pragma("GCC diagnostic push")                              \
-  _Pragma("GCC diagnostic ignored \"-Wstring-conversion\"")   \
-  ((CHECK) ? (EXPR) : ([]{assert(!#CHECK);}(), (EXPR)))       \
-  _Pragma("GCC diagnostic pop")
+  ((CHECK) ? (EXPR) : ([]{assert((#CHECK, false));}(), (EXPR)))
 #endif
 
 
@@ -247,7 +244,7 @@ struct optional_base
     explicit optional_base(in_place_t, std::initializer_list<U> il, Args&&... args)
         : init_(true), storage_(il, std::forward<Args>(args)...) {}
 
-    ~optional_base() { if (init_) storage_.value_.T::~T(); }
+    virtual ~optional_base() { if (init_) storage_.value_.T::~T(); }
 };
 
 

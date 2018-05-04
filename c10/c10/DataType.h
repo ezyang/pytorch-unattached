@@ -92,8 +92,8 @@ class DataTypeImpl {
   TypedCopy copy_;
   TypedDestructor dtor_;
 
-  constexpr DataTypeImpl(int64_t itemsize, const char *name, PlacementNew ctor, TypedCopy copy, TypedDestructor dtor)
-      : itemsize_(itemsize), name_(name), ctor_(ctor), copy_(copy), dtor_(dtor) {}
+  constexpr DataTypeImpl(int64_t itemsize__, const char *name__, PlacementNew ctor__, TypedCopy copy__, TypedDestructor dtor__)
+      : itemsize_(itemsize__), name_(name__), ctor_(ctor__), copy_(copy__), dtor_(dtor__) {}
 
   friend struct DataTypeImpls;
 

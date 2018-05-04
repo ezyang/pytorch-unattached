@@ -5,4 +5,4 @@
  */
 #define DISALLOW_COPY_AND_ASSIGN(Class)         \
   Class(const Class &rhs) = delete;             \
-  Class &operator=(const Class &rhs) = delete;  \
+  Class &operator=(const Class &rhs) = delete

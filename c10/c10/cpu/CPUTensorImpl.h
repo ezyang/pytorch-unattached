@@ -9,7 +9,7 @@
 
 namespace c10 { namespace cpu {
 
-C10_DECLARE_TENSOR_TYPE(CPU_TENSOR);
+C10_DECLARE_TENSOR_TYPE(CPU_TENSOR)
 
 /**
  * Specialization of TensorImpl for CPU tensors.  Data layout is the same but we can make

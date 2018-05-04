@@ -45,7 +45,7 @@ inline std::pair<int64_t, int64_t> compute_extent(ArrayRef<int64_t> size, ArrayR
     }
   }
   return {low_watermark, high_watermark};
-};
+}
 
 inline int64_t required_new_storage_size_bytes(
     DataType dtype,

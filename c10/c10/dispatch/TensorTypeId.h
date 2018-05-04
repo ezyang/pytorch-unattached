@@ -27,4 +27,4 @@ private:
 
 }
 
-C10_DEFINE_HASH_FOR_IDWRAPPER(c10::TensorTypeId);
+C10_DEFINE_HASH_FOR_IDWRAPPER(c10::TensorTypeId)

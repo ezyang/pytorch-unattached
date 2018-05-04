@@ -19,6 +19,8 @@ namespace detail {
 
 class ScopeGuardImplBase {
  public:
+  virtual ~ScopeGuardImplBase() = default;
+
   void dismiss() noexcept {
     dismissed_ = true;
   }

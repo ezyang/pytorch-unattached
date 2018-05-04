@@ -50,4 +50,4 @@ public:
 #define CONCAT_IMPL( x, y ) x##y
 #define MACRO_CONCAT( x, y ) CONCAT_IMPL( x, y )
 #define C10_REGISTER_OP()                                                           \
-  static auto MACRO_CONCAT(__opRegistrar_, __COUNTER__) = OpRegistrarEntryPoint()   \
+  static auto MACRO_CONCAT(__opRegistrar_, __COUNTER__) = OpRegistrarEntryPoint()

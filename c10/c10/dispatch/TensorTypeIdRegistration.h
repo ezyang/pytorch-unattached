@@ -9,6 +9,7 @@
  */
 
  #include "TensorTypeId.h"
+ #include <atomic>
 
 namespace c10 {
 
@@ -93,4 +94,4 @@ inline TensorTypeId TensorTypeIdRegistrar::id() const {
   TensorTypeId TensorName() {                                                    \
     static TensorTypeIdRegistrar registration_raii;                              \
     return registration_raii.id();                                               \
-  }                                                                              \
+  }
