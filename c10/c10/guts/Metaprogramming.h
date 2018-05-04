@@ -2,6 +2,7 @@
 
 #include <type_traits>
 #include <array>
+#include <functional>
 #include "TypeList.h"
 
 namespace c10 { namespace guts {
@@ -16,13 +17,13 @@ namespace c10 { namespace guts {
  *  prepend(2, {3, 4}) == {2, 3, 4}
  */
 namespace details {
-template<class T, size_t N, size_t... I> struct eq__ final {};
-template<class T, size_t N, size_t IHead, size_t... ITail> struct eq__<T, N, IHead, ITail...> final {
+template<class T, size_t N, size_t... I> struct eq__ {};
+template<class T, size_t N, size_t IHead, size_t... ITail> struct eq__<T, N, IHead, ITail...> {
  static constexpr bool call(std::array<T, N> lhs, std::array<T, N> rhs) {
    return std::get<IHead>(lhs) == std::get<IHead>(rhs) && eq__<T, N, ITail...>::call(lhs, rhs);
  }
 };
-template<class T, size_t N> struct eq__<T, N> final {
+template<class T, size_t N> struct eq__<T, N> {
  static constexpr bool call(std::array<T, N> /*lhs*/, std::array<T, N> /*rhs*/) {
    return true;
  }
@@ -85,7 +86,7 @@ template<class Func> struct function_traits {
   static_assert(!std::is_same<Func, Func>::value, "Can only use function_traits on function types");
 };
 template<class Result, class... Args>
-struct function_traits<Result (Args...)> final {
+struct function_traits<Result (Args...)> {
   using func_type = Result (Args...);
   using return_type = Result;
   using argument_types = typelist::typelist<Args...>;
@@ -131,25 +132,25 @@ static_assert(eq(std::array<int, 3>{{3, 5, 6}}, to_std_array({3, 5, 6})), "test"
 namespace details {
 template<template <class> class Condition, size_t index, class Enable, class... Args> struct extract_arg_by_filtered_index_;
 template<template <class> class Condition, size_t index, class Head, class... Tail>
-struct extract_arg_by_filtered_index_<Condition, index, std::enable_if_t<!Condition<Head>::value>, Head, Tail...> final {
+struct extract_arg_by_filtered_index_<Condition, index, std::enable_if_t<!Condition<Head>::value>, Head, Tail...> {
   static decltype(auto) call(Head&& /*head*/, Tail&&... tail) {
     return extract_arg_by_filtered_index_<Condition, index, void, Tail...>::call(std::forward<Tail>(tail)...);
   }
 };
 template<template <class> class Condition, size_t index, class Head, class... Tail>
-struct extract_arg_by_filtered_index_<Condition, index, std::enable_if_t<Condition<Head>::value && index != 0>, Head, Tail...> final {
+struct extract_arg_by_filtered_index_<Condition, index, std::enable_if_t<Condition<Head>::value && index != 0>, Head, Tail...> {
   static decltype(auto) call(Head&& /*head*/, Tail&&... tail) {
     return extract_arg_by_filtered_index_<Condition, index-1, void, Tail...>::call(std::forward<Tail>(tail)...);
   }
 };
 template<template <class> class Condition, size_t index>
-struct extract_arg_by_filtered_index_<Condition, index, void> final {
+struct extract_arg_by_filtered_index_<Condition, index, void> {
   static decltype(auto) call() {
     static_assert(index != index, "extract_arg_by_filtered_index out of range.");
   }
 };
 template<template <class> class Condition, size_t index, class Head, class... Tail>
-struct extract_arg_by_filtered_index_<Condition, index, std::enable_if_t<Condition<Head>::value && index == 0>, Head, Tail...> final {
+struct extract_arg_by_filtered_index_<Condition, index, std::enable_if_t<Condition<Head>::value && index == 0>, Head, Tail...> {
   static decltype(auto) call(Head&& head, Tail&&... /*tail*/) {
     return std::forward<Head>(head);
   }
@@ -176,13 +177,13 @@ decltype(auto) extract_arg_by_filtered_index(Args&&... args) {
 
 namespace details {
 
-template<class ResultType, size_t num_results> struct filter_map_ final {
+template<class ResultType, size_t num_results> struct filter_map_ {
    template<template <class> class Condition, class Mapper, class... Args, size_t... I>
    static std::array<ResultType, num_results> call(const Mapper& mapper, std::index_sequence<I...>, Args&&... args) {
      return std::array<ResultType, num_results> { mapper(extract_arg_by_filtered_index<Condition, I>(std::forward<Args>(args)...))... };
    }
 };
-template<class ResultType> struct filter_map_<ResultType, 0> final {
+template<class ResultType> struct filter_map_<ResultType, 0> {
   template<template <class> class Condition, class Mapper, class... Args, size_t... I>
   static std::array<ResultType, 0> call(const Mapper& /*mapper*/, std::index_sequence<I...>, Args&&... /*args*/) {
     return std::array<ResultType, 0> { };
@@ -196,5 +197,38 @@ template<class ResultType, template <class> class Condition, class Mapper, class
 }
 
 // TODO Test filter_map
+
+template<class T, class Enable = void> struct is_equality_comparable : std::false_type {};
+template<class T> struct is_equality_comparable<T, void_t<decltype(std::declval<T&>() == std::declval<T&>())>> : std::true_type {};
+template<class T> using is_equality_comparable_t = typename is_equality_comparable<T>::type;
+
+namespace test_is_equality_comparable {
+class NotEqualityComparable {};
+class EqualityComparable{};
+inline bool operator==(const EqualityComparable&, const EqualityComparable&) {return false;}
+
+static_assert(!is_equality_comparable<NotEqualityComparable>::value, "");
+static_assert(is_equality_comparable<EqualityComparable>::value, "");
+static_assert(is_equality_comparable<int>::value, "");
+}
+
+template<class T, class Enable = void> struct is_hashable : std::false_type {};
+template<class T> struct is_hashable<T, void_t<decltype(std::hash<T>()(std::declval<T&>()))>> : std::true_type {};
+template<class T> using is_hashable_t = typename is_hashable<T>::type;
+
+namespace test_is_hashable {
+class NotHashable {};
+class Hashable {};
+}}}
+namespace std {
+template<> struct hash<c10::guts::test_is_hashable::Hashable> final {
+  size_t operator()(const c10::guts::test_is_hashable::Hashable&) { return 0; }
+};
+}
+namespace c10 { namespace guts { namespace test_is_hashable {
+static_assert(is_hashable<int>::value, "");
+static_assert(is_hashable<Hashable>::value, "");
+static_assert(!is_hashable<NotHashable>::value, "");
+}
 
 }}

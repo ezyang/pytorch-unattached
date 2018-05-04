@@ -51,6 +51,8 @@ public:
 template<class OpSchemaDef>
 struct get_dispatch_key_type<OpSchemaDef, guts::void_t<typename OpSchemaDef::DispatchKey>> final {
   // Special case. Operator overwrites DispatchKey type. Use that.
+  static_assert(guts::is_equality_comparable<typename OpSchemaDef::DispatchKey>::value, "Operator specified custom dispatch key type, but that type doesn't have the equality operator defined. Please define it.");
+  static_assert(guts::is_hashable<typename OpSchemaDef::DispatchKey>::value, "Operator specified custom dispatch key type, but that type doesn't have an overload for std::hash. Please define it.");
   using type = typename OpSchemaDef::DispatchKey;
 };
 
