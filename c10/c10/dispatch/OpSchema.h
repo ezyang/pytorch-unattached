@@ -15,9 +15,6 @@ static_assert(is_tensor_arg<const Tensor&>::value, "");
 static_assert(is_tensor_arg<Tensor&&>::value, "");
 static_assert(!is_tensor_arg<int>::value, "");
 }
-}
-
-namespace details {
 
 template<class... Args> auto getTensorTypeIds_(const Args&... args) {
   return guts::filter_map<TensorTypeId, is_tensor_arg>([] (const Tensor& t) { return t._to_impl()->type_id(); }, args...);
@@ -25,44 +22,18 @@ template<class... Args> auto getTensorTypeIds_(const Args&... args) {
 
 // TODO Test getTensorTypeIds_
 
-template<class T>
-struct is_operator_function_type final : std::false_type {};
-template<class Result, class... Args>
-struct is_operator_function_type<Result (Args...)> final : std::true_type {};
-
-// TODO Test is_operator_function_type
-
 template<class T, typename = void>
-struct has_signature_defined final : std::false_type {};
+struct has_signature_defined : std::false_type {};
 template<class T>
 struct has_signature_defined<T, guts::void_t<
   typename T::Signature
->> final : std::true_type {};
+>> : std::true_type {};
 
 // TODO Test has_signature_defined
 
-template<class OpSchemaDef, class Enable = void> struct get_dispatch_key_type final {
-  // General case. Operator doesn't overwrite DispatchKey type. Use default.
-private:
-  static constexpr size_t num_tensor_args = guts::typelist::count_if<details::is_tensor_arg, typename guts::function_traits<typename OpSchemaDef::Signature>::argument_types>::value;
-public:
-  using type = DispatchKey<num_tensor_args>;
-};
-template<class OpSchemaDef>
-struct get_dispatch_key_type<OpSchemaDef, guts::void_t<typename OpSchemaDef::DispatchKey>> final {
-  // Special case. Operator overwrites DispatchKey type. Use that.
-  static_assert(guts::is_equality_comparable<typename OpSchemaDef::DispatchKey>::value, "Operator specified custom dispatch key type, but that type doesn't have the equality operator defined. Please define it.");
-  static_assert(guts::is_hashable<typename OpSchemaDef::DispatchKey>::value, "Operator specified custom dispatch key type, but that type doesn't have an overload for std::hash. Please define it.");
-  using type = typename OpSchemaDef::DispatchKey;
-};
-
-}
-
-
-template<class OpSchemaDef> class OpSchema final {
-private:
-  static_assert(details::has_signature_defined<OpSchemaDef>::value, "Given operator schema doesn't define a valid Signature member type.");
-  static_assert(details::is_operator_function_type<typename OpSchemaDef::Signature>::value, "Signature member of operator schema must be a function type.");
+template<class OpSchemaDef> class OpSignatureSchema final {
+  static_assert(details::has_signature_defined<OpSchemaDef>::value, "Operator schema doesn't define a valid Signature member type.");
+  static_assert(guts::is_function_type<typename OpSchemaDef::Signature>::value, "Signature member of operator schema must be a function type.");
 
   using signature_traits = guts::function_traits<typename OpSchemaDef::Signature>;
 public:
@@ -72,36 +43,75 @@ public:
 
   static constexpr size_t num_args = argument_types::size;
   static constexpr size_t num_tensor_args = guts::typelist::count_if<details::is_tensor_arg, argument_types>::value;
+};
 
-  using dispatch_key_type = typename details::get_dispatch_key_type<OpSchemaDef>::type;
+template<class T, typename = void>
+struct has_function_dispatchKeyForOpCalling_defined : std::false_type {};
+template<class T>
+struct has_function_dispatchKeyForOpCalling_defined<T, guts::void_t<
+  decltype(&T::dispatchKeyForOpCalling)
+>> : std::true_type {};
+
+template<class T, typename = void>
+struct has_function_dispatchKeyForOpRegistration_defined : std::false_type {};
+template<class T>
+struct has_function_dispatchKeyForOpRegistration_defined<T, guts::void_t<
+  decltype(&T::dispatchKeyForOpRegistration)
+>> : std::true_type {};
+
+template<class OpSchemaDef, class Enable = void> class OpDispatchKeySchema final {
+  // General case. Operator doesn't overwrite DispatchKey generation. Use default.
+  using signature = OpSignatureSchema<OpSchemaDef>;
+
+  static_assert(!has_function_dispatchKeyForOpCalling_defined<OpSchemaDef>::value, "Operator schema specifies a custom dispatchKeyForOpCalling function, but doesn't specify a custom DispatchKey type. Please specify it.");
+  static_assert(!has_function_dispatchKeyForOpRegistration_defined<OpSchemaDef>::value, "Operator schema specifies a custom dispatchKeyForOpRegistration function, but doesn't specify a custom DispatchKey type. Please specify it.");
+
+public:
+  using dispatch_key_type = DispatchKey<signature::num_tensor_args>;
 
   template<class... Args>
-  static inline DispatchKey<num_tensor_args> dispatchKey(const Args&... args) {
-    // TODO pass to OpSchemaDef::dispatchKey if defined
+  static inline DispatchKey<signature::num_tensor_args> dispatchKeyForOpCalling(const Args&... args) {
     using guts::typelist::map_t;
     using guts::typelist::typelist;
     static_assert(std::is_same<
       map_t<std::remove_cv_t, map_t<std::remove_reference_t, typelist<Args...>>>,
-      map_t<std::remove_cv_t, map_t<std::remove_reference_t, argument_types>>
-      >::value, "Invalid argument types passed to OpSchema::dispatchKey()");
-    return DispatchKey<num_tensor_args> {
+      map_t<std::remove_cv_t, map_t<std::remove_reference_t, typename signature::argument_types>>
+      >::value, "Invalid argument types passed to OpSchema::dispatchKeyForOpCalling()");
+    return DispatchKey<signature::num_tensor_args> {
       details::getTensorTypeIds_(args...)
     };
   }
 
-  static inline DispatchKey<num_tensor_args> dispatchKey() {
-    static_assert(OpSchema<OpSchemaDef>::num_tensor_args == 0, "DispatchKey can only be generated without tensor arguments if the OpSchemaDef doesn't have tensor arguments.");
-    return DispatchKey<num_tensor_args> {
-      std::array<TensorTypeId, 0>{}
-    };
-  }
-
-  static inline constexpr DispatchKey<num_tensor_args> dispatchKey(const std::array<TensorTypeId, num_tensor_args>& tensorTypeIds) {
-    // TODO pass to OpSchemaDef::dispatchKey if defined
-    return DispatchKey<num_tensor_args> {
+  static inline constexpr DispatchKey<signature::num_tensor_args> dispatchKeyForOpRegistration(const std::array<TensorTypeId, signature::num_tensor_args>& tensorTypeIds) {
+    return DispatchKey<signature::num_tensor_args> {
       std::move(tensorTypeIds)
     };
   }
+};
+
+template<class OpSchemaDef>
+class OpDispatchKeySchema<OpSchemaDef, guts::void_t<typename OpSchemaDef::DispatchKey>> final {
+  // Special case. Operator overwrites DispatchKey generation. Use that.
+  static_assert(guts::is_equality_comparable<typename OpSchemaDef::DispatchKey>::value, "Operator schema specified custom dispatch key type, but that type doesn't have the equality operator defined. Please define it.");
+  static_assert(guts::is_hashable<typename OpSchemaDef::DispatchKey>::value, "Operator schema specified custom dispatch key type, but that type doesn't have an overload for std::hash. Please define it.");
+
+  static_assert(has_function_dispatchKeyForOpCalling_defined<OpSchemaDef>::value, "Operator schema specifies a custom DispatchKey type but is missing the dispatchKeyForOpCalling function to specify how to generate dispatch keys.");
+  static_assert(has_function_dispatchKeyForOpRegistration_defined<OpSchemaDef>::value, "Operator schema specifies a custom DispatchKey type but is missing the dispatchKeyForOpRegistration function to specify how to generate dispatch keys.");
+
+  static_assert(guts::is_function_type<decltype(OpSchemaDef::dispatchKeyForOpCalling)>::value, "Operator schema defines dispatchKeyForOpCalling, but it isn't a function.");
+  static_assert(guts::is_function_type<decltype(OpSchemaDef::dispatchKeyForOpRegistration)>::value, "Operator schema defines dispatchKeyForOpRegistration, but it isn't a function.");
+
+public:
+
+  using dispatch_key_type = typename OpSchemaDef::DispatchKey;
+};
+
+}
+
+template<class OpSchemaDef> class OpSchema final {
+public:
+  using signature = details::OpSignatureSchema<OpSchemaDef>;
+  using dispatch = details::OpDispatchKeySchema<OpSchemaDef>;
 };
 
 // TODO Move to test cases
@@ -109,10 +119,10 @@ namespace test_opschema {
 struct SchemaDef final {
   using Signature = bool (int, Tensor, float, Tensor, Tensor, unsigned int);
 };
-static_assert(6 == OpSchema<SchemaDef>::num_args, "test num_tensor_args");
-static_assert(3 == OpSchema<SchemaDef>::num_tensor_args, "test num_tensor_args");
-static_assert(std::is_same<bool, typename OpSchema<SchemaDef>::return_type>::value, "test num_tensor_args");
-static_assert(std::is_same<guts::typelist::typelist<int, Tensor, float, Tensor, Tensor, unsigned int>, typename OpSchema<SchemaDef>::argument_types>::value, "test num_tensor_args");
+static_assert(6 == OpSchema<SchemaDef>::signature::num_args, "test num_tensor_args");
+static_assert(3 == OpSchema<SchemaDef>::signature::num_tensor_args, "test num_tensor_args");
+static_assert(std::is_same<bool, typename OpSchema<SchemaDef>::signature::return_type>::value, "test num_tensor_args");
+static_assert(std::is_same<guts::typelist::typelist<int, Tensor, float, Tensor, Tensor, unsigned int>, typename OpSchema<SchemaDef>::signature::argument_types>::value, "test num_tensor_args");
 }
 
 }

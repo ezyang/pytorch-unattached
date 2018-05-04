@@ -12,7 +12,6 @@ struct conditional final {
   using Signature = Tensor(bool, const Tensor&, Tensor);
 };
 struct add_notensor final {
-  using DispatchKey = c10::DispatchKey<0>;
   using Signature = int(int, int);
 };
 }

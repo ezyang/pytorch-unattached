@@ -231,4 +231,11 @@ static_assert(is_hashable<Hashable>::value, "");
 static_assert(!is_hashable<NotHashable>::value, "");
 }
 
+template<class T>
+struct is_function_type : std::false_type {};
+template<class Result, class... Args>
+struct is_function_type<Result (Args...)> : std::true_type {};
+
+// TODO Test is_function_type
+
 }}

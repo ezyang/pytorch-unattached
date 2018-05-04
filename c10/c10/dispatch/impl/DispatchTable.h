@@ -19,19 +19,19 @@ public:
   DispatchTable(): ops_() {}
 
   template<size_t num_tensor_args>
-  void registerOp(typename Schema::func_type* func, const TensorTypeId (&tensorTypeIds)[num_tensor_args]) {
-    static_assert(Schema::num_tensor_args == num_tensor_args, "Operator registration failed. Number of tensor type ids must match the number of tensor arguments in the operator signature.");
-    registerOp_(func, Schema::dispatchKey(guts::to_std_array(tensorTypeIds)));
+  void registerOp(typename Schema::signature::func_type* func, const TensorTypeId (&tensorTypeIds)[num_tensor_args]) {
+    static_assert(Schema::signature::num_tensor_args == num_tensor_args, "Operator registration failed. Number of tensor type ids must match the number of tensor arguments in the operator signature.");
+    registerOp_(func, Schema::dispatch::dispatchKeyForOpRegistration(guts::to_std_array(tensorTypeIds)));
   }
 
   // overload for ops with zero tensor arguments (C arrays with size zero are invalid in C++, so they can't use the method above)
-  void registerOp(typename Schema::func_type* func) {
-    static_assert(Schema::num_tensor_args == 0, "Operator registration failed. Number of tensor type ids must match the number of tensor arguments in the operator signature.");
-    registerOp_(func, Schema::dispatchKey());
+  void registerOp(typename Schema::signature::func_type* func) {
+    static_assert(Schema::signature::num_tensor_args == 0, "Operator registration failed. Number of tensor type ids must match the number of tensor arguments in the operator signature.");
+    registerOp_(func, Schema::dispatch::dispatchKeyForOpRegistration({}));
   }
 
   template<class... Args>
-  typename Schema::return_type call(Args&&... args) const {
+  typename Schema::signature::return_type call(Args&&... args) const {
     // TODO Better error message, but need to take care that reference arguments match non-reference arguments and so on.
     //      static_assert(std::is_same<typename Schema::return_type (Args...), typename Schema::func_type>::value, "Argument types don't match operator signature");
     auto operator_func = lookupOp_(args...);
@@ -40,16 +40,16 @@ public:
 
 private:
   template<class... Args>
-  typename Schema::func_type* lookupOp_(const Args&... args) const {
-    auto dispatchKey = Schema::dispatchKey(args...);
+  typename Schema::signature::func_type* lookupOp_(const Args&... args) const {
+    auto dispatchKey = Schema::dispatch::dispatchKeyForOpCalling(args...);
     auto found = ops_.find(dispatchKey);
     if (found == ops_.end()) {
       throw std::logic_error("Didn't find operator to dispatch to");
     }
-    return reinterpret_cast<typename Schema::func_type*>(found->second);
+    return reinterpret_cast<typename Schema::signature::func_type*>(found->second);
   }
 
-  void registerOp_(typename Schema::func_type* func, const typename Schema::dispatch_key_type& dispatchKey) {
+  void registerOp_(typename Schema::signature::func_type* func, const typename Schema::dispatch::dispatch_key_type& dispatchKey) {
     auto emplaced = ops_.emplace(dispatchKey, reinterpret_cast<void*>(func));
     if (!emplaced.second) {
       throw std::logic_error("Tried to register conflicting operators to the dispatcher.");
@@ -57,7 +57,7 @@ private:
   }
 
   // TODO Use better hash map
-  std::unordered_map<typename Schema::dispatch_key_type, void*> ops_;
+  std::unordered_map<typename Schema::dispatch::dispatch_key_type, void*> ops_;
 };
 
 }

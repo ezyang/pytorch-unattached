@@ -33,13 +33,13 @@ private:
 class OpRegistrarEntryPoint final {
 public:
   template<class OpSchemaDef, size_t num_tensor_args>
-  static OpRegistrar<OpSchemaDef> define(typename OpSchema<OpSchemaDef>::func_type* func, const TensorTypeId (&tensorTypeIds)[num_tensor_args]) {
+  static OpRegistrar<OpSchemaDef> define(typename OpSchema<OpSchemaDef>::signature::func_type* func, const TensorTypeId (&tensorTypeIds)[num_tensor_args]) {
     return OpRegistrar<OpSchemaDef>::create(func, tensorTypeIds);
   }
 
   // overload for ops with zero tensor arguments (C arrays with size zero are invalid in C++, so they can't use the method above)
   template<class OpSchemaDef>
-  static OpRegistrar<OpSchemaDef> define(typename OpSchema<OpSchemaDef>::func_type* func) {
+  static OpRegistrar<OpSchemaDef> define(typename OpSchema<OpSchemaDef>::signature::func_type* func) {
     return OpRegistrar<OpSchemaDef>::create(func);
   }
 };
