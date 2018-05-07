@@ -14,8 +14,8 @@ struct conditional final {
 struct add_notensor final {
   using Signature = int(int, int);
 
-  static int dispatch_key(int, int) {
-    return 0;
+  static std::string dispatch_key(int, int) {
+    return "bla";
   }
 };
 }
@@ -41,7 +41,7 @@ int add_notensor_op(int lhs, int rhs) {
 
 C10_REGISTER_OP(::ops::add_notensor)
   .kernel(&add_notensor_op)
-  .dispatchKey({});
+  .dispatchKey("bla");
 
 struct equals final {
   using Signature = bool(Tensor, Tensor);
