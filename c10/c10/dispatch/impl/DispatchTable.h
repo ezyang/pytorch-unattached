@@ -18,16 +18,8 @@ private:
 public:
   DispatchTable(): ops_() {}
 
-  template<size_t num_tensor_args>
-  void registerOp(typename Schema::signature::func_type* func, const TensorTypeId (&tensorTypeIds)[num_tensor_args]) {
-    static_assert(Schema::signature::num_tensor_args == num_tensor_args, "Operator registration failed. Number of tensor type ids must match the number of tensor arguments in the operator signature.");
-    registerOp_(func, Schema::dispatch::dispatchKeyForOpRegistration(guts::to_std_array(tensorTypeIds)));
-  }
-
-  // overload for ops with zero tensor arguments (C arrays with size zero are invalid in C++, so they can't use the method above)
-  void registerOp(typename Schema::signature::func_type* func) {
-    static_assert(Schema::signature::num_tensor_args == 0, "Operator registration failed. Number of tensor type ids must match the number of tensor arguments in the operator signature.");
-    registerOp_(func, Schema::dispatch::dispatchKeyForOpRegistration({}));
+  void registerOp(typename Schema::signature::func_type* func, const typename Schema::dispatch::registration_data_type& registration_data) {
+    registerOp_(func, Schema::dispatch::dispatchKeyForOpRegistration(registration_data));
   }
 
   template<class... Args>

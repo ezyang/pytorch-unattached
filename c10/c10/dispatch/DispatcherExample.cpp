@@ -13,6 +13,14 @@ struct conditional final {
 };
 struct add_notensor final {
   using Signature = int(int, int);
+
+  using DispatchKey = int;
+  static int dispatchKeyForOpCalling(int, int) {
+    return 0;
+  }
+  static int dispatchKeyForOpRegistration() {
+    return 0;
+  }
 };
 }
 C10_DEFINE_OP_SCHEMA(::ops::conditional);
@@ -33,7 +41,7 @@ int add_notensor_op(int lhs, int rhs) {
   return lhs + rhs;
 }
 
-C10_REGISTER_OP().define<::ops::add_notensor>(&add_notensor_op);
+C10_REGISTER_OP().define<::ops::add_notensor>(&add_notensor_op, {});
 
 int main() {
   Tensor t1 = tensor<int>({5});

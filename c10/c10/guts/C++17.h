@@ -1,6 +1,7 @@
 #pragma once
 
 #include <type_traits>
+#include <utility>
 
 /*
  * This header adds some utils with C++17 functionality
@@ -52,6 +53,31 @@ using void_t = std::void_t;
 // (it takes CWG1558 into account and also works for older compilers)
 template<typename... Ts> struct make_void { typedef void type;};
 template<typename... Ts> using void_t = typename make_void<Ts...>::type;
+
+#endif
+
+#ifdef __cpp_lib_apply
+
+using apply = std::apply;
+
+#else
+
+// Implementation from http://en.cppreference.com/w/cpp/utility/apply (but modified)
+namespace detail {
+template <class F, class Tuple, std::size_t... I>
+constexpr decltype(auto) apply_impl(F&& f, Tuple&& t, std::index_sequence<I...>)
+{
+    return std::forward<F>(f)(std::get<I>(std::forward<Tuple>(t))...);
+}
+}  // namespace detail
+
+template <class F, class Tuple>
+constexpr decltype(auto) apply(F&& f, Tuple&& t)
+{
+    return detail::apply_impl(
+        std::forward<F>(f), std::forward<Tuple>(t),
+        std::make_index_sequence<std::tuple_size<std::remove_reference_t<Tuple>>::value>{});
+}
 
 #endif
 
