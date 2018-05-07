@@ -50,7 +50,7 @@ inline Tensor tensor(const void* data, ArrayRef<int64_t> size, DataType dtype) {
 // to help the matcher out.
 template<typename T>
 inline Tensor tensor(ArrayRef<T> data, ArrayRef<int64_t> size) {
-  C10_CHECK(product(size) == data.size(),
+  C10_CHECK(static_cast<size_t>(product(size)) == data.size(),
             "tensor: tensor to be constructed is declared to have size ", size,
             " (and thus would contain ", product(size), " elements), but size of source data is ", data.size()
   );

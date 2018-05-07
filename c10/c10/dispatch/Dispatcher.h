@@ -13,6 +13,12 @@ public:
   }
 
   template<class OpSchemaDef, class... Args>
+  static auto deregisterOp(Args&&... args) {
+    auto& dispatch_table_for_this_op = c10_dispatch_table<OpSchemaDef>();
+    return dispatch_table_for_this_op.deregisterOp(std::forward<Args>(args)...);
+  }
+
+  template<class OpSchemaDef, class... Args>
   static auto call(Args&&... args) {
     auto& dispatch_table_for_this_op = c10_dispatch_table<OpSchemaDef>();
     return dispatch_table_for_this_op.call(std::forward<Args>(args)...);

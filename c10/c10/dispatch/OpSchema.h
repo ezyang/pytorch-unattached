@@ -46,107 +46,68 @@ public:
 };
 
 template<class T, typename = void>
-struct has_function_dispatchKeyForOpCalling_defined : std::false_type {};
+struct has_function_dispatch_key_defined : std::false_type {};
 template<class T>
-struct has_function_dispatchKeyForOpCalling_defined<T, guts::void_t<
-  decltype(&T::dispatchKeyForOpCalling)
->> : std::true_type {};
-
-template<class T, typename = void>
-struct has_function_dispatchKeyForOpRegistration_defined : std::false_type {};
-template<class T>
-struct has_function_dispatchKeyForOpRegistration_defined<T, guts::void_t<
-  decltype(&T::dispatchKeyForOpRegistration)
+struct has_function_dispatch_key_defined<T, guts::void_t<
+  decltype(&T::dispatch_key)
 >> : std::true_type {};
 
 // General case. Operator doesn't overwrite DispatchKey generation. Use default.
-template<class OpSchemaDef, class Enable = void> class OpDispatchKeySchema final {
+template<class OpSchemaDef, class Enable = void> class OpDispatchKeySchema final {};
+template<class OpSchemaDef>
+class OpDispatchKeySchema<OpSchemaDef, std::enable_if_t<!has_function_dispatch_key_defined<OpSchemaDef>::value>> final {
   using signature = OpSignatureSchema<OpSchemaDef>;
-
-  static_assert(!has_function_dispatchKeyForOpCalling_defined<OpSchemaDef>::value, "Operator schema specifies a custom dispatchKeyForOpCalling function, but doesn't specify a custom DispatchKey type. Please specify it.");
-  static_assert(!has_function_dispatchKeyForOpRegistration_defined<OpSchemaDef>::value, "Operator schema specifies a custom dispatchKeyForOpRegistration function, but doesn't specify a custom DispatchKey type. Please specify it.");
 
 public:
   using dispatch_key_type = DispatchKey<signature::num_tensor_args>;
-  using registration_data_type = std::array<TensorTypeId, signature::num_tensor_args>;
 
   template<class... Args>
-  static inline dispatch_key_type dispatchKeyForOpCalling(const Args&... args) {
+  static inline dispatch_key_type dispatch_key(const Args&... args) {
     using guts::typelist::map_t;
     using guts::typelist::typelist;
     static_assert(std::is_same<
       map_t<std::remove_cv_t, map_t<std::remove_reference_t, typelist<Args...>>>,
       map_t<std::remove_cv_t, map_t<std::remove_reference_t, typename signature::argument_types>>
-      >::value, "Invalid argument types passed to OpSchema::dispatchKeyForOpCalling()");
+      >::value, "Invalid argument types passed to OpSchema::dispatch_key()");
     return dispatch_key_type {
       details::getTensorTypeIds_(args...)
     };
   }
-
-  static inline constexpr dispatch_key_type dispatchKeyForOpRegistration(const registration_data_type& tensorTypeIds) {
-    // TODO static_assert(Schema::signature::num_tensor_args == num_tensor_args, "Operator registration failed. Number of tensor type ids must match the number of tensor arguments in the operator signature.");
-    // TODO Also do checking of this kind for custom dispatch keys
-    return dispatch_key_type {
-      tensorTypeIds
-    };
-  }
-
-  // overload for ops with zero tensor arguments (C arrays with size zero are invalid in C++, so they can't use the method above)
-  /*void registerOp(typename Schema::signature::func_type* func) {
-    static_assert(Schema::signature::num_tensor_args == 0, "Operator registration failed. Number of tensor type ids must match the number of tensor arguments in the operator signature.");
-    return dispatch_key_type {};
-  }*/
 };
 
 // Special case. Operator overwrites DispatchKey generation. Use that.
 template<class OpSchemaDef>
-class OpDispatchKeySchema<OpSchemaDef, guts::void_t<typename OpSchemaDef::DispatchKey>> final {
+class OpDispatchKeySchema<OpSchemaDef, std::enable_if_t<has_function_dispatch_key_defined<OpSchemaDef>::value>> final {
   using signature = OpSignatureSchema<OpSchemaDef>;
 
-  static_assert(guts::is_equality_comparable<typename OpSchemaDef::DispatchKey>::value, "Operator schema specified custom dispatch key type, but that type doesn't have the equality operator defined. Please define it.");
-  static_assert(guts::is_hashable<typename OpSchemaDef::DispatchKey>::value, "Operator schema specified custom dispatch key type, but that type doesn't have an overload for std::hash. Please define it.");
+  static_assert(guts::is_function_type<decltype(OpSchemaDef::dispatch_key)>::value, "Operator schema defines dispatch_key member, but it isn't a function.");
 
-  static_assert(has_function_dispatchKeyForOpCalling_defined<OpSchemaDef>::value, "Operator schema specifies a custom DispatchKey type but is missing the dispatchKeyForOpCalling function to specify how to generate dispatch keys.");
-  static_assert(has_function_dispatchKeyForOpRegistration_defined<OpSchemaDef>::value, "Operator schema specifies a custom DispatchKey type but is missing the dispatchKeyForOpRegistration function to specify how to generate dispatch keys.");
+  using dispatch_key_traits = guts::function_traits<decltype(OpSchemaDef::dispatch_key)>;
 
-  static_assert(guts::is_function_type<decltype(OpSchemaDef::dispatchKeyForOpCalling)>::value, "Operator schema defines dispatchKeyForOpCalling, but it isn't a function.");
-  static_assert(guts::is_function_type<decltype(OpSchemaDef::dispatchKeyForOpRegistration)>::value, "Operator schema defines dispatchKeyForOpRegistration, but it isn't a function.");
+public:
+  using dispatch_key_type = typename dispatch_key_traits::return_type;
 
-  using dispatchKeyForOpCalling_traits = guts::function_traits<decltype(OpSchemaDef::dispatchKeyForOpCalling)>;
-  using dispatchKeyForOpRegistration_traits = guts::function_traits<decltype(OpSchemaDef::dispatchKeyForOpRegistration)>;
+private:
+
+  static_assert(guts::is_equality_comparable<dispatch_key_type>::value, "Operator schema specified custom dispatch_key() derivation function, but the returned dispatch key type doesn't have the equality operator defined. Please define it.");
+  static_assert(guts::is_hashable<dispatch_key_type>::value, "Operator schema specified custom dispatch_key() derivation function, but the returned dispatch key type doesn't have an overload for std::hash. Please define it.");
 
   static_assert(std::is_same<
-    guts::typelist::map_t<std::remove_cv_t, guts::typelist::map_t<std::remove_reference_t, typename dispatchKeyForOpCalling_traits::argument_types>>,
+    guts::typelist::map_t<std::remove_cv_t, guts::typelist::map_t<std::remove_reference_t, typename dispatch_key_traits::argument_types>>,
     guts::typelist::map_t<std::remove_cv_t, guts::typelist::map_t<std::remove_reference_t, typename signature::argument_types>>
-    >::value, "Operator schema defines dispatchKeyForOpCalling, but the arguments don't match the operator signature.");
-  static_assert(std::is_same<
-    typename dispatchKeyForOpCalling_traits::return_type,
-    typename OpSchemaDef::DispatchKey
-    >::value, "Operator schema defines dispatchKeyForOpCalling, but the return value doesn't match the defined DispatchKey type.");
-
-  static_assert(std::is_same<
-    typename dispatchKeyForOpRegistration_traits::return_type,
-    typename OpSchemaDef::DispatchKey
-    >::value, "Operator schema defines dispatchKeyForOpRegistration, but the return value doesn't match the defined DispatchKey type.");
+    >::value, "Operator schema defines custom dispatch_key() derivation function, but the arguments don't match the operator signature.");
 
 public:
 
-  using dispatch_key_type = typename OpSchemaDef::DispatchKey;
-  using registration_data_type = typename dispatchKeyForOpRegistration_traits::argument_types::tuple_type;
-
   template<class... Args>
-  static inline dispatch_key_type dispatchKeyForOpCalling(const Args&... args) {
+  static inline dispatch_key_type dispatch_key(const Args&... args) {
     using guts::typelist::map_t;
     using guts::typelist::typelist;
     static_assert(std::is_same<
       map_t<std::remove_cv_t, map_t<std::remove_reference_t, typelist<Args...>>>,
       map_t<std::remove_cv_t, map_t<std::remove_reference_t, typename signature::argument_types>>
-      >::value, "Invalid argument types passed to OpSchema::dispatchKeyForOpCalling()");
-    return OpSchemaDef::dispatchKeyForOpCalling(args...);
-  }
-
-  static inline constexpr dispatch_key_type dispatchKeyForOpRegistration(const registration_data_type& registration_data) {
-    return guts::apply(&OpSchemaDef::dispatchKeyForOpRegistration, registration_data);
+      >::value, "Invalid argument types passed to OpSchema::dispatch_key()");
+    return OpSchemaDef::dispatch_key(args...);
   }
 };
 

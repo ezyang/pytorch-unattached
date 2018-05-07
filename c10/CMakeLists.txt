@@ -63,10 +63,11 @@ target_include_directories(c10 PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:${C10_INSTALL_INCLUDE_SUBDIR}>
     )
-target_compile_options(c10 PRIVATE -Wall -Wextra -Wold-style-cast -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-include-dirs -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-promo -Wstrict-overflow=5 -Wundef -fdiagnostics-show-option -Wconversion -Wpedantic -Wno-gnu-zero-variadic-macro-arguments -Werror)
+target_compile_options(c10 PRIVATE -Wall -Wextra -Wold-style-cast -Wno-missing-braces -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-include-dirs -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-promo -Wstrict-overflow=5 -Wundef -fdiagnostics-show-option -Wconversion -Wpedantic -Wno-gnu-zero-variadic-macro-arguments -Werror)
 set_property(TARGET c10 PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 add_executable(c10_dispatch_example c10/dispatch/DispatcherExample.cpp)
+target_compile_options(c10_dispatch_example PRIVATE -Wall -Wextra -Wold-style-cast -Wno-missing-braces -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-include-dirs -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-promo -Wstrict-overflow=5 -Wundef -fdiagnostics-show-option -Wconversion -Wpedantic -Wno-gnu-zero-variadic-macro-arguments -Werror)
 target_link_libraries(c10_dispatch_example c10)
 set_property(TARGET c10_dispatch_example PROPERTY POSITION_INDEPENDENT_CODE ON)
 

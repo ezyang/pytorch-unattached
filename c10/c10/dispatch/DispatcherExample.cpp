@@ -14,11 +14,7 @@ struct conditional final {
 struct add_notensor final {
   using Signature = int(int, int);
 
-  using DispatchKey = int;
-  static int dispatchKeyForOpCalling(int, int) {
-    return 0;
-  }
-  static int dispatchKeyForOpRegistration() {
+  static int dispatch_key(int, int) {
     return 0;
   }
 };
@@ -35,13 +31,31 @@ Tensor conditional_op(bool condition, const Tensor& thenTensor, Tensor elseTenso
   }
 }
 
-C10_REGISTER_OP().define<::ops::conditional>(&conditional_op, {CPU_TENSOR(), CPU_TENSOR()});
+C10_REGISTER_OP(::ops::conditional)
+  .kernel(&conditional_op)
+  .dispatchKey({CPU_TENSOR(), CPU_TENSOR()});
 
 int add_notensor_op(int lhs, int rhs) {
   return lhs + rhs;
 }
 
-C10_REGISTER_OP().define<::ops::add_notensor>(&add_notensor_op, {});
+C10_REGISTER_OP(::ops::add_notensor)
+  .kernel(&add_notensor_op)
+  .dispatchKey({});
+
+struct equals final {
+  using Signature = bool(Tensor, Tensor);
+};
+
+C10_DEFINE_OP_SCHEMA(::equals);
+
+bool equals_impl(Tensor, Tensor) {
+  return true;
+}
+
+C10_REGISTER_OP(::equals)
+  .kernel(&equals_impl)
+  .dispatchKey({CPU_TENSOR(), CPU_TENSOR()});
 
 int main() {
   Tensor t1 = tensor<int>({5});

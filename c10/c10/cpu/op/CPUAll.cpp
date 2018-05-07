@@ -37,7 +37,9 @@ Tensor zeros(ArrayRef<int64_t> sizes, DataType dtype) {
   return r;
 }
 
-C10_REGISTER_OP().define<c10::ops::zeros>(&zeros, {});
+C10_REGISTER_OP(c10::ops::zeros)
+  .kernel(&zeros)
+  .dispatchKey({});
 
 // Channeling Caffe2 Tensor::Tensor(const T& value, Context* context)
 void copy_(const Tensor& self, DataType dtype, const void* p, int64_t size_bytes) {
@@ -162,7 +164,9 @@ bool equal(Tensor self, Tensor other) {
   }
 }
 
-C10_REGISTER_OP().define<c10::ops::equals>(&equal, {{CPU_TENSOR(), CPU_TENSOR()}});
+C10_REGISTER_OP(c10::ops::equals)
+  .kernel(&equal)
+  .dispatchKey({CPU_TENSOR(), CPU_TENSOR()});
 
 /*
 // Channeling Caffe2 Tensor::CopyFrom(const Tensor<SrcContext>& src, ContextForCopy* context)

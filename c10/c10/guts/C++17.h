@@ -45,7 +45,7 @@ struct negation : bool_constant<!bool(B::value)> { };
 
 #ifdef __cpp_lib_void_t
 
-using void_t = std::void_t;
+template<class T> using void_t = std::void_t<T>;
 
 #else
 
@@ -63,6 +63,7 @@ using apply = std::apply;
 #else
 
 // Implementation from http://en.cppreference.com/w/cpp/utility/apply (but modified)
+// TODO This is an incomplete implementation of std::apply, not working for member functions.
 namespace detail {
 template <class F, class Tuple, std::size_t... I>
 constexpr decltype(auto) apply_impl(F&& f, Tuple&& t, std::index_sequence<I...>)

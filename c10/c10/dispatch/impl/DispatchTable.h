@@ -18,8 +18,19 @@ private:
 public:
   DispatchTable(): ops_() {}
 
-  void registerOp(typename Schema::signature::func_type* func, const typename Schema::dispatch::registration_data_type& registration_data) {
-    registerOp_(func, Schema::dispatch::dispatchKeyForOpRegistration(registration_data));
+  void registerOp(typename Schema::signature::func_type* func, typename Schema::dispatch::dispatch_key_type dispatch_key) {
+    auto emplaced = ops_.emplace(std::move(dispatch_key), reinterpret_cast<void*>(func));
+    if (!emplaced.second) {
+      throw std::logic_error("Tried to register conflicting operators to the dispatcher.");
+    }
+  }
+
+  void deregisterOp(const typename Schema::dispatch::dispatch_key_type& dispatch_key) {
+    auto found = ops_.find(dispatch_key);
+    if (found == ops_.end()) {
+      throw std::logic_error("Tried to deregister an operator that isn't registered.");
+    }
+    ops_.erase(found);
   }
 
   template<class... Args>
@@ -33,19 +44,12 @@ public:
 private:
   template<class... Args>
   typename Schema::signature::func_type* lookupOp_(const Args&... args) const {
-    auto dispatchKey = Schema::dispatch::dispatchKeyForOpCalling(args...);
-    auto found = ops_.find(dispatchKey);
+    auto dispatch_key = Schema::dispatch::dispatch_key(args...);
+    auto found = ops_.find(dispatch_key);
     if (found == ops_.end()) {
       throw std::logic_error("Didn't find operator to dispatch to");
     }
     return reinterpret_cast<typename Schema::signature::func_type*>(found->second);
-  }
-
-  void registerOp_(typename Schema::signature::func_type* func, const typename Schema::dispatch::dispatch_key_type& dispatchKey) {
-    auto emplaced = ops_.emplace(dispatchKey, reinterpret_cast<void*>(func));
-    if (!emplaced.second) {
-      throw std::logic_error("Tried to register conflicting operators to the dispatcher.");
-    }
   }
 
   // TODO Use better hash map
