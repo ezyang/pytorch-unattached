@@ -89,14 +89,14 @@ template<class Result, class... Args>
 struct function_traits<Result (Args...)> {
   using func_type = Result (Args...);
   using return_type = Result;
-  using argument_types = typelist::typelist<Args...>;
+  using parameter_types = typelist::typelist<Args...>;
 };
 
 namespace test_function_traits {
 static_assert(std::is_same<void, typename function_traits<void (int, float)>::return_type>::value, "test");
 static_assert(std::is_same<int, typename function_traits<int (int, float)>::return_type>::value, "test");
-static_assert(std::is_same<typelist::typelist<int, float>, typename function_traits<void (int, float)>::argument_types>::value, "test");
-static_assert(std::is_same<typelist::typelist<int, float>, typename function_traits<int (int, float)>::argument_types>::value, "test");
+static_assert(std::is_same<typelist::typelist<int, float>, typename function_traits<void (int, float)>::parameter_types>::value, "test");
+static_assert(std::is_same<typelist::typelist<int, float>, typename function_traits<int (int, float)>::parameter_types>::value, "test");
 }
 
 namespace details {
