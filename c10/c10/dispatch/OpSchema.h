@@ -6,6 +6,8 @@
 
 namespace c10 {
 
+  // TODO Rename argument_types -> parameter_types, argument_names -> parameter_names
+
 namespace details {
 template<class Arg> using is_tensor_arg = std::is_same<Tensor, std::remove_cv_t<std::remove_reference_t<Arg>>>;
 

@@ -80,6 +80,7 @@ public:
 }
 
 // TODO Can the builder logic be moved to compile time?
+// TODO Rename Op -> Kernel
 #define CONCAT_IMPL( x, y ) x##y
 #define MACRO_CONCAT( x, y ) CONCAT_IMPL( x, y )
 #define C10_REGISTER_OP(OpSchemaDef)                                                           \

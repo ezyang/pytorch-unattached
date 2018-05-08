@@ -10,6 +10,10 @@ using c10::cpu::CPU_TENSOR;
 namespace ops {
 struct conditional final {
   using Signature = Tensor(bool, const Tensor&, Tensor);
+
+  static constexpr auto parameter_names = {
+    "condition", "lhs", "rhs"
+  };
 };
 struct add_notensor final {
   using Signature = int(int, int);
