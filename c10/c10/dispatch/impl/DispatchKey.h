@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../TensorTypeId.h"
+#include <c10/dispatch/TensorTypeId.h>
 
 #include <vector>
 #include <functional>
