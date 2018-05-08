@@ -7,6 +7,7 @@
 #include <c10/guts/Metaprogramming.h>
 #include "../OpSchema.h"
 #include "../TensorTypeId.h"
+#include <shared_mutex>
 
 namespace c10 {
 
@@ -19,6 +20,8 @@ public:
   DispatchTable(): ops_() {}
 
   void registerOp(typename Schema::signature::func_type* func, typename Schema::dispatch::dispatch_key_type dispatch_key) {
+    std::unique_lock<std::shared_mutex> lock(ops_mutex_);
+
     auto emplaced = ops_.emplace(std::move(dispatch_key), reinterpret_cast<void*>(func));
     if (!emplaced.second) {
       throw std::logic_error("Tried to register conflicting operators to the dispatcher.");
@@ -26,6 +29,8 @@ public:
   }
 
   void deregisterOp(const typename Schema::dispatch::dispatch_key_type& dispatch_key) {
+    std::unique_lock<std::shared_mutex> lock(ops_mutex_);
+
     auto found = ops_.find(dispatch_key);
     if (found == ops_.end()) {
       throw std::logic_error("Tried to deregister an operator that isn't registered.");
@@ -44,6 +49,8 @@ public:
 private:
   template<class... Args>
   typename Schema::signature::func_type* lookupOp_(const Args&... args) const {
+    std::shared_lock<std::shared_mutex> lock(ops_mutex_);
+
     auto dispatch_key = Schema::dispatch::dispatch_key(args...);
     auto found = ops_.find(dispatch_key);
     if (found == ops_.end()) {
@@ -54,6 +61,7 @@ private:
 
   // TODO Use better hash map
   std::unordered_map<typename Schema::dispatch::dispatch_key_type, void*> ops_;
+  mutable std::shared_mutex ops_mutex_;
 };
 
 }
