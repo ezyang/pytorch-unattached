@@ -13,6 +13,9 @@ namespace details {
   using _tensorTypeId_underlyingType = uint8_t;
 }
 
+/**
+ * Dynamic type ID of a Tensor argument.  It represents something like CPUFloatTensor, etc.
+ */
 class TensorTypeId final : public guts::IdWrapper<TensorTypeId, details::_tensorTypeId_underlyingType> {
 public:
   // Don't use this!

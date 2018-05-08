@@ -4,6 +4,11 @@
 
 // TODO Better error message when this definition is missing
 
+/**
+ * Macro for defining an operator schema.  Every user-defined OpSchemaDef struct must
+ * invoke this macro on it.  Internally, this arranges for the dispatch table for
+ * the operator to be created.
+ */
 #define C10_DEFINE_OP_SCHEMA(OpSchemaDef)                                         \
   template<>                                                                      \
   c10::DispatchTable<OpSchemaDef>& c10_dispatch_table<OpSchemaDef>() {            \
