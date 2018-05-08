@@ -146,10 +146,10 @@ struct SchemaDef final {
     "1", "2", "3", "4", "5", "6"
   };
 };
-static_assert(6 == OpSchema<SchemaDef>::signature::num_args, "test num_tensor_args");
-static_assert(3 == OpSchema<SchemaDef>::signature::num_tensor_args, "test num_tensor_args");
-static_assert(std::is_same<bool, typename OpSchema<SchemaDef>::signature::return_type>::value, "test num_tensor_args");
-static_assert(std::is_same<guts::typelist::typelist<int, Tensor, float, Tensor, Tensor, unsigned int>, typename OpSchema<SchemaDef>::signature::parameter_types>::value, "test num_tensor_args");
+static_assert(6 == OpSchema<SchemaDef>::signature::num_args, "test num_dispatch_args");
+static_assert(3 == OpSchema<SchemaDef>::signature::num_tensor_args, "test num_dispatch_args");
+static_assert(std::is_same<bool, typename OpSchema<SchemaDef>::signature::return_type>::value, "test num_dispatch_args");
+static_assert(std::is_same<guts::typelist::typelist<int, Tensor, float, Tensor, Tensor, unsigned int>, typename OpSchema<SchemaDef>::signature::parameter_types>::value, "test num_dispatch_args");
 
 // TODO test OpSchema::dispatch stuff
 }
