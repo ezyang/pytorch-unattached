@@ -1,16 +1,29 @@
 #pragma once
 
+#include <c10/guts/Metaprogramming.h>
+#include <c10/dispatch/OpSchema.h>
+#include <c10/dispatch/TensorTypeId.h>
+
 #include <type_traits>
 #include <array>
 #include <unordered_map>
 #include <iostream>
-#include <c10/guts/Metaprogramming.h>
-#include "../OpSchema.h"
-#include "../TensorTypeId.h"
 #include <shared_mutex>
 
 namespace c10 {
 
+/**
+ * Per-operator dispatch table.
+ *
+ * Given an operator specified by 'OpSchemaDef', this class records a dispatch table for
+ * various backends provided for this operator.  For example, if we consider the operator
+ * add(Tensor, Tensor), the dispatch table for this operator may contain implementations
+ * for various dynamic tensor types, such as (CPUFloatTensor, CPUFloatTensor),
+ * (CUDAFloatTensor, CUDAFloatTensor), etc.
+ *
+ * @tparam OpSchemaDef The operator signature this dispatch table encodes.
+ */
+// TODO: Support dispatch for meta-operators (which apply to all dynamic types)
 template<class OpSchemaDef>
 class DispatchTable final {
 private:
@@ -19,6 +32,11 @@ private:
 public:
   DispatchTable(): ops_() {}
 
+  /**
+   * Register an operator implementation in the table at some dispatch key.
+   * @param func Concrete function implementation to register
+   * @param dispatch_key Dispatch key to implement this function with
+   */
   void registerOp(typename Schema::signature::func_type* func, typename Schema::dispatch::dispatch_key_type dispatch_key) {
     std::unique_lock<std::shared_mutex> lock(ops_mutex_);
 
@@ -28,6 +46,14 @@ public:
     }
   }
 
+  /**
+   * Unregister the operator implementation at some dispatch key.
+   *
+   * @param dispatch_key Dispatch key to unregister.
+   */
+  // TODO: This isn't going to work so well when we get more complicated override patterns!
+  // In this case, an operator will show up in multiple slots, and erasing them one-by-one
+  // is probably not such a good idea.
   void deregisterOp(const typename Schema::dispatch::dispatch_key_type& dispatch_key) {
     std::unique_lock<std::shared_mutex> lock(ops_mutex_);
 
@@ -38,6 +64,17 @@ public:
     ops_.erase(found);
   }
 
+  /**
+   * Perform a dynamic dispatch on this table.
+   *
+   * @tparam Args Perfect forwarding template arguments to the dispatch
+   * @param args Arguments to invoke the function with
+   * @return Returned value of the operator
+   */
+  // ezyang to smessmer: It's a pity this has to be templated, because we technically already know
+  // the argument type of this function (since this class is templated on OpSchemaDef).  Is there
+  // really nothing we can do here?  Well, since it's perfect forwarding it should work OK for
+  // most cases.
   template<class... Args>
   typename Schema::signature::return_type call(Args&&... args) const {
     // TODO Better error message, but need to take care that reference arguments match non-reference arguments and so on.
@@ -49,6 +86,8 @@ public:
 private:
   template<class... Args>
   typename Schema::signature::func_type* lookupOp_(const Args&... args) const {
+    // ezyang to smessmer: We will probably need to remove the read-side lock.  This will probably
+    // necessitate replacing unordered_map with our own map implementation
     std::shared_lock<std::shared_mutex> lock(ops_mutex_);
 
     auto dispatch_key = Schema::dispatch::dispatch_key(args...);
