@@ -7,21 +7,32 @@
 namespace c10 {
 
 namespace details {
+
+// TODO: Automatically extract type ids from DataType as well
+
+/**
+ * If Arg is a Tensor or reference to a Tensor, provide the member constant value equal to true.  Otherwise
+ * return false.
+ */
 template<class Arg> using is_tensor_arg = std::is_same<Tensor, std::remove_cv_t<std::remove_reference_t<Arg>>>;
 
-namespace test_is_tensor_arg {
-static_assert(is_tensor_arg<Tensor>::value, "");
-static_assert(is_tensor_arg<const Tensor&>::value, "");
-static_assert(is_tensor_arg<Tensor&&>::value, "");
-static_assert(!is_tensor_arg<int>::value, "");
-}
-
+/**
+ * Extract the type ids of all tensors in a variadic list of arguments
+ *
+ * @tparam Args Inferred variadic list of argument types
+ * @param args List of arguments to get type ids from
+ * @return std::array<TypeId, n>, where n is the number of tensor arguments (is_tensor_arg) in the class
+ */
 template<class... Args> auto getTensorTypeIds_(const Args&... args) {
   return guts::filter_map<TensorTypeId, is_tensor_arg>([] (const Tensor& t) { return t._to_impl()->type_id(); }, args...);
 }
 
 // TODO Test getTensorTypeIds_
 
+/**
+ * If T is a struct with a type field Signature, provides the member constant
+ * @tparam T
+ */
 template<class T, typename = void>
 struct has_signature_defined : std::false_type {};
 template<class T>
@@ -40,17 +51,37 @@ struct has_parameter_names_defined<T, guts::void_t<
 
 // TODO Test has_parameter_names_defined
 
+/**
+ * Wrapper class around a user-provided schema definition some useful information about the schema.
+ *
+ * @tparam OpSchemaDef Operator schema definition.  See OpSchema for more details.
+ */
 template<class OpSchemaDef> class OpSignatureSchema final {
   static_assert(details::has_signature_defined<OpSchemaDef>::value, "Operator schema doesn't define a valid Signature member type.");
   static_assert(guts::is_function_type<typename OpSchemaDef::Signature>::value, "Signature member of operator schema must be a function type.");
 
   using signature_traits = guts::function_traits<typename OpSchemaDef::Signature>;
 public:
+  /**
+   * The function type OpSchemaDef::Signature
+   */
   using func_type = typename signature_traits::func_type;
+  /**
+   * The return type of the function OpSchemaDef::Signature
+   */
   using return_type = typename signature_traits::return_type;
+  /**
+   * A type list of the parameter types of OpSchemaDef::Signature
+   */
   using parameter_types = typename signature_traits::parameter_types;
 
+  /**
+   * The number of arguments of OpSchemaDef::Signature
+   */
   static constexpr size_t num_args = parameter_types::size;
+  /**
+   * The number of tensor arguments (as per is_tensor_arg) in OpSchemaDef::Signature
+   */
   static constexpr size_t num_tensor_args = guts::typelist::count_if<details::is_tensor_arg, parameter_types>::value;
 
 private:
@@ -59,11 +90,19 @@ private:
   static_assert(std::is_same<const std::array<const char*, num_args>, decltype(OpSchemaDef::parameter_names)>::value, "Operator schema defines parameter_names member, but it isn't the correct type. Must be a static constexpr std::array of const char* with one entry for each parameter.");
 
 public:
+  /**
+   * The names of the parameters (as per OpSchemaDef::parameter_names)
+   * @return Array
+   */
   static constexpr const std::array<const char*, num_args>& parameter_names() {
     return OpSchemaDef::parameter_names;
   }
 };
 
+/**
+ * If T has a method dispatch_key, provide a member constant value equal to true.  Otherwise return false.
+ * @tparam T
+ */
 template<class T, typename = void>
 struct has_function_dispatch_key_defined : std::false_type {};
 template<class T>
@@ -71,8 +110,16 @@ struct has_function_dispatch_key_defined<T, guts::void_t<
   decltype(&T::dispatch_key)
 >> : std::true_type {};
 
-// General case. Operator doesn't overwrite DispatchKey generation. Use default.
+/**
+ * Wrapper class around a user-defined schema definition providing a way of computing a dispatch key
+ * from arguments matching the signature of that schema.
+ *
+ * @tparam OpSchemaDef Operator schema definition.  See OpSchema for more details.
+ * @tparam Enable Inferred, used to control specialization
+ */
 template<class OpSchemaDef, class Enable = void> class OpDispatchKeySchema final {};
+
+// General case. Operator doesn't overwrite DispatchKey generation. Use default.
 template<class OpSchemaDef>
 class OpDispatchKeySchema<OpSchemaDef, std::enable_if_t<!has_function_dispatch_key_defined<OpSchemaDef>::value>> final {
   using signature = OpSignatureSchema<OpSchemaDef>;
@@ -132,26 +179,28 @@ public:
 
 }
 
+/**
+ * Wrapper class for user-defined OpSchemaDef, providing functionality for determining
+ * information about the signature and dispatching on that signature.  This is the
+ * "public" facing class.
+ *
+ * @tparam OpSchemaDef User-defined OpSchemaDef.
+ *   This struct is expected to define:
+ *      - a function type Signature
+ *      - a constexpr std::array<const char*, n_args> parameter_names field (where n_args is
+ *        the number of arguments in Signature)
+ */
 template<class OpSchemaDef> class OpSchema final {
 public:
+  /**
+   * Information about the signature
+   */
   using signature = details::OpSignatureSchema<OpSchemaDef>;
+  /**
+   * Functionality for dispatching on that signature
+   */
   using dispatch = details::OpDispatchKeySchema<OpSchemaDef>;
 };
 
-// TODO Move to test cases
-namespace test_opschema {
-struct SchemaDef final {
-  using Signature = bool (int, Tensor, float, Tensor, Tensor, unsigned int);
-  static constexpr std::array<const char*, 6> parameter_names = {
-    "1", "2", "3", "4", "5", "6"
-  };
-};
-static_assert(6 == OpSchema<SchemaDef>::signature::num_args, "test num_dispatch_args");
-static_assert(3 == OpSchema<SchemaDef>::signature::num_tensor_args, "test num_dispatch_args");
-static_assert(std::is_same<bool, typename OpSchema<SchemaDef>::signature::return_type>::value, "test num_dispatch_args");
-static_assert(std::is_same<guts::typelist::typelist<int, Tensor, float, Tensor, Tensor, unsigned int>, typename OpSchema<SchemaDef>::signature::parameter_types>::value, "test num_dispatch_args");
-
 // TODO test OpSchema::dispatch stuff
-}
-
 }

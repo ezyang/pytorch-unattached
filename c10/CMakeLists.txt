@@ -58,7 +58,7 @@ add_library(c10 SHARED
     c10/General.cpp
     c10/KeywordArgs.cpp
     c10/Context.cpp
-)
+    c10/dispatch/OpSchema_test.cpp)
 target_include_directories(c10 PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:${C10_INSTALL_INCLUDE_SUBDIR}>
@@ -117,6 +117,7 @@ if (BUILD_TEST)
       c10/cpu/op/CPUAll_test.cpp
       c10/dispatch/DispatcherExample.cpp
       c10/Registry_test.cpp
+      c10/dispatch/OpSchema_test.cpp
       )
     # Without directory or longest extension
     get_filename_component(test_name "${test_src}" NAME_WE)
