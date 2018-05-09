@@ -5,7 +5,7 @@
 using namespace c10;
 
 constexpr auto equals() {
-  return OpSig()
+  return OpSig<0>()
       .arg<int>("lhs")
       .arg<int>("rhs");
 }
