@@ -58,7 +58,7 @@ add_library(c10 SHARED
     c10/General.cpp
     c10/KeywordArgs.cpp
     c10/Context.cpp
-    c10/dispatch/OpSchema_test.cpp)
+    c10/dispatch/OpSchema_test.cpp c10/dispatch/OpSig.cpp c10/dispatch/OpSig.h c10/dispatch/OpSig_test.cpp)
 target_include_directories(c10 PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:${C10_INSTALL_INCLUDE_SUBDIR}>
