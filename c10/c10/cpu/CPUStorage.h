@@ -4,7 +4,6 @@
 #include <c10/cpu/CPUAllocator.h>
 #include <c10/guts/Storage.h>
 #include <c10/Error.h>
-#include <c10/DataType.h>
 
 #include <cstddef>
 #include <memory>
@@ -28,7 +27,7 @@ class CPUStorageImpl final : public guts::StorageImpl {
 public:
   // TODO: Permit allocator to be passed in through this function
 
-  CPUStorageImpl(DataType data_type)
+  CPUStorageImpl(caffe2::TypeMeta data_type)
       : StorageImpl(data_type)
   {}
 
@@ -57,7 +56,7 @@ public:
     if (copy_size_bytes <= 0) return;
     if (auto copy = data_type_.copy()) {
       // Swapped argument order?! How confusing!
-      copy(src, data_.get(), copy_size_bytes / data_type_.itemsize());
+      copy(src, data_.get(), static_cast<size_t>(copy_size_bytes / static_cast<int64_t>(data_type_.itemsize())));
     } else {
       std::memcpy(data_.get(), src, static_cast<size_t>(copy_size_bytes));
     }
@@ -77,10 +76,10 @@ public:
   //
   // NB: This has the logic for Caffe2-style placement-new/placement-delete
   void resize_(int64_t new_size_bytes, bool keep_data = true) {
-    C10_ASSERT(new_size_bytes % data_type_.itemsize() == 0,
+    C10_ASSERT(new_size_bytes % static_cast<int64_t>(data_type_.itemsize()) == 0,
       "requested new size of ", new_size_bytes, " bytes is not a multiple of ",
-      data_type_.itemsize(), "(aka, the item size of dtype ", data_type_, ")");
-    auto new_size_elems = new_size_bytes / data_type_.itemsize();
+      data_type_.itemsize(), "(aka, the item size of dtype ", data_type_.id(), ")");
+    auto new_size_elems = new_size_bytes / static_cast<int64_t>(data_type_.itemsize());
     if (!resizable_) throw std::runtime_error("trying to resize storage that is not resizable");
     // TODO: Consider bringing back the old realloc path from TH?
     data_t old_data = std::move(data_);
@@ -96,7 +95,7 @@ public:
         // TODO: It is too bad we can't move capture 'deleter'; an unnecessary
         // copy happens here. (It also happened in the old Caffe2 version of this code)
         auto deleter_with_dtor = [dtor, deleter, new_size_elems](void* p) {
-          dtor(p, new_size_elems);
+          dtor(p, static_cast<size_t>(new_size_elems));
           deleter(p);
         };
         // TODO: It's probably an error if ctor is set but not dtor
@@ -108,7 +107,7 @@ public:
       // we will attempt to deallocate the data using the placement-deleter, which is obviously
       // not going to work
       if (auto ctor = data_type_.ctor()) {
-        ctor(data_.get(), new_size_bytes / data_type_.itemsize());
+        ctor(data_.get(), static_cast<size_t>(new_size_bytes / static_cast<int64_t>(data_type_.itemsize())));
       }
     }
     auto old_size_bytes = size_bytes_;

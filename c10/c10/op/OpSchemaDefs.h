@@ -18,7 +18,7 @@ struct equals final {
 };
 
 struct zeros final {
-  using Signature = Tensor(ArrayRef<int64_t>, DataType);
+  using Signature = Tensor(ArrayRef<int64_t>, caffe2::TypeMeta);
   // ezyang: This is really long...
   static constexpr std::array<const char*, 2> parameter_names = {
     "shape", "dtype"

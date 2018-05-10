@@ -2,7 +2,7 @@
 
 #include <c10/guts/IntrusivePtr.h>
 #include <c10/Error.h>
-#include <c10/DataType.h>
+#include <c10/guts/caffe2/typeid.h>
 
 #include <cstddef>
 #include <memory>
@@ -59,7 +59,7 @@ protected:
 
   // The scalar type of this storage.  We need this in case we need to do placement-new/placement-delete
   // after allocation
-  DataType data_type_;
+  caffe2::TypeMeta data_type_;
 
   // Is this storage resizable?  If it comes externally, or has been shared to some external system, it may not be.
   // Corresponds to TH_STORAGE_RESIZABLE.
@@ -109,13 +109,13 @@ protected:
   // because you will always actually have a CPUStorageImpl or something similar, and
   // so if you use the base class you will miss methods.
 
-  StorageImpl(DataType data_type)
+  StorageImpl(caffe2::TypeMeta data_type)
       : data_(nullptr), size_bytes_(0), data_type_(data_type), resizable_(true) {}
 
   // TODO: Make a more descriptive constructor for non-resizable things.  Note that since you're
   // using make_shared most of the time for storages, you probably just want to make another
   // top-level 'make' function.
-  StorageImpl(DataType data_type, data_t &&data, int64_t size, bool resizable = true)
+  StorageImpl(caffe2::TypeMeta data_type, data_t &&data, int64_t size, bool resizable = true)
       : data_(std::move(data)), size_bytes_(size), data_type_(data_type), resizable_(resizable) {}
 
   // NB: Move constructor is legitimately used to destructively overwrite a storage, as in the case of a resize_()

@@ -24,7 +24,10 @@ template<class Arg> using is_tensor_arg = std::is_same<Tensor, std::remove_cv_t<
  * @return std::array<TypeId, n>, where n is the number of tensor arguments (is_tensor_arg) in the class
  */
 template<class... Args> auto getTensorTypeIds_(const Args&... args) {
-  return guts::filter_map<TensorTypeId, is_tensor_arg>([] (const Tensor& t) { return t._to_impl()->type_id(); }, args...);
+  return guts::filter_map<TensorParameterDispatchKey, is_tensor_arg>([] (const Tensor& t) {
+    auto* impl = t._to_impl();
+    return TensorParameterDispatchKey{impl->type_id(), impl->dtype().id()};
+  }, args...);
 }
 
 // TODO Test getTensorTypeIds_

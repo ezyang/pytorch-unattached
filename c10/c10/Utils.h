@@ -2,7 +2,7 @@
 
 #include <c10/DimVector.h>
 #include <c10/ArrayRef.h>
-#include <c10/DataType.h>
+#include <c10/guts/caffe2/typeid.h>
 
 #include <numeric>
 #include <cinttypes>
@@ -48,18 +48,18 @@ inline std::pair<int64_t, int64_t> compute_extent(ArrayRef<int64_t> size, ArrayR
 }
 
 inline int64_t required_new_storage_size_bytes(
-    DataType dtype,
+    caffe2::TypeMeta dtype,
     ArrayRef<int64_t> size,
     ArrayRef<int64_t> stride,
     int64_t storage_offset_bytes) {
   int64_t low_watermark, high_watermark;
   std::tie(low_watermark, high_watermark) = compute_extent(size, stride);
-  if (low_watermark * dtype.itemsize() + storage_offset_bytes < 0) {
+  if (low_watermark * static_cast<int64_t>(dtype.itemsize()) + storage_offset_bytes < 0) {
     C10_CHECK(0, "The given size ", size, " and stride ", stride, " can result in a negative index ",
     "as large as ", low_watermark, ", but this could result in an underflow as your storage ",
-    "begins at element ", storage_offset_bytes / dtype.itemsize());
+    "begins at element ", storage_offset_bytes / static_cast<int64_t>(dtype.itemsize()));
   }
-  return high_watermark * dtype.itemsize() + storage_offset_bytes;
+  return high_watermark * static_cast<int64_t>(dtype.itemsize()) + storage_offset_bytes;
 }
 
 inline int64_t product(ArrayRef<int64_t> xs) {

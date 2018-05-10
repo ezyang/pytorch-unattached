@@ -83,7 +83,7 @@ Tensor conditional_kernel(bool conditional, Tensor lhs, Tensor rhs) {
 }
 C10_REGISTER_OP(op::conditional)
   .kernel(&conditional_kernel)
-  .dispatchKey({CPU_TENSOR(), CPU_TENSOR()});
+  .dispatchKey({c10::details::TensorParameterDispatchKey{CPU_TENSOR(), caffe2::TypeMeta::Id<float>()}, c10::details::TensorParameterDispatchKey{CPU_TENSOR(), caffe2::TypeMeta::Id<float>()}});
 
 
 

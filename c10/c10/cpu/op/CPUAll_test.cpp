@@ -10,7 +10,7 @@ static auto shapes = ::testing::Values(I{}, I{0}, I{1}, I{0,1}, I{1,1}, I{2,1}, 
 class CPUAll_empty_test : public ::testing::TestWithParam<ArrayRef<int64_t>> {};
 TEST_P(CPUAll_empty_test, int32) {
   ArrayRef<int64_t> size = GetParam();
-  constexpr DataType dtype = int32;
+  const caffe2::TypeMeta dtype = caffe2::TypeMeta::Make<int32_t>();
 
   Tensor x = cpu::op::empty(size, dtype);
   ASSERT_EQ(x.dtype(), dtype);
@@ -22,7 +22,7 @@ class CPUAll_zeros_test : public ::testing::TestWithParam<ArrayRef<int64_t>> {};
 TEST_P(CPUAll_zeros_test, int32) {
   ArrayRef<int64_t> size = GetParam();
   using dtype_t = int32_t;
-  constexpr DataType dtype = c10::dtype<dtype_t>();
+  const caffe2::TypeMeta dtype = caffe2::TypeMeta::Make<dtype_t>();
 
   Tensor x = cpu::op::zeros(size, dtype);
   ASSERT_EQ(x.dtype(), dtype);
@@ -36,13 +36,14 @@ TEST_P(CPUAll_zeros_test, int32) {
 INSTANTIATE_TEST_CASE_P(CPUAll_zeros_test_shapes, CPUAll_zeros_test, shapes);
 
 TEST(CPUAll_zero_test, int32) {
-  Tensor x = zeros({2,2}, int32);
-  Tensor y = empty({2,2}, int32);
+  Tensor x = zeros({2,2}, caffe2::TypeMeta::Make<int32_t>());
+  Tensor y = empty({2,2}, caffe2::TypeMeta::Make<int32_t>());
   cpu::op::zero_(y);
   ASSERT_TRUE(x.equal(y));
 }
 
 TEST(CPUAll_tensor_test, int32_zeros) {
+  const auto int32 = caffe2::TypeMeta::Make<int32_t>();
   std::initializer_list<int32_t> data = {0,0,0,0};
   Tensor x = cpu::op::tensor(data.begin(), {2,2}, int32);
   ASSERT_TRUE(x.equal(zeros({2,2}, int32)));
@@ -50,7 +51,7 @@ TEST(CPUAll_tensor_test, int32_zeros) {
 
 TEST(CPUAll_tensor_test, int32_indexed) {
   std::initializer_list<int32_t> data = {0, 1, 2, 3};
-  Tensor x = cpu::op::tensor(data.begin(), {2, 2}, int32);
+  Tensor x = cpu::op::tensor(data.begin(), {2, 2}, caffe2::TypeMeta::Make<int32_t>());
   auto *p = x.data<int32_t>();
   for (int i = 0; i < x.numel(); i++) {
     ASSERT_EQ(p[i], data.begin()[i]);
@@ -58,6 +59,7 @@ TEST(CPUAll_tensor_test, int32_indexed) {
 }
 
 TEST(CPUAll_copy, int32) {
+  const auto int32 = caffe2::TypeMeta::Make<int32_t>();
   std::initializer_list<int32_t> data = {0, 1, 2, 3};
   Tensor x = tensor(ArrayRef<int32_t>{data}, {2, 2});
   Tensor y = empty({2,2}, int32);

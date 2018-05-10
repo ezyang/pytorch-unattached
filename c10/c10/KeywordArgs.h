@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DataType.h"
+#include <c10/guts/caffe2/typeid.h>
 #include "Tensor.h"
 
 namespace c10 {
@@ -17,7 +17,7 @@ namespace c10 {
  * This class MAY participate in dispatch.
  */
 class KeywordArgs final {
-  DataType dtype_;
+  caffe2::TypeMeta dtype_;
   Tensor out_;
 public:
   KeywordArgs() = default;
@@ -26,13 +26,13 @@ public:
   KeywordArgs& operator=(KeywordArgs &&rhs) = default;
   KeywordArgs& operator=(const KeywordArgs &rhs) = default;
 
-  DataType dtype() const { return dtype_; }
+  caffe2::TypeMeta dtype() const { return dtype_; }
   Tensor out() const { return out_; }
 
   // Modern compilers are able to optimize away the copies.  See:
   // https://godbolt.org/g/fqErkU
 
-  KeywordArgs dtype(DataType dtype) const {
+  KeywordArgs dtype(caffe2::TypeMeta dtype) const {
     KeywordArgs args(*this);
     args.dtype_ = dtype;
     return args;

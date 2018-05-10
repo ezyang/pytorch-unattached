@@ -18,20 +18,20 @@ static CPUTensorImpl* _cpu_impl(const Tensor& self) {
 void zero_(const Tensor& self) {
   // TODO: This is wrong
   C10_ASSERT(self.is_contiguous(), "TODO: non-contiguous not supported yet (sizes = ", self.sizes(), ", strides = ", self.strides(), ")")
-  std::memset(self.data_ptr(), 0, static_cast<size_t>(self.numel() * self.dtype().itemsize()));
+  std::memset(self.data_ptr(), 0, static_cast<size_t>(self.numel() * static_cast<int64_t>(self.dtype().itemsize())));
 }
 
 // TCB
-Tensor empty(ArrayRef<int64_t> sizes, DataType dtype) {
+Tensor empty(ArrayRef<int64_t> sizes, caffe2::TypeMeta dtype) {
   auto r = Tensor::_from_impl(new CPUTensorImpl(dtype));
   // Please do not copy paste the line below, it relies on the invariant that
   // a fresh storage was allocated
-  _cpu_impl(r)->cpu_storage()->resize_(product(sizes) * dtype.itemsize(), /*keep data*/ false);
+  _cpu_impl(r)->cpu_storage()->resize_(product(sizes) * static_cast<int64_t>(dtype.itemsize()), /*keep data*/ false);
   _cpu_impl(r)->_set_sizes_and_strides(sizes, contiguous_strides(sizes));
   return r;
 }
 
-Tensor zeros(ArrayRef<int64_t> sizes, DataType dtype) {
+Tensor zeros(ArrayRef<int64_t> sizes, caffe2::TypeMeta dtype) {
   auto r = op::empty(sizes, dtype);  // nonvirtual
   r.zero_();
   return r;
@@ -42,14 +42,14 @@ C10_REGISTER_OP(c10::ops::zeros)
   .dispatchKey({});
 
 // Channeling Caffe2 Tensor::Tensor(const T& value, Context* context)
-void copy_(const Tensor& self, DataType dtype, const void* p, int64_t size_bytes) {
+void copy_(const Tensor& self, caffe2::TypeMeta dtype, const void* p, int64_t size_bytes) {
   C10_CHECK(dtype == self.dtype(), "");
   _cpu_impl(self)->cpu_storage()->copy_(p, size_bytes);
 }
 
-Tensor tensor(const void* data, ArrayRef<int64_t> sizes, DataType dtype) {
+Tensor tensor(const void* data, ArrayRef<int64_t> sizes, caffe2::TypeMeta dtype) {
   auto r = op::empty(sizes, dtype); // nonvirtual
-  op::copy_(r, dtype, data, r.numel() * dtype.itemsize()); // nonvirtual
+  op::copy_(r, dtype, data, r.numel() * static_cast<int64_t>(dtype.itemsize())); // nonvirtual
   return r;
 }
 
@@ -83,7 +83,7 @@ void legacy_pytorch_resize_(const Tensor &self, ArrayRef<int64_t> new_size, Arra
   bool unchanged = new_size.equals(self.sizes()) && new_stride.equals(self.strides());
   if (unchanged) return;
   // TODO: This is an error-prone API call.  Might be safer to just pass self directly
-  auto new_size_bytes = required_new_storage_size_bytes(self.dtype(), new_size, new_stride, self.storage_offset() * self.dtype().itemsize());
+  auto new_size_bytes = required_new_storage_size_bytes(self.dtype(), new_size, new_stride, self.storage_offset() * static_cast<int64_t>(self.dtype().itemsize()));
   auto impl = _cpu_impl(self);
   auto cpu_storage = impl->cpu_storage();
   if (new_size_bytes > cpu_storage->size_bytes() ) {
@@ -97,7 +97,7 @@ void legacy_caffe2_resize_(const Tensor &self, ArrayRef<int64_t> new_size) {
   if (new_size.equals(self.sizes())) return;
   // TODO: This is an error-prone API call.  Might be safer to just pass self directly
   auto new_stride = contiguous_strides(new_size);
-  auto new_size_bytes = required_new_storage_size_bytes(self.dtype(), new_size, new_stride, self.storage_offset() * self.dtype().itemsize());
+  auto new_size_bytes = required_new_storage_size_bytes(self.dtype(), new_size, new_stride, self.storage_offset() * static_cast<int64_t>(self.dtype().itemsize()));
   auto impl = _cpu_impl(self);
   auto cpu_storage = impl->cpu_storage();
   bool needs_resize =
@@ -117,7 +117,7 @@ void legacy_caffe2_resize_(const Tensor &self, ArrayRef<int64_t> new_size) {
 // TODO: Consider also having a direct "numels" variant.
 // Note that this version accounts correctly for strides
 void reserve_(const Tensor& self, ArrayRef<int64_t> new_size) {
-  auto new_size_bytes = required_new_storage_size_bytes(self.dtype(), new_size, self.strides(), self.storage_offset() * self.dtype().itemsize());
+  auto new_size_bytes = required_new_storage_size_bytes(self.dtype(), new_size, self.strides(), self.storage_offset() * static_cast<int64_t>(self.dtype().itemsize()));
   auto cpu_storage = _cpu_impl(self)->cpu_storage();
   if (new_size_bytes > cpu_storage->size_bytes()) {
     // NB: Size of this tensor is unchanged!
@@ -135,7 +135,7 @@ void extend_(const Tensor& self, int64_t num, double growthPct) {
   // Compute initialize size increase
   DimVector new_size{self.sizes()};
   new_size[0] += num;
-  auto tentative_new_size_bytes = required_new_storage_size_bytes(self.dtype(), new_size, self.strides(), self.storage_offset() * self.dtype().itemsize());
+  auto tentative_new_size_bytes = required_new_storage_size_bytes(self.dtype(), new_size, self.strides(), self.storage_offset() * static_cast<int64_t>(self.dtype().itemsize()));
   if (tentative_new_size_bytes <= cpu_storage->size_bytes()) {
     // Cheap! Do the quick and easy thing
     impl->_set_sizes_and_strides(new_size, self.strides());
@@ -144,7 +144,7 @@ void extend_(const Tensor& self, int64_t num, double growthPct) {
 
   // Compute the true size increase, to ensure extend() amortizes correctly
   new_size[0] = std::max(new_size[0], static_cast<int64_t>(std::ceil(static_cast<double>(self.sizes()[0]) * (growthPct + 100.0) / 100.0)));
-  auto new_size_bytes = required_new_storage_size_bytes(self.dtype(), new_size, self.strides(), self.storage_offset() * self.dtype().itemsize());
+  auto new_size_bytes = required_new_storage_size_bytes(self.dtype(), new_size, self.strides(), self.storage_offset() * static_cast<int64_t>(self.dtype().itemsize()));
   cpu_storage->resize_(new_size_bytes, /* keep data */ true);
   impl->_set_sizes_and_strides(new_size, self.strides());
 }
@@ -154,11 +154,11 @@ void extend_(const Tensor& self, int64_t num, double growthPct) {
 bool equal(Tensor self, Tensor other) {
   C10_ASSERT(self._to_impl()->type_id() == CPU_TENSOR(), "self.type_id() = ", self._to_impl()->type_id());
   C10_ASSERT(other._to_impl()->type_id() == CPU_TENSOR(), "other.type_id() = ", other._to_impl()->type_id());
-  C10_ASSERT(self.dtype() == other.dtype(), "self.dtype() = ", self.dtype(), "; other.dtype() = ", other.dtype())
+  C10_ASSERT(self.dtype() == other.dtype(), "self.dtype() = ", self.dtype().id(), "; other.dtype() = ", other.dtype().id())
   if (!self.sizes().equals(other.sizes())) return false;
   if (self.is_contiguous() && other.is_contiguous()) {
     // TODO: This is WRONG for floating point
-    return std::memcmp(self.data_ptr(), other.data_ptr(), static_cast<size_t>(self.numel() * self.dtype().itemsize())) == 0;
+    return std::memcmp(self.data_ptr(), other.data_ptr(), static_cast<size_t>(self.numel() * static_cast<int64_t>(self.dtype().itemsize()))) == 0;
   } else {
     C10_ASSERT(false, "non-contiguous equality not supported yet");
   }
@@ -166,7 +166,7 @@ bool equal(Tensor self, Tensor other) {
 
 C10_REGISTER_OP(c10::ops::equals)
   .kernel(&equal)
-  .dispatchKey({CPU_TENSOR(), CPU_TENSOR()});
+  .dispatchKey({c10::details::TensorParameterDispatchKey{CPU_TENSOR(), caffe2::TypeMeta::Id<float>()}, c10::details::TensorParameterDispatchKey{CPU_TENSOR(), caffe2::TypeMeta::Id<float>()}});
 
 /*
 // Channeling Caffe2 Tensor::CopyFrom(const Tensor<SrcContext>& src, ContextForCopy* context)

@@ -1,12 +1,36 @@
 #pragma once
 
 #include <c10/dispatch/TensorTypeId.h>
+#include <c10/guts/caffe2/typeid.h>
 
 #include <vector>
 #include <functional>
 
 namespace c10 {
 
+namespace details {
+struct TensorParameterDispatchKey final {
+  TensorTypeId tensorType;
+  // TODO Move this CaffeTypeId to c10 namespace
+  caffe2::CaffeTypeId dataType;
+};
+inline constexpr bool operator==(const TensorParameterDispatchKey& lhs, const TensorParameterDispatchKey& rhs) {
+  return lhs.tensorType == rhs.tensorType && lhs.dataType == rhs.dataType;
+}
+}
+}
+
+namespace std {
+  template<>
+  struct hash<c10::details::TensorParameterDispatchKey> final {
+    // TODO constexpr hashing
+    size_t operator()(const c10::details::TensorParameterDispatchKey& obj) const {
+      return std::hash<c10::TensorTypeId>()(obj.tensorType) ^ std::hash<caffe2::CaffeTypeId>()(obj.dataType);
+    }
+  };
+}
+
+namespace c10 {
 /**
  * The dispatch key encodes the runtime type identity of a function call arguments,
  * specifying what aspects of this identity can be dynamically dispatched on.
@@ -22,9 +46,9 @@ namespace c10 {
  */
 // ezyang to smessmer: You originally called this num_dispatch_args, but we might
 // include things like dtype in this dispatch key, so I renamed it
-template<size_t num_dispatch_args>
+template<size_t num_tensor_args>
 struct DispatchKey final {
-  std::array<TensorTypeId, num_dispatch_args> argTypes;
+  std::array<details::TensorParameterDispatchKey, num_tensor_args> argTypes;
 };
 
 template<size_t num_dispatch_args>
@@ -41,9 +65,9 @@ namespace std {
     // TODO constexpr hashing
     size_t operator()(const c10::DispatchKey<num_dispatch_args>& obj) const {
       size_t hash_value = 0;
-      for (const auto& typeId : obj.argTypes) {
+      for (const auto& argType : obj.argTypes) {
         hash_value *= 10883; // prime
-        hash_value += std::hash<c10::TensorTypeId>()(typeId);
+        hash_value += std::hash<c10::details::TensorParameterDispatchKey>()(argType);
       }
       return hash_value;
     }

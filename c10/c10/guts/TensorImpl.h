@@ -5,9 +5,9 @@
 #include <c10/ArrayRef.h>
 #include <c10/SmallVector.h>
 #include <c10/Optional.h>
-#include <c10/DataType.h>
 #include <c10/DimVector.h>
 #include <c10/dispatch/TensorTypeIdRegistration.h>
+#include <c10/guts/caffe2/typeid.h>
 
 #include "IntrusivePtr.h"
 #include "Storage.h"
@@ -45,7 +45,7 @@ protected:
   // TODO: Pointer to scalar type means there's a possibly unnecessary indirection here!
   // TODO: This is going to be redundant with type_id_, so if we want to squeeze down sizes
   // we can make this a computed property from type_id_.
-  DataType dtype_;
+  caffe2::TypeMeta dtype_;
 
   DimVector sizes_;
 
@@ -84,7 +84,7 @@ protected:
   // an "is-a" to "has-a" relationship and inline the storage struct in Tensor.
 
 public:
-  explicit TensorImpl(TensorTypeId type_id, DataType dtype, ArrayRef<int64_t> sizes, ArrayRef<int64_t> strides, Storage storage, int64_t storage_offset_bytes)
+  explicit TensorImpl(TensorTypeId type_id, caffe2::TypeMeta dtype, ArrayRef<int64_t> sizes, ArrayRef<int64_t> strides, Storage storage, int64_t storage_offset_bytes)
       : IntrusivePtrTarget()
       , type_id_(type_id)
       , dtype_(dtype)
@@ -105,12 +105,12 @@ public:
 
   // Previously was type().scalarType() but I haven't committed to adding a Type object
   // to the design yet.
-  DataType dtype() const {
+  caffe2::TypeMeta dtype() const {
     return dtype_;
   }
 
   int64_t storage_offset() const {
-    return storage_offset_bytes_ / dtype_.itemsize();
+    return storage_offset_bytes_ / static_cast<int64_t>(dtype_.itemsize());
   }
 
   // NB: In Caffe2, this quantity is CACHED.  For simplicity, we don't cache it for now, but consider
@@ -188,7 +188,7 @@ public:
     C10_CHECK(type_id() == src->type_id(),
               "src tensor has type ", src->type_id(), ", but expected ", type_id(), " (from destination tensor)");
     C10_CHECK(dtype() == src->dtype(),
-              "src tensor has dtype ", src->dtype(), ", but expected dtype ", dtype(), " (from destination tensor)");
+              "src tensor has dtype ", src->dtype().id(), ", but expected dtype ", dtype().id(), " (from destination tensor)");
     if (src != this) storage_ = src->storage_;
     // NB: The storage_offset is relative!  This means you can't just translate
     //    x.set_(y.storage(), ...)
@@ -197,7 +197,7 @@ public:
     // because the first call would have "lost" the offset in y, but second call preserves it.
     // Really, what you need is for y.storage() to return a contiguous, 1D tensor that spans
     // all of storage, then no translation necessary.  TODO: implement this
-    storage_offset_bytes_ = src->storage_offset_bytes_ + storage_offset * dtype_.itemsize();
+    storage_offset_bytes_ = src->storage_offset_bytes_ + storage_offset * static_cast<int64_t>(dtype_.itemsize());
     _set_sizes_and_strides(new_sizes, new_strides);
   }
 
@@ -211,7 +211,7 @@ public:
 //      instead of an error, which should have happened.  It just seems morally wrong to privilege empty CPU
 //      tensors in this way.  Also, you don't get reliable pointer equality tests anymore.
 class UndefinedTensorImpl final : public TensorImpl {
-  UndefinedTensorImpl() : TensorImpl(TensorTypeIds::undefined(), c10::undefined_dtype, {}, {}, nullptr, 0) {};
+  UndefinedTensorImpl() : TensorImpl(TensorTypeIds::undefined(), caffe2::TypeMeta::Make<float>(), {}, {}, nullptr, 0) {};
 public:
   static UndefinedTensorImpl *singleton() {
     // smessmer to @ezyang: Not sure this singleton is a good idea. If wrapped in Tensor, it is subject to ref counting and might get destructed.
