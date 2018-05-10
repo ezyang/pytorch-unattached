@@ -41,7 +41,7 @@ Tensor conditional_op(bool condition, const Tensor& thenTensor, Tensor elseTenso
 
 C10_REGISTER_OP(::ops::conditional)
   .kernel(&conditional_op)
-  .dispatchKey({c10::details::TensorParameterDispatchKey{CPU_TENSOR(), caffe2::TypeMeta::Id<float>()}, c10::details::TensorParameterDispatchKey{CPU_TENSOR(), caffe2::TypeMeta::Id<float>()}});
+  .dispatchKey({c10::details::TensorParameterDispatchKey{CPU_TENSOR(), caffe2::TypeMeta::Id<int>()}, c10::details::TensorParameterDispatchKey{CPU_TENSOR(), caffe2::TypeMeta::Id<int>()}});
 
 int add_notensor_op(int lhs, int rhs) {
   return lhs + rhs;
@@ -66,7 +66,7 @@ bool equals_impl(Tensor, Tensor) {
 
 C10_REGISTER_OP(::equals)
   .kernel(&equals_impl)
-  .dispatchKey({c10::details::TensorParameterDispatchKey{CPU_TENSOR(), caffe2::TypeMeta::Id<float>()}, c10::details::TensorParameterDispatchKey{CPU_TENSOR(), caffe2::TypeMeta::Id<float>()}});
+  .dispatchKey({c10::details::TensorParameterDispatchKey{CPU_TENSOR(), caffe2::TypeMeta::Id<int>()}, c10::details::TensorParameterDispatchKey{CPU_TENSOR(), caffe2::TypeMeta::Id<int>()}});
 
 int main() {
   Tensor t1 = tensor<int>({5});
