@@ -38,7 +38,7 @@ public:
    * @param dispatch_key Dispatch key to implement this function with
    */
   void registerOp(typename Schema::signature::func_type* func, typename Schema::dispatch::dispatch_key_type dispatch_key) {
-    std::unique_lock<std::shared_mutex> lock(ops_mutex_);
+    std::unique_lock<std::shared_timed_mutex> lock(ops_mutex_);
 
     auto emplaced = ops_.emplace(std::move(dispatch_key), reinterpret_cast<void*>(func));
     if (!emplaced.second) {
@@ -55,7 +55,7 @@ public:
   // In this case, an operator will show up in multiple slots, and erasing them one-by-one
   // is probably not such a good idea.
   void deregisterOp(const typename Schema::dispatch::dispatch_key_type& dispatch_key) {
-    std::unique_lock<std::shared_mutex> lock(ops_mutex_);
+    std::unique_lock<std::shared_timed_mutex> lock(ops_mutex_);
 
     auto found = ops_.find(dispatch_key);
     if (found == ops_.end()) {
@@ -88,7 +88,7 @@ private:
   typename Schema::signature::func_type* lookupOp_(const Args&... args) const {
     // ezyang to smessmer: We will probably need to remove the read-side lock.  This will probably
     // necessitate replacing unordered_map with our own map implementation
-    std::shared_lock<std::shared_mutex> lock(ops_mutex_);
+    std::shared_lock<std::shared_timed_mutex> lock(ops_mutex_);
 
     auto dispatch_key = Schema::dispatch::dispatch_key(args...);
     auto found = ops_.find(dispatch_key);
@@ -100,7 +100,7 @@ private:
 
   // TODO Use better hash map
   std::unordered_map<typename Schema::dispatch::dispatch_key_type, void*> ops_;
-  mutable std::shared_mutex ops_mutex_;
+  mutable std::shared_timed_mutex ops_mutex_;
 };
 
 }
