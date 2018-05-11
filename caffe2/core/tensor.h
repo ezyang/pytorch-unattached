@@ -9,8 +9,6 @@
 #include <typeinfo>
 #include <vector>
 
-#include <c10/c10.h>
-
 #include "caffe2/core/common.h"
 #include "caffe2/core/flags.h"
 #include "caffe2/core/context.h"
@@ -757,8 +755,6 @@ class Tensor {
   // discourage the use of = for Tensors.
   Tensor& operator=(const Tensor& src) = delete;
 };
-
-#include "caffe2/core/cpu_tensor.h"
 
 // For simplicity, we will typedef Tensor<CPUContext> to TensorCPU.
 typedef Tensor<CPUContext> TensorCPU;
