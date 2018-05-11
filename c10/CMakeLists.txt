@@ -32,8 +32,9 @@ add_library(c10 SHARED
     c10/guts/Macros.cpp
     c10/guts/C++17.cpp
     c10/guts/IdWrapper.cpp
-    c10/guts/caffe2/typeid.cc
+    c10/guts/TypeId.cpp
     c10/guts/caffe2/common.cc
+    c10/guts/scope_guard.cpp
     c10/cpu/CPUStorage.cpp
     c10/cpu/CPUAllocator.cpp
     c10/cpu/CPUTensorImpl.cpp

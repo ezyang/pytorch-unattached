@@ -1,7 +1,7 @@
 #pragma once
 
 #include <c10/dispatch/TensorTypeId.h>
-#include <c10/guts/caffe2/typeid.h>
+#include <c10/guts/TypeId.h>
 
 #include <vector>
 #include <functional>
@@ -12,7 +12,7 @@ namespace details {
 struct TensorParameterDispatchKey final {
   TensorTypeId tensorType;
   // TODO Move this CaffeTypeId to c10 namespace
-  caffe2::CaffeTypeId dataType;
+  TypeId dataType;
 };
 inline constexpr bool operator==(const TensorParameterDispatchKey& lhs, const TensorParameterDispatchKey& rhs) {
   return lhs.tensorType == rhs.tensorType && lhs.dataType == rhs.dataType;
@@ -25,7 +25,7 @@ namespace std {
   struct hash<c10::details::TensorParameterDispatchKey> final {
     // TODO constexpr hashing
     size_t operator()(const c10::details::TensorParameterDispatchKey& obj) const {
-      return std::hash<c10::TensorTypeId>()(obj.tensorType) ^ std::hash<caffe2::CaffeTypeId>()(obj.dataType);
+      return std::hash<c10::TensorTypeId>()(obj.tensorType) ^ std::hash<c10::TypeId>()(obj.dataType);
     }
   };
 }

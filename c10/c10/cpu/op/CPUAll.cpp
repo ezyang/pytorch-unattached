@@ -22,7 +22,7 @@ void zero_(const Tensor& self) {
 }
 
 // TCB
-Tensor empty(ArrayRef<int64_t> sizes, caffe2::TypeMeta dtype) {
+Tensor empty(ArrayRef<int64_t> sizes, TypeMeta dtype) {
   auto r = Tensor::_from_impl(new CPUTensorImpl(dtype));
   // Please do not copy paste the line below, it relies on the invariant that
   // a fresh storage was allocated
@@ -31,7 +31,7 @@ Tensor empty(ArrayRef<int64_t> sizes, caffe2::TypeMeta dtype) {
   return r;
 }
 
-Tensor zeros(ArrayRef<int64_t> sizes, caffe2::TypeMeta dtype) {
+Tensor zeros(ArrayRef<int64_t> sizes, TypeMeta dtype) {
   auto r = op::empty(sizes, dtype);  // nonvirtual
   r.zero_();
   return r;
@@ -42,12 +42,12 @@ C10_REGISTER_OP(c10::ops::zeros)
   .dispatchKey({});
 
 // Channeling Caffe2 Tensor::Tensor(const T& value, Context* context)
-void copy_(const Tensor& self, caffe2::TypeMeta dtype, const void* p, int64_t size_bytes) {
+void copy_(const Tensor& self, TypeMeta dtype, const void* p, int64_t size_bytes) {
   C10_CHECK(dtype == self.dtype(), "");
   _cpu_impl(self)->cpu_storage()->copy_(p, size_bytes);
 }
 
-Tensor tensor(const void* data, ArrayRef<int64_t> sizes, caffe2::TypeMeta dtype) {
+Tensor tensor(const void* data, ArrayRef<int64_t> sizes, TypeMeta dtype) {
   auto r = op::empty(sizes, dtype); // nonvirtual
   op::copy_(r, dtype, data, r.numel() * static_cast<int64_t>(dtype.itemsize())); // nonvirtual
   return r;
@@ -166,7 +166,7 @@ bool equal(Tensor self, Tensor other) {
 
 C10_REGISTER_OP(c10::ops::equals)
   .kernel(&equal)
-  .dispatchKey({c10::details::TensorParameterDispatchKey{CPU_TENSOR(), caffe2::TypeMeta::Id<float>()}, c10::details::TensorParameterDispatchKey{CPU_TENSOR(), caffe2::TypeMeta::Id<float>()}});
+  .dispatchKey({c10::details::TensorParameterDispatchKey{CPU_TENSOR(), TypeMeta::Id<float>()}, c10::details::TensorParameterDispatchKey{CPU_TENSOR(), TypeMeta::Id<float>()}});
 
 /*
 // Channeling Caffe2 Tensor::CopyFrom(const Tensor<SrcContext>& src, ContextForCopy* context)

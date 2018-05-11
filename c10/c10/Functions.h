@@ -21,7 +21,7 @@ namespace c10 {
  * @param sizes A sequence of integers defining the shape of the output tensor
  * @param dtype The desired data type of returned tensor
  */
-inline Tensor empty(ArrayRef<int64_t> sizes, caffe2::TypeMeta dtype) {
+inline Tensor empty(ArrayRef<int64_t> sizes, TypeMeta dtype) {
   return cpu::op::empty(sizes, dtype);
 }
 
@@ -31,11 +31,11 @@ inline Tensor empty(ArrayRef<int64_t> sizes, caffe2::TypeMeta dtype) {
  * @param sizes A sequence of integers defining the shape of the output tensor
  * @param dtype The desired data type of returned tensor
  */
-inline Tensor zeros(ArrayRef<int64_t> size, caffe2::TypeMeta dtype) {
+inline Tensor zeros(ArrayRef<int64_t> size, TypeMeta dtype) {
   return cpu::op::zeros(size, dtype);
 }
 
-inline Tensor tensor(const void* data, ArrayRef<int64_t> size, caffe2::TypeMeta dtype) {
+inline Tensor tensor(const void* data, ArrayRef<int64_t> size, TypeMeta dtype) {
   return cpu::op::tensor(data, size, dtype);
 }
 
@@ -54,7 +54,7 @@ inline Tensor tensor(ArrayRef<T> data, ArrayRef<int64_t> size) {
             "tensor: tensor to be constructed is declared to have size ", size,
             " (and thus would contain ", product(size), " elements), but size of source data is ", data.size()
   );
-  return tensor(data.data(), size, caffe2::TypeMeta::Make<T>());
+  return tensor(data.data(), size, TypeMeta::Make<T>());
 }
 
 template<typename T>

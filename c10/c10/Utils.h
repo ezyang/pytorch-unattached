@@ -2,7 +2,7 @@
 
 #include <c10/DimVector.h>
 #include <c10/ArrayRef.h>
-#include <c10/guts/caffe2/typeid.h>
+#include <c10/guts/TypeId.h>
 
 #include <numeric>
 #include <cinttypes>
@@ -48,7 +48,7 @@ inline std::pair<int64_t, int64_t> compute_extent(ArrayRef<int64_t> size, ArrayR
 }
 
 inline int64_t required_new_storage_size_bytes(
-    caffe2::TypeMeta dtype,
+    TypeMeta dtype,
     ArrayRef<int64_t> size,
     ArrayRef<int64_t> stride,
     int64_t storage_offset_bytes) {

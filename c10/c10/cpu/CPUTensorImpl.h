@@ -17,7 +17,7 @@ C10_DECLARE_TENSOR_TYPE(CPU_TENSOR)
  */
 class CPUTensorImpl final : public guts::TensorImpl {
 public:
-  explicit CPUTensorImpl(caffe2::TypeMeta dtype)
+  explicit CPUTensorImpl(TypeMeta dtype)
   : TensorImpl(CPU_TENSOR(), dtype, {0}, {1}, std::make_shared<CPUStorageImpl>(dtype), 0)
   {};
 

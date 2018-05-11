@@ -7,7 +7,7 @@
 #include <c10/Optional.h>
 #include <c10/DimVector.h>
 #include <c10/dispatch/TensorTypeIdRegistration.h>
-#include <c10/guts/caffe2/typeid.h>
+#include <c10/guts/TypeId.h>
 
 #include "IntrusivePtr.h"
 #include "Storage.h"
@@ -45,7 +45,7 @@ protected:
   // TODO: Pointer to scalar type means there's a possibly unnecessary indirection here!
   // TODO: This is going to be redundant with type_id_, so if we want to squeeze down sizes
   // we can make this a computed property from type_id_.
-  caffe2::TypeMeta dtype_;
+  TypeMeta dtype_;
 
   DimVector sizes_;
 
@@ -84,7 +84,7 @@ protected:
   // an "is-a" to "has-a" relationship and inline the storage struct in Tensor.
 
 public:
-  explicit TensorImpl(TensorTypeId type_id, caffe2::TypeMeta dtype, ArrayRef<int64_t> sizes, ArrayRef<int64_t> strides, Storage storage, int64_t storage_offset_bytes)
+  explicit TensorImpl(TensorTypeId type_id, TypeMeta dtype, ArrayRef<int64_t> sizes, ArrayRef<int64_t> strides, Storage storage, int64_t storage_offset_bytes)
       : IntrusivePtrTarget()
       , type_id_(type_id)
       , dtype_(dtype)
@@ -105,7 +105,7 @@ public:
 
   // Previously was type().scalarType() but I haven't committed to adding a Type object
   // to the design yet.
-  caffe2::TypeMeta dtype() const {
+  TypeMeta dtype() const {
     return dtype_;
   }
 
@@ -211,7 +211,7 @@ public:
 //      instead of an error, which should have happened.  It just seems morally wrong to privilege empty CPU
 //      tensors in this way.  Also, you don't get reliable pointer equality tests anymore.
 class UndefinedTensorImpl final : public TensorImpl {
-  UndefinedTensorImpl() : TensorImpl(TensorTypeIds::undefined(), caffe2::TypeMeta::Make<float>(), {}, {}, nullptr, 0) {};
+  UndefinedTensorImpl() : TensorImpl(TensorTypeIds::undefined(), TypeMeta::Make<float>(), {}, {}, nullptr, 0) {};
 public:
   static UndefinedTensorImpl *singleton() {
     // smessmer to @ezyang: Not sure this singleton is a good idea. If wrapped in Tensor, it is subject to ref counting and might get destructed.

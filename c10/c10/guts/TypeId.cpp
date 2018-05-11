@@ -1,24 +1,26 @@
-#include "typeid.h"
+#include "TypeId.h"
 #include "scope_guard.h"
 
 #if !defined(_MSC_VER)
 #include <cxxabi.h>
 #endif
 
-namespace caffe2 {
-std::map<CaffeTypeId, string>& gTypeNames() {
-  static std::map<CaffeTypeId, string> g_type_names;
+using std::string;
+
+namespace c10 {
+std::unordered_map<TypeId, string>& gTypeNames() {
+  static std::unordered_map<TypeId, string> g_type_names;
   return g_type_names;
 }
 
-std::set<string>& gRegisteredTypeNames() {
-  static std::set<string> g_registered_type_names;
+std::unordered_set<string>& gRegisteredTypeNames() {
+  static std::unordered_set<string> g_registered_type_names;
   return g_registered_type_names;
 }
 
-std::mutex& gCaffe2TypeRegistrationMutex() {
-  static std::mutex g_caffe2_type_registration_mutex;
-  return g_caffe2_type_registration_mutex;
+std::mutex& gTypeRegistrationMutex() {
+  static std::mutex g_type_registration_mutex;
+  return g_type_registration_mutex;
 }
 
 #if defined(_MSC_VER)
@@ -52,15 +54,15 @@ namespace {
 // intended to be only instantiated once here.
 struct UninitializedTypeNameRegisterer {
   UninitializedTypeNameRegisterer() {
-    gTypeNames()[0] = "nullptr (uninitialized)";
+    gTypeNames()[TypeId(0)] = "nullptr (uninitialized)";
   }
 };
 static UninitializedTypeNameRegisterer g_uninitialized_type_name_registerer;
 
 } // namespace
 
-CAFFE_KNOWN_TYPE(float);
-CAFFE_KNOWN_TYPE(int32_t);
-CAFFE_KNOWN_TYPE(std::string);
+C10_KNOWN_TYPE(float);
+C10_KNOWN_TYPE(int32_t);
+C10_KNOWN_TYPE(std::string);
 
-} // namespace caffe2
+}

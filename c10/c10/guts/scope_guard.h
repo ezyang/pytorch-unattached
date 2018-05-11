@@ -11,7 +11,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace caffe2 {
+namespace c10 {
 
 // Copied from folly/ScopeGuard.h
 
@@ -22,6 +22,8 @@ class ScopeGuardImplBase {
   void dismiss() noexcept {
     dismissed_ = true;
   }
+
+  virtual ~ScopeGuardImplBase() = default;
 
  protected:
   ScopeGuardImplBase() noexcept : dismissed_(false) {}
