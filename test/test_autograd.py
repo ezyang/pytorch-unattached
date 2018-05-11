@@ -8,7 +8,7 @@ import warnings
 from copy import deepcopy
 from collections import OrderedDict
 from itertools import product
-from operator import mul
+from operator import mul, itemgetter
 from functools import reduce, wraps
 from torch.autograd.gradcheck import gradgradcheck, gradcheck
 from torch.autograd.function import once_differentiable
@@ -611,6 +611,77 @@ class TestAutograd(TestCase):
 
         TestFn.apply(b).sum().backward()
 
+    def test_free_deep_graph(self):
+        def scope():
+            depth = 150000
+            x = torch.randn(1, requires_grad=True)
+            y = x.clone()
+
+            # build a "chain" computation graph
+            for i in range(depth):
+                y = y + y * 0.000001
+
+            # graph deletion occurs when the above locals go out of scope.
+            # In this case `del y` will trigger it but it's easier to leave
+            # it to Python to delete the locals.
+
+        # Should not stack overflow
+        scope()
+
+    def test_free_deep_graph_complicated(self):
+        def scope():
+            depth = 100000
+            randchoice = torch.randint(2, [depth, 2])
+            x = torch.randn(1, requires_grad=True)
+            y = x.clone()
+
+            # Hold the two previous values
+            prev_values = [None, None]
+
+            # Build a "chain with skip connections" graph
+            for i in range(depth):
+                prev_tensors = [tensor for tensor in prev_values[:-1]
+                                if tensor is not None]
+                prev_values.append(y)
+                prev_values.pop(0)
+
+                # Definitely pick one tensor to add
+                y += y * 0.000001
+
+                # Possibly add other tensors
+                nprev = len(prev_tensors)
+                if nprev == 2:
+                    y += randchoice[depth].mul(torch.cat(prev_tensors)).sum()
+
+            # graph deletion occurs when the above locals go out of scope.
+
+        # Should not stack overflow
+        scope()
+
+    def test_free_deep_graph_pyfunction(self):
+        class MyOp(Function):
+            @staticmethod
+            def forward(ctx, tensor1, tensor2):
+                return tensor1 + tensor2
+
+            @staticmethod
+            def backward(ctx, grad_output):
+                return grad_output, grad_output
+
+        def scope():
+            depth = 150000
+            x = torch.randn(1, requires_grad=True)
+            y = x.clone()
+
+            # build deeply nested computation graph
+            for i in range(depth):
+                y = MyOp.apply(y, y)
+
+            # graph deletion occurs when the above locals go out of scope.
+
+        # Should not stack overflow
+        scope()
+
     def test_no_grad(self):
         x = torch.ones(5, 5, requires_grad=True)
         y = Variable(torch.ones(5, 5) * 4)
@@ -638,7 +709,7 @@ class TestAutograd(TestCase):
         self.assertFalse(y.requires_grad)
 
     def test_indexing(self):
-        x = torch.arange(1, 17).view(4, 4)
+        x = torch.arange(1., 17).view(4, 4)
         y = Variable(x, requires_grad=True)
 
         def compare(x, y, idx, indexed_tensor, indexed_var):
@@ -681,7 +752,7 @@ class TestAutograd(TestCase):
         check_index(x, y, ([0]))
         check_index(x, y, ([0], ))
 
-        x = torch.arange(1, 49).view(4, 3, 4)
+        x = torch.arange(1., 49).view(4, 3, 4)
         y = Variable(x, requires_grad=True)
 
         check_index(x, y, (slice(None), [0], [0]))
@@ -717,7 +788,7 @@ class TestAutograd(TestCase):
         compare(x, y, seq, indexed_tensor, indexed_var)
 
     def test_indexing_duplicates(self):
-        x = torch.arange(1, 17).view(4, 4)
+        x = torch.arange(1., 17).view(4, 4)
         y = Variable(x, requires_grad=True)
 
         idx = torch.LongTensor([1, 1, 3, 2, 1, 2])
@@ -728,7 +799,7 @@ class TestAutograd(TestCase):
         self.assertEqual(y.grad.data, expected_grad)
 
         # with advanced indexing
-        x = torch.arange(1, 17).view(4, 4)
+        x = torch.arange(1., 17).view(4, 4)
         y = Variable(x, requires_grad=True)
 
         idx = [[1, 1, 3, 2, 1, 2], [0]]
@@ -740,7 +811,7 @@ class TestAutograd(TestCase):
 
         self.assertEqual(y.grad.data, expected_grad)
 
-        x = torch.arange(1, 17).view(4, 4)
+        x = torch.arange(1., 17).view(4, 4)
         y = Variable(x, requires_grad=True)
         idx = [[[1, 2], [0, 0]], [[0, 1], [1, 1]]]
         y[idx].sum().backward()
@@ -750,7 +821,7 @@ class TestAutograd(TestCase):
                                       [0, 0, 0, 0]])
         self.assertEqual(y.grad.data, expected_grad)
 
-        x = torch.arange(1, 65).view(4, 4, 4)
+        x = torch.arange(1., 65).view(4, 4, 4)
         y = Variable(x, requires_grad=True)
 
         idx = [[1, 1, 1], slice(None), slice(None)]
@@ -1952,7 +2023,7 @@ class TestAutograd(TestCase):
             self.assertTrue(hasattr(x, key))
 
     def test_as_strided(self):
-        x = Variable(torch.arange(0, 25).view(5, 5), requires_grad=True)
+        x = Variable(torch.arange(0., 25).view(5, 5), requires_grad=True)
 
         def as_strided(x):
             return x.as_strided([3, 3], [6, 2], 2)
@@ -2145,6 +2216,56 @@ class TestAutograd(TestCase):
         # we should throw an exception if the output requires grad
         self.assertRaisesRegex(RuntimeError, 'out=', lambda: torch.mul(a, b, out=x))
 
+    def test_diagonal_derivative_requires_grad(self):
+        # test that the backward requires grad
+        # we do this is because diagonal_backward uses inplace
+        # operations and gradgradcheck does not catch whether
+        # they works as expected (it will succeed even if
+        # the gradient has requires_grad == False
+        a = torch.randn(5, 6, requires_grad=True)
+        b = torch.diagonal(a)**2
+        c = b.sum()
+        d, = torch.autograd.grad(c, a, retain_graph=True, create_graph=True)
+        self.assertTrue(d.requires_grad)
+
+    @staticmethod
+    def _test_set_requires_grad_only_for_floats(self, cuda):
+        dtypes = [torch.int64, torch.int32, torch.int16, torch.int8,
+                  torch.float, torch.double]
+        if cuda:
+            dtypes.append(torch.half)
+
+        def f1(dt):
+            a = torch.ones(1, dtype=dt, device='cuda' if cuda else 'cpu')
+            a.requires_grad_()
+
+        def f2(dt):
+            a = torch.ones(1, dtype=dt, device='cuda' if cuda else 'cpu')
+            a.requires_grad = True
+
+        def f3(dt):
+            torch.ones(1, dtype=dt, device='cuda' if cuda else 'cpu', requires_grad=True)
+
+        for dt in dtypes:
+            a = torch.ones(1, dtype=dt, device='cuda' if cuda else 'cpu')
+            a.requires_grad = False  # should always work
+            a.requires_grad_(False)
+
+            for f in [f1, f2, f3]:
+                if dt.is_floating_point:
+                    f(dt)
+                else:
+                    with self.assertRaisesRegex(RuntimeError, 'floating point',
+                                                msg="dt: {} device: {}".format(a.dtype, a.device)):
+                        f(dt)
+
+    @unittest.skipIf(not torch.cuda.is_available(), "CUDA unavailable")
+    def test_set_requires_grad_only_for_floats_cuda(self):
+        self._test_set_requires_grad_only_for_floats(self, True)
+
+    def test_set_requires_grad_only_for_floats(self):
+        self._test_set_requires_grad_only_for_floats(self, False)
+
 
 def index_variable(shape, max_indices):
     if not isinstance(shape, tuple):
@@ -2241,7 +2362,7 @@ def make_nonzero_det(A, sign=None, min_singular_value=0.1):
 def random_fullrank_matrix_distinct_singular_value(l):
     A = torch.randn(l, l)
     u, _, v = A.svd()
-    s = torch.arange(1, l + 1).mul_(1.0 / (l + 1))
+    s = torch.arange(1., l + 1).mul_(1.0 / (l + 1))
     return u.mm(torch.diag(s)).mm(v.t())
 
 
@@ -2273,9 +2394,9 @@ S = 5
 #   method name,
 #   input size/constructing fn,
 #   args (tuple represents shape of a tensor arg),
-#   test variant name (will be used at test name suffix),  // optional
-#   indices for possible dim arg,                          // optional
-#   output indices that should be gradcheck'ed,            // optional
+#   test variant name (will be used at test name suffix),    // optional
+#   indices for possible dim arg,                            // optional
+#   fn mapping output to part that should be gradcheck'ed,   // optional
 # )
 method_tests = [
     ('add', (S, S, S), ((S, S, S),)),
@@ -2500,6 +2621,8 @@ method_tests = [
     ('sum', (), NO_ARGS, 'scalar'),
     ('sum', (), (0,), 'scalar_dim', [0]),
     ('sum', (), (0, True,), 'scalar_keepdim_dim', [0]),
+    ('sum', (S, S, S), ([1, 2],), 'multi_dim'),
+    ('sum', (S, S, S), ([1, 2], True,), 'multi_dim_keepdim'),
     ('prod', (S, S, S), NO_ARGS),
     ('prod', (S, S, S), (1,), 'dim', [0]),
     ('prod', (S, S, S), (1, True,), 'keepdim_dim', [0]),
@@ -2531,6 +2654,7 @@ method_tests = [
     ('std', (S,), (0, True, True), 'keepdim_dim_1d', [0]),
     ('renorm', (S, S, S), (2, 1, 0.5), 'dim', [1]),
     ('renorm', (S, S, S), (1, 2, 3), 'norm_1'),
+    ('renorm', (S, S, S), (float('inf'), 2, 0.5), 'norm_inf'),
     ('repeat', (S,), (2,), 'single_number'),
     ('repeat', (), (2, 3), 'scalar'),
     ('repeat', (2, 2), (3, 2)),
@@ -2619,6 +2743,7 @@ method_tests = [
     ('norm', (S, S), (0.5,), '0_5'),
     ('norm', (S, S), (1,), '1'),
     ('norm', (S, S), (3,), '3'),
+    ('norm', (S, S), (float('inf'),), 'inf'),
     ('norm', (S, S), (-1,), 'neg_1'),
     ('norm', (S, S), (-0.5,), 'neg_0_5'),
     ('norm', (S, S), (-1.5,), 'neg_1_5'),
@@ -2659,6 +2784,18 @@ method_tests = [
     ('diag', (M,), NO_ARGS, '1d'),
     ('diag', (M, M), (1,), '2d_1'),
     ('diag', (M, M), (2,), '2d_2'),
+    ('diagonal', (M, M), NO_ARGS, '2d'),
+    ('diagonal', (3, 5), NO_ARGS, '2d_wide'),
+    ('diagonal', (3, 5), (2,), '2d_wide_pos'),
+    ('diagonal', (3, 5), (-2,), '2d_wide_neg'),
+    ('diagonal', (5, 3), NO_ARGS, '2d_tall'),
+    ('diagonal', (5, 3), (2,), '2d_tall_pos'),
+    ('diagonal', (5, 3), (-2,), '2d_tall_neg'),
+    ('diagonal', (M, M), (1,), '2d_1'),
+    ('diagonal', (M, M), (2,), '2d_2'),
+    ('diagonal', (M, M, M), (1, 1, 2), '3d_1'),
+    ('diagonal', (M, M, M), (2, 0, 1), '3d_2'),
+    ('diagonal', (M, M, M), (-2, 0, 1), '3d_3'),
     ('tril', (M, M), NO_ARGS),
     ('tril', (M, M), (2,), 'idx'),
     ('triu', (M, M), NO_ARGS),
@@ -2706,19 +2843,36 @@ method_tests = [
      'symmetric_pd', NO_ARGS, [skipIfNoLapack]),
     ('logdet', lambda: make_nonzero_det(random_fullrank_matrix_distinct_singular_value(S), 1, 0), NO_ARGS,
      'distinct_singular_values', NO_ARGS, [skipIfNoLapack]),
-    ('slogdet', lambda: make_nonzero_det(torch.randn(1, 1), 1), NO_ARGS, '1x1_pos_det', NO_ARGS, [skipIfNoLapack], [1]),
+    ('slogdet', lambda: make_nonzero_det(torch.randn(1, 1), 1), NO_ARGS,
+     '1x1_pos_det', NO_ARGS, [skipIfNoLapack], itemgetter(1)),
     ('slogdet', lambda: make_nonzero_det(torch.randn(1, 1), -1), NO_ARGS,
-     '1x1_neg_det', NO_ARGS, [skipIfNoLapack], [1]),
-    ('slogdet', lambda: make_nonzero_det(torch.randn(S, S), 1), NO_ARGS, 'pos_det', NO_ARGS, [skipIfNoLapack], [1]),
-    ('slogdet', lambda: make_nonzero_det(torch.randn(S, S), -1), NO_ARGS, 'neg_det', NO_ARGS, [skipIfNoLapack], [1]),
+     '1x1_neg_det', NO_ARGS, [skipIfNoLapack], itemgetter(1)),
+    ('slogdet', lambda: make_nonzero_det(torch.randn(S, S), 1), NO_ARGS,
+     'pos_det', NO_ARGS, [skipIfNoLapack], itemgetter(1)),
+    ('slogdet', lambda: make_nonzero_det(torch.randn(S, S), -1), NO_ARGS,
+     'neg_det', NO_ARGS, [skipIfNoLapack], itemgetter(1)),
     ('slogdet', lambda: make_nonzero_det(random_symmetric_matrix(S)), NO_ARGS,
-     'symmetric', NO_ARGS, [skipIfNoLapack], [1]),
-    ('slogdet', lambda: random_symmetric_pd_matrix(S), NO_ARGS, 'symmetric_pd', NO_ARGS, [skipIfNoLapack], [1]),
+     'symmetric', NO_ARGS, [skipIfNoLapack], itemgetter(1)),
+    ('slogdet', lambda: random_symmetric_pd_matrix(S), NO_ARGS,
+     'symmetric_pd', NO_ARGS, [skipIfNoLapack], itemgetter(1)),
     ('slogdet', lambda: random_fullrank_matrix_distinct_singular_value(S), NO_ARGS,
-     'distinct_singular_values', NO_ARGS, [skipIfNoLapack], [1]),
+     'distinct_singular_values', NO_ARGS, [skipIfNoLapack], itemgetter(1)),
     ('svd', lambda: random_fullrank_matrix_distinct_singular_value(S), NO_ARGS, '', NO_ARGS, [skipIfNoLapack]),
-    ('svd', lambda: random_fullrank_matrix_distinct_singular_value(M), NO_ARGS, 'large', NO_ARGS, [skipIfNoLapack]),
+    ('svd', lambda: random_fullrank_matrix_distinct_singular_value(S)[:(S - 2)], NO_ARGS,
+     'wide', NO_ARGS, [skipIfNoLapack]),
+    ('svd', lambda: random_fullrank_matrix_distinct_singular_value(S)[:, :(S - 2)], NO_ARGS,
+     'tall', NO_ARGS, [skipIfNoLapack]),
+    ('svd', lambda: random_fullrank_matrix_distinct_singular_value(S)[:(S - 2)], (False,),
+     'wide_all', NO_ARGS, [skipIfNoLapack], lambda usv: (usv[0], usv[1], usv[2][:, :(S - 2)])),
+    ('svd', lambda: random_fullrank_matrix_distinct_singular_value(S)[:, :(S - 2)], (False,),
+     'tall_all', NO_ARGS, [skipIfNoLapack], lambda usv: (usv[0][:, :(S - 2)], usv[1], usv[2])),
+    ('svd', lambda: random_fullrank_matrix_distinct_singular_value(M), NO_ARGS,
+     'large', NO_ARGS, [skipIfNoLapack]),
     ('gesv', (S, S), ((S, S),), '', NO_ARGS, [skipIfNoLapack]),
+    ('gesv', (S, S, S), ((S, S, S),), 'batched', NO_ARGS, [skipIfNoLapack]),
+    ('gesv', (2, 3, S, S), ((2, 3, S, S),), 'batched_dims', NO_ARGS, [skipIfNoLapack]),
+    ('gesv', (2, 2, S, S), ((1, S, S),), 'batched_broadcast_A', NO_ARGS, [skipIfNoLapack]),
+    ('gesv', (1, S, S), ((2, 2, S, S),), 'batched_broadcast_b', NO_ARGS, [skipIfNoLapack]),
     ('fill_', (S, S, S), (1,), 'number'),
     ('fill_', (), (1,), 'number_scalar'),
     # FIXME: we should compute the derivative w.r.t torch.tensor(1)
@@ -3034,7 +3188,7 @@ for test in method_tests:
 
     skipTestIf = test[5] if len(test) >= 6 else []
 
-    test_output_indices = test[6] if len(test) >= 7 else None
+    output_process_fn = test[6] if len(test) >= 7 else lambda x: x
 
     for dim_perm in product([-1, 1], repeat=len(dim_args_idx)):
         test_name = basic_test_name
@@ -3045,7 +3199,7 @@ for test in method_tests:
         # for-loop bodies don't define scopes, so we have to save the variables
         # we want to close over in some way
         def do_test(self, name=name, self_size=self_size, args=new_args, test_name=test_name,
-                    test_output_indices=test_output_indices):
+                    output_process_fn=output_process_fn):
             def check(name):
                 is_magic_method = name[:2] == '__' and name[-2:] == '__'
                 is_inplace = name[-1] == "_" and not is_magic_method
@@ -3067,10 +3221,7 @@ for test in method_tests:
 
                 def fn(*inputs):
                     output = getattr(inputs[0], name)(*inputs[1:])
-                    if test_output_indices is None:
-                        return output
-                    else:
-                        return tuple(output[i] for i in test_output_indices)
+                    return output_process_fn(output)
 
                 if not is_inplace and name not in EXCLUDE_GRADCHECK:
                     run_grad_and_gradgrad_checks(self, name, test_name, fn,
@@ -3080,10 +3231,7 @@ for test in method_tests:
                 if hasattr(torch, name) and name not in EXCLUDE_FUNCTIONAL:
                     def fn(*inputs):
                         output = getattr(torch, name)(*inputs)
-                        if test_output_indices is None:
-                            return output
-                        else:
-                            return tuple(output[i] for i in test_output_indices)
+                        return output_process_fn(output)
 
                     f_args_variable = (self_variable,) + args_variable
                     f_args_tensor = (self_tensor,) + args_tensor

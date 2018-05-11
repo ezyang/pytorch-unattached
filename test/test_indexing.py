@@ -218,7 +218,7 @@ class TestIndexing(TestCase):
         self.assertEqual(x.tolist(), [[0, 1], [5, 6]])
 
     def test_byte_tensor_assignment(self):
-        x = torch.arange(0, 16).view(4, 4)
+        x = torch.arange(0., 16).view(4, 4)
         b = torch.ByteTensor([True, False, True, False])
         value = torch.tensor([3., 4., 5., 6.])
         x[b] = value
@@ -253,32 +253,6 @@ class TestIndexing(TestCase):
         with warnings.catch_warnings(record=True) as w:
             self.assertEqual(x, x[0])
             self.assertEqual(len(w), 1)
-
-    def test_legacy_dispatch(self):
-        # compare with indexing using index_select / index_fill etc
-        x = torch.arange(0, 9).view(3, 3)
-        idx = torch.tensor([0, 2])
-        self.assertEqual(x[idx], x.index_select(0, idx))
-        self.assertEqual(x[:, idx], x.index_select(1, idx))
-
-        mask = x > 4
-        self.assertEqual(x[mask], x.masked_select(mask))
-
-        y = x.clone()
-        yr = x.clone()
-        y[idx] = 0
-        yr.index_fill_(0, idx, 0)
-        self.assertEqual(y, yr)
-        y[:, idx] = 2
-        yr.index_fill_(1, idx, 2)
-        self.assertEqual(y, yr)
-
-        mask = x > 4
-        y = x.clone()
-        yr = x.clone()
-        y[mask] = 10
-        yr.masked_fill_(mask, 10)
-        self.assertEqual(y, yr)
 
 
 # The tests below are from NumPy test_indexing.py with some modifications to
@@ -501,7 +475,7 @@ class NumpyTests(TestCase):
 
     def test_broadcast_subspace(self):
         a = torch.zeros((100, 100))
-        v = torch.arange(0, 100)[:, None]
+        v = torch.arange(0., 100)[:, None]
         b = torch.arange(99, -1, -1).long()
         a[b] = v
         expected = b.double().unsqueeze(1).expand(100, 100)

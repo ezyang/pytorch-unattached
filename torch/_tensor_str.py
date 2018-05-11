@@ -72,6 +72,10 @@ def _get_min_log_scale():
     return math.ceil(math.log(min_positive, 10))
 
 
+def _get_format_fn(format, nonfinite_format):
+    return lambda x: format.format(x) if math.isinf(x) or math.isnan(x) else nonfinite_format.format(x)
+
+
 def _number_format(tensor, min_sz=-1):
     floating_dtype = tensor.dtype.is_floating_point  # save this because we cast later
     _min_log_scale = _get_min_log_scale()
@@ -92,8 +96,8 @@ def _number_format(tensor, min_sz=-1):
 
     int_mode = True
     # TODO: use fmod?
-    for value in tensor:
-        if value != math.ceil(value.item()):
+    for value in tensor.tolist():
+        if value != math.ceil(value):
             int_mode = False
             break
 
@@ -115,13 +119,16 @@ def _number_format(tensor, min_sz=-1):
     if int_mode:
         if exp_max > prec + 1:
             format = '{{:11.{}e}}'.format(prec)
+            fmt_fn = format.format
             sz = max(min_sz, 7 + prec)
         else:
-            sz = max(min_sz, exp_max + 1)
+            sz = max(min_sz, exp_max + 1 + include_decimal_int_mode)
             format = '{:' + str(sz) + '.0f}'
+            fmt_fn = format.format
             if include_decimal_int_mode:
-                format += '.'
-                sz += 1
+                format = '{:' + str(sz - 1) + '.0f}'
+                nonfinite_format = format + '.'
+                fmt_fn = _get_format_fn(format, nonfinite_format)
     else:
         if exp_max - exp_min > prec:
             sz = 7 + prec
@@ -129,6 +136,7 @@ def _number_format(tensor, min_sz=-1):
                 sz = sz + 1
             sz = max(min_sz, sz)
             format = '{{:{}.{}e}}'.format(sz, prec)
+            fmt_fn = format.format
         else:
             if exp_max > prec + 1 or exp_max < 0:
                 sz = max(min_sz, 7)
@@ -140,11 +148,12 @@ def _number_format(tensor, min_sz=-1):
                     sz = exp_max + 6
                 sz = max(min_sz, sz)
             format = '{{:{}.{}f}}'.format(sz, prec)
-    return format, scale, sz
+            fmt_fn = format.format
+    return fmt_fn, scale, sz
 
 
 def _scalar_str(self, fmt, scale):
-    scalar_str = fmt.format(self.item() / scale)
+    scalar_str = fmt(self.item() / scale)
     # The leading space for positives is ugly on scalars, so we strip it
     return scalar_str.lstrip()
 
@@ -155,11 +164,11 @@ def _vector_str(self, indent, fmt, scale, sz, summarize):
     char_per_line = element_length * elements_per_line
 
     if summarize and self.size(0) > 2 * PRINT_OPTS.edgeitems:
-        data = ([fmt.format(val.item() / scale) for val in self[:PRINT_OPTS.edgeitems]] +
+        data = ([fmt(val / scale) for val in self[:PRINT_OPTS.edgeitems].tolist()] +
                 [' ...'] +
-                [fmt.format(val.item() / scale) for val in self[-PRINT_OPTS.edgeitems:]])
+                [fmt(val / scale) for val in self[-PRINT_OPTS.edgeitems:].tolist()])
     else:
-        data = [fmt.format(val.item() / scale) for val in self]
+        data = [fmt(val / scale) for val in self.tolist()]
 
     data_lines = [data[i:i + elements_per_line] for i in range(0, len(data), elements_per_line)]
     lines = [', '.join(line) for line in data_lines]
@@ -185,6 +194,24 @@ def _tensor_str(self, indent, fmt, scale, sz, summarize):
 
     tensor_str = (',' + '\n' * (dim - 1) + ' ' * (indent + 1)).join(slices)
     return '[' + tensor_str + ']'
+
+
+def get_summarized_data(self):
+    dim = self.dim()
+    if dim == 0:
+        return self
+    if dim == 1:
+        if self.size(0) > 2 * PRINT_OPTS.edgeitems:
+            return torch.cat((self[:PRINT_OPTS.edgeitems], self[-PRINT_OPTS.edgeitems:]))
+        else:
+            return self
+    if self.size(0) > 2 * PRINT_OPTS.edgeitems:
+        start = [get_summarized_data(self[i]).view(-1) for i in range(0, PRINT_OPTS.edgeitems)]
+        end = ([get_summarized_data(self[i]).view(-1)
+               for i in range(len(self) - PRINT_OPTS.edgeitems, len(self))])
+        return torch.cat((start + end))
+    else:
+        return self
 
 
 def _str(self):
@@ -215,7 +242,7 @@ def _str(self):
         if self.dtype != torch.get_default_dtype() and self.dtype != torch.int64:
             suffix = ', dtype=' + str(self.dtype) + suffix
 
-        fmt, scale, sz = _number_format(self)
+        fmt, scale, sz = _number_format(get_summarized_data(self) if summarize else self)
         if scale != 1:
             prefix = prefix + SCALE_FORMAT.format(scale) + ' ' * indent
         tensor_str = _tensor_str(self, indent, fmt, scale, sz, summarize)

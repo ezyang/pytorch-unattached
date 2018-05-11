@@ -1,5 +1,5 @@
 #ifndef NO_PYTHON
-#include <Python.h>
+#include "torch/csrc/python_headers.h"
 #endif
 #include "torch/csrc/jit/tracer.h"
 
@@ -8,6 +8,8 @@
 #include "torch/csrc/autograd/engine.h"
 #include "torch/csrc/autograd/functions/special.h"
 #include "torch/csrc/jit/passes/dead_code_elimination.h"
+#include "torch/csrc/jit/passes/remove_expands.h"
+#include "torch/csrc/variable_tensor_functions.h"
 
 #include <string>
 #include <sstream>
@@ -47,7 +49,7 @@ std::shared_ptr<torch::jit::Graph> torch::jit::tracer::createGraphByTracing(
         py::function func,
         tracer::variable_list trace_inputs,
         size_t num_func_inputs) {
-  auto enter_info = tracer::enter(std::move(trace_inputs), 1);
+  auto enter_info = tracer::enter(std::move(trace_inputs), 1, false);
   py::tuple py_inputs(num_func_inputs);
   for(size_t i = 0; i < num_func_inputs; ++i) {
     py_inputs[i] = py::cast(enter_info.second[i]);
@@ -174,7 +176,7 @@ PreTraceInfo makePreTraceInfo(at::ArrayRef<Variable> inputs, F ctor) {
   auto& graph = info.state->graph;
   auto state_lock = info.state->lock();
 
-  Node *n = ctor(*graph);
+  Node *n = ctor(info.state, *graph);
 #ifndef NO_PYTHON
   auto sl = std::make_shared<StringSourceLocation>(getPythonInterpreterStackTrace());
   n->setSourceLocation(sl);
@@ -194,7 +196,7 @@ PreTraceInfo makePreTraceInfo(at::ArrayRef<Variable> inputs, F ctor) {
 
 PreTraceInfo preRecordTrace(Symbol op,
                             at::ArrayRef<Variable> inputs) {
-  return makePreTraceInfo(inputs, [&op](Graph& graph) {
+  return makePreTraceInfo(inputs, [&op](const std::shared_ptr<TracingState>& state, Graph& graph) {
     return graph.create(op, 0 /* initial outputs */);
   });
 }
@@ -205,15 +207,17 @@ PreTraceInfo preRecordPythonTrace(THPObjectPtr pyobj,
                                   at::ArrayRef<Variable> inputs,
                                   pyobj_list scalar_args) {
   std::vector<VariableFlags> var_flags = fmap(inputs, &VariableFlags::of);
-
-  return makePreTraceInfo(inputs, [&](Graph& graph) {
-    const bool is_legacy = false;
+  THPObjectPtr apply(PyObject_GetAttrString(pyobj.get(), "apply"));
+  if(!apply) {
+    throw python_error();
+  }
+  return makePreTraceInfo(inputs, [&](const std::shared_ptr<TracingState>& state, Graph& graph) {
     return graph.createPythonOp(
-        std::move(pyobj),
+        std::move(apply),
         arg_types,
-        is_legacy,
         std::move(var_flags),
-        std::move(scalar_args));
+        std::move(scalar_args),
+        state->creates_handles);
   });
 }
 #endif
@@ -234,6 +238,34 @@ void postRecordTrace(const PreTraceInfo& info,
   for (size_t i = 0; i < outputs.size(); i++) {
     assignOutput(outputs[i], info.n->addOutput());
   }
+}
+
+thread_local ArgumentStash ArgumentStash::stash;
+
+void ArgumentStash::stashIntListElem(const std::string& arg_name, size_t size, size_t idx, const Variable& var) {
+  // TODO: check type?
+  if (!isTracing(var)) return;
+  auto tracing_state = getTracingState({var});
+  auto & list_trace = stash.intlists.emplace(arg_name, size).first->second;
+  JIT_ASSERT(size == list_trace.size());
+  JIT_ASSERT(idx < list_trace.size());
+  JIT_ASSERT(list_trace[idx] == nullptr);
+  list_trace[idx] = getValueTrace(tracing_state, var);
+}
+
+autograd::Variable getSizeOf(const autograd::Variable& var, int64_t dim) {
+  auto tracing_state = getTracingState({var});
+  auto & graph = tracing_state->graph;
+
+  auto size_var = autograd::make_variable(at::Scalar(var.size(dim)).toTensor());
+  auto* value = getValueTrace(tracing_state, var);
+  auto* node = graph->create(aten::size, {value})
+                    ->i_(attr::dim, dim);
+  node->output()->inferTypeFrom(size_var);
+  graph->appendNode(node);
+  setValueTrace(tracing_state, size_var, node->output());
+
+  return size_var;
 }
 
 }}}

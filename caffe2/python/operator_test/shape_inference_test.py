@@ -397,6 +397,19 @@ class TestShapeInference(test_util.TestCase):
 
         self.InferTensorRunAndCompare(model)
 
+    def testLengthsPad(self):
+        model = model_helper.ModelHelper(name="test_model")
+        model.LengthsPad(
+            ["X", "length"],
+            ["X_padded"],
+            target_length=10,
+            padding_value=-1.0,
+        )
+        workspace.FeedBlob("X", np.random.rand(6, 32).astype(np.float32))
+        workspace.FeedBlob("length", np.array([1, 2, 3], dtype=np.int32))
+
+        self.InferTensorRunAndCompare(model)
+
     def testConcat(self):
         net = core.Net("concat")
 
@@ -471,6 +484,13 @@ class TestShapeInference(test_util.TestCase):
         model = model_helper.ModelHelper(name="powtest")
         model.Pow("x", 'y', exponent=-1.0)
         workspace.FeedBlob('x', np.random.rand(1, 2, 3, 4).astype(np.float32))
+        self.InferTensorRunAndCompare(model)
+
+    def testInt8Conversion(self):
+        model = model_helper.ModelHelper(name="int8_conversion_test")
+        model.FloatToFused8BitRowwiseQuantized('x', 'x_8bit')
+        model.Fused8BitRowwiseQuantizedToFloat('x_8bit', 'x_recovered')
+        workspace.FeedBlob('x', np.random.rand(100, 150).astype(np.float32))
         self.InferTensorRunAndCompare(model)
 
     def InferTensorRunAndCompare(self, model, expected_uninferred_blobs=None):

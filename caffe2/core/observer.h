@@ -28,6 +28,11 @@ class ObserverBase {
     return subject_;
   }
 
+  virtual std::unique_ptr<ObserverBase<T>> rnnCopy(T* subject, int rnn_order)
+      const {
+    return nullptr;
+  };
+
  protected:
   T* subject_;
 };

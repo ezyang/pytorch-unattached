@@ -102,6 +102,7 @@ void BlockToONNX(Block* old_block, Block* new_block, bool aten, std::unordered_m
   auto cloneNode = [&](Node * node) {
     auto n_ = ctx.block->appendNode(ctx.block->owningGraph()->createClone(node, envFn));
     for(size_t i = 0; i < node->outputs().size(); i++) {
+      // n_->outputs()[i]->setType(node->outputs()[i]->type());
       env[node->outputs()[i]] = n_->outputs()[i];
     }
   };
@@ -154,7 +155,12 @@ void BlockToONNX(Block* old_block, Block* new_block, bool aten, std::unordered_m
 
     // Test if there is a symbolic function; bail if there is not
     auto pyobj = py::handle(op->pyobj.get());
-    if (!py::hasattr(pyobj, "symbolic")) {
+    auto func = op->autogradFunction();
+    if(func) {
+      pyobj = func->get();
+    }
+
+    if(!py::hasattr(pyobj, "symbolic")) {
       cloneNode(op);
       return;
     }
@@ -212,6 +218,7 @@ void BlockToONNX(Block* old_block, Block* new_block, bool aten, std::unordered_m
   }
   for (auto output : old_block->outputs()) {
     ctx.block->registerOutput(env.at(output));
+    env.at(output)->setType(output->type());
   }
 
   // Copy stage from original graph

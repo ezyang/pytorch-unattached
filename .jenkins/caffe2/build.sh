@@ -44,6 +44,10 @@ CMAKE_ARGS=("-DBUILD_BINARY=ON")
 CMAKE_ARGS+=("-DUSE_OBSERVERS=ON")
 CMAKE_ARGS+=("-DUSE_ZSTD=ON")
 
+if [[ $BUILD_ENVIRONMENT == *-aten-* ]]; then
+  CMAKE_ARGS+=("-DUSE_ATEN=ON")
+fi
+
 # Run build script from scripts if applicable
 if [[ "${BUILD_ENVIRONMENT}" == *-android* ]]; then
   export ANDROID_NDK=/opt/ndk
@@ -53,13 +57,11 @@ fi
 if [[ "${BUILD_ENVIRONMENT}" == conda* ]]; then
 
   # click (required by onnx) wants these set
+  # TODO don't think this fixes the problem for conda3 yet
   export LANG=C.UTF-8
   export LC_ALL=C.UTF-8
 
-  # SKIP_CONDA_TESTS refers to only the 'test' section of the meta.yaml
-  export SKIP_CONDA_TESTS=1
-  export CONDA_INSTALL_LOCALLY=1
-  "${ROOT_DIR}/scripts/build_anaconda.sh" "$@"
+  "${ROOT_DIR}/scripts/build_anaconda.sh" --skip-tests --install-locally "$@"
 
   # This build will be tested against onnx tests, which needs onnx installed.
   # At this point the visible protbuf installation will be in conda, since one
@@ -130,6 +132,9 @@ if [[ -x "$(command -v cmake3)" ]]; then
 else
     CMAKE_BINARY=cmake
 fi
+
+# Use a speciallized onnx namespace in CI to catch hardcoded onnx namespace
+CMAKE_ARGS+=("-DONNX_NAMESPACE=ONNX_NAMESPACE_FOR_C2_CI")
 
 # Configure
 ${CMAKE_BINARY} "${ROOT_DIR}" ${CMAKE_ARGS[*]} "$@"

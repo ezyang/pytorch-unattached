@@ -92,6 +92,7 @@ void fuseBroadcast(Block *b) {
 
     // The expanded_rhs input isn't actually an expand, so no fusion available
     if (expanded_rhs->kind() != aten::expand) continue;
+    if (expanded_rhs->inputs().size() != 1) continue;
 
     auto* unexpanded_rhs = expanded_rhs->input();
 
@@ -197,6 +198,7 @@ void fuseTransposeIntoGemm(Block *b) {
 //   the removeNopPacking pass removes the packing operations
 //   entirely by pairing them with their inverse PadPacked. If the
 //   input graph does not pair the operations, export will fail.
+
 void pushPackingPastRnn(Block *b) {
   for (auto it = b->nodes().begin(); it != b->nodes().end(); ++it) {
     auto* n = *it;
@@ -215,6 +217,9 @@ void pushPackingPastRnn(Block *b) {
     if (!isRNN(rnn)) {
       continue;
     }
+
+    if(rnn->owningBlock() != n->owningBlock())
+      continue;
 
     // remove PackPadded from in front of the RNN
     n->outputs()[0]->replaceAllUsesWith(n->inputs()[0]);
@@ -373,6 +378,36 @@ void fixDefaultLstmCellState(Block *b) {
   }
 }
 
+static bool isSafeToSpeculate(Node* n) {
+  return n->kind() == onnx::Transpose;
+}
+
+static void speculateOps(Block* block) {
+  for(auto it = block->nodes().begin(), end = block->nodes().end();
+      it != end;) {
+    Node * n = *it;
+    ++it; //note: increment first so that it is safe to move the node if needed
+
+    for(auto b : n->blocks()) {
+      speculateOps(b);
+    }
+    if(!isSafeToSpeculate(n))
+      continue;
+    // XXX - only works for nodes with a single input
+    // move node n outside of the control flow it is nested in
+    auto node_input = n->input()->node();
+    if(node_input->owningBlock() == n->owningBlock())
+      continue;
+    // find the control flow node in the same block as node_input that contains
+    // Node n
+    auto control_flow_node = n->owningBlock()->owningNode();
+    while(control_flow_node->owningBlock() != node_input->owningBlock())
+      control_flow_node = control_flow_node->owningBlock()->owningNode();
+    // put the node right before this flow node
+    n->moveBefore(control_flow_node);
+  }
+}
+
 // This optimization does ONNX-specific peephole optimizations.
 //
 // At the moment, here are the optimizations it does:
@@ -402,6 +437,7 @@ void PeepholeOptimizeONNX(std::shared_ptr<Graph>& graph) {
   fuseConsecutiveTransposes(graph->block());
   eliminateNopTranspose(graph->block());
   fuseTransposeIntoGemm(graph->block());
+  speculateOps(graph->block());
 }
 
 }}

@@ -139,9 +139,9 @@ Args:
 Example::
 
     >>> tensor = torch.tensor((), dtype=torch.float64)
-    >>> tensor.new_ones((2, 3))
-    tensor([[ 1.,  1.,  1.],
-            [ 1.,  1.,  1.]], dtype=torch.float64)
+    >>> tensor.new_zeros((2, 3))
+    tensor([[ 0.,  0.,  0.],
+            [ 0.,  0.,  0.]], dtype=torch.float64)
 
 """.format(**new_common_args))
 
@@ -273,16 +273,106 @@ In-place version of :meth:`~Tensor.addr`
 
 add_docstr_all('all',
                r"""
-all() -> bool
+.. function:: all() -> bool
 
-Returns ``True`` if all elements in the tensor are non-zero, ``False`` otherwise.
+Returns True if all elements in the tensor are non-zero, False otherwise.
+
+Example::
+
+    >>> a = torch.randn(1, 3).mul(2).byte()
+    >>> a
+
+     1  1  0
+    [torch.ByteTensor of size 1x3]
+
+    >>> a.all()
+    False
+
+.. function:: all(dim, keepdim=False, out=None) -> Tensor
+
+Returns True if all elements in each row of the tensor in the given
+dimension :attr:`dim` are non-zero, False otherwise.
+
+If :attr:`keepdim` is ``True``, the output tensor is of the same size as
+:attr:`input` except in the dimension :attr:`dim` where it is of size 1.
+Otherwise, :attr:`dim` is squeezed (see :func:`torch.squeeze`), resulting
+in the output tensor having 1 fewer dimension than :attr:`input`.
+
+Args:
+    dim (int): the dimension to reduce
+    keepdim (bool): whether the output tensor has :attr:`dim` retained or not
+    out (Tensor, optional): the output tensor
+
+Example::
+
+    >>> a = torch.randn(4, 2).mul(2).byte()
+    >>> a
+
+     1  1
+     1  0
+     0  0
+     1  0
+    [torch.ByteTensor of size 4x2]
+
+    >>> a.all(dim=1)
+
+     1
+     0
+     0
+     0
+    [torch.ByteTensor of size 4]
 """)
 
 add_docstr_all('any',
                r"""
-any() -> bool
+.. function:: any() -> bool
 
-Returns ``True`` if any elements in the tensor are non-zero, ``False`` otherwise.
+Returns True if any elements in the tensor are non-zero, False otherwise.
+
+Example::
+
+    >>> a = torch.randn(1, 3).mul(2).byte()
+    >>> a
+
+     1  1  0
+    [torch.ByteTensor of size 1x3]
+
+    >>> a.any()
+    True
+
+.. function:: any(dim, keepdim=False, out=None) -> Tensor
+
+Returns True if any elements in each row of the tensor in the given
+dimension :attr:`dim` are non-zero, False otherwise.
+
+If :attr:`keepdim` is ``True``, the output tensor is of the same size as
+:attr:`input` except in the dimension :attr:`dim` where it is of size 1.
+Otherwise, :attr:`dim` is squeezed (see :func:`torch.squeeze`), resulting
+in the output tensor having 1 fewer dimension than :attr:`input`.
+
+Args:
+    dim (int): the dimension to reduce
+    keepdim (bool): whether the output tensor has :attr:`dim` retained or not
+    out (Tensor, optional): the output tensor
+
+Example::
+
+    >>> a = torch.randn(4, 2).mul(2).byte()
+    >>> a
+
+     1  1
+     1  0
+     0  0
+     1  0
+    [torch.ByteTensor of size 4x2]
+
+    >>> a.any(dim=1)
+
+     1
+     1
+     0
+     1
+    [torch.ByteTensor of size 4]
 """)
 
 add_docstr_all('apply_',
@@ -938,7 +1028,7 @@ add_docstr_all('item', r"""
 item() -> number
 
 Returns the value of this tensor as a standard Python number. This only works
-for tensors with one element.
+for tensors with one element. For other cases, see :meth:`~Tensor.tolist`.
 
 This operation is not differentiable.
 
@@ -2017,6 +2107,26 @@ tanh_() -> Tensor
 In-place version of :meth:`~Tensor.tanh`
 """)
 
+add_docstr_all('tolist',
+               r""""
+tolist() -> list or number
+
+Returns the tensor as a (nested) list. For scalars, a standard
+Python number is returned, just like with :meth:`~Tensor.item`.
+Tensors are automatically moved to the CPU first if necessary.
+
+This operation is not differentiable.
+
+Examples::
+
+    >>> a = torch.randn(2, 2)
+    >>> a.tolist()
+    [[0.012766935862600803, 0.5415473580360413],
+     [-0.08909505605697632, 0.7729271650314331]]
+    >>> a[0,0].tolist()
+    0.012766935862600803
+""")
+
 add_docstr_all('topk',
                r"""
 topk(k, dim=None, largest=True, sorted=True) -> (Tensor, LongTensor)
@@ -2150,7 +2260,7 @@ Args:
 
 Example::
 
-    >>> x = torch.arange(1, 8)
+    >>> x = torch.arange(1., 8)
     >>> x
     tensor([ 1.,  2.,  3.,  4.,  5.,  6.,  7.])
     >>> x.unfold(0, 2, 1)
