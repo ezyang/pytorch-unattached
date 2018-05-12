@@ -35,6 +35,7 @@ add_library(c10 SHARED
     c10/guts/TypeId.cpp
     c10/guts/caffe2/common.cc
     c10/guts/scope_guard.cpp
+    c10/guts/Any.cpp
     c10/cpu/CPUStorage.cpp
     c10/cpu/CPUAllocator.cpp
     c10/cpu/CPUTensorImpl.cpp
@@ -47,6 +48,9 @@ add_library(c10 SHARED
     c10/dispatch/TensorTypeId.cpp
     c10/dispatch/TensorTypeIdRegistration.cpp
     c10/dispatch/OpSchemaRegistration.cpp
+    c10/stack_bindings/CallStack.cpp
+    c10/stack_bindings/StackBasedOperator.cpp
+    c10/stack_bindings/StackBasedOperatorRegistry.cpp
     c10/SmallVector.cpp
     c10/DimVector.cpp
     c10/cpu/CPUContext.cpp

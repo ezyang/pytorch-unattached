@@ -114,4 +114,45 @@ template<class TypeList> using head_t = typename head<TypeList>::type;
 
 // TODO Test head_t
 
+namespace details {
+
+}
+
+template<class TypeList> struct reverse;
+template<class Head, class... Tail> struct reverse<typelist<Head, Tail...>> final {
+  using type = concat_t<typename reverse<typelist<Tail...>>::type, typelist<Head>>;
+};
+template<> struct reverse<typelist<>> final {
+  using type = typelist<>;
+};
+template<class TypeList> using reverse_t = typename reverse<TypeList>::type;
+
+namespace test_reverse {
+class MyClass {};
+static_assert(std::is_same<
+  typelist<int, double, MyClass*, const MyClass&&>,
+  reverse_t<typelist<const MyClass&&, MyClass*, double, int>>
+>::value, "");
+static_assert(std::is_same<
+  typelist<>,
+  reverse_t<typelist<>>
+>::value, "");
+}
+
+namespace details {
+template<class TypeList> struct map_types_to_values;
+template<class... Types> struct map_types_to_values<typelist<Types...>> final {
+  template<class Func>
+  static std::tuple<Types...> call(Func&& func) {
+    return { std::forward<Func>(func)(static_cast<Types*>(nullptr))... };
+  }
+};
+}
+
+template<class TypeList, class Func> typename TypeList::tuple_type map_types_to_values(Func&& func) {
+  return details::map_types_to_values<TypeList>::call(std::forward<Func>(func));
+}
+
+// TODO Test map_types_to_values
+
 }}}
