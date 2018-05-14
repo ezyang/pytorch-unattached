@@ -18,6 +18,7 @@ namespace c10 {
 // Implementation note: this class abstracts over the fact that we have per-operator
 // dispatch tables.  This could be easily adjusted to have a single global hash
 // table.
+template<class OpSchemaDef>
 class Dispatcher final {
 public:
 
@@ -29,7 +30,7 @@ public:
    * @param args Perfect-forwarding args to c10::dispatch::impl::DispatchTable::registerOp
    * @return void
    */
-  template<class OpSchemaDef, class... Args>
+  template<class... Args>
   static auto registerOp(Args&&... args) {
     auto& dispatch_table_for_this_op = c10_dispatch_table<OpSchemaDef>();
     return dispatch_table_for_this_op.registerOp(std::forward<Args>(args)...);
@@ -43,7 +44,7 @@ public:
    * @param args Perfect-forwarding args to c10::dispatch::impl::DispatchTable::deregisterOp
    * @return void
    */
-  template<class OpSchemaDef, class... Args>
+  template<class... Args>
   static auto deregisterOp(Args&&... args) {
     auto& dispatch_table_for_this_op = c10_dispatch_table<OpSchemaDef>();
     return dispatch_table_for_this_op.deregisterOp(std::forward<Args>(args)...);
@@ -57,7 +58,7 @@ public:
    * @param args Perfect-forwarding args to c10::dispatch::impl::DispatchTable::call
    * @return Return type of this operator
    */
-  template<class OpSchemaDef, class... Args>
+  template<class... Args>
   static auto call(Args&&... args) {
     auto& dispatch_table_for_this_op = c10_dispatch_table<OpSchemaDef>();
     return dispatch_table_for_this_op.call(std::forward<Args>(args)...);

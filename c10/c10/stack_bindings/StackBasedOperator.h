@@ -16,7 +16,7 @@ template<class OpSchemaDef, class ReturnType, class... Args> struct call_dispatc
 private:
   template<size_t... I>
   static ReturnType call_(std::tuple<Args...>&& args, std::index_sequence<I...>) {
-    return Dispatcher::call<OpSchemaDef, std::add_rvalue_reference_t<Args>...>(std::move(std::get<I>(args))...);
+    return Dispatcher<OpSchemaDef>::call(std::move(std::get<I>(args))...);
   }
 };
 }

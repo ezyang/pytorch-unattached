@@ -37,7 +37,7 @@ public:
    */
   KernelRegistrar(typename Schema::signature::func_type* kernel, typename Schema::dispatch::dispatch_key_type dispatch_key)
   : dispatch_key_(std::move(dispatch_key)), owns_registration_(true) {
-    Dispatcher::registerOp<OpSchemaDef>(kernel, dispatch_key_);
+    Dispatcher<OpSchemaDef>::registerOp(kernel, dispatch_key_);
   }
 
   KernelRegistrar(KernelRegistrar&& rhs)
@@ -50,7 +50,7 @@ public:
 
   ~KernelRegistrar() {
     if (owns_registration_) {
-      Dispatcher::deregisterOp<OpSchemaDef>(dispatch_key_);
+      Dispatcher<OpSchemaDef>::deregisterOp(dispatch_key_);
     }
   }
 

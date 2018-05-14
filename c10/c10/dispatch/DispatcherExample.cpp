@@ -71,10 +71,10 @@ C10_REGISTER_OP(::equals)
 int main() {
   Tensor t1 = tensor<int>({5});
   Tensor t2 = tensor<int>({10});
-  Tensor t3 = Dispatcher::call<::ops::conditional>(false, t1, t2);
+  Tensor t3 = Dispatcher<::ops::conditional>::call(false, t1, t2);
    std::cout << "Result is " << t3.data<int>()[0] << std::endl;
   // outputs "Result is 10"
 
-  std::cout << "Result is " << Dispatcher::call<::ops::add_notensor>(3, 6) << std::endl;
+  std::cout << "Result is " << Dispatcher<::ops::add_notensor>::call(3, 6) << std::endl;
   // outputs "Result is 9"
 }
