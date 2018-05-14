@@ -113,10 +113,10 @@ void ProfileOperatorObserver::Stop() {
   Dump();
 }
 
-std::unique_ptr<ObserverBase<OperatorBase>> ProfileOperatorObserver::rnnCopy(
-    OperatorBase* subject,
+std::unique_ptr<ObserverBase<IOperatorBase>> ProfileOperatorObserver::rnnCopy(
+    IOperatorBase* subject,
     int rnn_order) const {
-  return std::unique_ptr<ObserverBase<OperatorBase>>(
+  return std::unique_ptr<ObserverBase<IOperatorBase>>(
       new ProfileOperatorObserver(
           subject, netObserver_, net_position_, rnn_order));
 }

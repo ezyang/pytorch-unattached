@@ -30,7 +30,7 @@ typedef ObserverBase<NetBase> NetObserver;
 typedef std::function<std::unique_ptr<NetObserver>(NetBase*)>
     NetObserverCreator;
 
-class OperatorBase;
+class IOperatorBase;
 class Workspace;
 
 // Net is a thin struct that owns all the operators together with the operator
@@ -102,7 +102,7 @@ class NetBase : public Observable<NetBase> {
    * Returns pointers to objects owned with unique_ptrs.
    * Use with caution.
    */
-  virtual vector<OperatorBase*> GetOperators() const = 0;
+  virtual vector<IOperatorBase*> GetOperators() const = 0;
 
   const string& Name() const {
     return name_;

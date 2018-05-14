@@ -8,13 +8,13 @@
 namespace caffe2 {
 
 class RunCountNetObserver;
-class RunCountOperatorObserver final : public ObserverBase<OperatorBase> {
+class RunCountOperatorObserver final : public ObserverBase<IOperatorBase> {
  public:
-  explicit RunCountOperatorObserver(OperatorBase* op) = delete;
-  RunCountOperatorObserver(OperatorBase* op, RunCountNetObserver* netObserver);
+  explicit RunCountOperatorObserver(IOperatorBase* op) = delete;
+  RunCountOperatorObserver(IOperatorBase* op, RunCountNetObserver* netObserver);
   ~RunCountOperatorObserver() {}
-  std::unique_ptr<ObserverBase<OperatorBase>> rnnCopy(
-      OperatorBase* subject,
+  std::unique_ptr<ObserverBase<IOperatorBase>> rnnCopy(
+      IOperatorBase* subject,
       int rnn_order) const override;
 
  private:

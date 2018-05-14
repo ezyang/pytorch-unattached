@@ -47,7 +47,7 @@ void Tracer::recordEvent(const TracerEvent& event) {
 }
 
 // Special handling of shard blob annotations
-std::string Tracer::opTraceName(const OperatorBase* op) {
+std::string Tracer::opTraceName(const IOperatorBase* op) {
   if (!op->has_debug_def()) {
     return op->type();
   }
@@ -77,7 +77,7 @@ std::string Tracer::opTraceName(const OperatorBase* op) {
   }
 }
 
-std::string Tracer::opBlobsInfo(const OperatorBase& op) {
+std::string Tracer::opBlobsInfo(const IOperatorBase& op) {
   std::string blobs_info;
   if (op.has_debug_def()) {
     blobs_info += "I: ";

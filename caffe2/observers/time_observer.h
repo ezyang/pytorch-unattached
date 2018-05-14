@@ -28,15 +28,15 @@ class TimeCounter {
 };
 
 class TimeOperatorObserver final : public TimeCounter,
-                                   public ObserverBase<OperatorBase> {
+                                   public ObserverBase<IOperatorBase> {
  public:
-  explicit TimeOperatorObserver(OperatorBase* subject) = delete;
+  explicit TimeOperatorObserver(IOperatorBase* subject) = delete;
   explicit TimeOperatorObserver(
-      OperatorBase* subject,
+      IOperatorBase* subject,
       TimeObserver* /* unused */)
-      : ObserverBase<OperatorBase>(subject) {}
-  std::unique_ptr<ObserverBase<OperatorBase>> rnnCopy(
-      OperatorBase* subject,
+      : ObserverBase<IOperatorBase>(subject) {}
+  std::unique_ptr<ObserverBase<IOperatorBase>> rnnCopy(
+      IOperatorBase* subject,
       int rnn_order) const override;
 
  private:

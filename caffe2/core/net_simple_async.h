@@ -35,8 +35,8 @@ class AsyncSimpleNet : public NetBase {
    *
    * Think carefully before using.
    */
-  vector<OperatorBase*> GetOperators() const override {
-    vector<OperatorBase*> op_list;
+  vector<IOperatorBase*> GetOperators() const override {
+    vector<IOperatorBase*> op_list;
     for (auto& op : operators_) {
       op_list.push_back(op.get());
     }
@@ -46,7 +46,7 @@ class AsyncSimpleNet : public NetBase {
  protected:
   bool DoRunAsync() override;
 
-  vector<unique_ptr<OperatorBase>> operators_;
+  vector<unique_ptr<IOperatorBase>> operators_;
 
   DISABLE_COPY_AND_ASSIGN(AsyncSimpleNet);
 };

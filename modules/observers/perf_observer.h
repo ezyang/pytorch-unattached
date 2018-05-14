@@ -21,7 +21,7 @@ class PerfNetObserver : public NetObserver {
   void Start() override;
   void Stop() override;
 
-  caffe2::string getObserverName(const OperatorBase* op, int idx) const;
+  caffe2::string getObserverName(const IOperatorBase* op, int idx) const;
 
  private:
   enum LogType {
@@ -31,15 +31,15 @@ class PerfNetObserver : public NetObserver {
   };
   LogType logType_;
   unsigned int numRuns_;
-  std::unordered_map<const OperatorBase*, const ObserverBase<OperatorBase>*>
+  std::unordered_map<const IOperatorBase*, const ObserverBase<IOperatorBase>*>
       observerMap_;
 
   caffe2::Timer timer_;
 };
 
-class PerfOperatorObserver : public ObserverBase<OperatorBase> {
+class PerfOperatorObserver : public ObserverBase<IOperatorBase> {
  public:
-  PerfOperatorObserver(OperatorBase* op, PerfNetObserver* netObserver);
+  PerfOperatorObserver(IOperatorBase* op, PerfNetObserver* netObserver);
   virtual ~PerfOperatorObserver();
 
   double getMilliseconds() const;

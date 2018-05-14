@@ -26,7 +26,7 @@ namespace caffe2 {
 namespace dag_utils {
 
 struct OperatorNode {
-  unique_ptr<OperatorBase> operator_;
+  unique_ptr<IOperatorBase> operator_;
   vector<int> children_;
   vector<int> parents_;
   std::atomic<int> runtime_parent_count_;

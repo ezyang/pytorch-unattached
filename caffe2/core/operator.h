@@ -24,10 +24,38 @@
 
 namespace caffe2 {
 
-class OperatorBase;
-typedef ObserverBase<OperatorBase> OperatorObserver;
+class IOperatorBase;
+typedef ObserverBase<IOperatorBase> OperatorObserver;
 
-class OperatorBase : public Observable<OperatorBase> {
+
+// TODO Rename OperatorBase -> Caffe2OperatorBase, IOperatorBase -> OperatorBase
+// TODO Figure out which virtual methods not needed
+// TODO De-virtualize some methods back to how they were in C2?
+class IOperatorBase : public Observable<IOperatorBase> {
+public:
+  virtual ~IOperatorBase() = default;
+
+  static constexpr int kNoNetPositionSet = -1;
+
+  virtual const Event& event() const = 0;
+  virtual Event& event() = 0;
+  virtual void ResetEvent() = 0;
+  virtual void WaitEvents(const std::vector<const Event*>& events, int stream_id = -1) = 0;
+  virtual void SetExecutorHelper(ExecutorHelper* helper) = 0;
+  virtual ExecutorHelper* GetExecutorHelper() const = 0;
+  virtual bool SupportsAsyncScheduling() const = 0;
+  virtual bool IsStreamFree(int /* unused */) const = 0;
+  virtual const OperatorDef& debug_def() const = 0;
+  virtual const std::string& type() const = 0;
+  virtual bool has_debug_def() const = 0;
+  virtual bool Run(int stream_id = 0) = 0;
+  virtual bool RunAsync(int stream_id = 0) = 0;
+  virtual bool HasAsyncPart() const = 0;
+  virtual vector<TensorShape> InputTensorShapes() = 0;
+  virtual const DeviceOption& device_option() const = 0;
+};
+
+class OperatorBase : public IOperatorBase {
  public:
   explicit OperatorBase(const OperatorDef& operator_def, Workspace* ws);
   virtual ~OperatorBase() noexcept {}
@@ -115,7 +143,7 @@ class OperatorBase : public Observable<OperatorBase> {
   }
   inline const vector<const Blob*>& Inputs() const { return inputs_; }
   inline const vector<Blob*>& Outputs() { return outputs_; }
-  vector<TensorShape> InputTensorShapes();
+  vector<TensorShape> InputTensorShapes() override final;
 
   virtual void WaitEvent(const Event& ev, int /*stream_id */ = -1) {
     ev.Finish();
@@ -129,7 +157,7 @@ class OperatorBase : public Observable<OperatorBase> {
 
   virtual void WaitEvents(
       const std::vector<const Event*>& events,
-      int /*stream_id*/ = -1) {
+      int /*stream_id*/ = -1) override {
     for (const auto& ev : events) {
       ev->Finish();
     }
@@ -141,15 +169,15 @@ class OperatorBase : public Observable<OperatorBase> {
     }
   }
 
-  virtual bool Run(int /* unused */ /*stream_id*/ = 0) {
+  virtual bool Run(int /* unused */ /*stream_id*/ = 0) override {
     CAFFE_NOT_IMPLEMENTED;
   }
 
-  virtual bool HasAsyncPart() const {
+  virtual bool HasAsyncPart() const override {
     return false;
   }
 
-  virtual bool SupportsAsyncScheduling() const {
+  virtual bool SupportsAsyncScheduling() const override {
     return false;
   }
 
@@ -157,7 +185,7 @@ class OperatorBase : public Observable<OperatorBase> {
   // computation on the corresponding context and record the event in its
   // event_ member object. If the specific operator does not support RunAsync,
   // it will simply be synchronous as a fallback.
-  virtual bool RunAsync(int stream_id = 0) {
+  virtual bool RunAsync(int stream_id = 0) override {
     try {
       auto result = Run(stream_id);
       if (result) {
@@ -210,7 +238,7 @@ class OperatorBase : public Observable<OperatorBase> {
     }
   }
 
-  inline const OperatorDef& debug_def() const {
+  inline const OperatorDef& debug_def() const override final {
     CAFFE_ENFORCE(has_debug_def(), "operator_def was null!");
     return *operator_def_;
   }
@@ -220,7 +248,7 @@ class OperatorBase : public Observable<OperatorBase> {
     operator_def_ = operator_def;
   }
 
-  inline bool has_debug_def() const {
+  inline bool has_debug_def() const override final {
     return operator_def_ != nullptr;
   }
 
@@ -242,21 +270,21 @@ class OperatorBase : public Observable<OperatorBase> {
     net_position_ = idx;
   }
 
-  const DeviceOption& device_option() const {
+  const DeviceOption& device_option() const override final {
     return device_option_;
   }
 
-  const Event& event() const {
+  const Event& event() const override final {
     CAFFE_ENFORCE(event_, "Event is disabled");
     return *event_;
   }
 
-  Event& event() {
+  Event& event() override final {
     CAFFE_ENFORCE(event_, "Event is disabled");
     return *event_;
   }
 
-  void ResetEvent() {
+  void ResetEvent() override final {
     if (event_) {
       event_->Reset();
     }
@@ -273,11 +301,11 @@ class OperatorBase : public Observable<OperatorBase> {
   // Checks whether stream is ready to execute new computation,
   // used in stream allocation optimization to skip stream that is currently
   // busy. Depends on context and operator's device, returns true by default
-  virtual bool IsStreamFree(int /* unused */) const {
+  virtual bool IsStreamFree(int /* unused */) const override {
     return true;
   }
 
-  const std::string& type() const {
+  const std::string& type() const override final {
     return type_;
   }
 
@@ -289,16 +317,13 @@ class OperatorBase : public Observable<OperatorBase> {
     return engine_;
   }
 
-  void SetExecutorHelper(ExecutorHelper* helper) {
+  void SetExecutorHelper(ExecutorHelper* helper) override final {
     helper_ = helper;
   }
 
-  ExecutorHelper* GetExecutorHelper() const {
+  ExecutorHelper* GetExecutorHelper() const override final {
     return helper_;
   }
-
- public:
-  static constexpr int kNoNetPositionSet = -1;
 
  private:
   Workspace* operator_ws_;

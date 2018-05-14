@@ -50,19 +50,19 @@ class ProfileCounter {
 };
 
 class ProfileOperatorObserver : public ProfileCounter,
-                                public ObserverBase<OperatorBase> {
+                                public ObserverBase<IOperatorBase> {
  public:
-  explicit ProfileOperatorObserver(OperatorBase* subject) = delete;
+  explicit ProfileOperatorObserver(IOperatorBase* subject) = delete;
   explicit ProfileOperatorObserver(
-      OperatorBase* subject,
+      IOperatorBase* subject,
       ProfileObserver* netObserver)
-      : ObserverBase<OperatorBase>(subject), netObserver_(netObserver) {
+      : ObserverBase<IOperatorBase>(subject), netObserver_(netObserver) {
     if (subject) {
       net_position_ = subject->net_position();
     }
   }
   explicit ProfileOperatorObserver(
-      OperatorBase* subject,
+      IOperatorBase* subject,
       ProfileObserver* netObserver,
       int net_position,
       int rnn_order)
@@ -71,8 +71,8 @@ class ProfileOperatorObserver : public ProfileCounter,
     rnn_order_ = rnn_order;
   }
 
-  std::unique_ptr<ObserverBase<OperatorBase>> rnnCopy(
-      OperatorBase* subject,
+  std::unique_ptr<ObserverBase<IOperatorBase>> rnnCopy(
+      IOperatorBase* subject,
       int rnn_order) const override;
 
   void Dump() const;
@@ -80,7 +80,7 @@ class ProfileOperatorObserver : public ProfileCounter,
   virtual std::string getId() const {
     std::stringstream ss;
     ss << net_position_;
-    if (rnn_order_ != OperatorBase::kNoNetPositionSet) {
+    if (rnn_order_ != IOperatorBase::kNoNetPositionSet) {
       ss << "-" << rnn_order_;
     }
     return ss.str();
@@ -89,7 +89,7 @@ class ProfileOperatorObserver : public ProfileCounter,
  protected:
   ProfileObserver* netObserver_;
   int net_position_; // Needed because this is not visible in RNN Executor
-  int rnn_order_ = OperatorBase::kNoNetPositionSet;
+  int rnn_order_ = IOperatorBase::kNoNetPositionSet;
 
  private:
   void Start() override;

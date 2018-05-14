@@ -65,7 +65,7 @@ class RecurrentNetworkExecutorBase {
   void EnsureTimestepInitialized(
       int t,
       Workspace* ws,
-      const std::vector<std::unique_ptr<ObserverBase<OperatorBase>>>&
+      const std::vector<std::unique_ptr<ObserverBase<IOperatorBase>>>&
           observers_list) {
     if (timestep_ops_template_.size() == 0) {
       // Firsrt invocation -- compute dependencies
@@ -135,7 +135,7 @@ class RecurrentNetworkExecutorBase {
 
           rnn_op.op = CreateOperator(op_copy, ws);
           for (const auto& observer : observers_list) {
-            std::unique_ptr<ObserverBase<OperatorBase>> rnn_observer_copy =
+            std::unique_ptr<ObserverBase<IOperatorBase>> rnn_observer_copy =
                 observer.get()->rnnCopy(rnn_op.op.get(), rnn_op.order);
             if (rnn_observer_copy) {
               rnn_op.op->AttachObserver(std::move(rnn_observer_copy));
@@ -153,7 +153,7 @@ class RecurrentNetworkExecutorBase {
             // owned by this timestep.
             rnn_op.op = CreateOperator(step_net_def_.op(rnn_op.order), ws);
             for (const auto& observer : observers_list) {
-              std::unique_ptr<ObserverBase<OperatorBase>> rnn_observer_copy =
+              std::unique_ptr<ObserverBase<IOperatorBase>> rnn_observer_copy =
                   observer.get()->rnnCopy(rnn_op.op.get(), rnn_op.order);
               if (rnn_observer_copy) {
                 rnn_op.op->AttachObserver(std::move(rnn_observer_copy));
@@ -443,7 +443,7 @@ class RecurrentNetworkExecutorBase {
   virtual bool ignoreLinkDependencies() = 0;
 
   std::vector<std::vector<RNNNetOperator>> timestep_ops_;
-  std::vector<OperatorBase*> op_ptrs_;
+  std::vector<IOperatorBase*> op_ptrs_;
 
   std::vector<RNNNetOperator> timestep_ops_template_;
 

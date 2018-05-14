@@ -55,8 +55,8 @@ class Tracer {
   Tracer(const NetBase* net, const std::string& net_name);
 
   void recordEvent(const TracerEvent& event);
-  std::string opTraceName(const OperatorBase* op);
-  std::string opBlobsInfo(const OperatorBase& op);
+  std::string opTraceName(const IOperatorBase* op);
+  std::string opBlobsInfo(const IOperatorBase& op);
   std::string serializeEvent(const TracerEvent& event);
   void linearizeEvents();
   void renameThreads();

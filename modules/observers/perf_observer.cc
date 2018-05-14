@@ -94,7 +94,7 @@ void PerfNetObserver::Stop() {
   ObserverConfig::getReporter()->reportDelay(subject_, delays, "ms");
 }
 
-caffe2::string PerfNetObserver::getObserverName(const OperatorBase* op, int idx)
+caffe2::string PerfNetObserver::getObserverName(const IOperatorBase* op, int idx)
     const {
   string opType = op->has_debug_def() ? op->debug_def().type() : "NO_TYPE";
   string displayName =
@@ -109,9 +109,9 @@ caffe2::string PerfNetObserver::getObserverName(const OperatorBase* op, int idx)
 }
 
 PerfOperatorObserver::PerfOperatorObserver(
-    OperatorBase* op,
+    IOperatorBase* op,
     PerfNetObserver* netObserver)
-    : ObserverBase<OperatorBase>(op),
+    : ObserverBase<IOperatorBase>(op),
       netObserver_(netObserver),
       milliseconds_(0) {
   CAFFE_ENFORCE(netObserver_, "Observers can't operate outside of the net");

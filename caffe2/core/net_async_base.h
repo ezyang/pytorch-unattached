@@ -30,7 +30,7 @@ class AsyncNetBase : public NetBase {
     return true;
   }
 
-  vector<OperatorBase*> GetOperators() const override {
+  vector<IOperatorBase*> GetOperators() const override {
     return operators_;
   }
 
@@ -64,7 +64,7 @@ class AsyncNetBase : public NetBase {
   bool isStreamFree(int task_id, int stream_id) const;
 
   // Operator/task graph
-  std::vector<OperatorBase*> operators_;
+  std::vector<IOperatorBase*> operators_;
   std::vector<dag_utils::OperatorNode> operator_nodes_;
   std::vector<std::vector<int>> chains_;
   std::vector<dag_utils::OpGraphNode> chain_nodes_; // chains' parents/children
