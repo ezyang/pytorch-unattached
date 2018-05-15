@@ -38,9 +38,6 @@ private:
   using ReturnType = typename Schema::signature::return_type;
 
   using ParameterBaseTypes = guts::typelist::map_t<std::remove_cv_t, guts::typelist::map_t<std::remove_reference_t, typename Schema::signature::parameter_types>>;
-
-  template<class T> using is_not_reference = guts::conjunction<guts::negation<std::is_reference<T>>, guts::negation<std::is_const<T>>>;
-  static_assert(guts::typelist::true_for_each_type<is_not_reference, ParameterBaseTypes>::value, "bla");
   using ArgumentsTuple = typename ParameterBaseTypes::tuple_type;
 
 public:
