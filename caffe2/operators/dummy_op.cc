@@ -23,7 +23,7 @@ Tensor<CPUContext> dummy_op_impl(Tensor<CPUContext> arg) {
 namespace c10 {
 C10_REGISTER_OP(DummyOp)
   .kernel(&dummy_op_impl)
-  .dispatchKey({});
+  .dispatchKey({c10::CAFFE2_CPU_TENSOR(), c10::TypeMeta::Id<float>()});
 }
 namespace caffe2 {
 REGISTER_C10_OPERATOR_FOR_CAFFE2_DISPATCH(DummyOp, DummyOp)

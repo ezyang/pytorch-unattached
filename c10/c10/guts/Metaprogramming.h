@@ -238,4 +238,12 @@ struct is_function_type<Result (Args...)> : std::true_type {};
 
 // TODO Test is_function_type
 
+
+template <template <class...> class Template, class T>
+struct is_instantiation_of : std::false_type {};
+template <template <class...> class Template, class... Args>
+struct is_instantiation_of<Template, Template<Args...>> : std::true_type {};
+
+// TODO Test is_instantiation_of
+
 }}

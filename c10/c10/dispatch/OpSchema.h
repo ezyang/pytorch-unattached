@@ -4,7 +4,17 @@
 #include <c10/guts/Metaprogramming.h>
 #include <c10/Tensor.h>
 
+namespace caffe2 {
+template<class Context> class Tensor;
+class CPUContext;
+class CUDAContext;
+}
+
 namespace c10 {
+
+// TODO Get rid of CAFFE2_CPU_TENSOR and CAFFE2_CUDA_TENSOR once the caffe2 tensor type is gone
+C10_DECLARE_TENSOR_TYPE(CAFFE2_CPU_TENSOR);
+C10_DECLARE_TENSOR_TYPE(CAFFE2_CUDA_TENSOR);
 
 namespace details {
 
@@ -14,7 +24,29 @@ namespace details {
  * If Arg is a Tensor or reference to a Tensor, provide the member constant value equal to true.  Otherwise
  * return false.
  */
-template<class Arg> using is_tensor_arg = std::is_same<Tensor, std::remove_cv_t<std::remove_reference_t<Arg>>>;
+template<class Arg> using is_tensor_arg = guts::disjunction<
+  std::is_same<Tensor, std::remove_cv_t<std::remove_reference_t<Arg>>>,
+  guts::is_instantiation_of<caffe2::Tensor, std::remove_cv_t<std::remove_reference_t<Arg>>>
+>;
+
+// TODO get rid of tensor_to_dispatch_key once c2::Tensor is not used anymore, this then fits into a template lambda instead of a functor.
+struct tensor_to_dispatch_key final {
+  template<class TensorType>
+  TensorParameterDispatchKey operator()(const TensorType& tensor) const;
+};
+
+template<> inline TensorParameterDispatchKey tensor_to_dispatch_key::operator()<c10::Tensor>(const c10::Tensor& tensor) const {
+  auto* impl = tensor._to_impl();
+  return TensorParameterDispatchKey{impl->type_id(), impl->dtype().id()};
+}
+template<> inline TensorParameterDispatchKey tensor_to_dispatch_key::operator()<caffe2::Tensor<caffe2::CPUContext>>(const caffe2::Tensor<caffe2::CPUContext>& /*tensor*/) const {
+  // TODO Return actual dtype
+  return TensorParameterDispatchKey{CAFFE2_CPU_TENSOR(), TypeMeta::Id<float>()};
+}
+template<> inline TensorParameterDispatchKey tensor_to_dispatch_key::operator()<caffe2::Tensor<caffe2::CUDAContext>>(const caffe2::Tensor<caffe2::CUDAContext>& /*tensor*/) const {
+  // TODO Return actual dtype
+  return TensorParameterDispatchKey{CAFFE2_CUDA_TENSOR(), TypeMeta::Id<float>()};
+}
 
 /**
  * Extract the type ids of all tensors in a variadic list of arguments
@@ -24,10 +56,7 @@ template<class Arg> using is_tensor_arg = std::is_same<Tensor, std::remove_cv_t<
  * @return std::array<TypeId, n>, where n is the number of tensor arguments (is_tensor_arg) in the class
  */
 template<class... Args> auto getTensorTypeIds_(const Args&... args) {
-  return guts::filter_map<TensorParameterDispatchKey, is_tensor_arg>([] (const Tensor& t) {
-    auto* impl = t._to_impl();
-    return TensorParameterDispatchKey{impl->type_id(), impl->dtype().id()};
-  }, args...);
+  return guts::filter_map<TensorParameterDispatchKey, is_tensor_arg>(tensor_to_dispatch_key(), args...);
 }
 
 // TODO Test getTensorTypeIds_
