@@ -8,6 +8,7 @@
 using std::string;
 
 namespace c10 {
+
 std::unordered_map<TypeId, string>& gTypeNames() {
   static std::unordered_map<TypeId, string> g_type_names;
   return g_type_names;
@@ -54,7 +55,7 @@ namespace {
 // intended to be only instantiated once here.
 struct UninitializedTypeNameRegisterer {
   UninitializedTypeNameRegisterer() {
-    gTypeNames()[TypeId(0)] = "nullptr (uninitialized)";
+    gTypeNames()[TypeId::uninitialized()] = "nullptr (uninitialized)";
   }
 };
 static UninitializedTypeNameRegisterer g_uninitialized_type_name_registerer;

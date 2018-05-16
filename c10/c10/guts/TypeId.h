@@ -26,14 +26,26 @@ public:
   constexpr explicit TypeId(intptr_t id): IdWrapper(id) {}
 
   friend std::ostream& operator<<(std::ostream& stream, TypeId typeId);
+  friend bool operator<(TypeId lhs, TypeId rhs);
 
   // Don't use this default constructor!
   // Unfortunately, a default constructor needs to be defined because of https://reviews.llvm.org/D41223
   constexpr TypeId(): IdWrapper(0) {}
+
+  // TODO Can we get rid of uninitialized?
+  static constexpr TypeId uninitialized() {
+    return TypeId(0);
+  }
 };
 
 inline std::ostream& operator<<(std::ostream& stream, TypeId typeId) {
   return stream << typeId.underlyingId();
+}
+
+// Allow usage in std::map / std::set
+// TODO Disallow this and rather use std::unordered_map/set everywhere
+inline bool operator<(TypeId lhs, TypeId rhs) {
+  return lhs.underlyingId() < rhs.underlyingId();
 }
 
 }
