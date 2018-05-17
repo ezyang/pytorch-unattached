@@ -13,16 +13,26 @@ struct DummyOp final {
 
 C10_DEFINE_OP_SCHEMA(DummyOp);
 
-Tensor<CPUContext> dummy_op_impl(Tensor<CPUContext> arg) {
+Tensor<CPUContext> dummy_op_int_impl(Tensor<CPUContext> arg) {
   Tensor<CPUContext> result;
   result.CopyFrom(arg);
-  result.mutable_data<float>()[0] += 1;
+  result.mutable_data<int>()[0] += 10;
+  return result;
+}
+
+Tensor<CPUContext> dummy_op_float_impl(Tensor<CPUContext> arg) {
+  Tensor<CPUContext> result;
+  result.CopyFrom(arg);
+  result.mutable_data<float>()[0] += 20;
   return result;
 }
 
 namespace c10 {
 C10_REGISTER_OP(DummyOp)
-  .kernel(&dummy_op_impl)
+  .kernel(&dummy_op_int_impl)
+  .dispatchKey({c10::CAFFE2_CPU_TENSOR(), c10::TypeMeta::Id<int>()});
+C10_REGISTER_OP(DummyOp)
+  .kernel(&dummy_op_float_impl)
   .dispatchKey({c10::CAFFE2_CPU_TENSOR(), c10::TypeMeta::Id<float>()});
 }
 namespace caffe2 {

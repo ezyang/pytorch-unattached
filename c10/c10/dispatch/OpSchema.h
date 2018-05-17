@@ -30,23 +30,33 @@ template<class Arg> using is_tensor_arg = guts::disjunction<
 >;
 
 // TODO get rid of tensor_to_dispatch_key once c2::Tensor is not used anymore, this then fits into a template lambda instead of a functor.
-struct tensor_to_dispatch_key final {
-  template<class TensorType>
-  TensorParameterDispatchKey operator()(const TensorType& tensor) const;
+template<class TensorType, class Enable = void> struct tensor_to_dispatch_key_ final {};
+template<>
+struct tensor_to_dispatch_key_<c10::Tensor, void> final {
+    static TensorParameterDispatchKey call(const c10::Tensor& tensor) {
+      auto *impl = tensor._to_impl();
+      return TensorParameterDispatchKey{impl->type_id(), impl->dtype().id()};
+    }
+};
+template<class TensorType>
+struct tensor_to_dispatch_key_<TensorType, std::enable_if_t<std::is_same<TensorType, caffe2::Tensor<caffe2::CPUContext>>::value>> final {
+    static TensorParameterDispatchKey call(const TensorType& tensor) {
+      return TensorParameterDispatchKey{CAFFE2_CPU_TENSOR(), tensor.meta().id()};
+    }
 };
 
-template<> inline TensorParameterDispatchKey tensor_to_dispatch_key::operator()<c10::Tensor>(const c10::Tensor& tensor) const {
-  auto* impl = tensor._to_impl();
-  return TensorParameterDispatchKey{impl->type_id(), impl->dtype().id()};
-}
-template<> inline TensorParameterDispatchKey tensor_to_dispatch_key::operator()<caffe2::Tensor<caffe2::CPUContext>>(const caffe2::Tensor<caffe2::CPUContext>& /*tensor*/) const {
-  // TODO Return actual dtype
-  return TensorParameterDispatchKey{CAFFE2_CPU_TENSOR(), TypeMeta::Id<float>()};
-}
-template<> inline TensorParameterDispatchKey tensor_to_dispatch_key::operator()<caffe2::Tensor<caffe2::CUDAContext>>(const caffe2::Tensor<caffe2::CUDAContext>& /*tensor*/) const {
-  // TODO Return actual dtype
-  return TensorParameterDispatchKey{CAFFE2_CUDA_TENSOR(), TypeMeta::Id<float>()};
-}
+template<class TensorType>
+struct tensor_to_dispatch_key_<TensorType, std::enable_if_t<std::is_same<TensorType, caffe2::Tensor<caffe2::CUDAContext>>::value>> final {
+    static TensorParameterDispatchKey call(const TensorType& tensor) {
+      return TensorParameterDispatchKey{CAFFE2_CUDA_TENSOR(), tensor.meta().id()};
+    }
+};
+struct tensor_to_dispatch_key final {
+    template<class TensorType>
+    TensorParameterDispatchKey operator()(const TensorType& tensor) const {
+      return tensor_to_dispatch_key_<TensorType, void>::call(tensor);
+    }
+};
 
 /**
  * Extract the type ids of all tensors in a variadic list of arguments
