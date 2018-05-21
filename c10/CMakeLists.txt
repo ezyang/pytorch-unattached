@@ -70,6 +70,10 @@ target_include_directories(c10 PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:${C10_INSTALL_INCLUDE_SUBDIR}>
     )
+target_include_directories(c10 SYSTEM PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../third_party/flat_hash_map>
+        $<INSTALL_INTERFACE:${C10_INSTALL_INCLUDE_SUBDIR}/../third_party/flat_hash_map>
+        )
 target_compile_options(c10 PRIVATE -Wall -Wextra -Wold-style-cast -Wno-missing-braces -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-include-dirs -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-promo -Wstrict-overflow=5 -Wundef -fdiagnostics-show-option -Wconversion -Wpedantic -Wno-gnu-zero-variadic-macro-arguments -Werror)
 set_property(TARGET c10 PROPERTY POSITION_INDEPENDENT_CODE ON)
 

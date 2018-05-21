@@ -22,7 +22,7 @@ inline constexpr bool operator==(const TensorParameterDispatchKey& lhs, const Te
 
 namespace std {
   template<>
-  struct hash<c10::details::TensorParameterDispatchKey> final {
+  struct hash<c10::details::TensorParameterDispatchKey> {
     // TODO constexpr hashing
     size_t operator()(const c10::details::TensorParameterDispatchKey& obj) const {
       return std::hash<c10::TensorTypeId>()(obj.tensorType) ^ std::hash<c10::TypeId>()(obj.dataType);
@@ -61,7 +61,7 @@ inline constexpr bool operator==(const DispatchKey<num_dispatch_args> &lhs, cons
 
 namespace std {
   template<size_t num_dispatch_args>
-  struct hash<c10::DispatchKey<num_dispatch_args>> final {
+  struct hash<c10::DispatchKey<num_dispatch_args>> {
     // TODO constexpr hashing
     size_t operator()(const c10::DispatchKey<num_dispatch_args>& obj) const {
       size_t hash_value = 0;

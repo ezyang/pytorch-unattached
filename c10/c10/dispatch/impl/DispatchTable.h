@@ -1,5 +1,6 @@
 #pragma once
 
+#include <flat_hash_map/flat_hash_map.h>
 #include <c10/guts/Metaprogramming.h>
 #include <c10/dispatch/OpSchema.h>
 #include <c10/dispatch/TensorTypeId.h>
@@ -11,6 +12,46 @@
 #include <shared_mutex>
 
 namespace c10 {
+
+namespace details {
+template<class Key>
+class ThreadsafeOperatorTable_ final {
+public:
+    template<class Key_>
+    void emplace(Key_&& key, void* value) {
+      std::unique_lock<std::shared_timed_mutex> lock(mutex_);
+
+      auto result = map_.emplace(std::forward<Key>(key), value);
+      if (!result.second) {
+        throw std::logic_error("Tried to register conflicting operators to the dispatcher.");
+      }
+    }
+
+    void erase(const Key& key) {
+      std::unique_lock<std::shared_timed_mutex> lock(mutex_);
+
+      size_t num_removed = map_.erase(key);
+      C10_ASSERT(num_removed <= 1, "This is not a multi-map");
+      if (num_removed == 0) {
+        throw std::logic_error("Tried to deregister an operator that isn't registered.");
+      }
+    }
+
+    void* lookup(const Key& key) const {
+      // TODO (needed but slow perf. Find better way) std::shared_lock<std::shared_timed_mutex> lock(mutex_);
+      auto found = map_.find(key);
+      if (found == map_.end()) {
+        return nullptr;
+      } else {
+        return found->second;
+      }
+    }
+
+private:
+    ska::flat_hash_map<Key, void*> map_;
+    mutable std::shared_timed_mutex mutex_;
+};
+}
 
 /**
  * Per-operator dispatch table.
@@ -38,12 +79,7 @@ public:
    * @param dispatch_key Dispatch key to implement this function with
    */
   void registerOp(typename Schema::signature::func_type* func, typename Schema::dispatch::dispatch_key_type dispatch_key) {
-    std::unique_lock<std::shared_timed_mutex> lock(ops_mutex_);
-
-    auto emplaced = ops_.emplace(std::move(dispatch_key), reinterpret_cast<void*>(func));
-    if (!emplaced.second) {
-      throw std::logic_error("Tried to register conflicting operators to the dispatcher.");
-    }
+    ops_.emplace(std::move(dispatch_key), reinterpret_cast<void*>(func));
   }
 
   /**
@@ -55,13 +91,7 @@ public:
   // In this case, an operator will show up in multiple slots, and erasing them one-by-one
   // is probably not such a good idea.
   void deregisterOp(const typename Schema::dispatch::dispatch_key_type& dispatch_key) {
-    std::unique_lock<std::shared_timed_mutex> lock(ops_mutex_);
-
-    auto found = ops_.find(dispatch_key);
-    if (found == ops_.end()) {
-      throw std::logic_error("Tried to deregister an operator that isn't registered.");
-    }
-    ops_.erase(found);
+    ops_.erase(dispatch_key);
   }
 
   /**
@@ -88,19 +118,17 @@ private:
   typename Schema::signature::func_type* lookupOp_(const Args&... args) const {
     // ezyang to smessmer: We will probably need to remove the read-side lock.  This will probably
     // necessitate replacing unordered_map with our own map implementation
-    std::shared_lock<std::shared_timed_mutex> lock(ops_mutex_);
-
+    // smessmer to ezyang: It's a readers/writers lock, so reading should be fast.
+    // I wouldn't start hand-rolling our own threadsafe map unless we really know we need it.
     auto dispatch_key = Schema::dispatch::dispatch_key(args...);
-    auto found = ops_.find(dispatch_key);
-    if (found == ops_.end()) {
+    void* found = ops_.lookup(dispatch_key);
+    if (found == nullptr) {
       throw std::logic_error("Didn't find operator to dispatch to");
     }
-    return reinterpret_cast<typename Schema::signature::func_type*>(found->second);
+    return reinterpret_cast<typename Schema::signature::func_type*>(found);
   }
 
-  // TODO Use better hash map
-  std::unordered_map<typename Schema::dispatch::dispatch_key_type, void*> ops_;
-  mutable std::shared_timed_mutex ops_mutex_;
+  details::ThreadsafeOperatorTable_<typename Schema::dispatch::dispatch_key_type> ops_;
 };
 
 }

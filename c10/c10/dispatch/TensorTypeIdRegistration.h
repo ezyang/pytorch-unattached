@@ -10,6 +10,7 @@
 
  #include "TensorTypeId.h"
  #include <atomic>
+  #include <flat_hash_map/flat_hash_map.h>
 
 namespace c10 {
 
@@ -39,8 +40,7 @@ public:
   void deregisterId(TensorTypeId id);
 
 private:
-  // TODO Something faster than unordered_set?
-  std::unordered_set<TensorTypeId> registeredTypeIds_;
+  ska::flat_hash_set<TensorTypeId> registeredTypeIds_;
   std::mutex mutex_;
 
   DISALLOW_COPY_AND_ASSIGN(TensorTypeIdRegistry);

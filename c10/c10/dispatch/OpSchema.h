@@ -18,8 +18,6 @@ C10_DECLARE_TENSOR_TYPE(CAFFE2_CUDA_TENSOR);
 
 namespace details {
 
-// TODO: Automatically extract type ids from DataType as well
-
 /**
  * If Arg is a Tensor or reference to a Tensor, provide the member constant value equal to true.  Otherwise
  * return false.

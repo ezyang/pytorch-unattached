@@ -1,7 +1,7 @@
 #ifndef CAFFE2_CORE_TYPEID_H_
 #define CAFFE2_CORE_TYPEID_H_
 
-#include <c10/guts/TypeId.h>
+#include "../../c10/c10/guts/TypeId.h"
 
 // Thin wrapper for c10::TypeId/TypeMeta.
 // TODO Remove this file and use c10 directly
