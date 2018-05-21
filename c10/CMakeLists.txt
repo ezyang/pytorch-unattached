@@ -119,8 +119,8 @@ if (BUILD_TEST)
   if (NOT CAFFE2_USE_MSVC_STATIC_RUNTIME)
     set(gtest_force_shared_crt ON)
   endif()
-  add_subdirectory(${PROJECT_SOURCE_DIR}/../third_party/googletest googletest)
-  include_directories(${PROJECT_SOURCE_DIR}/../third_party/googletest/googletest/include)
+  #add_subdirectory(${PROJECT_SOURCE_DIR}/../third_party/googletest googletest)
+  #include_directories(${PROJECT_SOURCE_DIR}/../third_party/googletest/googletest/include)
 
   foreach(test_src
       c10/DataType_test.cpp

@@ -41,6 +41,7 @@ public:
   virtual Event& event() = 0;
   virtual void ResetEvent() = 0;
   virtual void WaitEvents(const std::vector<const Event*>& events, int stream_id = -1) = 0;
+  virtual void DisableEvent() = 0;
   virtual void SetExecutorHelper(ExecutorHelper* helper) = 0;
   virtual ExecutorHelper* GetExecutorHelper() const = 0;
   virtual bool SupportsAsyncScheduling() const = 0;
@@ -290,7 +291,7 @@ class OperatorBase : public IOperatorBase {
     }
   }
 
-  void DisableEvent() {
+  void DisableEvent() override {
     event_ = nullptr;
   }
 

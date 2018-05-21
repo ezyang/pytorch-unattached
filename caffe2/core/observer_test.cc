@@ -26,15 +26,15 @@ class DummyObserver final : public ObserverBase<T> {
 
 template <>
 void DummyObserver<NetBase>::Start() {
-  vector<OperatorBase*> operators = subject_->GetOperators();
+  vector<IOperatorBase*> operators = subject_->GetOperators();
   for (auto& op : operators) {
-    op->AttachObserver(caffe2::make_unique<DummyObserver<OperatorBase>>(op));
+    op->AttachObserver(caffe2::make_unique<DummyObserver<IOperatorBase>>(op));
   }
   counter.fetch_add(1000);
 }
 
 template <>
-void DummyObserver<OperatorBase>::Start() {
+void DummyObserver<IOperatorBase>::Start() {
   counter.fetch_add(100);
 }
 
@@ -44,7 +44,7 @@ void DummyObserver<NetBase>::Stop() {
 }
 
 template <>
-void DummyObserver<OperatorBase>::Stop() {
+void DummyObserver<IOperatorBase>::Stop() {
   counter.fetch_add(1);
 }
 
