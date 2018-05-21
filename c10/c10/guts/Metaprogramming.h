@@ -8,7 +8,7 @@
 namespace c10 { namespace guts {
 
 
-/*
+/**
  * Compile-time operations on std::array.
  * Only call these at compile time, they're slow if called at runtime.
  * Examples:
@@ -62,21 +62,9 @@ constexpr inline std::array<T, N+1> prepend(T head, const std::array<T, N>& tail
   return details::prepend_(std::move(head), tail, std::make_index_sequence<N>());
 }
 
-// TODO Move to test cases
-namespace test_eq {
-static_assert(eq(std::array<int, 3>{{2, 3, 4}}, std::array<int, 3>{{2, 3, 4}}), "test");
-static_assert(!eq(std::array<int, 3>{{2, 3, 4}}, std::array<int, 3>{{2, 5, 4}}), "test");
-}
-namespace test_tail {
-static_assert(eq(std::array<int, 2>{{3, 4}}, tail(std::array<int, 3>{{2, 3, 4}})), "test");
-static_assert(eq(std::array<int, 0>{{}}, tail(std::array<int, 1>{{3}})), "test");
-}
-namespace test_prepend {
-static_assert(eq(std::array<int, 3>{{2, 3, 4}}, prepend(2, std::array<int, 2>{{3, 4}})), "test");
-static_assert(eq(std::array<int, 1>{{3}}, prepend(3, std::array<int, 0>{{}})), "test");
-}
 
-/*
+
+/**
  * Access information about result type or arguments from a function type.
  * Example:
  * using A = function_traits<int (float, double)>::return_type // A == int
@@ -92,12 +80,14 @@ struct function_traits<Result (Args...)> {
   using parameter_types = typelist::typelist<Args...>;
 };
 
-namespace test_function_traits {
-static_assert(std::is_same<void, typename function_traits<void (int, float)>::return_type>::value, "test");
-static_assert(std::is_same<int, typename function_traits<int (int, float)>::return_type>::value, "test");
-static_assert(std::is_same<typelist::typelist<int, float>, typename function_traits<void (int, float)>::parameter_types>::value, "test");
-static_assert(std::is_same<typelist::typelist<int, float>, typename function_traits<int (int, float)>::parameter_types>::value, "test");
-}
+
+
+/**
+ * Convert a C array into a std::array.
+ * Example:
+ *   int source[3] = {2, 3, 4};
+ *   std::array<int, 3> target = to_std_array(source);
+ */
 
 namespace details {
 template<class T, size_t N, size_t... I>
@@ -106,19 +96,12 @@ constexpr std::array<T, N> to_std_array_(const T (&arr)[N], std::index_sequence<
 }
 }
 
-/*
- * Convert a C array into a std::array.
- */
 template<class T, size_t N>
 constexpr std::array<T, N> to_std_array(const T (&arr)[N]) {
   return details::to_std_array_(arr, std::make_index_sequence<N>());
 }
 
-namespace test_to_std_array {
-constexpr int obj2[3] = {3, 5, 6};
-static_assert(eq(std::array<int, 3>{{3, 5, 6}}, to_std_array(obj2)), "test");
-static_assert(eq(std::array<int, 3>{{3, 5, 6}}, to_std_array({3, 5, 6})), "test");
-}
+
 
 /**
  * Use extract_arg_by_filtered_index to return the i-th argument whose
@@ -128,6 +111,9 @@ static_assert(eq(std::array<int, 3>{{3, 5, 6}}, to_std_array({3, 5, 6})), "test"
  * std::string arg1 = "Hello";
  * std::string arg2 = "World";
  * std::string&& result = extract_arg_by_filtered_index<is_string, 1>(0, arg1, 2.0, std::move(arg2));
+ *
+ * Warning: Taking the result by rvalue reference can cause segfaults because ownership will not be passed on
+ *          from the original reference. The original reference dies after the expression and the resulting
  */
 namespace details {
 template<template <class> class Condition, size_t index, class Enable, class... Args> struct extract_arg_by_filtered_index_;
@@ -161,8 +147,7 @@ decltype(auto) extract_arg_by_filtered_index(Args&&... args) {
   return details::extract_arg_by_filtered_index_<Condition, index, void, Args...>::call(std::forward<Args>(args)...);
 }
 
-// TODO Test extract_arg_by_filtered_index
-// TODO Also test perfect forwarding
+
 
 /**
  * Use filter_map to map a subset of the arguments to values.
@@ -173,8 +158,6 @@ decltype(auto) extract_arg_by_filtered_index(Args&&... args) {
  *  std::array<double, 2> result = filter_map<double, std::is_integral>([] (auto a) {return (double)a;}, 3, "bla", 4);
  *  // result == {3.0, 4.0}
  */
- // TODO call syntax with double parentheses?
-
 namespace details {
 
 template<class ResultType, size_t num_results> struct filter_map_ {
@@ -196,54 +179,37 @@ template<class ResultType, template <class> class Condition, class Mapper, class
   return details::filter_map_<ResultType, num_results>::template call<Condition, Mapper, Args...>(mapper, std::make_index_sequence<num_results>(), std::forward<Args>(args)...);
 }
 
-// TODO Test filter_map
 
+
+/**
+ * Extended type traits, these can for example be used in std::enable_if.
+ *  is_equality_comparable_t<T>  // true iff equality operator is defined for T
+ *  is_hashable_t<T>  // true iff std::hash has a specialisation for T
+ *  is_function_type_t<T> // true iff T is a C function type (i.e. "Result(Args....)")
+ *  is_instantiation_of_t<T, I> // true iff I is a template instantiation of T (e.g. vector<int> is an instantiation of vector)
+ *  Example:
+ *    is_instantiation_of_t<vector, vector<int>> // true
+ *    is_instantiation_of_t<pair, pair<int, string>> // true
+ *    is_instantiation_of_t<vector, pair<int, string>> // false
+ */
 template<class T, class Enable = void> struct is_equality_comparable : std::false_type {};
 template<class T> struct is_equality_comparable<T, void_t<decltype(std::declval<T&>() == std::declval<T&>())>> : std::true_type {};
 template<class T> using is_equality_comparable_t = typename is_equality_comparable<T>::type;
-
-namespace test_is_equality_comparable {
-class NotEqualityComparable {};
-class EqualityComparable{};
-inline bool operator==(const EqualityComparable&, const EqualityComparable&) {return false;}
-
-static_assert(!is_equality_comparable<NotEqualityComparable>::value, "");
-static_assert(is_equality_comparable<EqualityComparable>::value, "");
-static_assert(is_equality_comparable<int>::value, "");
-}
 
 template<class T, class Enable = void> struct is_hashable : std::false_type {};
 template<class T> struct is_hashable<T, void_t<decltype(std::hash<T>()(std::declval<T&>()))>> : std::true_type {};
 template<class T> using is_hashable_t = typename is_hashable<T>::type;
 
-namespace test_is_hashable {
-class NotHashable {};
-class Hashable {};
-}}}
-namespace std {
-template<> struct hash<c10::guts::test_is_hashable::Hashable> final {
-  size_t operator()(const c10::guts::test_is_hashable::Hashable&) { return 0; }
-};
-}
-namespace c10 { namespace guts { namespace test_is_hashable {
-static_assert(is_hashable<int>::value, "");
-static_assert(is_hashable<Hashable>::value, "");
-static_assert(!is_hashable<NotHashable>::value, "");
-}
-
 template<class T>
 struct is_function_type : std::false_type {};
 template<class Result, class... Args>
 struct is_function_type<Result (Args...)> : std::true_type {};
-
-// TODO Test is_function_type
-
+template<class T> using is_function_type_t = typename is_function_type<T>::type;
 
 template <template <class...> class Template, class T>
 struct is_instantiation_of : std::false_type {};
 template <template <class...> class Template, class... Args>
 struct is_instantiation_of<Template, Template<Args...>> : std::true_type {};
-
-// TODO Test is_instantiation_of
+template<template<class...> class Template, class T> using is_instantiation_of_t = typename is_instantiation_of<Template, T>::type;
 
 }}

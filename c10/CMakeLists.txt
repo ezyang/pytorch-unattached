@@ -130,6 +130,7 @@ if (BUILD_TEST)
       c10/Registry_test.cpp
       c10/dispatch/OpSchema_test.cpp
       c10/dispatch/OpSig_test.cpp
+      c10/guts/Metaprogramming_test.cpp
       )
     # Without directory or longest extension
     get_filename_component(test_name "${test_src}" NAME_WE)
