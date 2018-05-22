@@ -48,8 +48,8 @@ public:
     // TODO Instead push a full args tuple to the stack?
     // TODO Pop in reverse (using Metaprogramming::reverse_t, but then also reverse results again? Performance?)
     ArgumentsTuple arguments =
-      map_types_to_values<ParameterBaseTypes>([callStack] (auto* t) {
-        using ParameterType = std::remove_cv_t<std::remove_reference_t<decltype(*t)>>;
+      map_types_to_values<ParameterBaseTypes>([callStack] (auto t) {
+        using ParameterType = typename decltype(t)::type;
         return callStack->pop<ParameterType>();
       });
 
