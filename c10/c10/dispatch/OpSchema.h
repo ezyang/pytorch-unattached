@@ -118,7 +118,7 @@ public:
   /**
    * The number of arguments of OpSchemaDef::Signature
    */
-  static constexpr size_t num_args = parameter_types::size;
+  static constexpr size_t num_args = guts::typelist::size<parameter_types>::value;
   /**
    * The number of tensor arguments (as per is_tensor_arg) in OpSchemaDef::Signature
    */

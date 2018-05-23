@@ -38,7 +38,7 @@ private:
   using ReturnType = typename Schema::signature::return_type;
 
   using ParameterBaseTypes = guts::typelist::map_t<std::remove_cv_t, guts::typelist::map_t<std::remove_reference_t, typename Schema::signature::parameter_types>>;
-  using ArgumentsTuple = typename ParameterBaseTypes::tuple_type;
+  using ArgumentsTuple = guts::typelist::to_tuple_t<ParameterBaseTypes>;
 
 public:
   void operator()(CallStack* callStack) override {

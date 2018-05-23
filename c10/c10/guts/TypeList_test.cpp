@@ -3,10 +3,23 @@
 
 using namespace c10::guts::typelist;
 
+namespace test_size {
+    class MyClass {};
+    static_assert(0 == size<typelist<>>::value, "");
+    static_assert(1 == size<typelist<int>>::value, "");
+    static_assert(3 == size<typelist<int, float&, const MyClass&&>>::value, "");
+}
+
 namespace test_from_tuple {
     class MyClass {};
     static_assert(std::is_same<typelist<int, float&, const MyClass&&>, from_tuple_t<std::tuple<int, float&, const MyClass&&>>>::value, "");
     static_assert(std::is_same<typelist<>, from_tuple_t<std::tuple<>>>::value, "");
+}
+
+namespace test_to_tuple {
+    class MyClass {};
+    static_assert(std::is_same<std::tuple<int, float&, const MyClass&&>, to_tuple_t<typelist<int, float&, const MyClass&&>>>::value, "");
+    static_assert(std::is_same<std::tuple<>, to_tuple_t<typelist<>>>::value, "");
 }
 
 namespace test_concat {

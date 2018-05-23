@@ -13,16 +13,39 @@ template<class... T> struct false_t : std::false_type {};
  * Type holding a list of types for compile time type computations
  */
 template<class... Items> struct typelist final {
-  /**
-   * Transforms a list of types into a tuple holding these types
-   */
-  using tuple_type = std::tuple<Items...>;
-
-  /**
-   * Number of types in the list
-   */
-  static constexpr size_t size = sizeof...(Items);
+private:
+    typelist() = delete; // not for instantiation
 };
+
+
+
+/**
+ * Returns the number of types in a typelist
+ * Example:
+ *   3  ==  size<typelist<int, int, double>>::value
+ */
+template<class TypeList> struct size final {
+    static_assert(detail::false_t<TypeList>::value, "In typelist::size<T>, T must be typelist<...>.");
+};
+template<class... Types> struct size<typelist<Types...>> final {
+    static constexpr size_t value = sizeof...(Types);
+};
+
+
+
+/**
+ * Transforms a list of types into a tuple holding these types.
+ * Example:
+ *   std::tuple<int, string>  ==  to_tuple_t<typelist<int, string>>
+ */
+template<class TypeList> struct to_tuple final {
+    static_assert(detail::false_t<TypeList>::value, "In typelist::to_tuple<T>, T must be typelist<...>.");
+};
+template<class... Types> struct to_tuple<typelist<Types...>> final {
+    using type = std::tuple<Types...>;
+};
+template<class TypeList> using to_tuple_t = typename to_tuple<TypeList>::type;
+
 
 
 
@@ -106,7 +129,7 @@ struct count_if final {
   static_assert(detail::is_condition<Condition>::value, "In typelist::count_if<Condition, TypeList>, the Condition argument must be a condition type trait, i.e. have a static constexpr bool ::value member.");
   static_assert(is_instantiation_of<typelist, TypeList>::value, "In typelist::count_if<Condition, TypeList>, the TypeList argument must be typelist<...>.");
   // TODO Direct implementation might be faster
-  static constexpr size_t value = filter_t<Condition, TypeList>::size;
+  static constexpr size_t value = size<filter_t<Condition, TypeList>>::value;
 };
 
 
