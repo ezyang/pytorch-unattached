@@ -97,4 +97,10 @@ namespace {
         static_assert(!is_instantiation_of<Multiple, Single<int>>::value, "");
     }
 
+    namespace test_is_type_condition {
+        template<class> class NotATypeCondition {};
+        static_assert(is_type_condition<std::is_reference>::value, "");
+        static_assert(!is_type_condition<NotATypeCondition>::value, "");
+    }
+
 }

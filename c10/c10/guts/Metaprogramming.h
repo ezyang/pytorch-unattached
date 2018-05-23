@@ -71,7 +71,7 @@ constexpr inline std::array<T, N+1> prepend(T head, const std::array<T, N>& tail
  * using A = function_traits<int (float, double)>::argument_typle_type // A == tuple<float, double>
  */
 template<class Func> struct function_traits {
-  static_assert(!std::is_same<Func, Func>::value, "Can only use function_traits on function types");
+  static_assert(!std::is_same<Func, Func>::value, "In function_traits<Func>, Func must be a plain function type.");
 };
 template<class Result, class... Args>
 struct function_traits<Result (Args...)> {
@@ -144,6 +144,7 @@ struct extract_arg_by_filtered_index_<Condition, index, std::enable_if_t<Conditi
 }
 template<template <class> class Condition, size_t index, class... Args>
 decltype(auto) extract_arg_by_filtered_index(Args&&... args) {
+  static_assert(is_type_condition<Condition>::value, "In extract_arg_by_filtered_index, the Condition argument must be a condition type trait, i.e. have a static constexpr bool ::value member.");
   return detail::extract_arg_by_filtered_index_<Condition, index, void, Args...>::call(std::forward<Args>(args)...);
 }
 
@@ -175,6 +176,8 @@ template<class ResultType> struct filter_map_<ResultType, 0> {
 }
 
 template<class ResultType, template <class> class Condition, class Mapper, class... Args> auto filter_map(const Mapper& mapper, Args&&... args) {
+  static_assert(is_type_condition<Condition>::value, "In filter_map<Result, Condition>, the Condition argument must be a condition type trait, i.e. have a static constexpr bool ::value member.");
+
   static constexpr size_t num_results = typelist::count_if<Condition, typelist::typelist<Args...>>::value;
   return detail::filter_map_<ResultType, num_results>::template call<Condition, Mapper, Args...>(mapper, std::make_index_sequence<num_results>(), std::forward<Args>(args)...);
 }

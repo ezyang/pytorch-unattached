@@ -93,16 +93,12 @@ template<class... TypeLists> using concat_t = typename concat<TypeLists...>::typ
  * Examples:
  *   typelist<int&, const string&&>  ==  filter_t<std::is_reference, typelist<void, string, int&, bool, const string&&, int>>
  */
-namespace detail {
-template<template<class> class C, class Enable = void> struct is_condition : std::false_type {};
-template<template<class> class C> struct is_condition<C, std::enable_if_t<std::is_same<bool, std::remove_cv_t<decltype(C<int>::value)>>::value>> : std::true_type {};
-}
 template<template <class> class Condition, class TypeList> struct filter final {
   static_assert(detail::false_t<TypeList>::value, "In typelist::filter<Condition, TypeList>, the TypeList argument must be typelist<...>.");
 };
 template<template <class> class Condition, class Head, class... Tail>
 struct filter<Condition, typelist<Head, Tail...>> final {
-  static_assert(detail::is_condition<Condition>::value, "In typelist::filter<Condition, TypeList>, the Condition argument must be a condition type trait, i.e. have a static constexpr bool ::value member.");
+  static_assert(is_type_condition<Condition>::value, "In typelist::filter<Condition, TypeList>, the Condition argument must be a condition type trait, i.e. have a static constexpr bool ::value member.");
   using type = std::conditional_t<
     Condition<Head>::value,
     concat_t<typelist<Head>, typename filter<Condition, typelist<Tail...>>::type>,
@@ -111,7 +107,7 @@ struct filter<Condition, typelist<Head, Tail...>> final {
 };
 template<template <class> class Condition>
 struct filter<Condition, typelist<>> final {
-  static_assert(detail::is_condition<Condition>::value, "In typelist::filter<Condition, TypeList>, the Condition argument must be a condition type trait, i.e. have a static constexpr bool ::value member.");
+  static_assert(is_type_condition<Condition>::value, "In typelist::filter<Condition, TypeList>, the Condition argument must be a condition type trait, i.e. have a static constexpr bool ::value member.");
   using type = typelist<>;
 };
 template<template <class> class Condition, class TypeList>
@@ -126,7 +122,7 @@ using filter_t = typename filter<Condition, TypeList>::type;
  */
 template<template <class> class Condition, class TypeList>
 struct count_if final {
-  static_assert(detail::is_condition<Condition>::value, "In typelist::count_if<Condition, TypeList>, the Condition argument must be a condition type trait, i.e. have a static constexpr bool ::value member.");
+  static_assert(is_type_condition<Condition>::value, "In typelist::count_if<Condition, TypeList>, the Condition argument must be a condition type trait, i.e. have a static constexpr bool ::value member.");
   static_assert(is_instantiation_of<typelist, TypeList>::value, "In typelist::count_if<Condition, TypeList>, the TypeList argument must be typelist<...>.");
   // TODO Direct implementation might be faster
   static constexpr size_t value = size<filter_t<Condition, TypeList>>::value;
@@ -146,7 +142,7 @@ template<template <class> class Condition, class TypeList> struct true_for_each_
 template<template <class> class Condition, class... Types>
 struct true_for_each_type<Condition, typelist<Types...>> final
 : guts::conjunction<Condition<Types>...> {
-    static_assert(detail::is_condition<Condition>::value, "In typelist::true_for_each_type<Condition, TypeList>, the Condition argument must be a condition type trait, i.e. have a static constexpr bool ::value member.");
+    static_assert(is_type_condition<Condition>::value, "In typelist::true_for_each_type<Condition, TypeList>, the Condition argument must be a condition type trait, i.e. have a static constexpr bool ::value member.");
 };
 
 
