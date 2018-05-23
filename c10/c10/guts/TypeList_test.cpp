@@ -1,5 +1,6 @@
 #include "TypeList.h"
 #include <gtest/gtest.h>
+#include <memory>
 
 using namespace c10::guts::typelist;
 
