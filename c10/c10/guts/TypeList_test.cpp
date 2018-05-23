@@ -38,6 +38,7 @@ namespace test_count_if {
 }
 
 namespace test_true_for_each_type {
+    template<class> class Test;
     class MyClass {};
     static_assert(true_for_each_type<std::is_reference, typelist<int&, const float&&, const MyClass&>>::value, "");
     static_assert(!true_for_each_type<std::is_reference, typelist<int&, const float, const MyClass&>>::value, "");

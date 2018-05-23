@@ -36,6 +36,8 @@ add_library(c10 SHARED
     c10/guts/caffe2/common.cc
     c10/guts/scope_guard.cpp
     c10/guts/Any.cpp
+    c10/guts/TypeList.cpp
+    c10/guts/TypeTraits.cpp
     c10/cpu/CPUStorage.cpp
     c10/cpu/CPUAllocator.cpp
     c10/cpu/CPUTensorImpl.cpp
@@ -132,6 +134,7 @@ if (BUILD_TEST)
       c10/dispatch/OpSig_test.cpp
       c10/guts/Metaprogramming_test.cpp
       c10/guts/TypeList_test.cpp
+      c10/guts/TypeTraits_test.cpp
       )
     # Without directory or longest extension
     get_filename_component(test_name "${test_src}" NAME_WE)
