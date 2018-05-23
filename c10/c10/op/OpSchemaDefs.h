@@ -1,6 +1,5 @@
 #pragma once
 
-#include <c10/dispatch/OpId.h>
 #include <c10/Tensor.h>
 
 namespace c10 { namespace ops {

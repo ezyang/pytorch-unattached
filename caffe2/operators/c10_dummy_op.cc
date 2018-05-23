@@ -1,6 +1,6 @@
 #include "caffe2/core/operator_c10wrapper.h"
 #include <c10/dispatch/OpSchemaRegistration.h>
-#include <c10/dispatch/OpRegistration.h>
+#include <c10/dispatch/KernelRegistration.h>
 
 using caffe2::Tensor;
 using caffe2::CPUContext;
@@ -28,10 +28,10 @@ Tensor<CPUContext> dummy_op_float_impl(Tensor<CPUContext> arg) {
 }
 
 namespace c10 {
-C10_REGISTER_OP(DummyOp)
+C10_REGISTER_KERNEL(DummyOp)
   .kernel(&dummy_op_int_impl)
   .dispatchKey({c10::CAFFE2_CPU_TENSOR(), c10::TypeMeta::Id<int>()});
-C10_REGISTER_OP(DummyOp)
+C10_REGISTER_KERNEL(DummyOp)
   .kernel(&dummy_op_float_impl)
   .dispatchKey({c10::CAFFE2_CPU_TENSOR(), c10::TypeMeta::Id<float>()});
 }

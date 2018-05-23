@@ -1,7 +1,7 @@
 #include <c10/dispatch/Dispatcher.h>
 #include <c10.h>
 #include <c10/cpu/CPUTensorImpl.h>
-#include <c10/dispatch/OpRegistration.h>
+#include <c10/dispatch/KernelRegistration.h>
 #include <c10/dispatch/OpSchemaRegistration.h>
 
 using namespace c10;
@@ -39,7 +39,7 @@ Tensor conditional_op(bool condition, const Tensor& thenTensor, Tensor elseTenso
   }
 }
 
-C10_REGISTER_OP(::ops::conditional)
+C10_REGISTER_KERNEL(::ops::conditional)
   .kernel(&conditional_op)
   .dispatchKey({c10::details::TensorParameterDispatchKey{CPU_TENSOR(), TypeMeta::Id<int>()}, c10::details::TensorParameterDispatchKey{CPU_TENSOR(), TypeMeta::Id<int>()}});
 
@@ -47,7 +47,7 @@ int add_notensor_op(int lhs, int rhs) {
   return lhs + rhs;
 }
 
-C10_REGISTER_OP(::ops::add_notensor)
+C10_REGISTER_KERNEL(::ops::add_notensor)
   .kernel(&add_notensor_op)
   .dispatchKey("bla");
 
@@ -64,7 +64,7 @@ bool equals_impl(Tensor, Tensor) {
   return true;
 }
 
-C10_REGISTER_OP(::equals)
+C10_REGISTER_KERNEL(::equals)
   .kernel(&equals_impl)
   .dispatchKey({c10::details::TensorParameterDispatchKey{CPU_TENSOR(), TypeMeta::Id<int>()}, c10::details::TensorParameterDispatchKey{CPU_TENSOR(), TypeMeta::Id<int>()}});
 

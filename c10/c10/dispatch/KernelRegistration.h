@@ -5,9 +5,10 @@
 #include <c10/Optional.h>
 
 /**
- * To register your own operator, do in one (!) cpp file:
- *   C10_DEFINE_OPERATOR(OpSchemaDef, func, {tensor_type1, tensor_type2, ...})
- * Both must be in the same namespace.
+ * To register your own kernel for an operator, do in one (!) cpp file:
+ *   C10_REGISTER_KERNEL(OpSchemaDef)
+ *      .kernel(&kernel_func)
+ *      .dispatchKey(dispatch_key);
  */
 
 namespace c10 {
@@ -65,7 +66,7 @@ private:
  * Helper class for building a KernelRegistrar.  This permits "keyword-argument" like syntax
  * when performing operator registration, e.g., as in:
  *
- * C10_REGISTER_OP(::ops::add_notensor)
+ * C10_REGISTER_KERNEL(::ops::add_notensor)
  *      .kernel(&add_notensor_op)
  *      .dispatchKey("bla");
  *
@@ -135,5 +136,5 @@ public:
 #define CONCAT_IMPL( x, y ) x##y
 #define MACRO_CONCAT( x, y ) CONCAT_IMPL( x, y )
 // NB: Semicolon after applying this macro is MANDATORY
-#define C10_REGISTER_OP(OpSchemaDef)                                                           \
+#define C10_REGISTER_KERNEL(OpSchemaDef)                                                           \
   static KernelRegistrar<OpSchemaDef> MACRO_CONCAT(__kernelRegistrationBuilder_, __COUNTER__) = KernelRegistrationBuilder<OpSchemaDef, false, false>()

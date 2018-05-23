@@ -3,7 +3,7 @@
 #include <c10.h>
 #include <c10/cpu/CPUTensorImpl.h>
 #include <c10/op/OpSchemaDefs.h>
-#include <c10/dispatch/OpRegistration.h>
+#include <c10/dispatch/KernelRegistration.h>
 
 namespace c10 { namespace cpu { namespace op {
 
@@ -37,7 +37,7 @@ Tensor zeros(ArrayRef<int64_t> sizes, TypeMeta dtype) {
   return r;
 }
 
-C10_REGISTER_OP(c10::ops::zeros)
+C10_REGISTER_KERNEL(c10::ops::zeros)
   .kernel(&zeros)
   .dispatchKey({});
 
@@ -164,7 +164,7 @@ bool equal(Tensor self, Tensor other) {
   }
 }
 
-C10_REGISTER_OP(c10::ops::equals)
+C10_REGISTER_KERNEL(c10::ops::equals)
   .kernel(&equal)
   .dispatchKey({c10::details::TensorParameterDispatchKey{CPU_TENSOR(), TypeMeta::Id<float>()}, c10::details::TensorParameterDispatchKey{CPU_TENSOR(), TypeMeta::Id<float>()}});
 

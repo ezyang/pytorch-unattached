@@ -1,7 +1,7 @@
 #include <c10.h>
 #include <utility>
 #include <c10/dispatch/OpSchemaRegistration.h>
-#include <c10/dispatch/OpRegistration.h>
+#include <c10/dispatch/KernelRegistration.h>
 #include <c10/cpu/CPUTensorImpl.h>
 #include <c10/stack_bindings/StackBasedOperatorRegistry.h>
 #include <c10/stack_bindings/CallStack.h>
@@ -29,7 +29,7 @@ Tensor conditional_op(bool condition, const Tensor& thenTensor, Tensor elseTenso
   }
 }
 
-C10_REGISTER_OP(::ops::conditional)
+C10_REGISTER_KERNEL(::ops::conditional)
   .kernel(&conditional_op)
   .dispatchKey({c10::details::TensorParameterDispatchKey{CPU_TENSOR(), TypeMeta::Id<int>()}, c10::details::TensorParameterDispatchKey{CPU_TENSOR(), TypeMeta::Id<int>()}});
 

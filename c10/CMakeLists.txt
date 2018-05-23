@@ -44,8 +44,7 @@ add_library(c10 SHARED
     c10/dispatch/Dispatcher.cpp
     c10/dispatch/impl/DispatchTable.cpp
     c10/dispatch/impl/DispatchKey.cpp
-    c10/dispatch/OpId.cpp
-    c10/dispatch/OpRegistration.cpp
+    c10/dispatch/KernelRegistration.cpp
     c10/dispatch/OpSchema.cpp
     c10/dispatch/TensorTypeId.cpp
     c10/dispatch/TensorTypeIdRegistration.cpp

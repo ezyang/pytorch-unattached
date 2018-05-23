@@ -1,6 +1,6 @@
 #include "caffe2/core/operator_c10wrapper.h"
 #include <c10/dispatch/OpSchemaRegistration.h>
-#include <c10/dispatch/OpRegistration.h>
+#include <c10/dispatch/KernelRegistration.h>
 #include "caffe2/utils/math.h"
 
 using caffe2::Tensor;
@@ -47,7 +47,7 @@ Tensor<CPUContext> elementwise_linear_op_cpu_impl(const Tensor<CPUContext>& X, c
 }
 
 namespace c10 {
-C10_REGISTER_OP(ElementwiseLinearOp)
+C10_REGISTER_KERNEL(ElementwiseLinearOp)
   .kernel(&elementwise_linear_op_cpu_impl)
   .dispatchKey({c10::details::TensorParameterDispatchKey{c10::CAFFE2_CPU_TENSOR(), c10::TypeMeta::Id<float>()}, c10::details::TensorParameterDispatchKey{c10::CAFFE2_CPU_TENSOR(), c10::TypeMeta::Id<float>()}, c10::details::TensorParameterDispatchKey{c10::CAFFE2_CPU_TENSOR(), c10::TypeMeta::Id<float>()}});
 }
