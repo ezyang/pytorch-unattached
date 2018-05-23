@@ -16,7 +16,7 @@ namespace c10 { namespace guts {
  *  tail({2, 3, 4}) == {3, 4}
  *  prepend(2, {3, 4}) == {2, 3, 4}
  */
-namespace details {
+namespace detail {
 template<class T, size_t N, size_t... I> struct eq__ {};
 template<class T, size_t N, size_t IHead, size_t... ITail> struct eq__<T, N, IHead, ITail...> {
  static constexpr bool call(const std::array<T, N>& lhs, const std::array<T, N>& rhs) {
@@ -35,10 +35,10 @@ constexpr inline bool eq_(const std::array<T, N>& lhs, const std::array<T, N>& r
 }
 template<class T, size_t N>
 constexpr inline bool eq(const std::array<T, N>& lhs, const std::array<T, N>& rhs) {
- return details::eq_(lhs, rhs, std::make_index_sequence<N>());
+ return detail::eq_(lhs, rhs, std::make_index_sequence<N>());
 }
 
-namespace details {
+namespace detail {
 template<class T, size_t N, size_t... I>
 constexpr inline std::array<T, N-1> tail_(const std::array<T, N>& arg, std::index_sequence<I...>) {
   static_assert(sizeof...(I) == N-1, "invariant");
@@ -48,10 +48,10 @@ constexpr inline std::array<T, N-1> tail_(const std::array<T, N>& arg, std::inde
 template<class T, size_t N>
 constexpr inline std::array<T, N-1> tail(const std::array<T, N>& arg) {
   static_assert(N > 0, "Can only call tail() on an std::array with at least one element");
-  return details::tail_(arg, std::make_index_sequence<N-1>());
+  return detail::tail_(arg, std::make_index_sequence<N-1>());
 }
 
-namespace details {
+namespace detail {
 template<class T, size_t N, size_t... I>
 constexpr inline std::array<T, N+1> prepend_(T head, const std::array<T, N>& tail, std::index_sequence<I...>) {
   return {{std::move(head), std::get<I>(tail)...}};
@@ -59,7 +59,7 @@ constexpr inline std::array<T, N+1> prepend_(T head, const std::array<T, N>& tai
 }
 template<class T, size_t N>
 constexpr inline std::array<T, N+1> prepend(T head, const std::array<T, N>& tail) {
-  return details::prepend_(std::move(head), tail, std::make_index_sequence<N>());
+  return detail::prepend_(std::move(head), tail, std::make_index_sequence<N>());
 }
 
 
@@ -89,7 +89,7 @@ struct function_traits<Result (Args...)> {
  *   std::array<int, 3> target = to_std_array(source);
  */
 
-namespace details {
+namespace detail {
 template<class T, size_t N, size_t... I>
 constexpr std::array<T, N> to_std_array_(const T (&arr)[N], std::index_sequence<I...>) {
   return {{arr[I]...}};
@@ -98,7 +98,7 @@ constexpr std::array<T, N> to_std_array_(const T (&arr)[N], std::index_sequence<
 
 template<class T, size_t N>
 constexpr std::array<T, N> to_std_array(const T (&arr)[N]) {
-  return details::to_std_array_(arr, std::make_index_sequence<N>());
+  return detail::to_std_array_(arr, std::make_index_sequence<N>());
 }
 
 
@@ -115,7 +115,7 @@ constexpr std::array<T, N> to_std_array(const T (&arr)[N]) {
  * Warning: Taking the result by rvalue reference can cause segfaults because ownership will not be passed on
  *          from the original reference. The original reference dies after the expression and the resulting
  */
-namespace details {
+namespace detail {
 template<template <class> class Condition, size_t index, class Enable, class... Args> struct extract_arg_by_filtered_index_;
 template<template <class> class Condition, size_t index, class Head, class... Tail>
 struct extract_arg_by_filtered_index_<Condition, index, std::enable_if_t<!Condition<Head>::value>, Head, Tail...> {
@@ -144,7 +144,7 @@ struct extract_arg_by_filtered_index_<Condition, index, std::enable_if_t<Conditi
 }
 template<template <class> class Condition, size_t index, class... Args>
 decltype(auto) extract_arg_by_filtered_index(Args&&... args) {
-  return details::extract_arg_by_filtered_index_<Condition, index, void, Args...>::call(std::forward<Args>(args)...);
+  return detail::extract_arg_by_filtered_index_<Condition, index, void, Args...>::call(std::forward<Args>(args)...);
 }
 
 
@@ -158,7 +158,7 @@ decltype(auto) extract_arg_by_filtered_index(Args&&... args) {
  *  std::array<double, 2> result = filter_map<double, std::is_integral>([] (auto a) {return (double)a;}, 3, "bla", 4);
  *  // result == {3.0, 4.0}
  */
-namespace details {
+namespace detail {
 
 template<class ResultType, size_t num_results> struct filter_map_ {
    template<template <class> class Condition, class Mapper, class... Args, size_t... I>
@@ -176,7 +176,7 @@ template<class ResultType> struct filter_map_<ResultType, 0> {
 
 template<class ResultType, template <class> class Condition, class Mapper, class... Args> auto filter_map(const Mapper& mapper, Args&&... args) {
   static constexpr size_t num_results = typelist::count_if<Condition, typelist::typelist<Args...>>::value;
-  return details::filter_map_<ResultType, num_results>::template call<Condition, Mapper, Args...>(mapper, std::make_index_sequence<num_results>(), std::forward<Args>(args)...);
+  return detail::filter_map_<ResultType, num_results>::template call<Condition, Mapper, Args...>(mapper, std::make_index_sequence<num_results>(), std::forward<Args>(args)...);
 }
 
 }}

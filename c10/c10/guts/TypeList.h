@@ -216,7 +216,7 @@ template<class TypeList> using reverse_t = typename reverse<TypeList>::type;
  *     );
  *   // shared_ptrs == std::tuple<shared_ptr<int>, shared_ptr<double>>()
  */
-namespace details {
+namespace detail {
 template<class T> struct type_ final {
     using type = T;
 };
@@ -232,7 +232,7 @@ template<class... Types> struct map_types_to_values<typelist<Types...>> final {
 }
 
 template<class TypeList, class Func> auto map_types_to_values(Func&& func) {
-  return details::map_types_to_values<TypeList>::call(std::forward<Func>(func));
+  return detail::map_types_to_values<TypeList>::call(std::forward<Func>(func));
 }
 
 
