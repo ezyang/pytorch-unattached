@@ -40,13 +40,6 @@ protected:
   // Used for dispatch on the object
   const TensorTypeId type_id_;
 
-  // The scalar type of elements stored in this tensor.  This contains
-  // important information like "what is the sizes of the scalar element."
-  // TODO: Pointer to scalar type means there's a possibly unnecessary indirection here!
-  // TODO: This is going to be redundant with type_id_, so if we want to squeeze down sizes
-  // we can make this a computed property from type_id_.
-  TypeMeta dtype_;
-
   DimVector sizes_;
 
   // TODO: This is not always valid, and needs to be treated accordingly
@@ -77,7 +70,7 @@ protected:
   // Note: In Torch this can be nonzero, because we support views into the
   // inside of tensors.  In historic Caffe2 this was always zero.
   // NB: This is BYTES!!!  Different from TH historically, which was scalar sizes.
-  int64_t storage_offset_bytes_;
+  int64_t storage_offset_;
 
   // TODO: need boolean flags to specify whether or not elements like strides and storage are valid.
 
@@ -85,14 +78,13 @@ protected:
   // an "is-a" to "has-a" relationship and inline the storage struct in Tensor.
 
 public:
-  explicit TensorImpl(TensorTypeId type_id, TypeMeta dtype, ArrayRef<int64_t> sizes, ArrayRef<int64_t> strides, Storage storage, int64_t storage_offset_bytes)
+  explicit TensorImpl(TensorTypeId type_id, ArrayRef<int64_t> sizes, ArrayRef<int64_t> strides, Storage storage, int64_t storage_offset)
       : IntrusivePtrTarget()
       , type_id_(type_id)
-      , dtype_(dtype)
       , sizes_(sizes)
       , strides_(strides)
       , storage_(storage)
-      , storage_offset_bytes_(storage_offset_bytes)
+      , storage_offset_(storage_offset)
   {};
 
   // TODO: Not sure about this...
@@ -104,14 +96,12 @@ public:
     return sizes_;
   }
 
-  // Previously was type().scalarType() but I haven't committed to adding a Type object
-  // to the design yet.
   TypeMeta dtype() const {
-    return dtype_;
+    return storage_->dtype();
   }
 
   int64_t storage_offset() const {
-    return storage_offset_bytes_ / static_cast<int64_t>(dtype_.itemsize());
+    return storage_offset_;
   }
 
   // NB: In Caffe2, this quantity is CACHED.  For simplicity, we don't cache it for now, but consider
@@ -135,7 +125,7 @@ public:
 
   void *data_ptr() const {
     if (!storage_) return nullptr;
-    return static_cast<void*>(static_cast<char*>(storage_->data_ptr()) + storage_offset_bytes_);
+    return static_cast<void*>(static_cast<char*>(storage_->data_ptr()) + static_cast<size_t>(storage_offset_) * dtype().itemsize());
   }
 
   // TODO: precompute this value
@@ -198,7 +188,7 @@ public:
     // because the first call would have "lost" the offset in y, but second call preserves it.
     // Really, what you need is for y.storage() to return a contiguous, 1D tensor that spans
     // all of storage, then no translation necessary.  TODO: implement this
-    storage_offset_bytes_ = src->storage_offset_bytes_ + storage_offset * static_cast<int64_t>(dtype_.itemsize());
+    storage_offset_ = src->storage_offset_ + storage_offset;
     _set_sizes_and_strides(new_sizes, new_strides);
   }
 
@@ -212,7 +202,7 @@ public:
 //      instead of an error, which should have happened.  It just seems morally wrong to privilege empty CPU
 //      tensors in this way.  Also, you don't get reliable pointer equality tests anymore.
 class UndefinedTensorImpl final : public TensorImpl {
-  UndefinedTensorImpl() : TensorImpl(TensorTypeIds::undefined(), TypeMeta::Make<float>(), {}, {}, nullptr, 0) {};
+  UndefinedTensorImpl() : TensorImpl(TensorTypeIds::undefined(), {}, {}, nullptr, 0) {};
 public:
   static UndefinedTensorImpl *singleton() {
     // smessmer to @ezyang: Not sure this singleton is a good idea. If wrapped in Tensor, it is subject to ref counting and might get destructed.

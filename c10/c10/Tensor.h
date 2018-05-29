@@ -269,9 +269,9 @@ public:
    *
    * @param dtype       The type of the elements to be copied
    * @param p           Pointer to the elements to be copied
-   * @param size_bytes  The size in bytes to copy
+   * @param size        The number of elements to copy
    */
-  void copy_(TypeMeta dtype, const void* p, int64_t size_bytes) const;
+  void copy_(TypeMeta dtype, const void* p, int64_t size) const;
 
   // NB: This is an instance of the design pattern, where we cannot (and will not) dispatch
   // templated functions.  So this has an inline definition which goes straight to the
@@ -284,7 +284,7 @@ public:
    */
   template <typename T>
   void copy_(ArrayRef<T> arr) const {
-    copy_(TypeMeta::Make<T>(), arr.data(), arr.size() * sizeof(T));
+    copy_(TypeMeta::Make<T>(), arr.data(), arr.size());
   }
 
   /**

@@ -23,7 +23,9 @@ private:
 
 
 
-
+/**
+ * This class provides an  interface
+ */
 class StackBasedOperator {
 public:
   virtual void operator()(CallStack* callStack) = 0;

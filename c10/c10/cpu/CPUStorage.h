@@ -52,13 +52,13 @@ public:
     std::swap(*this, other);
   }
 
-  void copy_(const void* src, int64_t copy_size_bytes) {
-    if (copy_size_bytes <= 0) return;
+  void copy_(const void* src, int64_t copy_size) {
+    if (copy_size <= 0) return;
     if (auto copy = data_type_.copy()) {
       // Swapped argument order?! How confusing!
-      copy(src, data_.get(), static_cast<size_t>(copy_size_bytes / static_cast<int64_t>(data_type_.itemsize())));
+      copy(src, data_.get(), static_cast<size_t>(copy_size));
     } else {
-      std::memcpy(data_.get(), src, static_cast<size_t>(copy_size_bytes));
+      std::memcpy(data_.get(), src, static_cast<size_t>(copy_size) * data_type_.itemsize());
     }
   }
 
@@ -75,27 +75,24 @@ public:
   // than 'resize'
   //
   // NB: This has the logic for Caffe2-style placement-new/placement-delete
-  void resize_(int64_t new_size_bytes, bool keep_data = true) {
-    C10_ASSERT(new_size_bytes % static_cast<int64_t>(data_type_.itemsize()) == 0,
-      "requested new size of ", new_size_bytes, " bytes is not a multiple of ",
-      data_type_.itemsize(), "(aka, the item size of dtype ", data_type_.id(), ")");
-    auto new_size_elems = new_size_bytes / static_cast<int64_t>(data_type_.itemsize());
+  void resize_(int64_t new_size, bool keep_data = true) {
     if (!resizable_) throw std::runtime_error("trying to resize storage that is not resizable");
     // TODO: Consider bringing back the old realloc path from TH?
     data_t old_data = std::move(data_);
-    if (new_size_bytes == 0) {
+    if (new_size == 0) {
       data_ = nullptr;
     } else {
       void* raw_data;
       std::function<void(void*)> deleter;
+      auto new_size_bytes = new_size * static_cast<int64_t>(data_type_.itemsize());
       std::tie(raw_data, deleter) = globalCPUContext().getCPUAllocator()->malloc(new_size_bytes);
       // TODO: Exception safety?!  If an exception happens before we allocate the unique_ptr
       // we will lose this data.
       if (auto dtor = data_type_.dtor()) {
         // TODO: It is too bad we can't move capture 'deleter'; an unnecessary
         // copy happens here. (It also happened in the old Caffe2 version of this code)
-        auto deleter_with_dtor = [dtor, deleter, new_size_elems](void* p) {
-          dtor(p, static_cast<size_t>(new_size_elems));
+        auto deleter_with_dtor = [dtor, deleter, new_size](void* p) {
+          dtor(p, static_cast<size_t>(new_size));
           deleter(p);
         };
         // TODO: It's probably an error if ctor is set but not dtor
@@ -107,14 +104,14 @@ public:
       // we will attempt to deallocate the data using the placement-deleter, which is obviously
       // not going to work
       if (auto ctor = data_type_.ctor()) {
-        ctor(data_.get(), static_cast<size_t>(new_size_bytes / static_cast<int64_t>(data_type_.itemsize())));
+        ctor(data_.get(), static_cast<size_t>(new_size));
       }
     }
-    auto old_size_bytes = size_bytes_;
-    size_bytes_ = new_size_bytes;
+    auto old_size = size_;
+    size_ = new_size;
     if (old_data != nullptr && keep_data) {
-      int64_t copy_size_bytes = std::min(new_size_bytes, old_size_bytes);
-      copy_(old_data.get(), copy_size_bytes);
+      int64_t copy_size = std::min(new_size, old_size);
+      copy_(old_data.get(), copy_size);
       old_data.reset();
     }
   }
