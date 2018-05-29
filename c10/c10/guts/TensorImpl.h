@@ -71,6 +71,7 @@ protected:
   // Note: storage->sizes() may be greater than the recorded sizes of the tensor
   // ezyang to @smessmer: Maybe we should consider using a never-null pointer.
   // If you do that a number of "is null" tests can be deleted.
+  // INVARIANT: storage is always non-null
   Storage storage_;
 
   // Note: In Torch this can be nonzero, because we support views into the

@@ -5,6 +5,15 @@
 
 namespace c10 {
 
+// TODO: Don't name this CallStack, that implies that each entry in the
+// stack is a frame, but in this case we're allowed to push multiple entries
+// on the stack per frame.
+/**
+ * The stack of a stack-based interpreter.  Arguments (boxed using Any) can be pushed onto
+ * the stack, and then popped out at the implementation of a function.  We use this stack
+ * to let us write code which is polymorphic (without templates or code generation) over arguments,
+ * and can forward said arguments to an underlying function.
+ */
 class CallStack final {
 public:
   template<class T>
