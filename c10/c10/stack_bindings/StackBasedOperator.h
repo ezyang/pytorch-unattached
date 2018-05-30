@@ -8,6 +8,8 @@
 namespace c10 {
 
 namespace details {
+// A small gadget to invoke the dispatcher with a tuple of arguments (native API is
+// variadic arguments).
 template<class OpSchemaDef, class ReturnType, class ArgsTuple> struct call_dispatcher_with_args_tuple;
 template<class OpSchemaDef, class ReturnType, class... Args> struct call_dispatcher_with_args_tuple<OpSchemaDef, ReturnType, std::tuple<Args...>> final {
   static ReturnType call(std::tuple<Args...>&& args) {
