@@ -49,7 +49,7 @@ add_library(c10 SHARED
     c10/dispatch/TensorTypeId.cpp
     c10/dispatch/TensorTypeIdRegistration.cpp
     c10/dispatch/OpSchemaRegistration.cpp
-    c10/stack_bindings/CallStack.cpp
+    c10/stack_bindings/ParameterStack.cpp
     c10/stack_bindings/StackBasedOperator.cpp
     c10/stack_bindings/StackBasedOperatorRegistry.cpp
     c10/SmallVector.cpp

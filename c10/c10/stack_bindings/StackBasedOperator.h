@@ -1,7 +1,7 @@
 #pragma once
 
 #include <c10/dispatch/OpSchema.h>
-#include "CallStack.h"
+#include "ParameterStack.h"
 #include <c10/dispatch/Dispatcher.h>
 #include <c10/guts/C++17.h>
 
@@ -24,11 +24,13 @@ private:
 
 
 /**
- * This class provides an  interface
+ * This class provides a virtual interface to operators using a boxed input representation.
+ * Unlike direct-style, unboxed operators, we can work with stack based operators (and their
+ * input/outputs) in a polymorphic way without requiring templates.
  */
 class StackBasedOperator {
 public:
-  virtual void operator()(CallStack* callStack) = 0;
+  virtual void operator()(ParameterStack* callStack) = 0;
 
   virtual ~StackBasedOperator() = default;
 };
@@ -43,7 +45,7 @@ private:
   using ArgumentsTuple = guts::typelist::to_tuple_t<ParameterBaseTypes>;
 
 public:
-  void operator()(CallStack* callStack) override {
+  void operator()(ParameterStack* callStack) override {
     using guts::typelist::map_types_to_values;
     using guts::typelist::reverse_t;
 
