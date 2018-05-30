@@ -68,7 +68,7 @@ constexpr inline std::array<T, N+1> prepend(T head, const std::array<T, N>& tail
  * Access information about result type or arguments from a function type.
  * Example:
  * using A = function_traits<int (float, double)>::return_type // A == int
- * using A = function_traits<int (float, double)>::parameter_types::tuple_type // A == tuple<float, double>
+ * using A = function_traits<int (float, double)>::argument_typle_type // A == tuple<float, double>
  */
 template<class Func> struct function_traits {
   static_assert(!std::is_same<Func, Func>::value, "In function_traits<Func>, Func must be a plain function type.");
