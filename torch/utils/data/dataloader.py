@@ -13,7 +13,7 @@ import threading
 import traceback
 import os
 import time
-from torch._six import string_classes, int_classes
+from torch._six import string_classes, int_classes, FileNotFoundError
 
 IS_WINDOWS = sys.platform == "win32"
 if IS_WINDOWS:
@@ -246,7 +246,7 @@ class _DataLoaderIter(object):
 
         self.sample_iter = iter(self.batch_sampler)
 
-        base_seed = torch.LongTensor(1).random_()[0]
+        base_seed = torch.LongTensor(1).random_().item()
 
         if self.num_workers > 0:
             self.worker_init_fn = loader.worker_init_fn
