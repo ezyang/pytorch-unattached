@@ -455,15 +455,19 @@ class Operator : public OperatorBase {
         AddRelatedBlobInfo(&err);
       }
       this->RecordLastFailedOpNetPosition();
+      StopAllObservers();
       throw;
     } catch (...) {
       this->RecordLastFailedOpNetPosition();
+      StopAllObservers();
       throw;
     }
   }
 
   bool RunAsync(int stream_id = 0) final {
     try {
+      StartAllObservers();
+
       context_.SwitchToDevice(stream_id);
       auto result = RunOnDevice();
       if (result) {
@@ -478,6 +482,9 @@ class Operator : public OperatorBase {
         SetEventFinished(getErrorMsg().c_str());
         this->RecordLastFailedOpNetPosition();
       }
+
+      StopAllObservers();
+
       return result;
     } catch (EnforceNotMet& err) {
       if (has_debug_def()) {
@@ -487,14 +494,17 @@ class Operator : public OperatorBase {
       }
       SetEventFinished(err.what());
       this->RecordLastFailedOpNetPosition();
+      StopAllObservers();
       throw;
     } catch (const std::exception& err) {
       SetEventFinished(err.what());
       this->RecordLastFailedOpNetPosition();
+      StopAllObservers();
       throw;
     } catch (...) {
       SetEventFinished(getErrorMsg().c_str());
       this->RecordLastFailedOpNetPosition();
+      StopAllObservers();
       throw;
     }
   }
