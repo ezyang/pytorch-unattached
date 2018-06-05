@@ -29,18 +29,18 @@ template<class T, size_t N> struct eq__<T, N> {
  }
 };
 template<class T, size_t N, size_t... I>
-constexpr inline bool eq_(const std::array<T, N>& lhs, const std::array<T, N>& rhs, std::index_sequence<I...>) {
+constexpr inline bool eq_(const std::array<T, N>& lhs, const std::array<T, N>& rhs, guts::index_sequence<I...>) {
  return eq__<T, N, I...>::call(lhs, rhs);
 }
 }
 template<class T, size_t N>
 constexpr inline bool eq(const std::array<T, N>& lhs, const std::array<T, N>& rhs) {
- return detail::eq_(lhs, rhs, std::make_index_sequence<N>());
+ return detail::eq_(lhs, rhs, guts::make_index_sequence<N>());
 }
 
 namespace detail {
 template<class T, size_t N, size_t... I>
-constexpr inline std::array<T, N-1> tail_(const std::array<T, N>& arg, std::index_sequence<I...>) {
+constexpr inline std::array<T, N-1> tail_(const std::array<T, N>& arg, guts::index_sequence<I...>) {
   static_assert(sizeof...(I) == N-1, "invariant");
   return {{std::get<I+1>(arg)...}};
 }
@@ -48,18 +48,18 @@ constexpr inline std::array<T, N-1> tail_(const std::array<T, N>& arg, std::inde
 template<class T, size_t N>
 constexpr inline std::array<T, N-1> tail(const std::array<T, N>& arg) {
   static_assert(N > 0, "Can only call tail() on an std::array with at least one element");
-  return detail::tail_(arg, std::make_index_sequence<N-1>());
+  return detail::tail_(arg, guts::make_index_sequence<N-1>());
 }
 
 namespace detail {
 template<class T, size_t N, size_t... I>
-constexpr inline std::array<T, N+1> prepend_(T head, const std::array<T, N>& tail, std::index_sequence<I...>) {
+constexpr inline std::array<T, N+1> prepend_(T head, const std::array<T, N>& tail, guts::index_sequence<I...>) {
   return {{std::move(head), std::get<I>(tail)...}};
 }
 }
 template<class T, size_t N>
 constexpr inline std::array<T, N+1> prepend(T head, const std::array<T, N>& tail) {
-  return detail::prepend_(std::move(head), tail, std::make_index_sequence<N>());
+  return detail::prepend_(std::move(head), tail, guts::make_index_sequence<N>());
 }
 
 
@@ -91,14 +91,14 @@ struct function_traits<Result (Args...)> {
 
 namespace detail {
 template<class T, size_t N, size_t... I>
-constexpr std::array<T, N> to_std_array_(const T (&arr)[N], std::index_sequence<I...>) {
+constexpr std::array<T, N> to_std_array_(const T (&arr)[N], guts::index_sequence<I...>) {
   return {{arr[I]...}};
 }
 }
 
 template<class T, size_t N>
 constexpr std::array<T, N> to_std_array(const T (&arr)[N]) {
-  return detail::to_std_array_(arr, std::make_index_sequence<N>());
+  return detail::to_std_array_(arr, guts::make_index_sequence<N>());
 }
 
 
@@ -118,32 +118,36 @@ constexpr std::array<T, N> to_std_array(const T (&arr)[N]) {
 namespace detail {
 template<template <class> class Condition, size_t index, class Enable, class... Args> struct extract_arg_by_filtered_index_;
 template<template <class> class Condition, size_t index, class Head, class... Tail>
-struct extract_arg_by_filtered_index_<Condition, index, std::enable_if_t<!Condition<Head>::value>, Head, Tail...> {
-  static decltype(auto) call(Head&& /*head*/, Tail&&... tail) {
+struct extract_arg_by_filtered_index_<Condition, index, guts::enable_if_t<!Condition<Head>::value>, Head, Tail...> {
+  static auto call(Head&& /*head*/, Tail&&... tail)
+  -> decltype(extract_arg_by_filtered_index_<Condition, index, void, Tail...>::call(std::forward<Tail>(tail)...)) {
     return extract_arg_by_filtered_index_<Condition, index, void, Tail...>::call(std::forward<Tail>(tail)...);
   }
 };
 template<template <class> class Condition, size_t index, class Head, class... Tail>
-struct extract_arg_by_filtered_index_<Condition, index, std::enable_if_t<Condition<Head>::value && index != 0>, Head, Tail...> {
-  static decltype(auto) call(Head&& /*head*/, Tail&&... tail) {
+struct extract_arg_by_filtered_index_<Condition, index, guts::enable_if_t<Condition<Head>::value && index != 0>, Head, Tail...> {
+  static auto call(Head&& /*head*/, Tail&&... tail)
+  -> decltype(extract_arg_by_filtered_index_<Condition, index-1, void, Tail...>::call(std::forward<Tail>(tail)...)) {
     return extract_arg_by_filtered_index_<Condition, index-1, void, Tail...>::call(std::forward<Tail>(tail)...);
   }
 };
 template<template <class> class Condition, size_t index>
 struct extract_arg_by_filtered_index_<Condition, index, void> {
-  static decltype(auto) call() {
+  static void call() {
     static_assert(index != index, "extract_arg_by_filtered_index out of range.");
   }
 };
 template<template <class> class Condition, size_t index, class Head, class... Tail>
-struct extract_arg_by_filtered_index_<Condition, index, std::enable_if_t<Condition<Head>::value && index == 0>, Head, Tail...> {
-  static decltype(auto) call(Head&& head, Tail&&... /*tail*/) {
+struct extract_arg_by_filtered_index_<Condition, index, guts::enable_if_t<Condition<Head>::value && index == 0>, Head, Tail...> {
+  static auto call(Head&& head, Tail&&... /*tail*/)
+  -> decltype(std::forward<Head>(head)) {
     return std::forward<Head>(head);
   }
 };
 }
 template<template <class> class Condition, size_t index, class... Args>
-decltype(auto) extract_arg_by_filtered_index(Args&&... args) {
+auto extract_arg_by_filtered_index(Args&&... args)
+-> decltype(detail::extract_arg_by_filtered_index_<Condition, index, void, Args...>::call(std::forward<Args>(args)...)) {
   static_assert(is_type_condition<Condition>::value, "In extract_arg_by_filtered_index, the Condition argument must be a condition type trait, i.e. have a static constexpr bool ::value member.");
   return detail::extract_arg_by_filtered_index_<Condition, index, void, Args...>::call(std::forward<Args>(args)...);
 }
@@ -156,30 +160,41 @@ decltype(auto) extract_arg_by_filtered_index(Args&&... args) {
  * At runtime, it will just loop over the pre-filtered arguments to create an std::array.
  *
  * Example:
+ *  // in C++14
  *  std::array<double, 2> result = filter_map<double, std::is_integral>([] (auto a) {return (double)a;}, 3, "bla", 4);
+ *  // result == {3.0, 4.0}
+ *
+ *  // same example in C++11
+ *  struct my_map {
+ *    template<class T> constexpr double operator()(T a) {
+ *      return (double)a;
+ *    }
+ *  };
+ *  std::array<double, 2> result = filter_map<double, std::is_integral>(my_map(), 3, "bla", 4);
  *  // result == {3.0, 4.0}
  */
 namespace detail {
 
 template<class ResultType, size_t num_results> struct filter_map_ {
    template<template <class> class Condition, class Mapper, class... Args, size_t... I>
-   static std::array<ResultType, num_results> call(const Mapper& mapper, std::index_sequence<I...>, Args&&... args) {
+   static std::array<ResultType, num_results> call(const Mapper& mapper, guts::index_sequence<I...>, Args&&... args) {
      return std::array<ResultType, num_results> { mapper(extract_arg_by_filtered_index<Condition, I>(std::forward<Args>(args)...))... };
    }
 };
 template<class ResultType> struct filter_map_<ResultType, 0> {
   template<template <class> class Condition, class Mapper, class... Args, size_t... I>
-  static std::array<ResultType, 0> call(const Mapper& /*mapper*/, std::index_sequence<I...>, Args&&... /*args*/) {
+  static std::array<ResultType, 0> call(const Mapper& /*mapper*/, guts::index_sequence<I...>, Args&&... /*args*/) {
     return std::array<ResultType, 0> { };
   }
 };
 }
 
-template<class ResultType, template <class> class Condition, class Mapper, class... Args> auto filter_map(const Mapper& mapper, Args&&... args) {
+template<class ResultType, template <class> class Condition, class Mapper, class... Args> auto filter_map(const Mapper& mapper, Args&&... args)
+-> decltype(detail::filter_map_<ResultType, typelist::count_if<Condition, typelist::typelist<Args...>>::value>::template call<Condition, Mapper, Args...>(mapper, guts::make_index_sequence<typelist::count_if<Condition, typelist::typelist<Args...>>::value>(), std::forward<Args>(args)...)) {
   static_assert(is_type_condition<Condition>::value, "In filter_map<Result, Condition>, the Condition argument must be a condition type trait, i.e. have a static constexpr bool ::value member.");
 
   static constexpr size_t num_results = typelist::count_if<Condition, typelist::typelist<Args...>>::value;
-  return detail::filter_map_<ResultType, num_results>::template call<Condition, Mapper, Args...>(mapper, std::make_index_sequence<num_results>(), std::forward<Args>(args)...);
+  return detail::filter_map_<ResultType, num_results>::template call<Condition, Mapper, Args...>(mapper, guts::make_index_sequence<num_results>(), std::forward<Args>(args)...);
 }
 
 }}

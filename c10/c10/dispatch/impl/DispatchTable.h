@@ -9,7 +9,7 @@
 #include <array>
 #include <unordered_map>
 #include <iostream>
-#include <shared_mutex>
+#include <mutex>
 
 namespace c10 {
 
@@ -33,7 +33,8 @@ class ThreadsafeOperatorTable_ final {
 public:
     template<class Key_>
     void emplace(Key_&& key, void* value) {
-      std::unique_lock<std::shared_timed_mutex> lock(mutex_);
+      // TODO Locking
+      //std::unique_lock<std::shared_timed_mutex> lock(mutex_);
 
       auto result = map_.emplace(std::forward<Key>(key), value);
       if (!result.second) {
@@ -42,7 +43,8 @@ public:
     }
 
     void erase(const Key& key) {
-      std::unique_lock<std::shared_timed_mutex> lock(mutex_);
+      // TODO Locking
+      //std::unique_lock<std::shared_timed_mutex> lock(mutex_);
 
       size_t num_removed = map_.erase(key);
       C10_ASSERT(num_removed <= 1, "This is not a multi-map");
@@ -63,7 +65,8 @@ public:
 
 private:
     ska::flat_hash_map<Key, void*> map_;
-    mutable std::shared_timed_mutex mutex_;
+    // TODO Figure out how to get fast locking in C++11 (use boost::shared_timed_mutex? folly::SharedMutex?)
+    //mutable std::shared_timed_mutex mutex_;
 };
 }
 

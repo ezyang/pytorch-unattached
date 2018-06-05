@@ -13,11 +13,11 @@ namespace details {
 template<class OpSchemaDef, class ReturnType, class ArgsTuple> struct call_dispatcher_with_args_tuple;
 template<class OpSchemaDef, class ReturnType, class... Args> struct call_dispatcher_with_args_tuple<OpSchemaDef, ReturnType, std::tuple<Args...>> final {
   static ReturnType call(std::tuple<Args...>&& args) {
-    return call_(std::move(args), std::index_sequence_for<Args...>());
+    return call_(std::move(args), guts::index_sequence_for<Args...>());
   }
 private:
   template<size_t... I>
-  static ReturnType call_(std::tuple<Args...>&& args, std::index_sequence<I...>) {
+  static ReturnType call_(std::tuple<Args...>&& args, guts::index_sequence<I...>) {
     return Dispatcher<OpSchemaDef>::call(std::move(std::get<I>(args))...);
   }
 };
@@ -60,8 +60,21 @@ private:
   using Schema = OpSchema<OpSchemaDef>;
   using ReturnType = typename Schema::signature::return_type;
 
-  using ParameterBaseTypes = guts::typelist::map_t<std::remove_cv_t, guts::typelist::map_t<std::remove_reference_t, typename Schema::signature::parameter_types>>;
+  using ParameterBaseTypes = guts::typelist::map_t<guts::remove_cv_t, guts::typelist::map_t<guts::remove_reference_t, typename Schema::signature::parameter_types>>;
   using ArgumentsTuple = guts::typelist::to_tuple_t<ParameterBaseTypes>;
+
+  class pop_from_stack_ final {
+  public:
+    explicit pop_from_stack_(ParameterStack* callStack): callStack_(callStack) {}
+
+    template<class T> auto operator()(T) -> typename T::type {
+      using ParameterType = typename T::type;
+      return callStack_->pop<ParameterType>();
+    }
+
+  private:
+    ParameterStack* callStack_;
+  };
 
 public:
   void operator()(ParameterStack* callStack) override {
@@ -70,11 +83,7 @@ public:
 
     // TODO Instead push a full args tuple to the stack?
     // TODO Pop in reverse (using Metaprogramming::reverse_t, but then also reverse results again? Performance?)
-    ArgumentsTuple arguments =
-      map_types_to_values<ParameterBaseTypes>([callStack] (auto t) {
-        using ParameterType = typename decltype(t)::type;
-        return callStack->pop<ParameterType>();
-      });
+    ArgumentsTuple arguments = map_types_to_values<ParameterBaseTypes>(pop_from_stack_(callStack));
 
     // TODO Check if this correctly moves the arguments from the tuple into the op
     ReturnType result = details::call_dispatcher_with_args_tuple<OpSchemaDef, ReturnType, ArgumentsTuple>::call(std::move(arguments));

@@ -200,15 +200,18 @@ namespace ska
         template<typename T>
         struct sherwood_v3_entry_constexpr
         {
+            constexpr explicit sherwood_v3_entry_constexpr(int8_t distance_from_desired_ = -1, typename std::aligned_storage<sizeof(T), alignof(T)>::type bytes_ = {})
+            : distance_from_desired(distance_from_desired_), bytes(bytes_) {}
+
             static constexpr sherwood_v3_entry_constexpr special_end_entry()
             {
-                sherwood_v3_entry_constexpr end;
-                end.distance_from_desired = sherwood_v3_entry<T>::special_end_value;
-                return end;
+                return sherwood_v3_entry_constexpr(
+                  sherwood_v3_entry<T>::special_end_value
+                );
             }
 
-            int8_t distance_from_desired = -1;
-            typename std::aligned_storage<sizeof(T), alignof(T)>::type bytes = {};
+            int8_t distance_from_desired;
+            typename std::aligned_storage<sizeof(T), alignof(T)>::type bytes;
         };
         static constexpr int8_t min_lookups = 4;
         template<typename T>
@@ -216,7 +219,10 @@ namespace ska
         {
             static constexpr const sherwood_v3_entry_constexpr<T> table[min_lookups] =
                     {
-                            {}, {}, {}, sherwood_v3_entry_constexpr<T>::special_end_entry()
+                            sherwood_v3_entry_constexpr<T>(),
+                            sherwood_v3_entry_constexpr<T>(),
+                            sherwood_v3_entry_constexpr<T>(),
+                            sherwood_v3_entry_constexpr<T>::special_end_entry()
                     };
         };
         template<typename T>
@@ -466,7 +472,10 @@ namespace ska
             template<typename ValueType>
             struct templated_iterator
             {
-                EntryPointer current = EntryPointer();
+                explicit templated_iterator(EntryPointer current_ = EntryPointer())
+                : current(current_) {}
+
+                EntryPointer current;
 
                 using iterator_category = std::forward_iterator_tag;
                 using value_type = ValueType;
@@ -510,7 +519,7 @@ namespace ska
 
                 operator templated_iterator<const value_type>() const
                 {
-                    return { current };
+                    return templated_iterator<const value_type>(current);
                 }
             };
             using iterator = templated_iterator<value_type>;
@@ -521,7 +530,7 @@ namespace ska
                 for (EntryPointer it = entries;; ++it)
                 {
                     if (it->has_value())
-                        return { it };
+                        return iterator(it);
                 }
             }
             const_iterator begin() const
@@ -529,7 +538,7 @@ namespace ska
                 for (EntryPointer it = entries;; ++it)
                 {
                     if (it->has_value())
-                        return { it };
+                        return iterator(it);
                 }
             }
             const_iterator cbegin() const
@@ -538,11 +547,11 @@ namespace ska
             }
             iterator end()
             {
-                return { entries + static_cast<ptrdiff_t>(num_slots_minus_one + max_lookups) };
+                return iterator(entries + static_cast<ptrdiff_t>(num_slots_minus_one + max_lookups));
             }
             const_iterator end() const
             {
-                return { entries + static_cast<ptrdiff_t>(num_slots_minus_one + max_lookups) };
+                return iterator(entries + static_cast<ptrdiff_t>(num_slots_minus_one + max_lookups));
             }
             const_iterator cend() const
             {
@@ -556,7 +565,7 @@ namespace ska
                 for (int8_t distance = 0; it->distance_from_desired >= distance; ++distance, ++it)
                 {
                     if (compares_equal(key, it->value))
-                        return { it };
+                        return iterator(it);
                 }
                 return end();
             }
@@ -594,7 +603,7 @@ namespace ska
                 for (; current_entry->distance_from_desired >= distance_from_desired; ++current_entry, ++distance_from_desired)
                 {
                     if (compares_equal(key, current_entry->value))
-                        return { { current_entry }, false };
+                        return { iterator(current_entry), false };
                 }
                 return emplace_new_key(distance_from_desired, current_entry, std::forward<Key>(key), std::forward<Args>(args)...);
             }
@@ -716,7 +725,7 @@ namespace ska
                     ++it;
                     num_to_move = std::min(static_cast<ptrdiff_t>(it->distance_from_desired), num_to_move);
                 }
-                return { to_return };
+                return iterator(to_return);
             }
 
             size_t erase(const FindKey & key)
@@ -846,12 +855,12 @@ namespace ska
                 {
                     current_entry->emplace(distance_from_desired, std::forward<Key>(key), std::forward<Args>(args)...);
                     ++num_elements;
-                    return { { current_entry }, true };
+                    return { iterator(current_entry), true };
                 }
                 value_type to_insert(std::forward<Key>(key), std::forward<Args>(args)...);
                 swap(distance_from_desired, current_entry->distance_from_desired);
                 swap(to_insert, current_entry->value);
-                iterator result = { current_entry };
+                iterator result(current_entry);
                 for (++distance_from_desired, ++current_entry;; ++current_entry)
                 {
                     if (current_entry->is_empty())
@@ -924,16 +933,16 @@ namespace ska
                 operator iterator()
                 {
                     if (it->has_value())
-                        return { it };
+                        return iterator(it);
                     else
-                        return ++iterator{it};
+                        return ++iterator(it);
                 }
                 operator const_iterator()
                 {
                     if (it->has_value())
-                        return { it };
+                        return const_iterator(it);
                     else
-                        return ++const_iterator{it};
+                        return ++const_iterator(it);
                 }
             };
 

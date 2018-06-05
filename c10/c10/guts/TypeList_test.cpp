@@ -61,9 +61,9 @@ namespace test_true_for_each_type {
 
 namespace test_map {
     class MyClass {};
-    static_assert(std::is_same<typelist<>, map_t<std::add_lvalue_reference_t, typelist<>>>::value, "");
-    static_assert(std::is_same<typelist<int&>, map_t<std::add_lvalue_reference_t, typelist<int>>>::value, "");
-    static_assert(std::is_same<typelist<int&, double&, const MyClass&>, map_t<std::add_lvalue_reference_t, typelist<int, double, const MyClass>>>::value, "");
+    static_assert(std::is_same<typelist<>, map_t<c10::guts::add_lvalue_reference_t, typelist<>>>::value, "");
+    static_assert(std::is_same<typelist<int&>, map_t<c10::guts::add_lvalue_reference_t, typelist<int>>>::value, "");
+    static_assert(std::is_same<typelist<int&, double&, const MyClass&>, map_t<c10::guts::add_lvalue_reference_t, typelist<int, double, const MyClass>>>::value, "");
 }
 
 namespace test_head {
@@ -87,42 +87,52 @@ namespace test_reverse {
 }
 
 namespace test_map_types_to_values {
+    struct map_to_size {
+      template<class T> constexpr size_t operator()(T) {return sizeof(typename T::type);}
+    };
+
     TEST(TypeListTest, MapTypesToValues_sametype) {
         auto sizes =
-            map_types_to_values<typelist<int64_t, bool, uint32_t>>(
-                    [](auto type) -> size_t { return sizeof(typename decltype(type)::type); }
-            );
+            map_types_to_values<typelist<int64_t, bool, uint32_t>>(map_to_size());
         std::tuple<size_t, size_t, size_t> expected(8, 1, 4);
         static_assert(std::is_same<decltype(expected), decltype(sizes)>::value, "");
         EXPECT_EQ(expected, sizes);
     }
 
+    struct map_make_shared {
+      template<class T> std::shared_ptr<typename T::type> operator()(T) {
+        return std::make_shared<typename T::type>();
+      }
+    };
+
     TEST(TypeListTest, MapTypesToValues_differenttypes) {
         auto shared_ptrs =
-                map_types_to_values<typelist<int, double>>(
-                        [](auto type) { return std::make_shared<typename decltype(type)::type>(); }
-                );
+                map_types_to_values<typelist<int, double>>(map_make_shared());
         static_assert(std::is_same<std::tuple<std::shared_ptr<int>, std::shared_ptr<double>>, decltype(shared_ptrs)>::value, "");
     }
 
     struct Class1 {static int func() {return 3;}};
     struct Class2 {static double func() {return 2.0;}};
 
+    struct mapper_call_func {
+      template<class T> auto operator()(T) -> decltype(T::type::func()) { return T::type::func(); }
+    };
+
     TEST(TypeListTest, MapTypesToValues_members) {
         auto result =
-                map_types_to_values<typelist<Class1, Class2>>(
-                        [](auto type) { return decltype(type)::type::func(); }
-                );
+                map_types_to_values<typelist<Class1, Class2>>(mapper_call_func());
         std::tuple<int, double> expected(3, 2.0);
         static_assert(std::is_same<decltype(expected), decltype(result)>::value, "");
         EXPECT_EQ(expected, result);
     }
 
+    struct mapper_call_nonexistent_function {
+      template<class T> auto operator()(T) -> decltype(T::type::this_doesnt_exist()) { return T::type::this_doesnt_exist(); }
+    };
+
     TEST(TypeListTest, MapTypesToValues_empty) {
         auto result =
-                map_types_to_values<typelist<>>(
-                        [](auto type) { return decltype(type)::type::this_doesnt_exist(); }
-                );
+                map_types_to_values<typelist<>>(mapper_call_nonexistent_function());
         std::tuple<> expected;
         static_assert(std::is_same<decltype(expected), decltype(result)>::value, "");
         EXPECT_EQ(expected, result);

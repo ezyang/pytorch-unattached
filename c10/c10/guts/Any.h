@@ -8,6 +8,7 @@
 #include <typeinfo>
 #include <utility>
 #include <vector>
+#include "C++17.h"
 
 namespace c10 {
 
@@ -125,7 +126,7 @@ class Any {
   template <typename T>
   explicit Any(T&& value)
       : content_(
-            std::make_unique<Holder<std::decay_t<T>>>(std::forward<T>(value))) {}
+            guts::make_unique<Holder<guts::decay_t<T>>>(std::forward<T>(value))) {}
 
   /// `Any` is a public type, but its construction is only allowed via this
   /// "private" function in the `detail` namespace.
