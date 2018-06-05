@@ -22,9 +22,9 @@ void Tensor::legacy_caffe2_resize_(ArrayRef<int64_t> size) const {
   cpu::op::legacy_caffe2_resize_(*this, size);
 }
 
-void Tensor::copy_(TypeMeta dtype, const void* p, int64_t size_bytes) const {
+void Tensor::copy_(TypeMeta dtype, const void* p, int64_t size) const {
   // TODO: Use the dynamic dispatcher instead
-  cpu::op::copy_(*this, dtype, p, size_bytes);
+  cpu::op::copy_(*this, dtype, p, size);
 }
 
 void Tensor::extend_(int64_t num, double growthPct) const {

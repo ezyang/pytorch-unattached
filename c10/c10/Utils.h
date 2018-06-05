@@ -47,19 +47,18 @@ inline std::pair<int64_t, int64_t> compute_extent(ArrayRef<int64_t> size, ArrayR
   return {low_watermark, high_watermark};
 }
 
-inline int64_t required_new_storage_size_bytes(
-    TypeMeta dtype,
+inline int64_t required_new_storage_size(
     ArrayRef<int64_t> size,
     ArrayRef<int64_t> stride,
-    int64_t storage_offset_bytes) {
+    int64_t storage_offset) {
   int64_t low_watermark, high_watermark;
   std::tie(low_watermark, high_watermark) = compute_extent(size, stride);
-  if (low_watermark * static_cast<int64_t>(dtype.itemsize()) + storage_offset_bytes < 0) {
+  if (low_watermark + storage_offset < 0) {
     C10_CHECK(0, "The given size ", size, " and stride ", stride, " can result in a negative index ",
     "as large as ", low_watermark, ", but this could result in an underflow as your storage ",
-    "begins at element ", storage_offset_bytes / static_cast<int64_t>(dtype.itemsize()));
+    "begins at element ", storage_offset);
   }
-  return high_watermark * static_cast<int64_t>(dtype.itemsize()) + storage_offset_bytes;
+  return high_watermark + storage_offset;
 }
 
 inline int64_t product(ArrayRef<int64_t> xs) {

@@ -4,7 +4,7 @@
 #include <c10/dispatch/KernelRegistration.h>
 #include <c10/cpu/CPUTensorImpl.h>
 #include <c10/stack_bindings/StackBasedOperatorRegistry.h>
-#include <c10/stack_bindings/CallStack.h>
+#include <c10/stack_bindings/ParameterStack.h>
 #include <iostream>
 
 using namespace c10;
@@ -34,7 +34,7 @@ C10_REGISTER_KERNEL(::ops::conditional)
   .dispatchKey({c10::details::TensorParameterDispatchKey{CPU_TENSOR(), TypeMeta::Id<int>()}, c10::details::TensorParameterDispatchKey{CPU_TENSOR(), TypeMeta::Id<int>()}});
 
 int main() {
-  CallStack callStack;
+  ParameterStack callStack;
 
   callStack.push(tensor<int>({5}));
   callStack.push(tensor<int>({10}));

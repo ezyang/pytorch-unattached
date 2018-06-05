@@ -49,13 +49,7 @@ protected:
   // fairly rare, since it's not an operation that is all that useful for internal implementation
   // inside CPUStorageImpl
 
-  // ezyang: In the original draft of this class, sizes was recorded in bytes because storage was content
-  // agnostic.  Now that we may possibly need to placement-new/placement-delete when storage resize, storage
-  // must be content-aware, and now it is less clear if the sizes should be counted in bytes or number of
-  // elements.  (Bytes is more likely to be the number you need, but number of elements reduces the number
-  // of unrepresentable states.)  For reference, TH used to count the number of elements, but it also
-  // created a copy of the struct per data type, so the sizes of the element was statically known.
-  int64_t size_bytes_; // in bytes
+  int64_t size_; // numel
 
   // The scalar type of this storage.  We need this in case we need to do placement-new/placement-delete
   // after allocation
@@ -110,13 +104,13 @@ protected:
   // so if you use the base class you will miss methods.
 
   StorageImpl(TypeMeta data_type)
-      : data_(nullptr), size_bytes_(0), data_type_(data_type), resizable_(true) {}
+      : data_(nullptr), size_(0), data_type_(data_type), resizable_(true) {}
 
   // TODO: Make a more descriptive constructor for non-resizable things.  Note that since you're
   // using make_shared most of the time for storages, you probably just want to make another
   // top-level 'make' function.
   StorageImpl(TypeMeta data_type, data_t &&data, int64_t size, bool resizable = true)
-      : data_(std::move(data)), size_bytes_(size), data_type_(data_type), resizable_(resizable) {}
+      : data_(std::move(data)), size_(size), data_type_(data_type), resizable_(resizable) {}
 
   // NB: Move constructor is legitimately used to destructively overwrite a storage, as in the case of a resize_()
   // TODO: explicitly declare permitted constructors.  (Consult my "rule of X" stuff...)
@@ -139,8 +133,12 @@ public:
     return data_.get();
   }
 
-  int64_t size_bytes() const {
-    return size_bytes_;
+  TypeMeta dtype() {
+    return data_type_;
+  }
+
+  int64_t size() const {
+    return size_;
   }
 };
 

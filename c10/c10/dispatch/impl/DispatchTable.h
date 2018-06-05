@@ -14,6 +14,20 @@
 namespace c10 {
 
 namespace details {
+
+// Internal implementation of the operator as a thread-safe hash table.
+//
+// The current implementation below does not have the correct correctness characteristics
+// which we need.  It's worth spelling out exactly what we need:
+//
+//  - We need LOCK FREE read access to the table (as per the performance benchmark
+//    at https://fb.quip.com/hvz3AGnx8MQ8
+//
+//  - We need to support writes which are possibly concurrent with reads, occurring when
+//    a dynamic library is loaded or unloaded.
+//
+//  - We probably can require that dynamic library loads/unloads be synchronized (so
+//    there are never two concurrent loads.)
 template<class Key>
 class ThreadsafeOperatorTable_ final {
 public:
