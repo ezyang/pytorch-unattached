@@ -149,10 +149,10 @@ class TypeMeta {
   TypeMeta(
       TypeId i,
       size_t s,
-      PlacementNew* ctor,
-      TypedCopy* copy,
-      TypedDestructor* dtor) noexcept
-      : id_(i), itemsize_(s), ctor_(ctor), copy_(copy), dtor_(dtor) {}
+      PlacementNew* ctor__,
+      TypedCopy* copy__,
+      TypedDestructor* dtor__) noexcept
+      : id_(i), itemsize_(s), ctor_(ctor__), copy_(copy__), dtor_(dtor__) {}
 
  public:
   /**

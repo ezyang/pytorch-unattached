@@ -7,7 +7,7 @@ namespace c10 {
 
 C10_DECLARE_REGISTRY(
     StackBasedOperatorRegistry,
-    StackBasedOperator);
+    StackBasedOperator)
 
 #define C10_REGISTER_STACK_INTERFACE_FOR_OPERATOR(OpSchemaDef)           \
   C10_REGISTER_CLASS(StackBasedOperatorRegistry, OpSchemaDef, ConcreteStackBasedOperator<OpSchemaDef>)

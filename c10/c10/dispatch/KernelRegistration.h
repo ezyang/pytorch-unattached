@@ -113,9 +113,9 @@ public:
    * @param kernel concrete function implementation to be registered
    * @return "this" for method chaining
    */
-  constexpr auto kernel(typename Schema::signature::func_type* kernel) && {
+  constexpr auto kernel(typename Schema::signature::func_type* kernel_func) && {
     static_assert(!hasKernel, "Tried to define kernel twice in same op registration");
-    return KernelRegistrationBuilder<OpSchemaDef, true, hasDispatchKey>(*kernel, std::move(dispatch_key_));
+    return KernelRegistrationBuilder<OpSchemaDef, true, hasDispatchKey>(*kernel_func, std::move(dispatch_key_));
   }
 
   /**

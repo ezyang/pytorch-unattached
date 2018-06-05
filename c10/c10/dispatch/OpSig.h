@@ -16,7 +16,7 @@ using TypeMeta = int;
 
 struct ArgSig final {
   constexpr ArgSig() : ty(0), name("") {}
-  constexpr ArgSig(TypeMeta ty, const char* name) : ty(ty), name(name) {};
+  constexpr ArgSig(TypeMeta ty_, const char* name_) : ty(ty_), name(name_) {};
   TypeMeta ty;
   const char* name;
 };
@@ -36,7 +36,7 @@ template <std::size_t N = 0>
 struct OpSig final {
   std::array<ArgSig, N> args;
   constexpr OpSig() {}
-  constexpr OpSig(std::array<ArgSig, N> args) : args(args) {}
+  constexpr OpSig(std::array<ArgSig, N> args_) : args(std::move(args_)) {}
   template <typename T>
   constexpr auto arg(const char* name) {
     return OpSig<N+1>(append(args, ArgSig(type_meta<T>(), name)));
