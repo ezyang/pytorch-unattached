@@ -45,7 +45,7 @@ private:
     int val;
 };
 
-template<class T> using is_my_movable_only_class = std::is_same<MovableOnly, std::remove_cv_t<std::remove_reference_t<T>>>;
+template<class T> using is_my_movable_only_class = std::is_same<MovableOnly, remove_cv_t<remove_reference_t<T>>>;
 
 struct CopyCounting {
     int move_count;
@@ -66,7 +66,7 @@ struct CopyCounting {
     }
 };
 
-template<class T> using is_my_copy_counting_class = std::is_same<CopyCounting, std::remove_cv_t<std::remove_reference_t<T>>>;
+template<class T> using is_my_copy_counting_class = std::is_same<CopyCounting, remove_cv_t<remove_reference_t<T>>>;
 
 namespace test_extract_arg_by_filtered_index {
     class MyClass {};
@@ -130,45 +130,69 @@ namespace test_extract_arg_by_filtered_index {
 namespace test_filter_map {
     class MyClass {};
 
+    struct map_to_double {
+      template<class T> constexpr double operator()(T a) const {
+        return (double)a;
+      }
+    };
+
     TEST(MetaprogrammingTest, FilterMap) {
-        auto result = filter_map<double, std::is_integral>([] (auto a) {return (double)a;}, 3, "bla", MyClass(), 4, nullptr, 5);
+        auto result = filter_map<double, std::is_integral>(map_to_double(), 3, "bla", MyClass(), 4, nullptr, 5);
         static_assert(std::is_same<std::array<double, 3>, decltype(result)>::value, "");
         constexpr std::array<double, 3> expected{{3.0, 4.0, 5.0}};
         EXPECT_EQ(expected, result);
     }
 
     TEST(MetaprogrammingTest, FilterMap_emptyInput) {
-        auto result = filter_map<double, std::is_integral>([] (auto a) {return (double)a;});
+        auto result = filter_map<double, std::is_integral>(map_to_double());
         static_assert(std::is_same<std::array<double, 0>, decltype(result)>::value, "");
         constexpr std::array<double, 0> expected{{}};
         EXPECT_EQ(expected, result);
     }
 
     TEST(MetaprogrammingTest, FilterMap_emptyOutput) {
-        auto result = filter_map<double, std::is_integral>([] (auto a) {return (double)a;}, "bla", MyClass(), nullptr);
+        auto result = filter_map<double, std::is_integral>(map_to_double(), "bla", MyClass(), nullptr);
         static_assert(std::is_same<std::array<double, 0>, decltype(result)>::value, "");
         constexpr std::array<double, 0> expected{{}};
         EXPECT_EQ(expected, result);
     }
 
     TEST(MetaprogrammingTest, FilterMap_movableOnly_byRValue) {
-        auto result = filter_map<MovableOnly, is_my_movable_only_class>([] (MovableOnly&& v) {return std::move(v);}, MovableOnly(5), "bla", nullptr, 3, MovableOnly(2));
+        struct map_movable_by_rvalue {
+          MovableOnly operator()(MovableOnly&& a) const {
+            return std::move(a);
+          }
+        };
+
+        auto result = filter_map<MovableOnly, is_my_movable_only_class>(map_movable_by_rvalue(), MovableOnly(5), "bla", nullptr, 3, MovableOnly(2));
         static_assert(std::is_same<std::array<MovableOnly, 2>, decltype(result)>::value, "");
         constexpr std::array<MovableOnly, 2> expected {{MovableOnly(5), MovableOnly(2)}};
         EXPECT_EQ(expected, result);
     }
 
     TEST(MetaprogrammingTest, FilterMap_movableOnly_byValue) {
-        auto result = filter_map<MovableOnly, is_my_movable_only_class>([] (MovableOnly v) {return v;}, MovableOnly(5), "bla", nullptr, 3, MovableOnly(2));
+        struct map_movable_by_lvalue {
+          MovableOnly operator()(MovableOnly a) const {
+            return std::move(a);
+          }
+        };
+
+        auto result = filter_map<MovableOnly, is_my_movable_only_class>(map_movable_by_lvalue(), MovableOnly(5), "bla", nullptr, 3, MovableOnly(2));
         static_assert(std::is_same<std::array<MovableOnly, 2>, decltype(result)>::value, "");
         constexpr std::array<MovableOnly, 2> expected {{MovableOnly(5), MovableOnly(2)}};
         EXPECT_EQ(expected, result);
     }
 
     TEST(MetaprogrammingTest, FilterMap_onlyCopiesIfNecessary) {
+        struct map_copy_counting_by_copy {
+          CopyCounting operator()(CopyCounting v) const {
+            return v;
+          }
+        };
+
         CopyCounting source;
         CopyCounting source2;
-        auto result = filter_map<CopyCounting, is_my_copy_counting_class>([] (CopyCounting v) {return v;}, CopyCounting(), "bla", nullptr, 3, source, std::move(source2));
+        auto result = filter_map<CopyCounting, is_my_copy_counting_class>(map_copy_counting_by_copy(), CopyCounting(), "bla", nullptr, 3, source, std::move(source2));
         static_assert(std::is_same<std::array<CopyCounting, 3>, decltype(result)>::value, "");
         EXPECT_EQ(0, result[0].copy_count);
         EXPECT_EQ(2, result[0].move_count);
@@ -179,8 +203,14 @@ namespace test_filter_map {
     }
 
     TEST(MetaprogrammingTest, FilterMap_onlyMovesIfNecessary_1) {
+        struct map_copy_counting_by_move {
+          CopyCounting operator()(CopyCounting&& v) const {
+            return std::move(v);
+          }
+        };
+
         CopyCounting source;
-        auto result = filter_map<CopyCounting, is_my_copy_counting_class>([] (CopyCounting&& v) {return std::move(v);}, CopyCounting(), "bla", nullptr, 3, std::move(source));
+        auto result = filter_map<CopyCounting, is_my_copy_counting_class>(map_copy_counting_by_move(), CopyCounting(), "bla", nullptr, 3, std::move(source));
         static_assert(std::is_same<std::array<CopyCounting, 2>, decltype(result)>::value, "");
         EXPECT_EQ(0, result[0].copy_count);
         EXPECT_EQ(1, result[0].move_count);
@@ -189,9 +219,15 @@ namespace test_filter_map {
     }
 
     TEST(MetaprogrammingTest, FilterMap_onlyMovesIfNecessary_2) {
+        struct map_copy_counting_by_pointer {
+          const CopyCounting* operator()(const CopyCounting& v) const {
+            return &v;
+          }
+        };
+
         CopyCounting source1;
         CopyCounting source2;
-        auto result = filter_map<const CopyCounting*, is_my_copy_counting_class>([] (const CopyCounting& v) {return &v;}, "bla", nullptr, 3, source1, std::move(source2));
+        auto result = filter_map<const CopyCounting*, is_my_copy_counting_class>(map_copy_counting_by_pointer(), "bla", nullptr, 3, source1, std::move(source2));
         static_assert(std::is_same<std::array<const CopyCounting*, 2>, decltype(result)>::value, "");
         EXPECT_EQ(0, result[0]->copy_count);
         EXPECT_EQ(0, result[0]->move_count);

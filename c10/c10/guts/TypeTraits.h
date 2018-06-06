@@ -59,7 +59,7 @@ template<template<class...> class Template, class T> using is_instantiation_of_t
 template<template<class> class C, class Enable = void>
 struct is_type_condition : std::false_type {};
 template<template<class> class C>
-struct is_type_condition<C, std::enable_if_t<std::is_same<bool, std::remove_cv_t<decltype(C<int>::value)>>::value>> : std::true_type {};
+struct is_type_condition<C, guts::enable_if_t<std::is_same<bool, guts::remove_cv_t<decltype(C<int>::value)>>::value>> : std::true_type {};
 
 }
 }

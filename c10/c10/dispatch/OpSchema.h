@@ -23,8 +23,8 @@ namespace details {
  * return false.
  */
 template<class Arg> using is_tensor_arg = guts::disjunction<
-  std::is_same<Tensor, std::remove_cv_t<std::remove_reference_t<Arg>>>,
-  guts::is_instantiation_of<caffe2::Tensor, std::remove_cv_t<std::remove_reference_t<Arg>>>
+  std::is_same<Tensor, guts::remove_cv_t<guts::remove_reference_t<Arg>>>,
+  guts::is_instantiation_of<caffe2::Tensor, guts::remove_cv_t<guts::remove_reference_t<Arg>>>
 >;
 
 // TODO get rid of tensor_to_dispatch_key once c2::Tensor is not used anymore, this then fits into a template lambda instead of a functor.
@@ -37,14 +37,14 @@ struct tensor_to_dispatch_key_<c10::Tensor, void> final {
     }
 };
 template<class TensorType>
-struct tensor_to_dispatch_key_<TensorType, std::enable_if_t<std::is_same<TensorType, caffe2::Tensor<caffe2::CPUContext>>::value>> final {
+struct tensor_to_dispatch_key_<TensorType, guts::enable_if_t<std::is_same<TensorType, caffe2::Tensor<caffe2::CPUContext>>::value>> final {
     static TensorParameterDispatchKey call(const TensorType& tensor) {
       return TensorParameterDispatchKey{CAFFE2_CPU_TENSOR(), tensor.meta().id()};
     }
 };
 
 template<class TensorType>
-struct tensor_to_dispatch_key_<TensorType, std::enable_if_t<std::is_same<TensorType, caffe2::Tensor<caffe2::CUDAContext>>::value>> final {
+struct tensor_to_dispatch_key_<TensorType, guts::enable_if_t<std::is_same<TensorType, caffe2::Tensor<caffe2::CUDAContext>>::value>> final {
     static TensorParameterDispatchKey call(const TensorType& tensor) {
       return TensorParameterDispatchKey{CAFFE2_CUDA_TENSOR(), tensor.meta().id()};
     }
@@ -63,7 +63,8 @@ struct tensor_to_dispatch_key final {
  * @param args List of arguments to get type ids from
  * @return std::array<TypeId, n>, where n is the number of tensor arguments (is_tensor_arg) in the class
  */
-template<class... Args> auto getTensorTypeIds_(const Args&... args) {
+template<class... Args> auto getTensorTypeIds_(const Args&... args)
+-> std::array<TensorParameterDispatchKey, guts::typelist::count_if<is_tensor_arg, guts::typelist::typelist<Args...>>::value> {
   return guts::filter_map<TensorParameterDispatchKey, is_tensor_arg>(tensor_to_dispatch_key(), args...);
 }
 
@@ -161,7 +162,7 @@ template<class OpSchemaDef, class Enable = void> class OpDispatchKeySchema final
 
 // General case. Operator doesn't overwrite DispatchKey generation. Use default.
 template<class OpSchemaDef>
-class OpDispatchKeySchema<OpSchemaDef, std::enable_if_t<!has_function_dispatch_key_defined<OpSchemaDef>::value>> final {
+class OpDispatchKeySchema<OpSchemaDef, guts::enable_if_t<!has_function_dispatch_key_defined<OpSchemaDef>::value>> final {
   using signature = OpSignatureSchema<OpSchemaDef>;
 
 public:
@@ -172,8 +173,8 @@ public:
     using guts::typelist::map_t;
     using guts::typelist::typelist;
     static_assert(std::is_same<
-      map_t<std::remove_cv_t, map_t<std::remove_reference_t, typelist<Args...>>>,
-      map_t<std::remove_cv_t, map_t<std::remove_reference_t, typename signature::parameter_types>>
+      map_t<guts::remove_cv_t, map_t<guts::remove_reference_t, typelist<Args...>>>,
+      map_t<guts::remove_cv_t, map_t<guts::remove_reference_t, typename signature::parameter_types>>
       >::value, "Invalid argument types passed to OpSchema::dispatch_key()");
     return dispatch_key_type {
       details::getTensorTypeIds_(args...)
@@ -183,7 +184,7 @@ public:
 
 // Special case. Operator overwrites DispatchKey generation. Use that.
 template<class OpSchemaDef>
-class OpDispatchKeySchema<OpSchemaDef, std::enable_if_t<has_function_dispatch_key_defined<OpSchemaDef>::value>> final {
+class OpDispatchKeySchema<OpSchemaDef, guts::enable_if_t<has_function_dispatch_key_defined<OpSchemaDef>::value>> final {
   using signature = OpSignatureSchema<OpSchemaDef>;
 
   static_assert(guts::is_function_type<decltype(OpSchemaDef::dispatch_key)>::value, "Operator schema defines dispatch_key member, but it isn't a function.");
@@ -199,8 +200,8 @@ private:
   static_assert(guts::is_hashable<dispatch_key_type>::value, "Operator schema specified custom dispatch_key() derivation function, but the returned dispatch key type doesn't have an overload for std::hash. Please define it.");
 
   static_assert(std::is_same<
-    guts::typelist::map_t<std::remove_cv_t, guts::typelist::map_t<std::remove_reference_t, typename dispatch_key_traits::parameter_types>>,
-    guts::typelist::map_t<std::remove_cv_t, guts::typelist::map_t<std::remove_reference_t, typename signature::parameter_types>>
+    guts::typelist::map_t<guts::remove_cv_t, guts::typelist::map_t<guts::remove_reference_t, typename dispatch_key_traits::parameter_types>>,
+    guts::typelist::map_t<guts::remove_cv_t, guts::typelist::map_t<guts::remove_reference_t, typename signature::parameter_types>>
     >::value, "Operator schema defines custom dispatch_key() derivation function, but the arguments don't match the operator signature.");
 
 public:
@@ -210,8 +211,8 @@ public:
     using guts::typelist::map_t;
     using guts::typelist::typelist;
     static_assert(std::is_same<
-      map_t<std::remove_cv_t, map_t<std::remove_reference_t, typelist<Args...>>>,
-      map_t<std::remove_cv_t, map_t<std::remove_reference_t, typename signature::parameter_types>>
+      map_t<guts::remove_cv_t, map_t<guts::remove_reference_t, typelist<Args...>>>,
+      map_t<guts::remove_cv_t, map_t<guts::remove_reference_t, typename signature::parameter_types>>
       >::value, "Invalid argument types passed to OpSchema::dispatch_key()");
     return OpSchemaDef::dispatch_key(args...);
   }

@@ -31,7 +31,7 @@ public:
    * @return void
    */
   template<class... Args>
-  static auto registerOp(Args&&... args) {
+  static void registerOp(Args&&... args) {
     auto& dispatch_table_for_this_op = c10_dispatch_table<OpSchemaDef>();
     return dispatch_table_for_this_op.registerOp(std::forward<Args>(args)...);
   }
@@ -45,7 +45,7 @@ public:
    * @return void
    */
   template<class... Args>
-  static auto deregisterOp(Args&&... args) {
+  static void deregisterOp(Args&&... args) {
     auto& dispatch_table_for_this_op = c10_dispatch_table<OpSchemaDef>();
     return dispatch_table_for_this_op.deregisterOp(std::forward<Args>(args)...);
   }
@@ -59,7 +59,7 @@ public:
    * @return Return type of this operator
    */
   template<class... Args>
-  static auto call(Args&&... args) {
+  static typename OpSchema<OpSchemaDef>::signature::return_type call(Args&&... args) {
     auto& dispatch_table_for_this_op = c10_dispatch_table<OpSchemaDef>();
     return dispatch_table_for_this_op.call(std::forward<Args>(args)...);
   }
