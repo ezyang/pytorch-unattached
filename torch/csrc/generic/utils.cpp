@@ -9,15 +9,9 @@
 #endif
 
 template<>
-void THPPointer<THStorage>::free() {
+void THPPointer<THWTensor>::free() {
   if (ptr)
-    THStorage_(free)(LIBRARY_STATE ptr);
-}
-
-template<>
-void THPPointer<THTensor>::free() {
-  if (ptr)
-    THTensor_(free)(LIBRARY_STATE ptr);
+    THWTensor_(free)(LIBRARY_STATE ptr);
 }
 
 template<>
@@ -26,21 +20,8 @@ void THPPointer<THPStorage>::free() {
     Py_DECREF(ptr);
 }
 
-#if GENERATE_SPARSE
-template<>
-void THPPointer<THSTensor>::free() {
-  if (ptr)
-    THSTensor_(free)(LIBRARY_STATE ptr);
-}
-#endif
-
-
-template class THPPointer<THStorage>;
-template class THPPointer<THTensor>;
+template class THPPointer<THWTensor>;
 template class THPPointer<THPStorage>;
-#if GENERATE_SPARSE
-template class THPPointer<THSTensor>;
-#endif
 
 #undef GENERATE_SPARSE
 

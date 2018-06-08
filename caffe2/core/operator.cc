@@ -56,7 +56,7 @@ OperatorBase::OperatorBase(const OperatorDef& operator_def, Workspace* ws)
   type_ = operator_def.type();
 }
 
-vector<TensorShape> OperatorBase::InputTensorShapes() {
+vector<TensorShape> OperatorBase::InputTensorShapes() const {
   vector<TensorShape> tps;
   for (const auto& blob : inputs_) {
     tps.push_back(GetTensorShapeOfBlob(blob));
@@ -167,7 +167,7 @@ unique_ptr<OperatorBase> _CreateOperator(
             << engine;
     auto op = TryCreateOperator(key, operator_def, ws);
     if (op) {
-      if (engine.size() <= FLAGS_caffe2_operator_max_engine_name_length) {
+      if (engine.size() <= (unsigned)FLAGS_caffe2_operator_max_engine_name_length) {
         op->annotate_engine(engine);
       } else {
         op->annotate_engine(
@@ -323,6 +323,13 @@ CAFFE_DEFINE_REGISTRY(
 CAFFE_REGISTER_DEVICE_TYPE(DeviceType::CUDA, CUDAOperatorRegistry);
 
 CAFFE_DEFINE_REGISTRY(
+    HIPOperatorRegistry,
+    OperatorBase,
+    const OperatorDef&,
+    Workspace*);
+CAFFE_REGISTER_DEVICE_TYPE(DeviceType::HIP, HIPOperatorRegistry);
+
+CAFFE_DEFINE_REGISTRY(
     GradientRegistry,
     GradientMakerBase,
     const OperatorDef&, const vector<GradientWrapper>&);
@@ -462,7 +469,7 @@ TensorShapes InferBlobShapesAndTypes(
           CaffeMap<string, string> grads_to_params =
               GradientMakerBase::MatchGradsToParams(op);
 
-          for (int i = 0; i < out.size(); i++) {
+          for (size_t i = 0; i < out.size(); i++) {
             if (out[i].unknown_shape()) {
               std::string gradout = op.output(i);
 
@@ -491,7 +498,7 @@ TensorShapes InferBlobShapesAndTypes(
         return tps;
       }
 
-      if (out.size() != op.output_size()) {
+      if (out.size() != (unsigned)op.output_size()) {
         if (op.type() == "Slice") {
           CAFFE_ENFORCE(
               out.size() == 0,
@@ -507,7 +514,7 @@ TensorShapes InferBlobShapesAndTypes(
               out.size());
         }
       } else {
-        for (int i = 0; i < out.size(); i++) {
+        for (size_t i = 0; i < out.size(); i++) {
           blob_desc[op.output(i)] = out[i];
         }
       }
@@ -613,6 +620,10 @@ std::map<string, std::pair<DeviceOption, DeviceOption>> ValidateTensorDevices(
 
       if (blob_device.device_type() == CUDA &&
           blob_device.cuda_gpu_id() != op_device.cuda_gpu_id()) {
+        mismatches[blob_name] = std::make_pair(op_device, blob_device);
+      }
+      else if (blob_device.device_type() == HIP &&
+          blob_device.hip_gpu_id() != op_device.hip_gpu_id()) {
         mismatches[blob_name] = std::make_pair(op_device, blob_device);
       }
     }
