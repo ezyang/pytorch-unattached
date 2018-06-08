@@ -13,6 +13,7 @@ using CaffeTypeId = c10::TypeId;
 using TypeMeta = c10::TypeMeta;
 
 // Needs to be called from ::caffe2 namespace
+
 #define CAFFE_KNOWN_TYPE(T)                              \
   } namespace c10 {                                      \
   using namespace ::caffe2;                              \

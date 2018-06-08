@@ -64,6 +64,9 @@ if(NOT NO_CUDA)
     ${CMAKE_MODULE_PATH})
   set(CMAKE_LIBRARY_PATH /usr/lib/x86_64-linux-gnu/ ${CMAKE_LIBRARY_PATH})
 
+  # Polyfill for upstream FindCUDA
+  include(CMakeInitializeConfigs)
+
   if(NOT CUDA_FOUND)
     find_package(CUDA 7.0)
   endif()
@@ -94,7 +97,7 @@ if(NOT NO_CUDA)
   endif()
 endif()
 
-add_definitions(-DNO_PYTHON -D_FORCE_INLINES)
+add_definitions(-DUSE_CATCH -D_FORCE_INLINES)
 
 if(NOT TORCH_INSTALL_BIN_DIR)
   set(TORCH_INSTALL_BIN_DIR bin)
@@ -227,6 +230,8 @@ set(TORCH_SRCS
   ${TORCH_SRC_DIR}/csrc/jit/passes/batch_mm.cpp
   ${TORCH_SRC_DIR}/csrc/jit/passes/create_autodiff_subgraphs.cpp
   ${TORCH_SRC_DIR}/csrc/jit/passes/remove_expands.cpp
+  ${TORCH_SRC_DIR}/csrc/jit/passes/decompose_addmm.cpp
+  ${TORCH_SRC_DIR}/csrc/jit/passes/loop_unrolling.cpp
   ${TORCH_SRC_DIR}/csrc/jit/interned_strings.cpp
   ${TORCH_SRC_DIR}/csrc/jit/script/compiler.cpp
   ${TORCH_SRC_DIR}/csrc/jit/script/lexer.cpp
@@ -239,12 +244,12 @@ set(TORCH_SRCS
   ${TORCH_SRC_DIR}/csrc/jit/import.cpp
   ${TORCH_SRC_DIR}/csrc/onnx/onnx.cpp
   ${TORCH_SRC_DIR}/csrc/onnx/onnx.pb.cpp
-  ${TORCH_SRC_DIR}/csrc/Exceptions.cpp
   ${TORCH_SRC_DIR}/csrc/torch.cpp)
 
 if (NOT NO_API)
   list(APPEND TORCH_SRCS
-    ${TORCH_SRC_DIR}/csrc/api/src/detail.cpp
+    ${TORCH_SRC_DIR}/csrc/api/src/utils.cpp
+    ${TORCH_SRC_DIR}/csrc/api/src/cuda.cpp
     ${TORCH_SRC_DIR}/csrc/api/src/nn/module.cpp
     ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/batchnorm.cpp
     ${TORCH_SRC_DIR}/csrc/api/src/nn/modules/conv.cpp
