@@ -1,6 +1,7 @@
 #include "caffe2/core/operator_c10wrapper.h"
 #include <c10/dispatch/OpSchemaRegistration.h>
 #include <c10/dispatch/KernelRegistration.h>
+#include "caffe2/utils/Array.h"
 
 using caffe2::Tensor;
 using caffe2::CPUContext;
@@ -8,7 +9,7 @@ using caffe2::CPUContext;
 struct DummyOp final {
   using Signature = Tensor<CPUContext>(Tensor<CPUContext>);
 
-  static constexpr std::array<const char*, 1> parameter_names = {"input"};
+  static constexpr c10::guts::array<const char*, 1> parameter_names = {"input"};
 };
 
 C10_DEFINE_OP_SCHEMA(DummyOp);
