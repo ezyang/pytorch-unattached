@@ -14,7 +14,7 @@ namespace ops {
 struct conditional final {
   using Signature = Tensor(bool, const Tensor&, Tensor);
 
-  static constexpr std::array<const char*, 3> parameter_names = {
+  static constexpr guts::array<const char*, 3> parameter_names = {
     "condition", "lhs", "rhs"
   };
 };

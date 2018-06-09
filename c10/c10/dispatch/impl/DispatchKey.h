@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <functional>
+#include "caffe2/utils/Array.h"
 
 namespace c10 {
 
@@ -48,7 +49,7 @@ namespace c10 {
 // include things like dtype in this dispatch key, so I renamed it
 template<size_t num_tensor_args>
 struct DispatchKey final {
-  std::array<details::TensorParameterDispatchKey, num_tensor_args> argTypes;
+  guts::array<details::TensorParameterDispatchKey, num_tensor_args> argTypes;
 };
 
 template<size_t num_dispatch_args>

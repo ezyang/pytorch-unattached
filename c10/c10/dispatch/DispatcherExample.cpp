@@ -3,6 +3,7 @@
 #include <c10/cpu/CPUTensorImpl.h>
 #include <c10/dispatch/KernelRegistration.h>
 #include <c10/dispatch/OpSchemaRegistration.h>
+#include "caffe2/utils/Array.h"
 
 using namespace c10;
 using c10::cpu::CPU_TENSOR;
@@ -11,14 +12,14 @@ namespace ops {
 struct conditional final {
   using Signature = Tensor(bool, const Tensor&, Tensor);
 
-  static constexpr std::array<const char*, 3> parameter_names = {
+  static constexpr guts::array<const char*, 3> parameter_names = {
     "condition", "lhs", "rhs"
   };
 };
 struct add_notensor final {
   using Signature = int(int, int);
 
-  static constexpr std::array<const char*, 2> parameter_names = {
+  static constexpr guts::array<const char*, 2> parameter_names = {
     "lhs", "rhs"
   };
 
@@ -53,7 +54,7 @@ C10_REGISTER_KERNEL(::ops::add_notensor)
 
 struct equals final {
   using Signature = bool(Tensor, Tensor);
-  static constexpr std::array<const char*, 2> parameter_names = {
+  static constexpr guts::array<const char*, 2> parameter_names = {
     "lhs", "rhs"
   };
 };

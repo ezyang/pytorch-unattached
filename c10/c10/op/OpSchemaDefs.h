@@ -1,13 +1,14 @@
 #pragma once
 
 #include <c10/Tensor.h>
+#include "caffe2/utils/Array.h"
 
 namespace c10 { namespace ops {
 
 //A(Tensor x, Tensor y);
 
 template <typename... Args>
-constexpr std::array<const char*, sizeof...(Args)> parameters(Args... args) {
+constexpr guts::array<const char*, sizeof...(Args)> parameters(Args... args) {
   return {args...};
 };
 
@@ -19,7 +20,7 @@ struct equals final {
 struct zeros final {
   using Signature = Tensor(ArrayRef<int64_t>, TypeMeta);
   // ezyang: This is really long...
-  static constexpr std::array<const char*, 2> parameter_names = {
+  static constexpr guts::array<const char*, 2> parameter_names = {
     "shape", "dtype"
   };
 };

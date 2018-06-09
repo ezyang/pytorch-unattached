@@ -33,9 +33,7 @@ set(WARNING_OPTIONS
       -Wmissing-include-dirs
       -Woverloaded-virtual
       -Wredundant-decls
-      -Wshadow
       -Wsign-promo
-      -Wstrict-overflow=5
       -fdiagnostics-show-option
       -Wconversion
       -Wno-gnu-zero-variadic-macro-arguments
@@ -52,16 +50,12 @@ add_library(c10 SHARED
     c10/AlignOf.cpp
     c10/guts/TensorImpl.cpp
     c10/guts/IntrusivePtr.cpp
-    c10/guts/Metaprogramming.cpp
     c10/guts/Macros.cpp
-    c10/guts/C++17.cpp
     c10/guts/IdWrapper.cpp
     c10/guts/TypeId.cpp
     c10/guts/caffe2/common.cc
     c10/guts/scope_guard.cpp
     c10/guts/Any.cpp
-    c10/guts/TypeList.cpp
-    c10/guts/TypeTraits.cpp
     c10/cpu/CPUStorage.cpp
     c10/cpu/CPUAllocator.cpp
     c10/cpu/CPUTensorImpl.cpp
@@ -156,9 +150,6 @@ if (BUILD_TEST)
       c10/Registry_test.cpp
       c10/dispatch/OpSchema_test.cpp
       c10/dispatch/OpSig_test.cpp
-      c10/guts/Metaprogramming_test.cpp
-      c10/guts/TypeList_test.cpp
-      c10/guts/TypeTraits_test.cpp
       )
     # Without directory or longest extension
     get_filename_component(test_name "${test_src}" NAME_WE)

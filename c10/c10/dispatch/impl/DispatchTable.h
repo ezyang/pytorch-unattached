@@ -1,7 +1,7 @@
 #pragma once
 
 #include <flat_hash_map/flat_hash_map.h>
-#include <c10/guts/Metaprogramming.h>
+#include "caffe2/utils/Metaprogramming.h"
 #include <c10/dispatch/OpSchema.h>
 #include <c10/dispatch/TensorTypeId.h>
 

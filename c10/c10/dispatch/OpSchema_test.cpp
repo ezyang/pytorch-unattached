@@ -1,4 +1,5 @@
 #include <c10/dispatch/OpSchema.h>
+#include "caffe2/utils/Array.h"
 
 using namespace c10;
 
@@ -9,7 +10,7 @@ static_assert(!details::is_tensor_arg<int>::value, "");
 
 struct SchemaDef final {
   using Signature = bool (int, Tensor, float, Tensor, Tensor, unsigned int);
-  static constexpr std::array<const char*, 6> parameter_names = {
+  static constexpr guts::array<const char*, 6> parameter_names = {
       "1", "2", "3", "4", "5", "6"
   };
 };

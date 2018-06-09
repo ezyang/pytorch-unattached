@@ -1,7 +1,8 @@
 #pragma once
 
 #include "impl/DispatchKey.h"
-#include <c10/guts/Metaprogramming.h>
+#include "caffe2/utils/Metaprogramming.h"
+#include "caffe2/utils/Array.h"
 #include <c10/Tensor.h>
 
 namespace caffe2 {
@@ -61,10 +62,10 @@ struct tensor_to_dispatch_key final {
  *
  * @tparam Args Inferred variadic list of argument types
  * @param args List of arguments to get type ids from
- * @return std::array<TypeId, n>, where n is the number of tensor arguments (is_tensor_arg) in the class
+ * @return guts::array<TypeId, n>, where n is the number of tensor arguments (is_tensor_arg) in the class
  */
 template<class... Args> auto getTensorTypeIds_(const Args&... args)
--> std::array<TensorParameterDispatchKey, guts::typelist::count_if<is_tensor_arg, guts::typelist::typelist<Args...>>::value> {
+-> guts::array<TensorParameterDispatchKey, guts::typelist::count_if<is_tensor_arg, guts::typelist::typelist<Args...>>::value> {
   return guts::filter_map<TensorParameterDispatchKey, is_tensor_arg>(tensor_to_dispatch_key(), args...);
 }
 
@@ -127,15 +128,15 @@ public:
 
 private:
   static_assert(details::has_parameter_names_defined<OpSchemaDef>::value, "Operator schema doesn't define parameter_names member.");
-  // TODO Allow simpler definition of parameter_names without having to spell out the std::array type in the schema def.
-  static_assert(std::is_same<const std::array<const char*, num_args>, decltype(OpSchemaDef::parameter_names)>::value, "Operator schema defines parameter_names member, but it isn't the correct type. Must be a static constexpr std::array of const char* with one entry for each parameter.");
+  // TODO Allow simpler definition of parameter_names without having to spell out the guts::array type in the schema def.
+  static_assert(std::is_same<const guts::array<const char*, num_args>, decltype(OpSchemaDef::parameter_names)>::value, "Operator schema defines parameter_names member, but it isn't the correct type. Must be a static constexpr guts::array of const char* with one entry for each parameter.");
 
 public:
   /**
    * The names of the parameters (as per OpSchemaDef::parameter_names)
    * @return Array
    */
-  static constexpr const std::array<const char*, num_args>& parameter_names() {
+  static constexpr const guts::array<const char*, num_args>& parameter_names() {
     return OpSchemaDef::parameter_names;
   }
 };
@@ -228,7 +229,7 @@ public:
  * @tparam OpSchemaDef User-defined OpSchemaDef.
  *   This struct is expected to define:
  *      - a function type Signature
- *      - a constexpr std::array<const char*, n_args> parameter_names field (where n_args is
+ *      - a constexpr guts<const char*, n_args> parameter_names field (where n_args is
  *        the number of arguments in Signature)
  */
 template<class OpSchemaDef> class OpSchema final {

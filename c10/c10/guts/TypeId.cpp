@@ -1,5 +1,6 @@
 #include "TypeId.h"
 #include "scope_guard.h"
+#include <atomic>
 
 #if !defined(_MSC_VER)
 #include <cxxabi.h>
