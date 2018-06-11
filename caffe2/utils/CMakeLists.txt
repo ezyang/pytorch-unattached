@@ -46,6 +46,7 @@ set(LIB_SOURCES_CPU
         Array.cpp
         C++17.cpp
         IdWrapper.cpp
+        Macros.cpp
         Metaprogramming.cpp
         TypeList.cpp
         TypeTraits.cpp
