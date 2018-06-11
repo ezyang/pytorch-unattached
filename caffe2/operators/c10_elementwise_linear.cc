@@ -10,7 +10,7 @@ using caffe2::CPUContext;
 struct ElementwiseLinearOp final {
   using Signature = Tensor<CPUContext>(const Tensor<CPUContext>&, const Tensor<CPUContext>&, const Tensor<CPUContext>&);
 
-  static constexpr c10::guts::array<const char*, 3> parameter_names = {"X", "a", "b"};
+  static constexpr c10::guts::array<const char*, 3> parameter_names = {{"X", "a", "b"}};
 };
 
 C10_DEFINE_OP_SCHEMA(ElementwiseLinearOp);

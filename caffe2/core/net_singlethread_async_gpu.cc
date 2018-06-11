@@ -16,7 +16,7 @@ namespace caffe2 {
 namespace gpu_single_thread {
 
 struct Task {
-  std::vector<std::unique_ptr<OperatorBase>>* ops_;
+  std::vector<std::unique_ptr<IOperatorBase>>* ops_;
   std::condition_variable* cv_;
   std::mutex* mtx_;
   int stream_id_;

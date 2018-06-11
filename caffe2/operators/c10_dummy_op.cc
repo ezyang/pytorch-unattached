@@ -9,7 +9,7 @@ using caffe2::CPUContext;
 struct DummyOp final {
   using Signature = Tensor<CPUContext>(Tensor<CPUContext>);
 
-  static constexpr c10::guts::array<const char*, 1> parameter_names = {"input"};
+  static constexpr c10::guts::array<const char*, 1> parameter_names = {{"input"}};
 };
 
 C10_DEFINE_OP_SCHEMA(DummyOp);

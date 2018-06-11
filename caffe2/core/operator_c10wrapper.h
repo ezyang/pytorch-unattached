@@ -15,13 +15,13 @@ public:
  USE_OPERATOR_CONTEXT_FUNCTIONS;
 
  bool RunOnDevice() override {
-   RunOnDevice_(std::make_index_sequence<Schema::signature::num_args>());
+   RunOnDevice_(c10::guts::make_index_sequence<Schema::signature::num_args>());
    return true;
  }
 
 private:
  template<size_t... InputIndex>
- void RunOnDevice_(std::index_sequence<InputIndex...>) {
+ void RunOnDevice_(c10::guts::index_sequence<InputIndex...>) {
    auto output = c10::Dispatcher<OpSchemaDef>::call(Input(InputIndex)...);
    // TODO Return output, but avoid pre-allocating output
    Output(0)->swap(output);
@@ -38,13 +38,13 @@ public:
     USE_OPERATOR_CONTEXT_FUNCTIONS;
 
     bool RunOnDevice() override {
-        RunOnDevice_(std::make_index_sequence<Schema::signature::num_args - 1>());
+        RunOnDevice_(c10::guts::make_index_sequence<Schema::signature::num_args - 1>());
         return true;
     }
 
 private:
     template<size_t... InputIndex>
-    void RunOnDevice_(std::index_sequence<InputIndex...>) {
+    void RunOnDevice_(c10::guts::index_sequence<InputIndex...>) {
         /*auto output =*/ c10::Dispatcher<OpSchemaDef>::call(Input(InputIndex)..., Output(0));
         // TODO Return output, but avoid pre-allocating output
         //Output(0)->swap(output);

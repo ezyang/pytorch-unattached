@@ -20,9 +20,9 @@ struct equals final {
 struct zeros final {
   using Signature = Tensor(ArrayRef<int64_t>, TypeMeta);
   // ezyang: This is really long...
-  static constexpr guts::array<const char*, 2> parameter_names = {
+  static constexpr guts::array<const char*, 2> parameter_names = {{
     "shape", "dtype"
-  };
+  }};
 };
 
 struct legacy_pytorch_resize_ final {

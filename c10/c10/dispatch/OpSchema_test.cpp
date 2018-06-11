@@ -10,9 +10,9 @@ static_assert(!details::is_tensor_arg<int>::value, "");
 
 struct SchemaDef final {
   using Signature = bool (int, Tensor, float, Tensor, Tensor, unsigned int);
-  static constexpr guts::array<const char*, 6> parameter_names = {
+  static constexpr guts::array<const char*, 6> parameter_names = {{
       "1", "2", "3", "4", "5", "6"
-  };
+  }};
 };
 static_assert(6 == OpSchema<SchemaDef>::signature::num_args, "test num_dispatch_args");
 static_assert(3 == OpSchema<SchemaDef>::signature::num_tensor_args, "test num_dispatch_args");
