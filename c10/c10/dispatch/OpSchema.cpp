@@ -1,5 +1,5 @@
 #include "OpSchema.h"
-#include <c10/dispatch/TensorTypeId.h>
+#include "caffe2/core/dispatch/TensorTypeId.h"
 
 namespace c10 {
 

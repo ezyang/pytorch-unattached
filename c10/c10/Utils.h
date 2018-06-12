@@ -2,7 +2,7 @@
 
 #include <c10/DimVector.h>
 #include <c10/ArrayRef.h>
-#include <c10/guts/TypeId.h>
+#include "caffe2/core/typeid.h"
 
 #include <numeric>
 #include <cinttypes>

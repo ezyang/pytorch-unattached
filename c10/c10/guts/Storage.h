@@ -2,7 +2,7 @@
 
 #include <c10/guts/IntrusivePtr.h>
 #include <c10/Error.h>
-#include <c10/guts/TypeId.h>
+#include "caffe2/core/typeid.h"
 
 #include <cstddef>
 #include <memory>

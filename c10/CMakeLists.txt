@@ -22,17 +22,16 @@ set(C10_INSTALL_SHARE_DIR "share" CACHE PATH "AT install include subdirectory")
 set(WARNING_OPTIONS
       -Wall
       -Wextra
-      -Wold-style-cast
+      #-Wold-style-cast
       -Wno-missing-braces
       -Wcast-align
-      -Wcast-qual
+      #-Wcast-qual
       -Wctor-dtor-privacy
       -Wdisabled-optimization
       -Wformat=2
       -Winit-self
       -Wmissing-include-dirs
       -Woverloaded-virtual
-      -Wredundant-decls
       -Wsign-promo
       -fdiagnostics-show-option
       -Wconversion
@@ -50,9 +49,10 @@ add_library(c10 SHARED
     c10/AlignOf.cpp
     c10/guts/TensorImpl.cpp
     c10/guts/IntrusivePtr.cpp
-    c10/guts/Macros.cpp
-    c10/guts/IdWrapper.cpp
-    c10/guts/TypeId.cpp
+    ../caffe2/core/typeid.cc
+    ../caffe2/core/logging.cc
+    ../caffe2/core/flags.cc
+    c10/guts/types.cpp
     c10/guts/caffe2/common.cc
     c10/guts/scope_guard.cpp
     c10/guts/Any.cpp
@@ -64,8 +64,8 @@ add_library(c10 SHARED
     c10/dispatch/impl/DispatchKey.cpp
     c10/dispatch/KernelRegistration.cpp
     c10/dispatch/OpSchema.cpp
-    c10/dispatch/TensorTypeId.cpp
-    c10/dispatch/TensorTypeIdRegistration.cpp
+    ../caffe2/core/dispatch/TensorTypeId.cpp
+    ../caffe2/core/dispatch/TensorTypeIdRegistration.cpp
     c10/dispatch/OpSchemaRegistration.cpp
     c10/stack_bindings/ParameterStack.cpp
     c10/stack_bindings/StackBasedOperator.cpp
@@ -94,7 +94,7 @@ target_include_directories(c10 SYSTEM PUBLIC
         $<INSTALL_INTERFACE:${C10_INSTALL_INCLUDE_SUBDIR}/../third_party/flat_hash_map>
         )
 target_compile_options(c10 PRIVATE ${WARNING_OPTIONS})
-target_link_libraries(c10 pthread)
+target_link_libraries(c10 pthread gflags)
 set_property(TARGET c10 PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 add_executable(c10_dispatch_example c10/dispatch/DispatcherExample.cpp)

@@ -207,8 +207,6 @@ class TypeMeta {
     return (id_ == Id<T>());
   }
 
-using TypeMeta = c10::TypeMeta;
-
   /**
    * Returns the unique id for the given type T. The id is unique for the type T
    * in the sense that for any two different types, their id are different; for

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <c10/guts/TypeId.h>
+#include "caffe2/core/typeid.h"
 #include "Tensor.h"
 
 namespace c10 {

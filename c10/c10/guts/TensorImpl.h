@@ -6,8 +6,8 @@
 #include <c10/SmallVector.h>
 #include <c10/Optional.h>
 #include <c10/DimVector.h>
-#include <c10/dispatch/TensorTypeIdRegistration.h>
-#include <c10/guts/TypeId.h>
+#include "caffe2/core/dispatch/TensorTypeIdRegistration.h"
+#include "caffe2/core/typeid.h"
 
 #include "IntrusivePtr.h"
 #include "Storage.h"

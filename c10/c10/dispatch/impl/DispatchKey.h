@@ -1,7 +1,7 @@
 #pragma once
 
-#include <c10/dispatch/TensorTypeId.h>
-#include <c10/guts/TypeId.h>
+#include "caffe2/core/dispatch/TensorTypeId.h"
+#include "caffe2/core/typeid.h"
 
 #include <vector>
 #include <functional>
