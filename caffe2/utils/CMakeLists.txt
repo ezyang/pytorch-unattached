@@ -45,6 +45,8 @@ set(Caffe2_GPU_TEST_SRCS ${Caffe2_GPU_TEST_SRCS}
 set(LIB_SOURCES_CPU
         Array.cpp
         C++17.cpp
+        IdWrapper.cpp
+        Macros.cpp
         Metaprogramming.cpp
         TypeList.cpp
         TypeTraits.cpp

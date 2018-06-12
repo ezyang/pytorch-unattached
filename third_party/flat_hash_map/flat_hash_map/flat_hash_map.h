@@ -201,12 +201,13 @@ namespace ska
         struct sherwood_v3_entry_constexpr
         {
             constexpr explicit sherwood_v3_entry_constexpr(int8_t distance_from_desired_ = -1, typename std::aligned_storage<sizeof(T), alignof(T)>::type bytes_ = {})
-            : distance_from_desired(distance_from_desired_), bytes(bytes_) {}
+
+                    : distance_from_desired(distance_from_desired_), bytes(bytes_) {}
 
             static constexpr sherwood_v3_entry_constexpr special_end_entry()
             {
                 return sherwood_v3_entry_constexpr(
-                  sherwood_v3_entry<T>::special_end_value
+                        sherwood_v3_entry<T>::special_end_value
                 );
             }
 
@@ -476,7 +477,7 @@ namespace ska
             struct templated_iterator
             {
                 explicit templated_iterator(EntryPointer current_ = EntryPointer())
-                : current(current_) {}
+                        : current(current_) {}
 
                 EntryPointer current;
 
@@ -1145,47 +1146,47 @@ namespace ska
         size_t index_for_hash(size_t hash, size_t /*num_slots_minus_one*/) const
         {
             static constexpr size_t (* const mod_functions[])(size_t) =
-            {
-                &mod0, &mod2, &mod3, &mod5, &mod7, &mod11, &mod13, &mod17, &mod23, &mod29, &mod37,
-                        &mod47, &mod59, &mod73, &mod97, &mod127, &mod151, &mod197, &mod251, &mod313, &mod397,
-                        &mod499, &mod631, &mod797, &mod1009, &mod1259, &mod1597, &mod2011, &mod2539, &mod3203,
-                        &mod4027, &mod5087, &mod6421, &mod8089, &mod10193, &mod12853, &mod16193, &mod20399,
-                        &mod25717, &mod32401, &mod40823, &mod51437, &mod64811, &mod81649, &mod102877,
-                        &mod129607, &mod163307, &mod205759, &mod259229, &mod326617, &mod411527, &mod518509,
-                        &mod653267, &mod823117, &mod1037059, &mod1306601, &mod1646237, &mod2074129,
-                        &mod2613229, &mod3292489, &mod4148279, &mod5226491, &mod6584983, &mod8296553,
-                        &mod10453007, &mod13169977, &mod16593127, &mod20906033, &mod26339969, &mod33186281,
-                        &mod41812097, &mod52679969, &mod66372617, &mod83624237, &mod105359939, &mod132745199,
-                        &mod167248483, &mod210719881, &mod265490441, &mod334496971, &mod421439783,
-                        &mod530980861, &mod668993977, &mod842879579, &mod1061961721, &mod1337987929,
-                        &mod1685759167, &mod2123923447, &mod2675975881, &mod3371518343, &mod4247846927,
-                        &mod5351951779, &mod6743036717, &mod8495693897, &mod10703903591, &mod13486073473,
-                        &mod16991387857, &mod21407807219, &mod26972146961, &mod33982775741, &mod42815614441,
-                        &mod53944293929, &mod67965551447, &mod85631228929, &mod107888587883, &mod135931102921,
-                        &mod171262457903, &mod215777175787, &mod271862205833, &mod342524915839,
-                        &mod431554351609, &mod543724411781, &mod685049831731, &mod863108703229,
-                        &mod1087448823553, &mod1370099663459, &mod1726217406467, &mod2174897647073,
-                        &mod2740199326961, &mod3452434812973, &mod4349795294267, &mod5480398654009,
-                        &mod6904869625999, &mod8699590588571, &mod10960797308051, &mod13809739252051,
-                        &mod17399181177241, &mod21921594616111, &mod27619478504183, &mod34798362354533,
-                        &mod43843189232363, &mod55238957008387, &mod69596724709081, &mod87686378464759,
-                        &mod110477914016779, &mod139193449418173, &mod175372756929481, &mod220955828033581,
-                        &mod278386898836457, &mod350745513859007, &mod441911656067171, &mod556773797672909,
-                        &mod701491027718027, &mod883823312134381, &mod1113547595345903, &mod1402982055436147,
-                        &mod1767646624268779, &mod2227095190691797, &mod2805964110872297, &mod3535293248537579,
-                        &mod4454190381383713, &mod5611928221744609, &mod7070586497075177, &mod8908380762767489,
-                        &mod11223856443489329, &mod14141172994150357, &mod17816761525534927,
-                        &mod22447712886978529, &mod28282345988300791, &mod35633523051069991,
-                        &mod44895425773957261, &mod56564691976601587, &mod71267046102139967,
-                        &mod89790851547914507, &mod113129383953203213, &mod142534092204280003,
-                        &mod179581703095829107, &mod226258767906406483, &mod285068184408560057,
-                        &mod359163406191658253, &mod452517535812813007, &mod570136368817120201,
-                        &mod718326812383316683, &mod905035071625626043, &mod1140272737634240411,
-                        &mod1436653624766633509, &mod1810070143251252131, &mod2280545475268481167,
-                        &mod2873307249533267101, &mod3620140286502504283, &mod4561090950536962147,
-                        &mod5746614499066534157, &mod7240280573005008577, &mod9122181901073924329,
-                        &mod11493228998133068689, &mod14480561146010017169, &mod18446744073709551557
-            };
+                    {
+                            &mod0, &mod2, &mod3, &mod5, &mod7, &mod11, &mod13, &mod17, &mod23, &mod29, &mod37,
+                            &mod47, &mod59, &mod73, &mod97, &mod127, &mod151, &mod197, &mod251, &mod313, &mod397,
+                            &mod499, &mod631, &mod797, &mod1009, &mod1259, &mod1597, &mod2011, &mod2539, &mod3203,
+                            &mod4027, &mod5087, &mod6421, &mod8089, &mod10193, &mod12853, &mod16193, &mod20399,
+                            &mod25717, &mod32401, &mod40823, &mod51437, &mod64811, &mod81649, &mod102877,
+                            &mod129607, &mod163307, &mod205759, &mod259229, &mod326617, &mod411527, &mod518509,
+                            &mod653267, &mod823117, &mod1037059, &mod1306601, &mod1646237, &mod2074129,
+                            &mod2613229, &mod3292489, &mod4148279, &mod5226491, &mod6584983, &mod8296553,
+                            &mod10453007, &mod13169977, &mod16593127, &mod20906033, &mod26339969, &mod33186281,
+                            &mod41812097, &mod52679969, &mod66372617, &mod83624237, &mod105359939, &mod132745199,
+                            &mod167248483, &mod210719881, &mod265490441, &mod334496971, &mod421439783,
+                            &mod530980861, &mod668993977, &mod842879579, &mod1061961721, &mod1337987929,
+                            &mod1685759167, &mod2123923447, &mod2675975881, &mod3371518343, &mod4247846927,
+                            &mod5351951779, &mod6743036717, &mod8495693897, &mod10703903591, &mod13486073473,
+                            &mod16991387857, &mod21407807219, &mod26972146961, &mod33982775741, &mod42815614441,
+                            &mod53944293929, &mod67965551447, &mod85631228929, &mod107888587883, &mod135931102921,
+                            &mod171262457903, &mod215777175787, &mod271862205833, &mod342524915839,
+                            &mod431554351609, &mod543724411781, &mod685049831731, &mod863108703229,
+                            &mod1087448823553, &mod1370099663459, &mod1726217406467, &mod2174897647073,
+                            &mod2740199326961, &mod3452434812973, &mod4349795294267, &mod5480398654009,
+                            &mod6904869625999, &mod8699590588571, &mod10960797308051, &mod13809739252051,
+                            &mod17399181177241, &mod21921594616111, &mod27619478504183, &mod34798362354533,
+                            &mod43843189232363, &mod55238957008387, &mod69596724709081, &mod87686378464759,
+                            &mod110477914016779, &mod139193449418173, &mod175372756929481, &mod220955828033581,
+                            &mod278386898836457, &mod350745513859007, &mod441911656067171, &mod556773797672909,
+                            &mod701491027718027, &mod883823312134381, &mod1113547595345903, &mod1402982055436147,
+                            &mod1767646624268779, &mod2227095190691797, &mod2805964110872297, &mod3535293248537579,
+                            &mod4454190381383713, &mod5611928221744609, &mod7070586497075177, &mod8908380762767489,
+                            &mod11223856443489329, &mod14141172994150357, &mod17816761525534927,
+                            &mod22447712886978529, &mod28282345988300791, &mod35633523051069991,
+                            &mod44895425773957261, &mod56564691976601587, &mod71267046102139967,
+                            &mod89790851547914507, &mod113129383953203213, &mod142534092204280003,
+                            &mod179581703095829107, &mod226258767906406483, &mod285068184408560057,
+                            &mod359163406191658253, &mod452517535812813007, &mod570136368817120201,
+                            &mod718326812383316683, &mod905035071625626043, &mod1140272737634240411,
+                            &mod1436653624766633509, &mod1810070143251252131, &mod2280545475268481167,
+                            &mod2873307249533267101, &mod3620140286502504283, &mod4561090950536962147,
+                            &mod5746614499066534157, &mod7240280573005008577, &mod9122181901073924329,
+                            &mod11493228998133068689, &mod14480561146010017169, &mod18446744073709551557
+                    };
             return mod_functions[prime_index](hash);
         }
         uint8_t next_size_over(size_t & size) const
@@ -1284,172 +1285,172 @@ namespace ska
             : public detailv3::sherwood_v3_table
                     <
                             std::pair<K, V>,
-              K,
-              H,
-              detailv3::KeyOrValueHasher<K, std::pair<K, V>, H>,
-    E,
-    detailv3::KeyOrValueEquality<K, std::pair<K, V>, E>,
-    A,
-    typename std::allocator_traits<A>::template rebind_alloc<detailv3::sherwood_v3_entry<std::pair<K, V>>>
-    >
-{
-    using Table = detailv3::sherwood_v3_table
-            <
-                    std::pair<K, V>,
-    K,
-    H,
-    detailv3::KeyOrValueHasher<K, std::pair<K, V>, H>,
-    E,
-    detailv3::KeyOrValueEquality<K, std::pair<K, V>, E>,
-    A,
-    typename std::allocator_traits<A>::template rebind_alloc<detailv3::sherwood_v3_entry<std::pair<K, V>>>
-    >;
+                            K,
+                            H,
+                            detailv3::KeyOrValueHasher<K, std::pair<K, V>, H>,
+                            E,
+                            detailv3::KeyOrValueEquality<K, std::pair<K, V>, E>,
+                            A,
+                            typename std::allocator_traits<A>::template rebind_alloc<detailv3::sherwood_v3_entry<std::pair<K, V>>>
+                    >
+    {
+        using Table = detailv3::sherwood_v3_table
+                <
+                        std::pair<K, V>,
+                        K,
+                        H,
+                        detailv3::KeyOrValueHasher<K, std::pair<K, V>, H>,
+                        E,
+                        detailv3::KeyOrValueEquality<K, std::pair<K, V>, E>,
+                        A,
+                        typename std::allocator_traits<A>::template rebind_alloc<detailv3::sherwood_v3_entry<std::pair<K, V>>>
+                >;
     public:
 
-    using key_type = K;
-    using mapped_type = V;
+        using key_type = K;
+        using mapped_type = V;
 
-    using Table::Table;
-    flat_hash_map()
-    {
-    }
-
-    V & operator[](const K & key)
-    {
-        return emplace(key, convertible_to_value()).first->second;
-    }
-    V & operator[](K && key)
-    {
-        return emplace(std::move(key), convertible_to_value()).first->second;
-    }
-    V & at(const K & key)
-    {
-        auto found = this->find(key);
-        if (found == this->end())
-            throw std::out_of_range("Argument passed to at() was not in the map.");
-        return found->second;
-    }
-    const V & at(const K & key) const
-    {
-        auto found = this->find(key);
-        if (found == this->end())
-            throw std::out_of_range("Argument passed to at() was not in the map.");
-        return found->second;
-    }
-
-    using Table::emplace;
-    std::pair<typename Table::iterator, bool> emplace()
-    {
-        return emplace(key_type(), convertible_to_value());
-    }
-
-    friend bool operator==(const flat_hash_map & lhs, const flat_hash_map & rhs)
-    {
-        if (lhs.size() != rhs.size())
-            return false;
-        for (const typename Table::value_type & value : lhs)
+        using Table::Table;
+        flat_hash_map()
         {
-            auto found = rhs.find(value.first);
-            if (found == rhs.end())
-                return false;
-            else if (value.second != found->second)
-                return false;
         }
-        return true;
-    }
-    friend bool operator!=(const flat_hash_map & lhs, const flat_hash_map & rhs)
-    {
-        return !(lhs == rhs);
-    }
+
+        V & operator[](const K & key)
+        {
+            return emplace(key, convertible_to_value()).first->second;
+        }
+        V & operator[](K && key)
+        {
+            return emplace(std::move(key), convertible_to_value()).first->second;
+        }
+        V & at(const K & key)
+        {
+            auto found = this->find(key);
+            if (found == this->end())
+                throw std::out_of_range("Argument passed to at() was not in the map.");
+            return found->second;
+        }
+        const V & at(const K & key) const
+        {
+            auto found = this->find(key);
+            if (found == this->end())
+                throw std::out_of_range("Argument passed to at() was not in the map.");
+            return found->second;
+        }
+
+        using Table::emplace;
+        std::pair<typename Table::iterator, bool> emplace()
+        {
+            return emplace(key_type(), convertible_to_value());
+        }
+
+        friend bool operator==(const flat_hash_map & lhs, const flat_hash_map & rhs)
+        {
+            if (lhs.size() != rhs.size())
+                return false;
+            for (const typename Table::value_type & value : lhs)
+            {
+                auto found = rhs.find(value.first);
+                if (found == rhs.end())
+                    return false;
+                else if (value.second != found->second)
+                    return false;
+            }
+            return true;
+        }
+        friend bool operator!=(const flat_hash_map & lhs, const flat_hash_map & rhs)
+        {
+            return !(lhs == rhs);
+        }
 
     private:
-    struct convertible_to_value
-    {
-        operator V() const
+        struct convertible_to_value
         {
-            return V();
-        }
+            operator V() const
+            {
+                return V();
+            }
+        };
     };
-};
 
-template<typename T, typename H = std::hash<T>, typename E = std::equal_to<T>, typename A = std::allocator<T> >
-class flat_hash_set
-        : public detailv3::sherwood_v3_table
+    template<typename T, typename H = std::hash<T>, typename E = std::equal_to<T>, typename A = std::allocator<T> >
+    class flat_hash_set
+            : public detailv3::sherwood_v3_table
+                    <
+                            T,
+                            T,
+                            H,
+                            detailv3::functor_storage<size_t, H>,
+                            E,
+                            detailv3::functor_storage<bool, E>,
+                            A,
+                            typename std::allocator_traits<A>::template rebind_alloc<detailv3::sherwood_v3_entry<T>>
+                    >
+    {
+        using Table = detailv3::sherwood_v3_table
                 <
                         T,
                         T,
                         H,
                         detailv3::functor_storage<size_t, H>,
-          E,
-          detailv3::functor_storage<bool, E>,
-          A,
-          typename std::allocator_traits<A>::template rebind_alloc<detailv3::sherwood_v3_entry<T>>
->
-{
-using Table = detailv3::sherwood_v3_table
-        <
-                T,
-                T,
-                H,
-                detailv3::functor_storage<size_t, H>,
-                E,
-                detailv3::functor_storage<bool, E>,
-                A,
-                typename std::allocator_traits<A>::template rebind_alloc<detailv3::sherwood_v3_entry<T>>
->;
-public:
+                        E,
+                        detailv3::functor_storage<bool, E>,
+                        A,
+                        typename std::allocator_traits<A>::template rebind_alloc<detailv3::sherwood_v3_entry<T>>
+                >;
+    public:
 
-using key_type = T;
+        using key_type = T;
 
-using Table::Table;
-flat_hash_set()
-{
-}
+        using Table::Table;
+        flat_hash_set()
+        {
+        }
 
-template<typename... Args>
-std::pair<typename Table::iterator, bool> emplace(Args &&... args)
-{
-    return Table::emplace(T(std::forward<Args>(args)...));
-}
-std::pair<typename Table::iterator, bool> emplace(const key_type & arg)
-{
-    return Table::emplace(arg);
-}
-std::pair<typename Table::iterator, bool> emplace(key_type & arg)
-{
-    return Table::emplace(arg);
-}
-std::pair<typename Table::iterator, bool> emplace(const key_type && arg)
-{
-    return Table::emplace(std::move(arg));
-}
-std::pair<typename Table::iterator, bool> emplace(key_type && arg)
-{
-    return Table::emplace(std::move(arg));
-}
+        template<typename... Args>
+        std::pair<typename Table::iterator, bool> emplace(Args &&... args)
+        {
+            return Table::emplace(T(std::forward<Args>(args)...));
+        }
+        std::pair<typename Table::iterator, bool> emplace(const key_type & arg)
+        {
+            return Table::emplace(arg);
+        }
+        std::pair<typename Table::iterator, bool> emplace(key_type & arg)
+        {
+            return Table::emplace(arg);
+        }
+        std::pair<typename Table::iterator, bool> emplace(const key_type && arg)
+        {
+            return Table::emplace(std::move(arg));
+        }
+        std::pair<typename Table::iterator, bool> emplace(key_type && arg)
+        {
+            return Table::emplace(std::move(arg));
+        }
 
-friend bool operator==(const flat_hash_set & lhs, const flat_hash_set & rhs)
-{
-    if (lhs.size() != rhs.size())
-        return false;
-    for (const T & value : lhs)
+        friend bool operator==(const flat_hash_set & lhs, const flat_hash_set & rhs)
+        {
+            if (lhs.size() != rhs.size())
+                return false;
+            for (const T & value : lhs)
+            {
+                if (rhs.find(value) == rhs.end())
+                    return false;
+            }
+            return true;
+        }
+        friend bool operator!=(const flat_hash_set & lhs, const flat_hash_set & rhs)
+        {
+            return !(lhs == rhs);
+        }
+    };
+
+
+    template<typename T>
+    struct power_of_two_std_hash : std::hash<T>
     {
-        if (rhs.find(value) == rhs.end())
-            return false;
-    }
-    return true;
-}
-friend bool operator!=(const flat_hash_set & lhs, const flat_hash_set & rhs)
-{
-    return !(lhs == rhs);
-}
-};
-
-
-template<typename T>
-struct power_of_two_std_hash : std::hash<T>
-{
-    typedef ska::power_of_two_hash_policy hash_policy;
-};
+        typedef ska::power_of_two_hash_policy hash_policy;
+    };
 
 } // end namespace ska
