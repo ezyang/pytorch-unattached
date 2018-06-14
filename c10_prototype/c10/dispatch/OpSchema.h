@@ -62,7 +62,7 @@ struct tensor_to_dispatch_key final {
  *
  * @tparam Args Inferred variadic list of argument types
  * @param args List of arguments to get type ids from
- * @return guts::array<TypeId, n>, where n is the number of tensor arguments (is_tensor_arg) in the class
+ * @return guts::array<TensorParameterDispatchKey, n>, where n is the number of tensor arguments (is_tensor_arg) in the class
  */
 template<class... Args> auto getTensorTypeIds_(const Args&... args)
 -> guts::array<TensorParameterDispatchKey, guts::typelist::count_if<is_tensor_arg, guts::typelist::typelist<Args...>>::value> {

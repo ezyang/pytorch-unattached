@@ -50,9 +50,9 @@ add_library(c10 SHARED
     c10/guts/TensorImpl.cpp
     c10/guts/IntrusivePtr.cpp
     ../caffe2/core/typeid.cc
+    ../caffe2/core/types.cc
     ../caffe2/core/logging.cc
     ../caffe2/core/flags.cc
-    c10/guts/types.cpp
     c10/guts/caffe2/common.cc
     c10/guts/scope_guard.cpp
     c10/guts/Any.cpp
@@ -89,6 +89,7 @@ target_include_directories(c10 PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:${C10_INSTALL_INCLUDE_SUBDIR}>
     )
+target_include_directories(c10 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/..)
 target_include_directories(c10 SYSTEM PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../third_party/flat_hash_map>
         $<INSTALL_INTERFACE:${C10_INSTALL_INCLUDE_SUBDIR}/../third_party/flat_hash_map>

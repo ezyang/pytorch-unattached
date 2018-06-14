@@ -201,7 +201,6 @@ namespace ska
         struct sherwood_v3_entry_constexpr
         {
             constexpr explicit sherwood_v3_entry_constexpr(int8_t distance_from_desired_ = -1, typename std::aligned_storage<sizeof(T), alignof(T)>::type bytes_ = {})
-
                     : distance_from_desired(distance_from_desired_), bytes(bytes_) {}
 
             static constexpr sherwood_v3_entry_constexpr special_end_entry()
@@ -218,16 +217,16 @@ namespace ska
         template<typename T>
         struct EntryDefaultTable
         {
-            static constexpr const sherwood_v3_entry_constexpr<T> table[min_lookups] =
-                    {
+            static constexpr std::array<const sherwood_v3_entry_constexpr<T>, min_lookups> table
+                    {{
                             sherwood_v3_entry_constexpr<T>(),
                             sherwood_v3_entry_constexpr<T>(),
                             sherwood_v3_entry_constexpr<T>(),
                             sherwood_v3_entry_constexpr<T>::special_end_entry()
-                    };
+                    }};
         };
         template<typename T>
-        constexpr const sherwood_v3_entry_constexpr<T> EntryDefaultTable<T>::table[min_lookups];
+        constexpr std::array<const sherwood_v3_entry_constexpr<T>, min_lookups> EntryDefaultTable<T>::table;
 
         inline int8_t log2(size_t value)
         {
@@ -813,7 +812,7 @@ namespace ska
 
         private:
             using DefaultTable = detailv3::EntryDefaultTable<T>;
-            EntryPointer entries = const_cast<Entry *>(reinterpret_cast<const Entry *>(DefaultTable::table));
+            EntryPointer entries = const_cast<Entry *>(reinterpret_cast<const Entry *>(DefaultTable::table.data()));
             size_t num_slots_minus_one = 0;
             typename HashPolicySelector<ArgumentHash>::type hash_policy;
             int8_t max_lookups = detailv3::min_lookups - 1;
@@ -899,7 +898,7 @@ namespace ska
 
             void deallocate_data(EntryPointer begin, size_t num_slots_minus_one, int8_t max_lookups)
             {
-                if (begin != const_cast<Entry *>(reinterpret_cast<const Entry *>(DefaultTable::table)))
+                if (begin != const_cast<Entry *>(reinterpret_cast<const Entry *>(DefaultTable::table.data())))
                 {
                     AllocatorTraits::deallocate(*this, begin, num_slots_minus_one + max_lookups + 1);
                 }
@@ -908,7 +907,7 @@ namespace ska
             void reset_to_empty_state()
             {
                 deallocate_data(entries, num_slots_minus_one, max_lookups);
-                entries = const_cast<Entry *>(reinterpret_cast<const Entry *>(DefaultTable::table));
+                entries = const_cast<Entry *>(reinterpret_cast<const Entry *>(DefaultTable::table.data()));
                 num_slots_minus_one = 0;
                 hash_policy.reset();
                 max_lookups = detailv3::min_lookups - 1;

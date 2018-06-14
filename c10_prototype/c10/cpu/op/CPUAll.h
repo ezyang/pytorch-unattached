@@ -16,13 +16,13 @@ namespace c10 {
 namespace c10 { namespace cpu { namespace op {
 
 // Factory functions
-Tensor empty(ArrayRef<int64_t> sizes, TypeMeta dtype);
-Tensor zeros(ArrayRef<int64_t> sizes, TypeMeta dtype);
+Tensor empty(ArrayRef<int64_t> sizes, caffe2::TypeMeta dtype);
+Tensor zeros(ArrayRef<int64_t> sizes, caffe2::TypeMeta dtype);
 void zero_(const Tensor& self);
-Tensor tensor(const void* data, ArrayRef<int64_t> sizes, TypeMeta dtype);
+Tensor tensor(const void* data, ArrayRef<int64_t> sizes, caffe2::TypeMeta dtype);
 
 // Caffe2's in-place operations
-void copy_(const Tensor& self, TypeMeta dtype, const void* p, int64_t size_bytes);
+void copy_(const Tensor& self, caffe2::TypeMeta dtype, const void* p, int64_t size_bytes);
 void legacy_pytorch_resize_(const Tensor &self, ArrayRef<int64_t> new_size, ArrayRef<int64_t> new_stride);
 void legacy_caffe2_resize_(const Tensor &self, ArrayRef<int64_t> new_size);
 void reserve_(const Tensor& self, ArrayRef<int64_t> new_size);

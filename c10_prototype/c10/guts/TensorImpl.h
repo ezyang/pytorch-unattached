@@ -96,7 +96,7 @@ public:
     return sizes_;
   }
 
-  TypeMeta dtype() const {
+  caffe2::TypeMeta dtype() const {
     return storage_->dtype();
   }
 

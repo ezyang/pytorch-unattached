@@ -50,7 +50,7 @@ void Tracer::recordEvent(const TracerEvent& event) {
 int getUniqueShardId(const OperatorDef& op_def);
 
 // Special handling of shard blob annotations
-std::string Tracer::opTraceName(const OperatorBase* op) {
+std::string Tracer::opTraceName(const IOperatorBase* op) {
   int unique_shard_id =
       op->has_debug_def() ? getUniqueShardId(op->debug_def()) : -1;
   if (unique_shard_id != -1) {

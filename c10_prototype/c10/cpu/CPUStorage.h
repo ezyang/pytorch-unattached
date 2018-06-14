@@ -27,7 +27,7 @@ class CPUStorageImpl final : public guts::StorageImpl {
 public:
   // TODO: Permit allocator to be passed in through this function
 
-  CPUStorageImpl(TypeMeta data_type)
+  CPUStorageImpl(caffe2::TypeMeta data_type)
       : StorageImpl(data_type)
   {}
 

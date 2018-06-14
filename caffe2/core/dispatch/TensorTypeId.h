@@ -13,7 +13,7 @@ namespace details {
 }
 
 /**
- * Dynamic type ID of a Tensor argument.  It represents something like CPUFloatTensor, etc.
+ * Dynamic type ID of a Tensor argument.  It represents something like CPUTensor, etc.
  */
 class TensorTypeId final : public guts::IdWrapper<TensorTypeId, details::_tensorTypeId_underlyingType> {
 public:
@@ -27,6 +27,6 @@ private:
   friend std::ostream& operator<<(std::ostream&, TensorTypeId);
 };
 
-}
+}  // namespace c10
 
 C10_DEFINE_HASH_FOR_IDWRAPPER(c10::TensorTypeId)

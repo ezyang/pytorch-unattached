@@ -31,7 +31,7 @@ Tensor conditional_op(bool condition, const Tensor& thenTensor, Tensor elseTenso
 
 C10_REGISTER_KERNEL(::ops::conditional)
   .kernel(&conditional_op)
-  .dispatchKey({c10::details::TensorParameterDispatchKey{CPU_TENSOR(), TypeMeta::Id<int>()}, c10::details::TensorParameterDispatchKey{CPU_TENSOR(), TypeMeta::Id<int>()}});
+  .dispatchKey({c10::details::TensorParameterDispatchKey{CPU_TENSOR(), caffe2::TypeMeta::Id<int>()}, c10::details::TensorParameterDispatchKey{CPU_TENSOR(), caffe2::TypeMeta::Id<int>()}});
 
 int main() {
   ParameterStack callStack;

@@ -192,7 +192,7 @@ public:
     return dim();
   }
 
-  TypeMeta dtype() const {
+  caffe2::TypeMeta dtype() const {
     return impl_->dtype();
   }
 
@@ -238,8 +238,8 @@ public:
     // dzhulgakov: also, if tensor doesn't support raw pointers - is it expected to throw?
     // ezyang: yes.  Not implemented yet.
     // clion hates me (scalar_type is ambiguous)
-    C10_ASSERT(TypeMeta::Make<T>() == impl_->dtype(),
-               "data: requested dtype ", TypeMeta::Make<T>().id(),
+    C10_ASSERT(caffe2::TypeMeta::Make<T>() == impl_->dtype(),
+               "data: requested dtype ", caffe2::TypeMeta::Make<T>().id(),
                " via template parameter does not match dtype of tensor ", impl_->dtype().id());
     return static_cast<T *>(data_ptr());
   }
@@ -271,7 +271,7 @@ public:
    * @param p           Pointer to the elements to be copied
    * @param size        The number of elements to copy
    */
-  void copy_(TypeMeta dtype, const void* p, int64_t size) const;
+  void copy_(caffe2::TypeMeta dtype, const void* p, int64_t size) const;
 
   // NB: This is an instance of the design pattern, where we cannot (and will not) dispatch
   // templated functions.  So this has an inline definition which goes straight to the
@@ -284,7 +284,7 @@ public:
    */
   template <typename T>
   void copy_(ArrayRef<T> arr) const {
-    copy_(TypeMeta::Make<T>(), arr.data(), arr.size());
+    copy_(caffe2::TypeMeta::Make<T>(), arr.data(), arr.size());
   }
 
   /**

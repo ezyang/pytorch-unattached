@@ -300,11 +300,8 @@ if(BUILD_CAFFE2)
   add_subdirectory(caffe/proto)
 endif()
 
-# ---[ Shared build
-add_subdirectory(c10)
-
 # ---[ Main build
-add_subdirectory(c10)
+add_subdirectory(c10_prototype)
 add_subdirectory(caffe2)
 
 # --[ Documentation
