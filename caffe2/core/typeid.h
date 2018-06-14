@@ -19,7 +19,9 @@
 namespace caffe2 {
 
 /**
- * Dynamic type ID of a Tensor argument.  It represents something like CPUFloatTensor, etc.
+ * A type id is a unique id for a given C++ type.
+ * You need to register your types using CAFFE_KNOWN_TYPE(MyType) to be able to use CaffeTypeId with custom types.
+ * This is for example used to store the dtype of tensors.
  */
 class CaffeTypeId final : public c10::guts::IdWrapper<CaffeTypeId, intptr_t> {
 public:
@@ -360,14 +362,14 @@ inline bool operator!=(const TypeMeta& lhs, const TypeMeta& rhs) noexcept {
  * Register unique id for a type so it can be used in TypeMeta context, e.g. be
  * used as a type for Blob or for Tensor elements.
  *
- * C10_KNOWN_TYPE does explicit instantiation of TypeMeta::Id<T> template
+ * CAFFE_KNOWN_TYPE does explicit instantiation of TypeMeta::Id<T> template
  * function and thus needs to be put in a single translation unit (.cpp file)
  * for a given type T. Other translation units that use type T as a type of the
  * caffe2::Blob or element type of caffe2::Tensor need to depend on the
- * translation unit that contains C10_KNOWN_TYPE declaration via regular
+ * translation unit that contains CAFFE_KNOWN_TYPE declaration via regular
  * linkage dependencies.
  *
- * NOTE: the macro needs to be invoked in ::c10 namespace
+ * NOTE: the macro needs to be invoked in ::caffe2 namespace
  */
 // Implementation note: in MSVC, we will need to prepend the CAFFE2_EXPORT
 // keyword in order to get things compiled properly. in Linux, gcc seems to
@@ -397,18 +399,5 @@ inline bool operator!=(const TypeMeta& lhs, const TypeMeta& rhs) noexcept {
     return type_id;                                                           \
   }
 #endif
-
-}
-
-// Define adapters for c10 code
-namespace c10 {
-using TypeId = caffe2::CaffeTypeId;
-using TypeMeta = caffe2::TypeMeta;
-
-// Needs to be called from top level (i.e. outside of any) namespace
-#define C10_KNOWN_TYPE(T)                              \
-  namespace caffe2 {                                   \
-    CAFFE_KNOWN_TYPE(T)                                \
-  }
 
 }
