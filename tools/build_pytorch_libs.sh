@@ -113,17 +113,17 @@ $BASE_DIR/torch/lib/THNN/generic/THNN.h;\
 $BASE_DIR/torch/lib/THCUNN/generic/THCUNN.h;\
 $BASE_DIR/torch/lib/ATen/nn.yaml"
 CUDA_NVCC_FLAGS=$C_FLAGS
-if [[ $CUDA_DEBUG -eq 1 ]]; then
-  CUDA_NVCC_FLAGS="$CUDA_NVCC_FLAGS -g -G"
+if [[ -z "$CUDA_DEVICE_DEBUG" ]]; then
+  CUDA_DEVICE_DEBUG=0
 fi
 if [ -z "$NUM_JOBS" ]; then
   NUM_JOBS="$(getconf _NPROCESSORS_ONLN)"
 fi
 
 BUILD_TYPE="Release"
-if [[ "$DEBUG" ]]; then
+if [[ -n "$DEBUG" && $DEBUG -ne 0 ]]; then
   BUILD_TYPE="Debug"
-elif [[ "$REL_WITH_DEB_INFO" ]]; then
+elif [[ -n "$REL_WITH_DEB_INFO" && $REL_WITH_DEB_INFO -ne 0 ]]; then
   BUILD_TYPE="RelWithDebInfo"
 fi
 
@@ -154,6 +154,7 @@ function build() {
               -DCMAKE_SHARED_LINKER_FLAGS="$LDFLAGS $USER_LDFLAGS" \
               -DCMAKE_INSTALL_LIBDIR="$INSTALL_DIR/lib" \
               -DCUDA_NVCC_FLAGS="$CUDA_NVCC_FLAGS" \
+              -DCUDA_DEVICE_DEBUG=$CUDA_DEVICE_DEBUG \
               -DCMAKE_PREFIX_PATH="$INSTALL_DIR" \
               -Dcwrap_files="$CWRAP_FILES" \
               -DTH_INCLUDE_PATH="$INSTALL_DIR/include" \
@@ -170,7 +171,7 @@ function build() {
               -DTHNN_SO_VERSION=1 \
               -DTHCUNN_SO_VERSION=1 \
               -DTHD_SO_VERSION=1 \
-              -DNO_CUDA=$((1-$WITH_CUDA)) \
+              -DUSE_CUDA=$WITH_CUDA \
               -DNO_NNPACK=$((1-$WITH_NNPACK)) \
               -DNCCL_EXTERNAL=1 \
               -Dnanopb_BUILD_GENERATOR=0 \
@@ -231,6 +232,7 @@ function build_caffe2() {
       -DBUILD_PYTHON=$FULL_CAFFE2 \
       -DBUILD_BINARY=OFF \
       -DBUILD_SHARED_LIBS=ON \
+      -DONNX_NAMESPACE=$ONNX_NAMESPACE \
       -DUSE_CUDA=$WITH_CUDA \
       -DUSE_ROCM=$WITH_ROCM \
       -DUSE_NNPACK=$WITH_NNPACK \

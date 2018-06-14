@@ -52,6 +52,10 @@
 #     specify which CUDA architectures to build for.
 #     ie `TORCH_CUDA_ARCH_LIST="6.0;7.0"`
 #
+#   ONNX_NAMESPACE
+#     specify a namespace for ONNX built here rather than the hard-coded
+#     one in this file; needed to build with other frameworks that share ONNX.
+#
 # Environment variables we respect (these environment variables are
 # conventional and are often understood/set by other software.)
 #
@@ -104,6 +108,7 @@ import importlib
 
 from tools.setup_helpers.env import check_env_flag
 from tools.setup_helpers.cuda import WITH_CUDA, CUDA_HOME, CUDA_VERSION
+from tools.setup_helpers.rocm import WITH_ROCM, ROCM_HOME, ROCM_VERSION
 from tools.setup_helpers.cudnn import (WITH_CUDNN, CUDNN_LIBRARY,
                                        CUDNN_LIB_DIR, CUDNN_INCLUDE_DIR)
 from tools.setup_helpers.nccl import WITH_NCCL, WITH_SYSTEM_NCCL, NCCL_LIB_DIR, \
@@ -126,7 +131,6 @@ DEBUG = check_env_flag('DEBUG')
 IS_WINDOWS = (platform.system() == 'Windows')
 IS_DARWIN = (platform.system() == 'Darwin')
 IS_LINUX = (platform.system() == 'Linux')
-WITH_ROCM = check_env_flag('WITH_ROCM')
 
 FULL_CAFFE2 = check_env_flag('FULL_CAFFE2')
 BUILD_PYTORCH = check_env_flag('BUILD_PYTORCH')
@@ -135,6 +139,10 @@ NUM_JOBS = multiprocessing.cpu_count()
 max_jobs = os.getenv("MAX_JOBS")
 if max_jobs is not None:
     NUM_JOBS = min(NUM_JOBS, int(max_jobs))
+
+ONNX_NAMESPACE = os.getenv("ONNX_NAMESPACE")
+if not ONNX_NAMESPACE:
+    ONNX_NAMESPACE = "onnx_torch"
 
 # Ninja
 try:
@@ -277,6 +285,7 @@ def build_libs(libs):
     my_env = os.environ.copy()
     my_env["PYTORCH_PYTHON"] = sys.executable
     my_env["NUM_JOBS"] = str(NUM_JOBS)
+    my_env["ONNX_NAMESPACE"] = ONNX_NAMESPACE
     if not IS_WINDOWS:
         if WITH_NINJA:
             my_env["CMAKE_GENERATOR"] = '-GNinja'
@@ -330,6 +339,7 @@ class build_deps(PytorchCommand):
         check_file(os.path.join(third_party_path, 'cpuinfo', 'CMakeLists.txt'))
         check_file(os.path.join(third_party_path, 'tbb', 'Makefile'))
         check_file(os.path.join(third_party_path, 'catch', 'CMakeLists.txt'))
+        check_file(os.path.join(third_party_path, 'onnx', 'CMakeLists.txt'))
 
         check_pydep('yaml', 'pyyaml')
         check_pydep('typing', 'typing')
@@ -577,23 +587,29 @@ class clean(distutils.command.clean.clean):
 
 include_dirs = []
 library_dirs = []
-extra_link_args = []
 
 if IS_WINDOWS:
-    extra_compile_args = ['/Z7', '/EHa', '/DNOMINMAX', '/wd4267', '/wd4251', '/wd4522',
-                          '/wd4522', '/wd4838', '/wd4305', '/wd4244', '/wd4190',
-                          '/wd4101', '/wd4996', '/wd4275'
-                          # /Z7 turns on symbolic debugging information in .obj files
-                          # /EHa is about native C++ catch support for asynchronous
-                          # structured exception handling (SEH)
-                          # /DNOMINMAX removes builtin min/max functions
-                          # /wdXXXX disables warning no. XXXX
-                          ]
+    # /NODEFAULTLIB makes sure we only link to DLL runtime
+    # and matches the flags set for protobuf and ONNX
+    extra_link_args = ['/NODEFAULTLIB:LIBCMT.LIB']
+    # /MD links against DLL runtime
+    # and matches the flags set for protobuf and ONNX
+    # /Z7 turns on symbolic debugging information in .obj files
+    # /EHa is about native C++ catch support for asynchronous
+    # structured exception handling (SEH)
+    # /DNOMINMAX removes builtin min/max functions
+    # /wdXXXX disables warning no. XXXX
+    extra_compile_args = ['/MD', '/Z7',
+                          '/EHa', '/DNOMINMAX',
+                          '/wd4267', '/wd4251', '/wd4522', '/wd4522', '/wd4838',
+                          '/wd4305', '/wd4244', '/wd4190', '/wd4101', '/wd4996',
+                          '/wd4275']
     if sys.version_info[0] == 2:
         # /bigobj increases number of sections in .obj file, which is needed to link
         # against libaries in Python 2.7 under Windows
         extra_compile_args.append('/bigobj')
 else:
+    extra_link_args = []
     extra_compile_args = [
         '-std=c++11',
         '-Wall',
@@ -619,20 +635,23 @@ else:
 
 include_dirs += [
     cwd,
-    os.path.join(cwd, "torch", "csrc"),
-    third_party_path + "/pybind11/include",
     tmp_install_path + "/include",
     tmp_install_path + "/include/TH",
     tmp_install_path + "/include/THNN",
     tmp_install_path + "/include/ATen",
+    third_party_path + "/pybind11/include",
+    os.path.join(cwd, "torch", "csrc"),
+    "build/third_party",
 ]
 
 library_dirs.append(lib_path)
 
 # we specify exact lib names to avoid conflict with lua-torch installs
 CAFFE2_LIBS = [os.path.join(lib_path, 'libcaffe2.so')]
-if WITH_CUDA or WITH_ROCM:
+if WITH_CUDA:
     CAFFE2_LIBS.extend(['-Wl,--no-as-needed', os.path.join(lib_path, 'libcaffe2_gpu.so'), '-Wl,--as-needed'])
+if WITH_ROCM:
+    CAFFE2_LIBS.extend(['-Wl,--no-as-needed', os.path.join(lib_path, 'libcaffe2_hip.so'), '-Wl,--as-needed'])
 THD_LIB = os.path.join(lib_path, 'libTHD.a')
 NCCL_LIB = os.path.join(lib_path, 'libnccl.so.1')
 C10D_LIB = os.path.join(lib_path, 'libc10d.a')
@@ -640,25 +659,41 @@ C10D_GLOO_LIB = os.path.join(lib_path, 'libc10d_gloo.a')
 
 # static library only
 NANOPB_STATIC_LIB = os.path.join(lib_path, 'libprotobuf-nanopb.a')
+if DEBUG:
+    PROTOBUF_STATIC_LIB = os.path.join(lib_path, 'libprotobufd.a')
+else:
+    PROTOBUF_STATIC_LIB = os.path.join(lib_path, 'libprotobuf.a')
 
 if IS_DARWIN:
     CAFFE2_LIBS = [os.path.join(lib_path, 'libcaffe2.dylib')]
-    if WITH_CUDA or WITH_ROCM:
+    if WITH_CUDA:
         CAFFE2_LIBS.append(os.path.join(lib_path, 'libcaffe2_gpu.dylib'))
+    if WITH_ROCM:
+        CAFFE2_LIBS.append(os.path.join(lib_path, 'libcaffe2_hip.dylib'))
     NCCL_LIB = os.path.join(lib_path, 'libnccl.1.dylib')
 
 if IS_WINDOWS:
     CAFFE2_LIBS = [os.path.join(lib_path, 'caffe2.lib')]
-    if WITH_CUDA or WITH_ROCM:
+    if WITH_CUDA:
         CAFFE2_LIBS.append(os.path.join(lib_path, 'caffe2_gpu.lib'))
+    if WITH_ROCM:
+        CAFFE2_LIBS.append(os.path.join(lib_path, 'caffe2_hip.lib'))
+    # Windows needs direct access to ONNX libraries as well
+    # as through Caffe2 library
+    CAFFE2_LIBS += [
+        os.path.join(lib_path, 'onnx.lib'),
+        os.path.join(lib_path, 'onnx_proto.lib'),
+    ]
     if DEBUG:
         NANOPB_STATIC_LIB = os.path.join(lib_path, 'protobuf-nanopbd.lib')
+        PROTOBUF_STATIC_LIB = os.path.join(lib_path, 'libprotobufd.lib')
     else:
         NANOPB_STATIC_LIB = os.path.join(lib_path, 'protobuf-nanopb.lib')
+        PROTOBUF_STATIC_LIB = os.path.join(lib_path, 'libprotobuf.lib')
 
-main_compile_args = ['-D_THP_CORE']
+main_compile_args = ['-D_THP_CORE', '-DONNX_NAMESPACE=' + ONNX_NAMESPACE]
 main_libraries = ['shm']
-main_link_args = CAFFE2_LIBS + [NANOPB_STATIC_LIB]
+main_link_args = CAFFE2_LIBS + [NANOPB_STATIC_LIB, PROTOBUF_STATIC_LIB]
 main_sources = [
     "torch/csrc/PtrWrapper.cpp",
     "torch/csrc/Module.cpp",
@@ -737,6 +772,8 @@ main_sources = [
     "torch/csrc/autograd/init.cpp",
     "torch/csrc/autograd/aten_variable_hooks.cpp",
     "torch/csrc/autograd/grad_mode.cpp",
+    "torch/csrc/autograd/anomaly_mode.cpp",
+    "torch/csrc/autograd/python_anomaly_mode.cpp",
     "torch/csrc/autograd/engine.cpp",
     "torch/csrc/autograd/function.cpp",
     "torch/csrc/autograd/variable.cpp",
@@ -944,6 +981,7 @@ if WITH_CUDA:
     THNVRTC = Extension("torch._nvrtc",
                         sources=['torch/csrc/nvrtc.cpp'],
                         language='c++',
+                        extra_compile_args=main_compile_args + extra_compile_args,
                         include_dirs=include_dirs,
                         library_dirs=library_dirs + cuda_stub_path,
                         extra_link_args=thnvrtc_link_flags,

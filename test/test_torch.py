@@ -2385,6 +2385,7 @@ class TestTorch(TestCase):
         except RuntimeError as e:
             return 'invalid multinomial distribution' in str(e)
 
+    @unittest.skipIf(IS_WINDOWS, 'FIXME: CUDA OOM error on Windows')
     @unittest.skipIf(not PY3,
                      "spawn start method is not supported in Python 2, \
                      but we need it for for testing failure case for CPU RNG on Windows")
@@ -5804,6 +5805,19 @@ class TestTorch(TestCase):
         self.assertEqual(t1.size(), size)
         self.assertEqual(t1.stride(), stride)
 
+        # test argument names
+        t1 = torch.Tensor()
+        # 1. case when source is tensor
+        t1.set_(source=t2)
+        self.assertEqual(t1.storage()._cdata, t2.storage()._cdata)
+        # 2. case when source is storage
+        t1.set_(source=t2.storage())
+        self.assertEqual(t1.storage()._cdata, t2.storage()._cdata)
+        # 3. case when source is storage, and other args also specified
+        t1.set_(source=t2.storage(), storage_offset=0, size=size, stride=stride)
+        self.assertEqual(t1.size(), size)
+        self.assertEqual(t1.stride(), stride)
+
     def test_equal(self):
         # Contiguous, 1D
         t1 = torch.Tensor((3, 4, 9, 10))
@@ -6607,6 +6621,20 @@ class TestTorch(TestCase):
         b = torch.load(data)
         self.assertTrue(data.was_called('readinto'))
 
+    def test_load_error_msg(self):
+        expected_err_msg = (".*You can only torch.load from a file that is seekable. " +
+                            "Please pre-load the data into a buffer like io.BytesIO and " +
+                            "try to load from it instead.")
+        if PY3:
+            import urllib.request
+            import io
+            resource = urllib.request.urlopen('https://download.pytorch.org/test_data/linear.pt')
+            self.assertRaisesRegex(io.UnsupportedOperation, expected_err_msg, lambda: torch.load(resource))
+        else:
+            import urllib
+            resource = urllib.urlopen('https://download.pytorch.org/test_data/linear.pt')
+            self.assertRaisesRegex(AttributeError, expected_err_msg, lambda: torch.load(resource))
+
     def test_from_buffer(self):
         a = bytearray([1, 2, 3, 4])
         self.assertEqual(torch.ByteStorage.from_buffer(a).tolist(), [1, 2, 3, 4])
@@ -6644,6 +6672,7 @@ class TestTorch(TestCase):
             self.assertEqual(t1, t2, 0)
 
     def test_print(self):
+        default_type = torch.Tensor().type()
         for t in torch._tensor_classes:
             if t == torch.HalfTensor:
                 continue  # HalfTensor does not support fill
@@ -6661,13 +6690,63 @@ class TestTorch(TestCase):
             obj.__repr__()
             str(obj)
 
-        x = torch.Tensor([4, float('inf'), 1.5, float('-inf'), 0, float('nan'), 1])
-        x.__repr__()
-        str(x)
+        # test big integer
+        x = torch.tensor(2341234123412341)
+        self.assertEqual(x.__repr__(), str(x))
+        self.assertExpected(str(x), subname='bigint')
 
-        x = torch.DoubleTensor([1e-324, 1e-323, 1e-322, 1e307, 1e308, 1e309])
-        x.__repr__()
-        str(x),
+        # test scientific notation
+        x = torch.tensor([1e28, 1e-28])
+        self.assertEqual(x.__repr__(), str(x))
+        self.assertExpected(str(x), subname='scimode')
+
+        # test no leading space if all elements positive
+        x = torch.tensor([1, 2])
+        self.assertEqual(x.__repr__(), str(x))
+        self.assertExpected(str(x), subname='posint')
+
+        # test for leading space if there are negative elements
+        x = torch.tensor([1, -2])
+        self.assertEqual(x.__repr__(), str(x))
+        self.assertExpected(str(x), subname='negint')
+
+        # test inf and nan
+        x = torch.tensor([4, float('inf'), 1.5, float('-inf'), 0, float('nan'), 1])
+        self.assertEqual(x.__repr__(), str(x))
+        self.assertExpected(str(x), subname='nonfinite')
+
+        # test dtype
+        torch.set_default_dtype(torch.float)
+        x = torch.tensor([1e-324, 1e-323, 1e-322, 1e307, 1e308, 1e309], dtype=torch.float64)
+        self.assertEqual(x.__repr__(), str(x))
+        self.assertExpected(str(x), subname='dtype')
+
+        # test changing default dtype
+        torch.set_default_dtype(torch.float64)
+        self.assertEqual(x.__repr__(), str(x))
+        self.assertExpected(str(x), subname='default_dtype')
+
+        # test summary
+        x = torch.zeros(10000)
+        self.assertEqual(x.__repr__(), str(x))
+        self.assertExpected(str(x), subname='summary')
+
+        # test device
+        if torch.cuda.is_available():
+            x = torch.tensor([123], device='cuda:0')
+            self.assertEqual(x.__repr__(), str(x))
+            self.assertExpected(str(x), subname='device')
+
+            # test changing default to cuda
+            torch.set_default_tensor_type(torch.cuda.FloatTensor)
+            self.assertEqual(x.__repr__(), str(x))
+            self.assertExpected(str(x), subname='default_device')
+        torch.set_default_tensor_type(default_type)
+
+        # test integral floats and requires_grad
+        x = torch.tensor([123.], requires_grad=True)
+        self.assertEqual(x.__repr__(), str(x))
+        self.assertExpected(str(x), subname='requires_grad')
 
     def test_sizeof(self):
         sizeof_empty = torch.randn(0).storage().__sizeof__()
@@ -7336,6 +7415,65 @@ class TestTorch(TestCase):
             RuntimeError,
             lambda: torch.unique(torch.cuda.FloatTensor([0., 1.])),
         )
+
+    @staticmethod
+    def _test_bincount(self, device):
+        # negative input throws
+        with self.assertRaisesRegex(RuntimeError, '1-d non-negative integral'):
+            torch.bincount(torch.tensor([1, -1], device=device))
+        # n-d input, with n > 1 throws
+        with self.assertRaisesRegex(RuntimeError, '1-d non-negative integral'):
+            torch.bincount(torch.tensor([[1, 2], [3, 4]], device=device))
+        # floating input type throws
+        with self.assertRaisesRegex(RuntimeError, 'not implemented'):
+            torch.bincount(torch.tensor([1., 0.3], device=device))
+        # minlength < 0 throws
+        with self.assertRaisesRegex(RuntimeError, 'minlength should be >= 0'):
+            torch.bincount(torch.tensor([1, 3], device=device),
+                           torch.tensor([.2, .2], device=device),
+                           minlength=-1)
+        # input and weights dim mismatch
+        with self.assertRaisesRegex(RuntimeError, 'same length'):
+            torch.bincount(torch.tensor([1, 0], device=device),
+                           torch.tensor([1., 0.3, 0.5], device=device))
+
+        # test tensor method without weights
+        long_counts = torch.tensor(
+            [0, 3, 2, 1, 3], dtype=torch.uint8, device=device).bincount()
+        self.assertEqual(
+            torch.tensor([1, 1, 1, 2], dtype=torch.int64, device=device),
+            long_counts)
+        # test minlength functionality
+        int_counts = torch.bincount(
+            torch.tensor([1, 1, 1, 1], device=device), minlength=5)
+        self.assertEqual(
+            torch.tensor([0, 4, 0, 0, 0], dtype=torch.int64, device=device),
+            int_counts)
+        # test weights
+        byte_counts = torch.bincount(
+            torch.tensor([0, 1, 1, 1, 4], device=device),
+            torch.tensor([.1, .2, .3, .4, .5], device=device))
+        self.assertEqual(
+            torch.tensor([0.1, 0.9, 0, 0, 0.5], device=device), byte_counts)
+        byte_counts = torch.bincount(
+            torch.tensor([0, 1, 1, 1, 4], device=device),
+            torch.tensor([1, 2, 3, 4, 5], dtype=torch.int8, device=device))
+        self.assertEqual(
+            torch.tensor([1, 9, 0, 0, 5], device=device), byte_counts)
+        # test large number of bins - global memory use
+        big_exp = torch.zeros(10000000, device=device)
+        big_exp[-1] = 50.0
+        big_w = torch.tensor([.5] * 100, device=device)
+        big_out = torch.tensor([9999999] * 100, device=device).bincount(big_w)
+        self.assertEqual(big_exp, big_out)
+        # test large input size
+        big_exp = torch.zeros(2, device=device)
+        big_exp[1] = 1000000
+        big_out = torch.ones(1000000, dtype=torch.int8, device=device).bincount()
+        self.assertEqual(big_exp, big_out)
+
+    def test_bincount_cpu(self):
+        self._test_bincount(self, device='cpu')
 
 
 # Functions to test negative dimension wrapping

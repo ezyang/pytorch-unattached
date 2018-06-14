@@ -15,7 +15,7 @@ from torch.autograd.function import once_differentiable
 from torch.autograd.profiler import profile
 from common import TEST_MKL, TestCase, run_tests, skipIfNoLapack, \
     suppress_warnings
-from torch.autograd import Variable, Function
+from torch.autograd import Variable, Function, detect_anomaly
 from torch.autograd.function import InplaceFunction
 from torch.testing import make_non_contiguous, randn_like
 
@@ -2306,6 +2306,41 @@ class TestAutograd(TestCase):
         out.sum().backward()
         self.assertFalse(s.grad is None or s.grad.abs().sum().item() == 0)
 
+    def test_anomaly_detect_nan(self):
+        size = 10
+
+        class MyFunc(Function):
+            @staticmethod
+            def forward(ctx, inp1, inp2, fail_0th):
+                ctx.fail_0th = fail_0th
+                return inp1.sum(0, keepdim=True)
+
+            @staticmethod
+            def backward(ctx, gO):
+                gI = gO.clone().expand(size)
+                gI[0] = 0
+                gI[0] /= 0  # Generate a nan
+                if ctx.fail_0th:
+                    return gI, None, None
+                else:
+                    return None, gI, None
+
+        inp = torch.rand(size, requires_grad=True)
+        out = MyFunc.apply(inp, inp, True)
+        out.backward()  # Should not fail
+
+        inp = torch.rand(size, requires_grad=True)
+        out = MyFunc.apply(inp, inp, True)
+        with self.assertRaisesRegexp(RuntimeError, "Function 'MyFuncBackward' returned nan values in its 0th output."):
+            with detect_anomaly():
+                out.backward()
+
+        inp = torch.rand(size, requires_grad=True)
+        out = MyFunc.apply(inp, inp, False)
+        with self.assertRaisesRegexp(RuntimeError, "Function 'MyFuncBackward' returned nan values in its 1th output."):
+            with detect_anomaly():
+                out.backward()
+
 
 def index_variable(shape, max_indices):
     if not isinstance(shape, tuple):
@@ -3218,17 +3253,18 @@ def run_functional_checks(test_case, test_name, name, apply_fn, run_grad_checks,
         test_case.assertEqual(self_variable.type(), self_variable.grad.type())
         test_case.assertEqual(self_variable.size(), self_variable.grad.size())
 
-for test in method_tests:
-    name, self_size, args = test[:3]
+
+def add_test(
+        name,
+        self_size,
+        args,
+        variant_name='',
+        dim_args_idx=(),
+        skipTestIf=(),
+        output_process_fn=lambda x: x):
     basic_test_name = 'test_' + name
-    if len(test) >= 4 and test[3] != '':
-        basic_test_name += '_' + test[3]
-
-    dim_args_idx = test[4] if len(test) >= 5 else []
-
-    skipTestIf = test[5] if len(test) >= 6 else []
-
-    output_process_fn = test[6] if len(test) >= 7 else lambda x: x
+    if variant_name != '':
+        basic_test_name += '_' + variant_name
 
     for dim_perm in product([-1, 1], repeat=len(dim_args_idx)):
         test_name = basic_test_name
@@ -3344,6 +3380,8 @@ for test in method_tests:
 
         setattr(TestAutograd, test_name, do_test)
 
+for test in method_tests:
+    add_test(*test)
 
 if __name__ == '__main__':
     run_tests()
