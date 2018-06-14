@@ -53,6 +53,8 @@ if(BUILD_ATEN)
   ENDIF(USE_ROCM)
 endif()
 
+add_subdirectory(c10_prototype)
+
 # ---[ Caffe2 build
 if(BUILD_CAFFE2)
   # Note: the folders that are being commented out have not been properly
@@ -190,9 +192,8 @@ target_include_directories(caffe2_protos INTERFACE $<INSTALL_INTERFACE:include>)
 target_link_libraries(caffe2_protos PUBLIC protobuf::libprotobuf)
 
 # Compile exposed libraries.
-list(APPEND Caffe2_CPU_SRCs $<TARGET_OBJECTS:c10>)
-add_library(caffe2 ${Caffe2_CPU_SRCS})
-target_link_libraries(caffe2 PUBLIC c10)
+list(APPEND Caffe2_CPU_SRCs)
+add_library(caffe2 ${Caffe2_CPU_SRCS} $<TARGET_OBJECTS:c10>)
 caffe2_interface_library(caffe2_protos caffe2_protos_whole)
 target_link_libraries(caffe2 PRIVATE caffe2_protos_whole)
 if (${CAFFE2_LINK_LOCAL_PROTOBUF})
@@ -206,6 +207,8 @@ target_link_libraries(caffe2 PRIVATE ${Caffe2_DEPENDENCY_WHOLE_LINK_LIBS})
 target_include_directories(caffe2 INTERFACE $<INSTALL_INTERFACE:include>)
 target_include_directories(caffe2 PRIVATE ${Caffe2_CPU_INCLUDE})
 target_include_directories(caffe2 SYSTEM PRIVATE "${Caffe2_DEPENDENCY_INCLUDE}")
+target_include_directories(caffe2 PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/flat_hash_map>)
+target_include_directories(caffe2 PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/caffe2/c10_prototype>)
 # Set standard properties on the target
 aten_set_target_props(caffe2)
 target_compile_options(caffe2 INTERFACE "-std=c++11")

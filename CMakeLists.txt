@@ -301,7 +301,6 @@ if(BUILD_CAFFE2)
 endif()
 
 # ---[ Main build
-add_subdirectory(c10_prototype)
 add_subdirectory(caffe2)
 
 # --[ Documentation
