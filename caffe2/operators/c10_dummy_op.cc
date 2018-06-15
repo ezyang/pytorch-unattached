@@ -31,10 +31,10 @@ Tensor<CPUContext> dummy_op_float_impl(Tensor<CPUContext> arg) {
 namespace c10 {
 C10_REGISTER_KERNEL(DummyOp)
   .kernel(&dummy_op_int_impl)
-  .dispatchKey({c10::CAFFE2_CPU_TENSOR(), caffe2::TypeMeta::Id<int>()});
+  .dispatchKey({DeviceId::CPU, LayoutId(0), caffe2::TypeMeta::Id<int>()});
 C10_REGISTER_KERNEL(DummyOp)
   .kernel(&dummy_op_float_impl)
-  .dispatchKey({c10::CAFFE2_CPU_TENSOR(), caffe2::TypeMeta::Id<float>()});
+  .dispatchKey({DeviceId::CPU, LayoutId(0), caffe2::TypeMeta::Id<float>()});
 }
 namespace caffe2 {
 REGISTER_C10_OPERATOR_FOR_CAFFE2_DISPATCH(DummyOp, DummyOp)

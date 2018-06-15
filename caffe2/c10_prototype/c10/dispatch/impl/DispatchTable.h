@@ -3,7 +3,6 @@
 #include <flat_hash_map/flat_hash_map.h>
 #include "caffe2/utils/Metaprogramming.h"
 #include <c10/dispatch/OpSchema.h>
-#include "caffe2/core/dispatch/TensorTypeId.h"
 
 #include <type_traits>
 #include <array>

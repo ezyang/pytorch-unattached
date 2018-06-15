@@ -8,7 +8,6 @@
 #include <iostream>
 
 using namespace c10;
-using cpu::CPU_TENSOR;
 
 namespace ops {
 struct conditional final {
@@ -31,7 +30,7 @@ Tensor conditional_op(bool condition, const Tensor& thenTensor, Tensor elseTenso
 
 C10_REGISTER_KERNEL(::ops::conditional)
   .kernel(&conditional_op)
-  .dispatchKey({c10::details::TensorParameterDispatchKey{CPU_TENSOR(), caffe2::TypeMeta::Id<int>()}, c10::details::TensorParameterDispatchKey{CPU_TENSOR(), caffe2::TypeMeta::Id<int>()}});
+  .dispatchKey({c10::details::TensorParameterDispatchKey{DeviceId::CPU, LayoutId(0), caffe2::TypeMeta::Id<int>()}, c10::details::TensorParameterDispatchKey{DeviceId::CPU, LayoutId(0), caffe2::TypeMeta::Id<int>()}});
 
 int main() {
   ParameterStack callStack;

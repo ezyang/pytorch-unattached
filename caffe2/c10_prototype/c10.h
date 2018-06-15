@@ -3,7 +3,6 @@
 #include "c10/Tensor.h"
 #include "c10/Functions.h"
 #include "c10/DataType.h"
-#include "caffe2/core/dispatch/TensorTypeId.h"
 
 #include "c10/ThreadContext.h"
 

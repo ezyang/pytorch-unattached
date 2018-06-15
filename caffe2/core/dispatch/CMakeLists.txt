@@ -1,6 +1,6 @@
 set(LIB_SOURCES
-        TensorTypeId.cpp
-        TensorTypeIdRegistration.cpp
+        DeviceId.cpp
+        LayoutId.cpp
 )
 
 set(TEST_SOURCES

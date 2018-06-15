@@ -6,8 +6,9 @@
 #include <c10/SmallVector.h>
 #include <c10/Optional.h>
 #include <c10/DimVector.h>
-#include "caffe2/core/dispatch/TensorTypeIdRegistration.h"
 #include "caffe2/core/typeid.h"
+#include "caffe2/core/dispatch/DeviceId.h"
+#include "caffe2/core/dispatch/LayoutId.h"
 
 #include "IntrusivePtr.h"
 #include "Storage.h"
@@ -38,7 +39,8 @@ protected:
   // purposes.)
 
   // Used for dispatch on the object
-  const TensorTypeId type_id_;
+  const DeviceId device_id_;
+  LayoutId layout_id_;
 
   DimVector sizes_;
 
@@ -78,9 +80,9 @@ protected:
   // an "is-a" to "has-a" relationship and inline the storage struct in Tensor.
 
 public:
-  explicit TensorImpl(TensorTypeId type_id, ArrayRef<int64_t> sizes, ArrayRef<int64_t> strides, Storage storage, int64_t storage_offset)
+  explicit TensorImpl(DeviceId device_id, LayoutId layout_id, ArrayRef<int64_t> sizes, ArrayRef<int64_t> strides, Storage storage, int64_t storage_offset)
       : IntrusivePtrTarget()
-      , type_id_(type_id)
+      , device_id_(device_id)
       , sizes_(sizes)
       , strides_(strides)
       , storage_(storage)
@@ -88,8 +90,11 @@ public:
   {};
 
   // TODO: Not sure about this...
-  TensorTypeId type_id() const {
-    return type_id_;
+  DeviceId device_id() const {
+    return device_id_;
+  }
+  LayoutId layout_id() const {
+    return layout_id_;
   }
 
   ArrayRef<int64_t> sizes() const {
@@ -175,9 +180,9 @@ public:
     // In principle we could allow the non-contiguous case, but the original API accepted storages
     // (which were guaranteed to contiguous); thus shall we.
     C10_CHECK(src->is_contiguous(), "set: src tensor must be contiguous");
-    // TODO: I guess if type_id() has refinements this check is no longer correct
-    C10_CHECK(type_id() == src->type_id(),
-              "src tensor has type ", src->type_id(), ", but expected ", type_id(), " (from destination tensor)");
+    // TODO: I guess if device_id() has refinements this check is no longer correct
+    C10_CHECK(device_id() == src->device_id(),
+              "src tensor has type ", src->device_id(), ", but expected ", device_id(), " (from destination tensor)");
     C10_CHECK(dtype() == src->dtype(),
               "src tensor has dtype ", src->dtype().id(), ", but expected dtype ", dtype().id(), " (from destination tensor)");
     if (src != this) storage_ = src->storage_;
@@ -202,7 +207,7 @@ public:
 //      instead of an error, which should have happened.  It just seems morally wrong to privilege empty CPU
 //      tensors in this way.  Also, you don't get reliable pointer equality tests anymore.
 class UndefinedTensorImpl final : public TensorImpl {
-  UndefinedTensorImpl() : TensorImpl(TensorTypeIds::undefined(), {}, {}, nullptr, 0) {};
+  UndefinedTensorImpl() : TensorImpl(DeviceId::UNDEFINED, LayoutId(0), {}, {}, nullptr, 0) {};
 public:
   static UndefinedTensorImpl *singleton() {
     // smessmer to @ezyang: Not sure this singleton is a good idea. If wrapped in Tensor, it is subject to ref counting and might get destructed.

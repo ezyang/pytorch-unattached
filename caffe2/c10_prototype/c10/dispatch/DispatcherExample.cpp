@@ -6,7 +6,6 @@
 #include "caffe2/utils/Array.h"
 
 using namespace c10;
-using c10::cpu::CPU_TENSOR;
 
 namespace ops {
 struct conditional final {
@@ -42,7 +41,7 @@ Tensor conditional_op(bool condition, const Tensor& thenTensor, Tensor elseTenso
 
 C10_REGISTER_KERNEL(::ops::conditional)
   .kernel(&conditional_op)
-  .dispatchKey({c10::details::TensorParameterDispatchKey{CPU_TENSOR(), caffe2::TypeMeta::Id<int>()}, c10::details::TensorParameterDispatchKey{CPU_TENSOR(), caffe2::TypeMeta::Id<int>()}});
+  .dispatchKey({c10::details::TensorParameterDispatchKey{DeviceId::CPU, LayoutId(0), caffe2::TypeMeta::Id<int>()}, c10::details::TensorParameterDispatchKey{DeviceId::CPU, LayoutId(0), caffe2::TypeMeta::Id<int>()}});
 
 int add_notensor_op(int lhs, int rhs) {
   return lhs + rhs;
@@ -67,7 +66,7 @@ bool equals_impl(Tensor, Tensor) {
 
 C10_REGISTER_KERNEL(::equals)
   .kernel(&equals_impl)
-  .dispatchKey({c10::details::TensorParameterDispatchKey{CPU_TENSOR(), caffe2::TypeMeta::Id<int>()}, c10::details::TensorParameterDispatchKey{CPU_TENSOR(), caffe2::TypeMeta::Id<int>()}});
+  .dispatchKey({c10::details::TensorParameterDispatchKey{DeviceId::CPU, LayoutId(0), caffe2::TypeMeta::Id<int>()}, c10::details::TensorParameterDispatchKey{DeviceId::CPU, LayoutId(0), caffe2::TypeMeta::Id<int>()}});
 
 int main() {
   Tensor t1 = tensor<int>({5});

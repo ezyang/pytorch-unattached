@@ -11,7 +11,7 @@ namespace c10 { namespace cpu { namespace op {
 
 // TCB
 static CPUTensorImpl* _cpu_impl(const Tensor& self) {
-  C10_ASSERT(self._to_impl()->type_id() == CPU_TENSOR(), "type_id = ", self._to_impl()->type_id());
+  C10_ASSERT(self._to_impl()->device_id() == DeviceId::CPU, "device_id = ", self._to_impl()->device_id());
   return static_cast<CPUTensorImpl*>(self._to_impl());
 }
 
@@ -152,8 +152,8 @@ void extend_(const Tensor& self, int64_t num, double growthPct) {
 
 // THTensor_(equal)
 bool equal(Tensor self, Tensor other) {
-  C10_ASSERT(self._to_impl()->type_id() == CPU_TENSOR(), "self.type_id() = ", self._to_impl()->type_id());
-  C10_ASSERT(other._to_impl()->type_id() == CPU_TENSOR(), "other.type_id() = ", other._to_impl()->type_id());
+  C10_ASSERT(self._to_impl()->device_id() == DeviceId::CPU, "self.device_id() = ", self._to_impl()->device_id());
+  C10_ASSERT(other._to_impl()->device_id() == DeviceId::CPU, "other.device_id() = ", other._to_impl()->device_id());
   C10_ASSERT(self.dtype() == other.dtype(), "self.dtype() = ", self.dtype().id(), "; other.dtype() = ", other.dtype().id())
   if (!self.sizes().equals(other.sizes())) return false;
   if (self.is_contiguous() && other.is_contiguous()) {
@@ -166,7 +166,7 @@ bool equal(Tensor self, Tensor other) {
 
 C10_REGISTER_KERNEL(c10::ops::equals)
   .kernel(&equal)
-  .dispatchKey({c10::details::TensorParameterDispatchKey{CPU_TENSOR(), caffe2::TypeMeta::Id<float>()}, c10::details::TensorParameterDispatchKey{CPU_TENSOR(), caffe2::TypeMeta::Id<float>()}});
+  .dispatchKey({c10::details::TensorParameterDispatchKey{DeviceId::CPU, LayoutId(0), caffe2::TypeMeta::Id<float>()}, c10::details::TensorParameterDispatchKey{DeviceId::CPU, LayoutId(0), caffe2::TypeMeta::Id<float>()}});
 
 /*
 // Channeling Caffe2 Tensor::CopyFrom(const Tensor<SrcContext>& src, ContextForCopy* context)

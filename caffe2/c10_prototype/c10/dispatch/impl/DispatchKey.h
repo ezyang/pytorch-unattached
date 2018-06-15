@@ -1,6 +1,7 @@
 #pragma once
 
-#include "caffe2/core/dispatch/TensorTypeId.h"
+#include "caffe2/core/dispatch/DeviceId.h"
+#include "caffe2/core/dispatch/LayoutId.h"
 #include "caffe2/core/typeid.h"
 
 #include <vector>
@@ -11,12 +12,13 @@ namespace c10 {
 
 namespace details {
 struct TensorParameterDispatchKey final {
-  TensorTypeId tensorType;
+  DeviceId deviceId;
+  LayoutId layoutId;
   // TODO Move this CaffeTypeId to c10 namespace
   caffe2::CaffeTypeId dataType;
 };
 inline constexpr bool operator==(const TensorParameterDispatchKey& lhs, const TensorParameterDispatchKey& rhs) {
-  return lhs.tensorType == rhs.tensorType && lhs.dataType == rhs.dataType;
+  return lhs.deviceId == rhs.deviceId && lhs.layoutId == rhs.layoutId && lhs.dataType == rhs.dataType;
 }
 }
 }
@@ -26,7 +28,7 @@ namespace std {
   struct hash<c10::details::TensorParameterDispatchKey> {
     // TODO constexpr hashing
     size_t operator()(const c10::details::TensorParameterDispatchKey& obj) const {
-      return std::hash<c10::TensorTypeId>()(obj.tensorType) ^ std::hash<caffe2::CaffeTypeId>()(obj.dataType);
+      return std::hash<c10::DeviceId>()(obj.deviceId) ^ std::hash<c10::LayoutId>()(obj.layoutId) ^ std::hash<caffe2::CaffeTypeId>()(obj.dataType);
     }
   };
 }

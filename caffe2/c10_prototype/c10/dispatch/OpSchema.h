@@ -13,10 +13,6 @@ class CUDAContext;
 
 namespace c10 {
 
-// TODO Get rid of CAFFE2_CPU_TENSOR and CAFFE2_CUDA_TENSOR once the caffe2 tensor type is gone
-C10_DECLARE_TENSOR_TYPE(CAFFE2_CPU_TENSOR)
-C10_DECLARE_TENSOR_TYPE(CAFFE2_CUDA_TENSOR)
-
 namespace details {
 
 /**
@@ -34,20 +30,20 @@ template<>
 struct tensor_to_dispatch_key_<c10::Tensor, void> final {
     static TensorParameterDispatchKey call(const c10::Tensor& tensor) {
       auto *impl = tensor._to_impl();
-      return TensorParameterDispatchKey{impl->type_id(), impl->dtype().id()};
+      return TensorParameterDispatchKey{impl->device_id(), impl->layout_id(), impl->dtype().id()};
     }
 };
 template<class TensorType>
 struct tensor_to_dispatch_key_<TensorType, guts::enable_if_t<std::is_same<TensorType, caffe2::Tensor<caffe2::CPUContext>>::value>> final {
     static TensorParameterDispatchKey call(const TensorType& tensor) {
-      return TensorParameterDispatchKey{CAFFE2_CPU_TENSOR(), tensor.meta().id()};
+      return TensorParameterDispatchKey{DeviceId::CPU, LayoutId(0), tensor.meta().id()};
     }
 };
 
 template<class TensorType>
 struct tensor_to_dispatch_key_<TensorType, guts::enable_if_t<std::is_same<TensorType, caffe2::Tensor<caffe2::CUDAContext>>::value>> final {
     static TensorParameterDispatchKey call(const TensorType& tensor) {
-      return TensorParameterDispatchKey{CAFFE2_CUDA_TENSOR(), tensor.meta().id()};
+      return TensorParameterDispatchKey{DeviceId::CUDA, LayoutId(0), tensor.meta().id()};
     }
 };
 struct tensor_to_dispatch_key final {
