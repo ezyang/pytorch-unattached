@@ -1,6 +1,6 @@
 #pragma once
 
-#include <c10/dispatch/OpSchema.h>
+#include "caffe2/core/dispatch/OpSchema.h"
 #include "ParameterStack.h"
 #include <c10/dispatch/Dispatcher.h>
 #include "caffe2/utils/C++17.h"

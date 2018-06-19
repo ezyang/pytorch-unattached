@@ -24,9 +24,7 @@ add_library(c10 OBJECT
     c10/cpu/CPUTensorImpl.cpp
     c10/dispatch/Dispatcher.cpp
     c10/dispatch/impl/DispatchTable.cpp
-    c10/dispatch/impl/DispatchKey.cpp
     c10/dispatch/KernelRegistration.cpp
-    c10/dispatch/OpSchema.cpp
     c10/dispatch/OpSchemaRegistration.cpp
     c10/stack_bindings/ParameterStack.cpp
     c10/stack_bindings/StackBasedOperator.cpp
@@ -93,7 +91,6 @@ if (BUILD_TEST)
       c10/cpu/op/CPUAll_test.cpp
       c10/dispatch/DispatcherExample.cpp
       c10/Registry_test.cpp
-      c10/dispatch/OpSchema_test.cpp
       c10/dispatch/OpSig_test.cpp
       )
     # Without directory or longest extension
