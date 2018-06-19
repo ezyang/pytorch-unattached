@@ -3,13 +3,12 @@
 #include "impl/DispatchKey.h"
 #include "caffe2/utils/Metaprogramming.h"
 #include "caffe2/utils/Array.h"
-#include <c10/Tensor.h>
 
 namespace caffe2 {
 template<class Context> class Tensor;
 class CPUContext;
 class CUDAContext;
-}
+}  // namespace caffe2
 
 namespace c10 {
 
@@ -19,27 +18,16 @@ namespace details {
  * If Arg is a Tensor or reference to a Tensor, provide the member constant value equal to true.  Otherwise
  * return false.
  */
-template<class Arg> using is_tensor_arg = guts::disjunction<
-  std::is_same<Tensor, guts::remove_cv_t<guts::remove_reference_t<Arg>>>,
-  guts::is_instantiation_of<caffe2::Tensor, guts::remove_cv_t<guts::remove_reference_t<Arg>>>
->;
+template<class Arg> using is_tensor_arg = guts::is_instantiation_of<caffe2::Tensor, guts::remove_cv_t<guts::remove_reference_t<Arg>>>;
 
-// TODO get rid of tensor_to_dispatch_key once c2::Tensor is not used anymore, this then fits into a template lambda instead of a functor.
+// TODO get rid of tensor_to_dispatch_key once c2::Tensor is de-templatized. This then fits into a template lambda instead of a functor.
 template<class TensorType, class Enable = void> struct tensor_to_dispatch_key_ final {};
-template<>
-struct tensor_to_dispatch_key_<c10::Tensor, void> final {
-    static TensorParameterDispatchKey call(const c10::Tensor& tensor) {
-      auto *impl = tensor._to_impl();
-      return TensorParameterDispatchKey{impl->device_id(), impl->layout_id(), impl->dtype().id()};
-    }
-};
 template<class TensorType>
 struct tensor_to_dispatch_key_<TensorType, guts::enable_if_t<std::is_same<TensorType, caffe2::Tensor<caffe2::CPUContext>>::value>> final {
     static TensorParameterDispatchKey call(const TensorType& tensor) {
       return TensorParameterDispatchKey{DeviceId::CPU, LayoutId(0), tensor.meta().id()};
     }
 };
-
 template<class TensorType>
 struct tensor_to_dispatch_key_<TensorType, guts::enable_if_t<std::is_same<TensorType, caffe2::Tensor<caffe2::CUDAContext>>::value>> final {
     static TensorParameterDispatchKey call(const TensorType& tensor) {
@@ -215,7 +203,7 @@ public:
   }
 };
 
-}
+}  // namespace details
 
 /**
  * Wrapper class for user-defined OpSchemaDef, providing functionality for determining
@@ -229,7 +217,7 @@ public:
  *        the number of arguments in Signature)
  */
 template<class OpSchemaDef> class OpSchema final {
-  // TODO static_assert OpSchemaDef isn't an instanciation of OpSchema. If yes, the caller probably passed an OpSchema somewhere where an OpSchemaDef was expected.
+  // TODO static_assert OpSchemaDef isn't an instanciation of OpSchema. If yes, the caller probably passed an OpSchema somewhere where an OpSchemaDef was expected and wants a good error message.
 public:
   /**
    * Information about the signature
@@ -242,4 +230,4 @@ public:
 };
 
 // TODO test OpSchema::dispatch stuff
-}
+}  // namespace c10

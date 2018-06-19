@@ -28,9 +28,10 @@ Tensor conditional_op(bool condition, const Tensor& thenTensor, Tensor elseTenso
   }
 }
 
-C10_REGISTER_KERNEL(::ops::conditional)
-  .kernel(&conditional_op)
-  .dispatchKey({c10::details::TensorParameterDispatchKey{DeviceId::CPU, LayoutId(0), caffe2::TypeMeta::Id<int>()}, c10::details::TensorParameterDispatchKey{DeviceId::CPU, LayoutId(0), caffe2::TypeMeta::Id<int>()}});
+// TODO Commented out because I removed c10::Tensor compatibility from OpSchema
+//C10_REGISTER_KERNEL(::ops::conditional)
+//  .kernel(&conditional_op)
+//  .dispatchKey({c10::details::TensorParameterDispatchKey{DeviceId::CPU, LayoutId(0), caffe2::TypeMeta::Id<int>()}, c10::details::TensorParameterDispatchKey{DeviceId::CPU, LayoutId(0), caffe2::TypeMeta::Id<int>()}});
 
 int main() {
   ParameterStack callStack;

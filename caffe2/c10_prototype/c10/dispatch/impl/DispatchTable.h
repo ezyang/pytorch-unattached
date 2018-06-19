@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <iostream>
 #include <mutex>
+#include <caffe2/c10_prototype/c10/Error.h>
 
 namespace c10 {
 

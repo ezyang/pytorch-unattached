@@ -39,9 +39,10 @@ Tensor conditional_op(bool condition, const Tensor& thenTensor, Tensor elseTenso
   }
 }
 
-C10_REGISTER_KERNEL(::ops::conditional)
-  .kernel(&conditional_op)
-  .dispatchKey({c10::details::TensorParameterDispatchKey{DeviceId::CPU, LayoutId(0), caffe2::TypeMeta::Id<int>()}, c10::details::TensorParameterDispatchKey{DeviceId::CPU, LayoutId(0), caffe2::TypeMeta::Id<int>()}});
+// TODO Commented out because I removed c10::Tensor compatibility from OpSchema
+//C10_REGISTER_KERNEL(::ops::conditional)
+//  .kernel(&conditional_op)
+//  .dispatchKey({c10::details::TensorParameterDispatchKey{DeviceId::CPU, LayoutId(0), caffe2::TypeMeta::Id<int>()}, c10::details::TensorParameterDispatchKey{DeviceId::CPU, LayoutId(0), caffe2::TypeMeta::Id<int>()}});
 
 int add_notensor_op(int lhs, int rhs) {
   return lhs + rhs;
@@ -64,9 +65,10 @@ bool equals_impl(Tensor, Tensor) {
   return true;
 }
 
-C10_REGISTER_KERNEL(::equals)
-  .kernel(&equals_impl)
-  .dispatchKey({c10::details::TensorParameterDispatchKey{DeviceId::CPU, LayoutId(0), caffe2::TypeMeta::Id<int>()}, c10::details::TensorParameterDispatchKey{DeviceId::CPU, LayoutId(0), caffe2::TypeMeta::Id<int>()}});
+// TODO Commented out because I removed c10::Tensor compatibility from OpSchema
+//C10_REGISTER_KERNEL(::equals)
+//  .kernel(&equals_impl)
+//  .dispatchKey({c10::details::TensorParameterDispatchKey{DeviceId::CPU, LayoutId(0), caffe2::TypeMeta::Id<int>()}, c10::details::TensorParameterDispatchKey{DeviceId::CPU, LayoutId(0), caffe2::TypeMeta::Id<int>()}});
 
 int main() {
   Tensor t1 = tensor<int>({5});
