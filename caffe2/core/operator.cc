@@ -650,6 +650,12 @@ std::set<std::string> GetRegisteredOperators() {
   for (const auto& name : CUDAOperatorRegistry()->Keys()) {
     all_keys.emplace(name);
   }
+
+  // HIP operators
+  for (const auto& name : HIPOperatorRegistry()->Keys()) {
+    all_keys.emplace(name);
+  }
+
   // C10 operators
   for (const auto& name: C10OperatorRegistry()->Keys()) {
     all_keys.emplace(name);

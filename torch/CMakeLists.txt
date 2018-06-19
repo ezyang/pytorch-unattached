@@ -102,7 +102,7 @@ if(NOT TORCH_INSTALL_LIB_DIR)
 endif()
 
 if(USE_CUDA)
-  add_definitions(-DWITH_CUDA)
+  add_definitions(-DUSE_CUDA)
 
   set(TORCH_CUDA_LIBRARIES
     ${CUDA_TOOLKIT_ROOT_DIR}/lib64/stubs/libcuda.so
@@ -350,7 +350,7 @@ if (TORCH_BUILD_TEST)
 
     add_executable(test_api
       ${TORCH_API_TEST_DIR}/any.cpp
-      ${TORCH_API_TEST_DIR}/container.cpp
+      ${TORCH_API_TEST_DIR}/modules.cpp
       ${TORCH_API_TEST_DIR}/cursor.cpp
       ${TORCH_API_TEST_DIR}/integration.cpp
       ${TORCH_API_TEST_DIR}/main.cpp
@@ -360,7 +360,12 @@ if (TORCH_BUILD_TEST)
       ${TORCH_API_TEST_DIR}/sequential.cpp
       ${TORCH_API_TEST_DIR}/rnn.cpp
       ${TORCH_API_TEST_DIR}/serialization.cpp
-      ${TORCH_API_TEST_DIR}/static.cpp)
+      ${TORCH_API_TEST_DIR}/static.cpp
+      ${TORCH_API_TEST_DIR}/tensor.cpp
+      # Temporary until ATen tests are built with Caffe2
+      ${TORCH_API_TEST_DIR}/tensor_options.cpp
+      ${TORCH_API_TEST_DIR}/tensor_options_cuda.cpp
+    )
 
       target_include_directories(test_api
         PUBLIC

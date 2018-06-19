@@ -320,7 +320,7 @@ void THTensor_(indexSelect)(THTensor *tensor, THTensor *src, int dim, THLongTens
 
   numel = THLongTensor_nElement(index);
 
-  newSize = THLongStorage_newWithSize(src->_dim());
+  newSize = THLongStorage_newWithSize(src->dim());
   THLongStorage_rawCopy(newSize,src->size);
 #ifdef DEBUG
   THAssert(numel <= LONG_MAX);
@@ -439,7 +439,7 @@ static inline int64_t THTensor_(wrapLinearIndex)(int64_t linearIndex, int64_t nu
 
 void THTensor_(take)(THTensor *r_, THTensor *src, THLongTensor *index)
 {
-  THTensor_(resizeNd)(r_, index->_dim(), index->size, NULL);
+  THTensor_(resizeNd)(r_, index->dim(), index->size, NULL);
   THTensor* dst = THTensor_(newContiguous)(r_);
 
   index = THLongTensor_newContiguous(index);
@@ -2812,12 +2812,6 @@ void THTensor_(cminValue)(THTensor *r, THTensor *t, real value) {
                    *r_data = *t_data > value ? value : *t_data;);  // this order propagates NaN
 }
 
-void THTensor_(zeros)(THTensor *r_, THLongStorage *size)
-{
-  THTensor_(resize)(r_, size, NULL);
-  THTensor_(zero)(r_);
-}
-
 void THTensor_(zerosLike)(THTensor *r_, THTensor *input)
 {
   THTensor_(resizeAs)(r_, input);
@@ -2827,12 +2821,6 @@ void THTensor_(zerosLike)(THTensor *r_, THTensor *input)
 void THTensor_(onesLike)(THTensor *r_, THTensor *input)
 {
   THTensor_(resizeAs)(r_, input);
-  THTensor_(fill)(r_, 1);
-}
-
-void THTensor_(ones)(THTensor *r_, THLongStorage *size)
-{
-  THTensor_(resize)(r_, size, NULL);
   THTensor_(fill)(r_, 1);
 }
 
@@ -2963,12 +2951,6 @@ void THTensor_(randperm)(THTensor *r_, THGenerator *_generator, int64_t n)
     r__data[i*r__stride_0] = r__data[(z+i)*r__stride_0];
     r__data[(z+i)*r__stride_0] = sav;
   }
-}
-
-void THTensor_(reshape)(THTensor *r_, THTensor *t, THLongStorage *size)
-{
-  THTensor_(resize)(r_, size, NULL);
-  THTensor_(copy)(r_, t);
 }
 
 /* I cut and pasted (slightly adapted) the quicksort code from
@@ -3652,7 +3634,7 @@ void THTensor_(catArray)(THTensor *result, THTensor **inputs, int numInputs, int
     }
     THLongStorage_data(size)[dim] = result_dim_size;
   }
-  THTensor_(resize)(result, size, NULL);
+  THTensor_(resizeLegacy)(result, size, NULL);
 
   // Check contiguity of all inputs and result
   int allContiguous = 1;
@@ -3722,25 +3704,25 @@ int THTensor_(equal)(THTensor *ta, THTensor* tb)
 #define TENSOR_IMPLEMENT_LOGICAL(NAME,OP)				\
   void THTensor_(NAME##Value)(THByteTensor *r_, THTensor* t, real value)	\
   {									\
-    THByteTensor_resizeNd(r_, t->_dim(), t->size, NULL);		\
+    THByteTensor_resizeNd(r_, t->dim(), t->size, NULL);		\
     TH_TENSOR_APPLY2(unsigned char, r_, real, t,			\
 		     *r__data = (*t_data OP value) ? 1 : 0;); \
   }									\
   void THTensor_(NAME##ValueT)(THTensor* r_, THTensor* t, real value)	\
   {									\
-    THTensor_(resizeNd)(r_, t->_dim(), t->size, NULL);		\
+    THTensor_(resizeNd)(r_, t->dim(), t->size, NULL);		\
     TH_TENSOR_APPLY2(real, r_, real, t,					\
 		     *r__data = (*t_data OP value) ? 1 : 0;); \
   }									\
   void THTensor_(NAME##Tensor)(THByteTensor *r_, THTensor *ta, THTensor *tb) \
   {									\
-    THByteTensor_resizeNd(r_, ta->_dim(), ta->size, NULL);		\
+    THByteTensor_resizeNd(r_, ta->dim(), ta->size, NULL);		\
     TH_TENSOR_APPLY3(unsigned char, r_, real, ta, real, tb,		\
 		     *r__data = (*ta_data OP *tb_data) ? 1 : 0;); \
   }									\
   void THTensor_(NAME##TensorT)(THTensor *r_, THTensor *ta, THTensor *tb) \
   {									\
-    THTensor_(resizeNd)(r_, ta->_dim(), ta->size, NULL);		\
+    THTensor_(resizeNd)(r_, ta->dim(), ta->size, NULL);		\
     TH_TENSOR_APPLY3(real, r_, real, ta, real, tb,			\
 		     *r__data = (*ta_data OP *tb_data) ? 1 : 0;); \
   }									\
@@ -4421,18 +4403,6 @@ void THTensor_(logspace)(THTensor *r_, real a, real b, int64_t n)
         i++;
         );
   }
-}
-
-void THTensor_(rand)(THTensor *r_, THGenerator *_generator, THLongStorage *size)
-{
-  THTensor_(resize)(r_, size, NULL);
-  THTensor_(uniform)(r_, _generator, 0, 1);
-}
-
-void THTensor_(randn)(THTensor *r_, THGenerator *_generator, THLongStorage *size)
-{
-  THTensor_(resize)(r_, size, NULL);
-  THTensor_(normal)(r_, _generator, 0, 1);
 }
 
 void THTensor_(histc)(THTensor *hist, THTensor *tensor, int64_t nbins, real minvalue, real maxvalue)

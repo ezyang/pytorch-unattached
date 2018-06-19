@@ -36,14 +36,6 @@ THCTensor_(zero)(THCState *state, THCTensor *self_)
 }
 
 THC_API void
-THCTensor_(zeros)(THCState *state, THCTensor *r_, THLongStorage *size)
-{
-  THCAssertSameGPU(THCTensor_(checkGPU)(state, 1, r_));
-  THCTensor_(resize)(state, r_, size, NULL);
-  THCTensor_(zero)(state, r_);
-}
-
-THC_API void
 THCTensor_(zerosLike)(THCState *state, THCTensor *r_, THCTensor *input)
 {
   THCAssertSameGPU(THCTensor_(checkGPU)(state, 2, r_, input));
@@ -52,27 +44,11 @@ THCTensor_(zerosLike)(THCState *state, THCTensor *r_, THCTensor *input)
 }
 
 THC_API void
-THCTensor_(ones)(THCState *state, THCTensor *r_, THLongStorage *size)
-{
-  THCAssertSameGPU(THCTensor_(checkGPU)(state, 1, r_));
-  THCTensor_(resize)(state, r_, size, NULL);
-  THCTensor_(fill)(state, r_, ScalarConvert<int, real>::to(1));
-}
-
-THC_API void
 THCTensor_(onesLike)(THCState *state, THCTensor *r_, THCTensor *input)
 {
   THCAssertSameGPU(THCTensor_(checkGPU)(state, 2, r_, input));
   THCTensor_(resizeAs)(state, r_, input);
   THCTensor_(fill)(state, r_, ScalarConvert<int, real>::to(1));
-}
-
-THC_API void
-THCTensor_(reshape)(THCState *state, THCTensor *r_, THCTensor *t, THLongStorage *size)
-{
-  THCAssertSameGPU(THCTensor_(checkGPU)(state, 2, r_, t));
-  THCTensor_(resize)(state, r_, size, NULL);
-  THCTensor_(copy)(state, r_, t);
 }
 
 ptrdiff_t
@@ -176,7 +152,7 @@ void THCTensor_(catArray)(THCState *state, THCTensor *result,
     }
     THLongStorage_data(size)[dim] = result_dim_size;
   }
-  THCTensor_(resize)(state, result, size, NULL);
+  THCTensor_(resizeLegacy)(state, result, size, NULL);
   THLongStorage_free(size);
 
   // We parallelize the copy if all 6 conditions pass:
