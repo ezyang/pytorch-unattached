@@ -1,9 +1,12 @@
 set(LIB_SOURCES
-        dummy.cpp
+        OpSchema.cpp
+        DeviceId.cpp
+        DispatchKey.cpp
+        LayoutId.cpp
 )
 
 set(TEST_SOURCES
-        dummy_test.cpp
+        OpSchema_test.cpp
 )
 
 add_library(dispatch OBJECT ${LIB_SOURCES})
