@@ -3,6 +3,8 @@ set(LIB_SOURCES
         DeviceId.cpp
         DispatchKey.cpp
         LayoutId.cpp
+        TensorTypeId.cpp
+        TensorTypeIdRegistration.cpp
 )
 
 set(TEST_SOURCES
