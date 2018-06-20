@@ -1,1 +1,1 @@
-#include "OpSchemaRegistration.h"
+#include "caffe2/core/dispatch/OpSchemaRegistration.h"

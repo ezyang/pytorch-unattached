@@ -556,6 +556,8 @@
   variants: function
   deprecated: true
 
+- func: flatten(Tensor self, int64_t start_dim=0, int64_t end_dim=-1) -> Tensor
+
 - func: fill_(Tensor self, Scalar value) -> Tensor
 
 - func: fill_(Tensor self, Tensor value) -> Tensor
@@ -792,6 +794,26 @@
 - func: max_values(Tensor self, int64_t dim, bool keepdim=false) -> Tensor
 
 - func: max_pool1d(Tensor self, IntList[1] kernel_size, IntList[1] stride={}, IntList[1] padding=0, IntList[1] dilation=1, bool ceil_mode=false) -> (Tensor, Tensor)
+  variants: function
+
+# FIXME: These could be combined as optional<ScalarType> but for https://github.com/pytorch/pytorch/issues/6593.
+- func: mean(Tensor self, *, ScalarType dtype) -> Tensor
+
+- func: mean(Tensor self) -> Tensor
+
+- func: mean(Tensor self, int64_t dim, bool keepdim, *, ScalarType dtype) -> Tensor
+
+- func: mean(Tensor self, int64_t dim, bool keepdim=False) -> Tensor
+
+- func: mean(Tensor self, int64_t dim, *, ScalarType dtype) -> Tensor
+
+- func: mean_out(Tensor result, Tensor self, int64_t dim, bool keepdim, *, ScalarType dtype) -> Tensor
+  variants: function
+
+- func: mean_out(Tensor result, Tensor self, int64_t dim, bool keepdim=False) -> Tensor
+  variants: function
+
+- func: mean_out(Tensor result, Tensor self, int64_t dim, *, ScalarType dtype) -> Tensor
   variants: function
 
 - func: min_values(Tensor self, int64_t dim, bool keepdim=false) -> Tensor
@@ -1551,10 +1573,10 @@
     SparseCPU: new_with_size_sparse
 
 - func: tensor(Type dtype) -> Tensor
-  variants: function
+  variants: []
 
 - func: tensor(Type dtype, IntList size) -> Tensor
-  variants: function
+  variants: []
 
 
 # NB: The function overloads are removed to avoid a nasty bug where
@@ -1576,10 +1598,10 @@
     SparseCPU: new_with_tensor_and_size_sparse
 
 - func: sparse_coo_tensor(IndexTensor indices, Tensor values) -> Tensor
-  variants: function
+  variants: []
 
 - func: sparse_coo_tensor(IndexTensor indices, Tensor values, IntList size) -> Tensor
-  variants: function
+  variants: []
 
 
 - func: _native_sparse_coo_tensor_unsafe(IndexTensor indices, Tensor values, IntList size) -> Tensor

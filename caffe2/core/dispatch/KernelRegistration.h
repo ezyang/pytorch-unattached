@@ -1,7 +1,7 @@
 #pragma once
 
 #include "caffe2/core/dispatch/OpSchema.h"
-#include "Dispatcher.h"
+#include "caffe2/core/dispatch/Dispatcher.h"
 #include "caffe2/utils/Optional.h"
 
 /**
@@ -25,8 +25,6 @@ namespace c10 {
  *
  * @tparam OpSchemaDef
  */
-// NB: This is similar to Registry from Caffe2, but instead of registering an object creator, it
-// registers to the dispatch table
 template<class OpSchemaDef>
 class KernelRegistrar final {
 private:
@@ -73,7 +71,7 @@ private:
  * Expanded, this macro invocation looks like:
  *
  * static KernelRegistrar<::ops::add_notensor> _anon0 =
- *    KernelRegistrationBuilder<::ops::add_notensor, false, false>
+ *    KernelRegistrationBuilder<::ops::add_notensor, false, false>()
  *      .kernel(&add_notensor_op)
  *      .dispatchKey("bla");
  *
@@ -129,10 +127,9 @@ public:
   }
 };
 
-}
+} // namespace c10
 
 // TODO Can the builder logic be moved to compile time?
-// TODO Rename Op -> Kernel
 #define CONCAT_IMPL( x, y ) x##y
 #define MACRO_CONCAT( x, y ) CONCAT_IMPL( x, y )
 // NB: Semicolon after applying this macro is MANDATORY

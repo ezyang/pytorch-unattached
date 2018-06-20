@@ -17,7 +17,7 @@ namespace c10 { namespace cpu {
 class CPUTensorImpl final : public guts::TensorImpl {
 public:
   explicit CPUTensorImpl(caffe2::TypeMeta dtype)
-  : TensorImpl(DeviceId::CPU, LayoutId(0), {0}, {1}, std::make_shared<CPUStorageImpl>(dtype), 0)
+  : TensorImpl(DeviceTypeId::CPU, LayoutId(0), {0}, {1}, std::make_shared<CPUStorageImpl>(dtype), 0)
   {};
 
   CPUStorage cpu_storage() {

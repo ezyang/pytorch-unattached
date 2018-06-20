@@ -22,16 +22,16 @@ namespace {
 namespace c10 {
     C10_REGISTER_KERNEL(caffe2::SigmoidOp2)
         .kernel(&sigmoid_op_cpu_impl_2<float>)
-        .dispatchKey({DeviceId::CUDA, LayoutId(0), caffe2::TypeMeta::Id<int>()});
+        .dispatchKey({DeviceTypeId::CUDA, LayoutId(0), caffe2::TypeMeta::Id<int>()});
     C10_REGISTER_KERNEL(caffe2::SigmoidOp2)
         .kernel(&sigmoid_op_cpu_impl_2<float>)
-        .dispatchKey({DeviceId::CUDA, LayoutId(0), caffe2::TypeMeta::Id<float>()});
+        .dispatchKey({DeviceTypeId::CUDA, LayoutId(0), caffe2::TypeMeta::Id<float>()});
     C10_REGISTER_KERNEL(caffe2::SigmoidOp2)
         .kernel(&sigmoid_op_cpu_impl_2<float>)
-        .dispatchKey({DeviceId::CPU, LayoutId(0), caffe2::TypeMeta::Id<int>()});
+        .dispatchKey({DeviceTypeId::CPU, LayoutId(0), caffe2::TypeMeta::Id<int>()});
     C10_REGISTER_KERNEL(caffe2::SigmoidOp2)
         .kernel(&sigmoid_op_cpu_impl_2<float>)
-        .dispatchKey({DeviceId::CPU, LayoutId(0), caffe2::TypeMeta::Id<float>()});
+        .dispatchKey({DeviceTypeId::CPU, LayoutId(0), caffe2::TypeMeta::Id<float>()});
 }
 
 
@@ -52,5 +52,5 @@ Tensor<CPUContext> sigmoid_op_cpu_impl(const Tensor<CPUContext>& input) {
 namespace c10 {
     C10_REGISTER_KERNEL(caffe2::SigmoidOp)
         .kernel(&sigmoid_op_cpu_impl<float>)
-        .dispatchKey({DeviceId::CPU, LayoutId(0), caffe2::TypeMeta::Id<float>()});
+        .dispatchKey({DeviceTypeId::CPU, LayoutId(0), caffe2::TypeMeta::Id<float>()});
 }

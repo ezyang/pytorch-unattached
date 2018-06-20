@@ -50,7 +50,7 @@ Tensor<CPUContext> elementwise_linear_op_cpu_impl(const Tensor<CPUContext>& X, c
 namespace c10 {
 C10_REGISTER_KERNEL(ElementwiseLinearOp)
   .kernel(&elementwise_linear_op_cpu_impl)
-  .dispatchKey({c10::details::TensorParameterDispatchKey{DeviceId::CPU, LayoutId(0), caffe2::TypeMeta::Id<float>()}, c10::details::TensorParameterDispatchKey{DeviceId::CPU, LayoutId(0), caffe2::TypeMeta::Id<float>()}, c10::details::TensorParameterDispatchKey{DeviceId::CPU, LayoutId(0), caffe2::TypeMeta::Id<float>()}});
+  .dispatchKey({c10::details::TensorParameterDispatchKey{DeviceTypeId::CPU, LayoutId(0), caffe2::TypeMeta::Id<float>()}, c10::details::TensorParameterDispatchKey{DeviceTypeId::CPU, LayoutId(0), caffe2::TypeMeta::Id<float>()}, c10::details::TensorParameterDispatchKey{DeviceTypeId::CPU, LayoutId(0), caffe2::TypeMeta::Id<float>()}});
 }
 namespace caffe2 {
 REGISTER_C10_OPERATOR_FOR_CAFFE2_DISPATCH(ElementwiseLinearOp, C10ElementwiseLinear)

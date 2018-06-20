@@ -46,8 +46,8 @@ UNITTEST_ARGS = [sys.argv[0]] + remaining
 torch.manual_seed(SEED)
 
 
-def run_tests():
-    unittest.main(argv=UNITTEST_ARGS)
+def run_tests(argv=UNITTEST_ARGS):
+    unittest.main(argv=argv)
 
 PY3 = sys.version_info > (3, 0)
 PY34 = sys.version_info >= (3, 4)
@@ -88,6 +88,16 @@ def skipCUDAMemoryLeakCheckIf(condition):
             fn._do_cuda_memory_leak_check = not condition
         return fn
     return dec
+
+
+def skipIfNoZeroSize(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        if torch._C._use_zero_size_dim():
+            fn(*args, **kwargs)
+        else:
+            raise unittest.SkipTest('Compiled without arbitrary zero size dimension support')
+    return wrapper
 
 
 def get_cuda_memory_usage():

@@ -39,7 +39,7 @@ protected:
   // purposes.)
 
   // Used for dispatch on the object
-  const DeviceId device_id_;
+  const DeviceTypeId device_id_;
   LayoutId layout_id_;
 
   DimVector sizes_;
@@ -80,7 +80,7 @@ protected:
   // an "is-a" to "has-a" relationship and inline the storage struct in Tensor.
 
 public:
-  explicit TensorImpl(DeviceId device_id, LayoutId layout_id, ArrayRef<int64_t> sizes, ArrayRef<int64_t> strides, Storage storage, int64_t storage_offset)
+  explicit TensorImpl(DeviceTypeId device_id, LayoutId layout_id, ArrayRef<int64_t> sizes, ArrayRef<int64_t> strides, Storage storage, int64_t storage_offset)
       : IntrusivePtrTarget()
       , device_id_(device_id)
       , sizes_(sizes)
@@ -90,7 +90,7 @@ public:
   {};
 
   // TODO: Not sure about this...
-  DeviceId device_id() const {
+  DeviceTypeId device_id() const {
     return device_id_;
   }
   LayoutId layout_id() const {
@@ -207,7 +207,7 @@ public:
 //      instead of an error, which should have happened.  It just seems morally wrong to privilege empty CPU
 //      tensors in this way.  Also, you don't get reliable pointer equality tests anymore.
 class UndefinedTensorImpl final : public TensorImpl {
-  UndefinedTensorImpl() : TensorImpl(DeviceId::UNDEFINED, LayoutId(0), {}, {}, nullptr, 0) {};
+  UndefinedTensorImpl() : TensorImpl(DeviceTypeId::UNDEFINED, LayoutId(0), {}, {}, nullptr, 0) {};
 public:
   static UndefinedTensorImpl *singleton() {
     // smessmer to @ezyang: Not sure this singleton is a good idea. If wrapped in Tensor, it is subject to ref counting and might get destructed.

@@ -14,22 +14,22 @@ namespace c10 {
 
 namespace details {
 
-// Internal implementation of the operator as a thread-safe hash table.
-//
-// The current implementation below does not have the correct correctness characteristics
-// which we need.  It's worth spelling out exactly what we need:
-//
-//  - We need LOCK FREE read access to the table (as per the performance benchmark
-//    at https://fb.quip.com/hvz3AGnx8MQ8
-//
-//  - We need to support writes which are possibly concurrent with reads, occurring when
-//    a dynamic library is loaded or unloaded.
-//
-//  - We probably can require that dynamic library loads/unloads be synchronized (so
-//    there are never two concurrent loads.)
+/// Internal implementation of the operator as a thread-safe hash table.
 template<class Key>
 class ThreadsafeOperatorTable_ final {
 public:
+    // TODO The current implementation below does not have the correct correctness characteristics
+    // which we need.  It's worth spelling out exactly what we need:
+    //
+    //  - We need LOCK FREE read access to the table (as per the performance benchmark
+    //    at https://fb.quip.com/hvz3AGnx8MQ8
+    //
+    //  - We need to support writes which are possibly concurrent with reads, occurring when
+    //    a dynamic library is loaded or unloaded.
+    //
+    //  - We probably can require that dynamic library loads/unloads be synchronized (so
+    //    there are never two concurrent loads.)
+
     template<class Key_>
     void emplace(Key_&& key, void* value) {
       // TODO Locking
@@ -53,7 +53,8 @@ public:
     }
 
     void* lookup(const Key& key) const {
-      // TODO (needed but slow perf. Find better way) std::shared_lock<std::shared_timed_mutex> lock(mutex_);
+      // TODO (lock needed but slow perf. Find better way)
+      // std::shared_lock<std::shared_timed_mutex> lock(mutex_);
       auto found = map_.find(key);
       if (found == map_.end()) {
         return nullptr;
@@ -67,7 +68,7 @@ private:
     // TODO Figure out how to get fast locking in C++11 (use boost::shared_timed_mutex? folly::SharedMutex?)
     //mutable std::shared_timed_mutex mutex_;
 };
-}
+} // namespace details
 
 /**
  * Per-operator dispatch table.
@@ -117,10 +118,6 @@ public:
    * @param args Arguments to invoke the function with
    * @return Returned value of the operator
    */
-  // ezyang to smessmer: It's a pity this has to be templated, because we technically already know
-  // the argument type of this function (since this class is templated on OpSchemaDef).  Is there
-  // really nothing we can do here?  Well, since it's perfect forwarding it should work OK for
-  // most cases.
   template<class... Args>
   typename Schema::signature::return_type call(Args&&... args) const {
     // TODO Better error message, but need to take care that reference arguments match non-reference arguments and so on.
@@ -132,10 +129,6 @@ public:
 private:
   template<class... Args>
   typename Schema::signature::func_type* lookupOp_(const Args&... args) const {
-    // ezyang to smessmer: We will probably need to remove the read-side lock.  This will probably
-    // necessitate replacing unordered_map with our own map implementation
-    // smessmer to ezyang: It's a readers/writers lock, so reading should be fast.
-    // I wouldn't start hand-rolling our own threadsafe map unless we really know we need it.
     auto dispatch_key = Schema::dispatch::dispatch_key(args...);
     void* found = ops_.lookup(dispatch_key);
     if (found == nullptr) {
@@ -147,7 +140,7 @@ private:
   details::ThreadsafeOperatorTable_<typename Schema::dispatch::dispatch_key_type> ops_;
 };
 
-}
+} // namespace c10
 
 /*
  * Use this to access the dispatch table singleton for a given op schema.

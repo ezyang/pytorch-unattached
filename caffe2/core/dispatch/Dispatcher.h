@@ -4,23 +4,15 @@
 
 namespace c10 {
 
-// ezyang to smessmer: Given that these are all static functions, no reason to have
-// a class right?
-
-// TODO: auto return type is C++14
-
-// TODO: Because these signatures are all perfect-forwarded, you have to look under the
-// covers at impl::DispatchTable to know what the types are.
-
 /**
  * Top-level dispatch interface for dispatching via the dynamic dispatcher.
  */
-// Implementation note: this class abstracts over the fact that we have per-operator
-// dispatch tables.  This could be easily adjusted to have a single global hash
-// table.
 template<class OpSchemaDef>
 class Dispatcher final {
 public:
+  // Implementation note: this class abstracts over the fact that we have per-operator
+  // dispatch tables.  This could be easily adjusted to have a single global hash
+  // table.
 
   /**
    * Register an operator to the dispatch table for some operator schema.
@@ -65,4 +57,4 @@ public:
   }
 };
 
-}
+} // namespace c10
