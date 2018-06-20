@@ -1,7 +1,7 @@
 #pragma once
 
-#include <c10/cpu/CPUAllocator.h>
-#include <c10/Optional.h>
+#include "caffe2/c10_prototype/c10/cpu/CPUAllocator.h"
+#include "caffe2/utils/Optional.h"
 
 namespace c10 { namespace cpu {
 

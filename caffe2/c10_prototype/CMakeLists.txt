@@ -13,7 +13,6 @@ add_library(c10 OBJECT
     c10/Tensor.cpp
     c10/ArrayRef.cpp
     c10/Error.cpp
-    c10/Optional.cpp
     c10/AlignOf.cpp
     c10/guts/TensorImpl.cpp
     c10/guts/IntrusivePtr.cpp
@@ -22,10 +21,6 @@ add_library(c10 OBJECT
     c10/cpu/CPUStorage.cpp
     c10/cpu/CPUAllocator.cpp
     c10/cpu/CPUTensorImpl.cpp
-    c10/dispatch/Dispatcher.cpp
-    c10/dispatch/impl/DispatchTable.cpp
-    c10/dispatch/KernelRegistration.cpp
-    c10/dispatch/OpSchemaRegistration.cpp
     c10/stack_bindings/ParameterStack.cpp
     c10/stack_bindings/StackBasedOperator.cpp
     c10/stack_bindings/StackBasedOperatorRegistry.cpp

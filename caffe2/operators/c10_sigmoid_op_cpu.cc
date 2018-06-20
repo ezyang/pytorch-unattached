@@ -1,5 +1,5 @@
 #include "c10_sigmoid_op.h"
-#include <c10/dispatch/KernelRegistration.h>
+#include "caffe2/core/dispatch/KernelRegistration.h"
 #include "caffe2/utils/math.h"
 
 using caffe2::Tensor;

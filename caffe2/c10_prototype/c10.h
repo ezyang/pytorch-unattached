@@ -1,11 +1,11 @@
 #pragma once
 
-#include "c10/Tensor.h"
-#include "c10/Functions.h"
-#include "c10/DataType.h"
+#include "caffe2/c10_prototype/c10/Tensor.h"
+#include "caffe2/c10_prototype/c10/Functions.h"
+#include "caffe2/c10_prototype/c10/DataType.h"
 
-#include "c10/ThreadContext.h"
+#include "caffe2/c10_prototype/c10/ThreadContext.h"
 
-#include "c10/ArrayRef.h"
-#include "c10/Optional.h"
-#include "c10/SmallVector.h"
+#include "caffe2/c10_prototype/c10/ArrayRef.h"
+#include "caffe2/utils/Optional.h"
+#include "caffe2/c10_prototype/c10/SmallVector.h"

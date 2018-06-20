@@ -1,14 +1,14 @@
 #pragma once
 
-#include <c10/Tensor.h>
-#include <c10/Utils.h>
-#include <c10/Context.h>
-#include <c10/dispatch/Dispatcher.h>
+#include "caffe2/c10_prototype/c10/Tensor.h"
+#include "caffe2/c10_prototype/c10/Utils.h"
+#include "caffe2/c10_prototype/c10/Context.h"
+#include "caffe2/core/dispatch/Dispatcher.h"
 
 // TODO: Strictly temporary, because the dispatch is hardcoded to go to CPU at the moment
-#include <c10/cpu/op/CPUAll.h>
+#include "caffe2/c10_prototype/c10/cpu/op/CPUAll.h"
 
-#include <c10/op/OpSchemaDefs.h>
+#include "caffe2/c10_prototype/c10/op/OpSchemaDefs.h"
 
 namespace c10 {
 

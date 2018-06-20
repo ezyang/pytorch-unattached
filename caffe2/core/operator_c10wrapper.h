@@ -1,7 +1,7 @@
 #pragma once
 
 #include "operator.h"
-#include <c10/dispatch/Dispatcher.h>
+#include "caffe2/core/dispatch/Dispatcher.h"
 
 namespace caffe2 {
 

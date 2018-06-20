@@ -1,7 +1,7 @@
 #pragma once
 
-#include <c10/General.h> // for C10_API
-#include <c10/Optional.h>
+#include "caffe2/c10_prototype/c10/General.h" // for C10_API
+#include "caffe2/utils/Optional.h"
 
 #include <cstdint>
 #include <cstdio>

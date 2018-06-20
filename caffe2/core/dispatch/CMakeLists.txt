@@ -1,8 +1,12 @@
 set(LIB_SOURCES
-        OpSchema.cpp
         DeviceId.cpp
+        Dispatcher.cpp
         DispatchKey.cpp
+        DispatchTable.cpp
+        KernelRegistration.cpp
         LayoutId.cpp
+        OpSchema.cpp
+        OpSchemaRegistration.cpp
         TensorTypeId.cpp
         TensorTypeIdRegistration.cpp
 )

@@ -1,6 +1,6 @@
 #include "caffe2/core/operator_c10wrapper.h"
-#include <c10/dispatch/OpSchemaRegistration.h>
-#include <c10/dispatch/KernelRegistration.h>
+#include "caffe2/core/dispatch/OpSchemaRegistration.h"
+#include "caffe2/core/dispatch/KernelRegistration.h"
 #include "caffe2/utils/math.h"
 #include "caffe2/utils/Array.h"
 

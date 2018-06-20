@@ -9,7 +9,6 @@
 #include <unordered_map>
 #include <iostream>
 #include <mutex>
-#include <caffe2/c10_prototype/c10/Error.h>
 
 namespace c10 {
 
@@ -47,7 +46,7 @@ public:
       //std::unique_lock<std::shared_timed_mutex> lock(mutex_);
 
       size_t num_removed = map_.erase(key);
-      C10_ASSERT(num_removed <= 1, "This is not a multi-map");
+      assert(num_removed <= 1); //This is not a multi-map
       if (num_removed == 0) {
         throw std::logic_error("Tried to deregister an operator that isn't registered.");
       }

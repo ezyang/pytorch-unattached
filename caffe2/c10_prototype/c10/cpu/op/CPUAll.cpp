@@ -1,9 +1,9 @@
-#include <c10/cpu/op/CPUAll.h>
+#include "caffe2/c10_prototype/c10/cpu/op/CPUAll.h"
 
-#include <c10.h>
-#include <c10/cpu/CPUTensorImpl.h>
-#include <c10/op/OpSchemaDefs.h>
-#include <c10/dispatch/KernelRegistration.h>
+#include "caffe2/c10_prototype/c10.h"
+#include "caffe2/c10_prototype/c10/cpu/CPUTensorImpl.h"
+#include "caffe2/c10_prototype/c10/op/OpSchemaDefs.h"
+#include "caffe2/core/dispatch/KernelRegistration.h"
 
 namespace c10 { namespace cpu { namespace op {
 

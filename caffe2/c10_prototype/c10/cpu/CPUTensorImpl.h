@@ -1,8 +1,8 @@
-#include <c10/cpu/CPUStorage.h>
-#include <c10/guts/TensorImpl.h>
-#include <c10/DimVector.h>
-#include <c10/Optional.h>
-#include <c10/dispatch/Dispatcher.h>
+#include "caffe2/c10_prototype/c10/cpu/CPUStorage.h"
+#include "caffe2/c10_prototype/c10/guts/TensorImpl.h"
+#include "caffe2/c10_prototype/c10/DimVector.h"
+#include "caffe2/utils/Optional.h"
+#include "caffe2/core/dispatch/Dispatcher.h"
 #include "caffe2/core/dispatch/DeviceId.h"
 
 #include <numeric>

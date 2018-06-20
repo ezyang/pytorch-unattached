@@ -1,6 +1,6 @@
 #include "c10_sigmoid_op.h"
 #include "caffe2/core/operator_c10wrapper.h"
-#include <c10/dispatch/OpSchemaRegistration.h>
+#include "caffe2/core/dispatch/OpSchemaRegistration.h"
 
 using caffe2::Tensor;
 using caffe2::CPUContext;

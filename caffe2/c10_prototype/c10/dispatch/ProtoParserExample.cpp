@@ -1,10 +1,10 @@
-#include <c10.h>
+#include "caffe2/c10_prototype/c10.h"
 #include <utility>
-#include <c10/dispatch/OpSchemaRegistration.h>
-#include <c10/dispatch/KernelRegistration.h>
-#include <c10/cpu/CPUTensorImpl.h>
-#include <c10/stack_bindings/StackBasedOperatorRegistry.h>
-#include <c10/stack_bindings/ParameterStack.h>
+#include "caffe2/core/dispatch/OpSchemaRegistration.h"
+#include "caffe2/core/dispatch/KernelRegistration.h"
+#include "caffe2/c10_prototype/c10/cpu/CPUTensorImpl.h"
+#include "caffe2/c10_prototype/c10/stack_bindings/StackBasedOperatorRegistry.h"
+#include "caffe2/c10_prototype/c10/stack_bindings/ParameterStack.h"
 #include <iostream>
 
 using namespace c10;

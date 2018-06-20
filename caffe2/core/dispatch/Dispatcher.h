@@ -1,6 +1,6 @@
 #pragma once
 
-#include <c10/dispatch/impl/DispatchTable.h>
+#include "caffe2/core/dispatch/DispatchTable.h"
 
 namespace c10 {
 

@@ -2,7 +2,7 @@
 
 #include "caffe2/core/dispatch/OpSchema.h"
 #include "Dispatcher.h"
-#include <c10/Optional.h>
+#include "caffe2/utils/Optional.h"
 
 /**
  * To register your own kernel for an operator, do in one (!) cpp file:

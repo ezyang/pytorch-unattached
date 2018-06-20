@@ -1,8 +1,8 @@
-#include <c10/dispatch/Dispatcher.h>
-#include <c10.h>
-#include <c10/cpu/CPUTensorImpl.h>
-#include <c10/dispatch/KernelRegistration.h>
-#include <c10/dispatch/OpSchemaRegistration.h>
+#include "caffe2/core/dispatch/Dispatcher.h"
+#include "caffe2/c10_prototype/c10.h"
+#include "caffe2/c10_prototype/c10/cpu/CPUTensorImpl.h"
+#include "caffe2/core/dispatch/KernelRegistration.h"
+#include "caffe2/core/dispatch/OpSchemaRegistration.h"
 #include "caffe2/utils/Array.h"
 
 using namespace c10;

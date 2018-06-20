@@ -2,10 +2,10 @@
 
 // NB: NO dependency on Tensor.h!!!
 
-#include <c10/ArrayRef.h>
-#include <c10/SmallVector.h>
-#include <c10/Optional.h>
-#include <c10/DimVector.h>
+#include "caffe2/c10_prototype/c10/ArrayRef.h"
+#include "caffe2/c10_prototype/c10/SmallVector.h"
+#include "caffe2/utils/Optional.h"
+#include "caffe2/c10_prototype/c10/DimVector.h"
 #include "caffe2/core/typeid.h"
 #include "caffe2/core/dispatch/DeviceId.h"
 #include "caffe2/core/dispatch/LayoutId.h"
