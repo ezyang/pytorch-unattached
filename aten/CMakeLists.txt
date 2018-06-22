@@ -4,6 +4,7 @@ if (CAFFE2_CMAKE_BUILDING_WITH_MAIN_REPO)
   endif()
 else()
   cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
+  project(ATen CXX C)
   include(CMakeDependentOption)
   option(USE_CUDA "Use CUDA" ON)
   option(USE_ROCM "Use ROCm" OFF)
@@ -18,9 +19,6 @@ else()
   set(BUILD_ATEN ON)
 endif()
 
-# Create the project in all cases
-project(ATen CXX C)
-
 # Find modules
 list(APPEND CMAKE_MODULE_PATH
   /usr/lib/x86_64-linux-gnu/
@@ -30,9 +28,6 @@ list(APPEND CMAKE_MODULE_PATH
 list(APPEND CMAKE_LIBRARY_PATH /usr/lib/x86_64-linux-gnu/)
 
 cmake_policy(SET CMP0012 NEW)
-
-# Polyfill for upstream FindCUDA
-include(CMakeInitializeConfigs)
 
 #############################################
 

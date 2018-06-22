@@ -54,9 +54,6 @@ if(USE_CUDA)
     ${CMAKE_MODULE_PATH})
   set(CMAKE_LIBRARY_PATH /usr/lib/x86_64-linux-gnu/ ${CMAKE_LIBRARY_PATH})
 
-  # Polyfill for upstream FindCUDA
-  include(CMakeInitializeConfigs)
-
   if(NOT CUDA_FOUND)
     find_package(CUDA 7.0)
   endif()
@@ -137,6 +134,10 @@ configure_file("${CAFFE2_PATH}/aten/src/ATen/common_with_cwrap.py"
                "${TOOLS_PATH}/shared/cwrap_common.py"
                COPYONLY)
 
+configure_file("${CAFFE2_PATH}/torch/_utils_internal.py"
+               "${TOOLS_PATH}/shared/_utils_internal.py"
+               COPYONLY)
+
 add_custom_command(
   OUTPUT
   "${TORCH_SRC_DIR}/csrc/nn/THNN.cpp"
@@ -215,6 +216,7 @@ set(TORCH_SRCS
   ${TORCH_SRC_DIR}/csrc/jit/passes/shape_analysis.cpp
   ${TORCH_SRC_DIR}/csrc/jit/passes/canonicalize.cpp
   ${TORCH_SRC_DIR}/csrc/jit/passes/dead_code_elimination.cpp
+  ${TORCH_SRC_DIR}/csrc/jit/passes/erase_number_types.cpp
   ${TORCH_SRC_DIR}/csrc/jit/passes/lower_tuples.cpp
   ${TORCH_SRC_DIR}/csrc/jit/passes/peephole.cpp
   ${TORCH_SRC_DIR}/csrc/jit/passes/inplace_check.cpp
@@ -234,7 +236,7 @@ set(TORCH_SRCS
   ${TORCH_SRC_DIR}/csrc/jit/export.cpp
   ${TORCH_SRC_DIR}/csrc/jit/import.cpp
   ${TORCH_SRC_DIR}/csrc/onnx/onnx.cpp
-  ${TORCH_SRC_DIR}/csrc/onnx/onnx.pb.cpp
+  ${TORCH_SRC_DIR}/csrc/onnx/onnx.npb.cpp
   ${TORCH_SRC_DIR}/csrc/torch.cpp)
 
 if (NOT NO_API)
