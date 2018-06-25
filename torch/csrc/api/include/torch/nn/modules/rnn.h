@@ -1,96 +1,155 @@
 #pragma once
 
-#include <torch/detail.h>
-#include <torch/nn/module.h>
+#include <torch/nn/cloneable.h>
+#include <torch/nn/modules/dropout.h>
+#include <torch/nn/pimpl.h>
+#include <torch/tensor.h>
 
-#include <torch/csrc/autograd/variable.h>
+#include <ATen/Error.h>
+#include <ATen/optional.h>
 
-#include <cstdint>
+#include <cstddef>
+#include <functional>
 #include <memory>
 #include <vector>
 
-namespace torch { namespace nn {
+namespace torch {
+namespace nn {
+namespace detail {
+struct RNNOptionsBase {
+  RNNOptionsBase(int64_t input_size, int64_t hidden_size);
+  virtual ~RNNOptionsBase() = default;
+  TORCH_ARG(int64_t, input_size);
+  TORCH_ARG(int64_t, hidden_size);
+  TORCH_ARG(int64_t, layers) = 1;
+  TORCH_ARG(bool, with_bias) = true;
+  TORCH_ARG(double, dropout) = 0.0;
+};
+
 template <typename Derived>
-class RNNBase : public CloneableModule<Derived> {
+class RNNImplBase : public torch::nn::Cloneable<Derived> {
  public:
-  // These must line up with the CUDNN mode codes
-  enum RNNMode : int64_t { RNN_RELU = 0, RNN_TANH = 1, LSTM = 2, GRU = 3 };
+  // These must line up with the CUDNN mode codes:
+  // https://docs.nvidia.com/deeplearning/sdk/cudnn-developer-guide/index.html#cudnnRNNMode_t
+  enum class CuDNNMode { RNN_RELU = 0, RNN_TANH = 1, LSTM = 2, GRU = 3 };
 
-  RNNBase(uint32_t input_size, uint32_t hidden_size)
-      : input_size_(input_size), hidden_size_(hidden_size) {}
+  RNNImplBase(
+      RNNOptionsBase options,
+      at::optional<CuDNNMode> cudnn_mode = at::nullopt,
+      int64_t number_of_gates = 1,
+      bool has_cell_state = false);
 
-  TORCH_AUTOGRAD_KWARG(RNNBase, RNNMode, mode, RNNMode::LSTM, RNNMode::LSTM)
-  TORCH_AUTOGRAD_KWARG(RNNBase, uint32_t, nlayers, 1, 1);
-  TORCH_AUTOGRAD_KWARG(RNNBase, bool, no_bias, false, true)
-  TORCH_AUTOGRAD_KWARG(RNNBase, float, dropout, 0, 0)
+  std::vector<Variable> forward(std::vector<Variable>);
 
-  bool flatten_parameters(); // Flatten for cudnn
+  void reset() override;
 
-  variable_list forward(variable_list) override;
-  void initialize_containers() override;
-  void initialize_parameters() override;
-  void reset_parameters() override;
-
-  void cpu() override;
-  void cuda() override;
-
-  std::vector<Variable> ihw;
-  std::vector<Variable> ihb;
-  std::vector<Variable> hhw;
-  std::vector<Variable> hhb;
+  void to(at::Type& type) override;
+  void to(at::ScalarType scalar_type) override;
+  void to(at::Backend backend) override;
 
  protected:
-  uint32_t input_size_;
-  uint32_t hidden_size_;
-  uint32_t gate_size_;
-  // This is copied from pytorch, to determine whether weights are flat for
-  // the fast CUDNN route. Otherwise, we have to use non flattened weights,
-  // which
+  virtual std::vector<Variable> cell_forward(
+      std::vector<Variable>,
+      int64_t layer) = 0;
+
+  std::vector<Variable> CUDNN_forward(std::vector<Variable>);
+  std::vector<Variable> autograd_forward(std::vector<Variable>);
+
+  void flatten_parameters_for_cudnn();
+  std::vector<at::Tensor> flat_weights() const;
+
+  RNNOptionsBase options_;
+
+  std::vector<Variable> ihw_;
+  std::vector<Variable> ihb_;
+  std::vector<Variable> hhw_;
+  std::vector<Variable> hhb_;
+
+  int64_t number_of_gates_;
+  bool has_cell_state_;
+  at::optional<CuDNNMode> cudnn_mode_;
+  Dropout dropout_module_;
+
+  // This is copied from pytorch, to determine whether weights are flat for the
+  // fast CUDNN route. Otherwise, we have to use non flattened weights, which
   // are much slower.
   // https://github.com/pytorch/pytorch/blob/1848cad10802db9fa0aa066d9de195958120d863/torch/nn/modules/rnn.py#L159-L165
   // TODO Actually since we are in C++ we can probably just actually check if
   // the parameters are flat, instead of relying on data pointers and stuff.
   std::vector<void*> data_ptrs_;
-  Variable flat_weight_;
-  std::shared_ptr<nn::Module> dropout_module;
+  Variable flat_weights_;
+};
+} // namespace detail
 
-  variable_list CUDNN_forward(variable_list);
-  variable_list autograd_forward(variable_list);
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ RNN ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  variable_list cell_forward(variable_list, int);
-  variable_list LSTM_cell_forward(variable_list, int);
-  variable_list GRU_cell_forward(variable_list, int);
-  variable_list RNN_RELU_cell_forward(variable_list, int);
-  variable_list RNN_TANH_cell_forward(variable_list, int);
+// TODO: Replace this with passing an activation module.
+
+enum class RNNActivation { ReLU, Tanh };
+
+struct RNNOptions {
+  RNNOptions(int64_t input_size, int64_t hidden_size);
+
+  RNNOptions& tanh();
+  RNNOptions& relu();
+
+  TORCH_ARG(int64_t, input_size);
+  TORCH_ARG(int64_t, hidden_size);
+  TORCH_ARG(int64_t, layers) = 1;
+  TORCH_ARG(bool, with_bias) = true;
+  TORCH_ARG(double, dropout) = 0.0;
+  TORCH_ARG(RNNActivation, activation) = RNNActivation::ReLU;
 };
 
-// We must instantiate these templates so we can put implementations in the .cpp
-class LSTM : public RNNBase<LSTM> {
+class RNNImpl : public detail::RNNImplBase<RNNImpl> {
  public:
-  LSTM(uint32_t inp_size, uint32_t hid_size) : RNNBase(inp_size, hid_size) {
-    mode_ = RNNBase::RNNMode::LSTM;
-  }
+  explicit RNNImpl(RNNOptions options);
+
+  const RNNOptions& options() const noexcept;
+
+ private:
+  std::vector<Variable> cell_forward(std::vector<Variable>, int64_t layer)
+      override;
+
+  RNNOptions options_;
+  std::function<Variable(Variable)> activation_function_;
 };
 
-class GRU : public RNNBase<GRU> {
+TORCH_MODULE(RNN);
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ LSTM ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+using LSTMOptions = detail::RNNOptionsBase;
+
+class LSTMImpl : public detail::RNNImplBase<LSTMImpl> {
  public:
-  GRU(uint32_t inp_size, uint32_t hid_size) : RNNBase(inp_size, hid_size) {
-    mode_ = RNNBase::RNNMode::GRU;
-  }
+  explicit LSTMImpl(LSTMOptions options);
+
+  const LSTMOptions& options() const noexcept;
+
+ private:
+  std::vector<Variable> cell_forward(std::vector<Variable>, int64_t layer)
+      override;
 };
 
-class RNN : public RNNBase<RNN> {
+TORCH_MODULE(LSTM);
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ GRU ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+using GRUOptions = detail::RNNOptionsBase;
+
+class GRUImpl : public detail::RNNImplBase<GRUImpl> {
  public:
-  enum Mode { Tanh, Relu };
-  RNN(uint32_t inp_size, uint32_t hid_size, Mode mode = Mode::Tanh)
-      : RNNBase(inp_size, hid_size) {
-    if (mode == Mode::Tanh) {
-      mode_ = RNNBase::RNNMode::RNN_TANH;
-    } else if (mode == Mode::Relu) {
-      mode_ = RNNBase::RNNMode::RNN_RELU;
-    } else {
-      throw std::runtime_error("RNN Mode not supported");
-    }
-  }
+  explicit GRUImpl(GRUOptions options);
+
+  const GRUOptions& options() const noexcept;
+
+ private:
+  std::vector<Variable> cell_forward(std::vector<Variable>, int64_t layer)
+      override;
 };
-}} // namespace torch::nn
+
+TORCH_MODULE(GRU);
+
+} // namespace nn
+} // namespace torch

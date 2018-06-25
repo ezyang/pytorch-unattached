@@ -24,10 +24,40 @@
 
 namespace caffe2 {
 
-class OperatorBase;
-typedef ObserverBase<OperatorBase> OperatorObserver;
+class IOperatorBase;
+typedef ObserverBase<IOperatorBase> OperatorObserver;
 
-class OperatorBase : public Observable<OperatorBase> {
+
+// TODO Rename OperatorBase -> Caffe2OperatorBase, IOperatorBase -> OperatorBase
+// TODO Figure out which virtual methods not needed
+// TODO De-virtualize some methods back to how they were in C2?
+class IOperatorBase : public Observable<IOperatorBase> {
+public:
+  virtual ~IOperatorBase() = default;
+
+  static constexpr int kNoNetPositionSet = -1;
+
+  virtual const Event& event() const = 0;
+  virtual Event& event() = 0;
+  virtual void ResetEvent() = 0;
+  virtual void WaitEvents(const std::vector<const Event*>& events, int stream_id = -1) = 0;
+  virtual void DisableEvent() = 0;
+  virtual void SetExecutorHelper(ExecutorHelper* helper) = 0;
+  virtual ExecutorHelper* GetExecutorHelper() const = 0;
+  virtual bool SupportsAsyncScheduling() const = 0;
+  virtual bool IsStreamFree(int /* unused */) const = 0;
+  virtual const OperatorDef& debug_def() const = 0;
+  virtual const std::string& type() const = 0;
+  virtual bool has_debug_def() const = 0;
+  virtual bool Run(int stream_id = 0) = 0;
+  virtual bool RunAsync(int stream_id = 0) = 0;
+  virtual bool HasAsyncPart() const = 0;
+  virtual vector<TensorShape> InputTensorShapes() const = 0;
+  virtual const DeviceOption& device_option() const = 0;
+  virtual const std::string& engine() const = 0;
+};
+
+class OperatorBase : public IOperatorBase {
  public:
   explicit OperatorBase(const OperatorDef& operator_def, Workspace* ws);
   virtual ~OperatorBase() noexcept {}
@@ -115,7 +145,7 @@ class OperatorBase : public Observable<OperatorBase> {
   }
   inline const vector<const Blob*>& Inputs() const { return inputs_; }
   inline const vector<Blob*>& Outputs() { return outputs_; }
-  vector<TensorShape> InputTensorShapes();
+  vector<TensorShape> InputTensorShapes() const override final;
 
   virtual void WaitEvent(const Event& ev, int /*stream_id */ = -1) {
     ev.Finish();
@@ -129,7 +159,7 @@ class OperatorBase : public Observable<OperatorBase> {
 
   virtual void WaitEvents(
       const std::vector<const Event*>& events,
-      int /*stream_id*/ = -1) {
+      int /*stream_id*/ = -1) override {
     for (const auto& ev : events) {
       ev->Finish();
     }
@@ -141,15 +171,15 @@ class OperatorBase : public Observable<OperatorBase> {
     }
   }
 
-  virtual bool Run(int /* unused */ /*stream_id*/ = 0) {
+  virtual bool Run(int /* unused */ /*stream_id*/ = 0) override {
     CAFFE_NOT_IMPLEMENTED;
   }
 
-  virtual bool HasAsyncPart() const {
+  virtual bool HasAsyncPart() const override {
     return false;
   }
 
-  virtual bool SupportsAsyncScheduling() const {
+  virtual bool SupportsAsyncScheduling() const override {
     return false;
   }
 
@@ -157,7 +187,7 @@ class OperatorBase : public Observable<OperatorBase> {
   // computation on the corresponding context and record the event in its
   // event_ member object. If the specific operator does not support RunAsync,
   // it will simply be synchronous as a fallback.
-  virtual bool RunAsync(int stream_id = 0) {
+  virtual bool RunAsync(int stream_id = 0) override {
     try {
       auto result = Run(stream_id);
       if (result) {
@@ -189,7 +219,7 @@ class OperatorBase : public Observable<OperatorBase> {
 
     bool found_input;
     if (err->caller() != nullptr) {
-      for (int i = 0; i < inputs_.size(); i++) {
+      for (size_t i = 0; i < inputs_.size(); i++) {
         if (inputs_[i]->GetRaw() == err->caller()) {
           found_input = true;
           err->AppendMessage(
@@ -197,7 +227,7 @@ class OperatorBase : public Observable<OperatorBase> {
           break;
         }
       }
-      for (int i = 0; i < outputs_.size(); i++) {
+      for (size_t i = 0; i < outputs_.size(); i++) {
         if (outputs_[i]->GetRaw() == err->caller()) {
           if (found_input) {
             err->AppendMessage("\n OR ");
@@ -210,7 +240,7 @@ class OperatorBase : public Observable<OperatorBase> {
     }
   }
 
-  inline const OperatorDef& debug_def() const {
+  inline const OperatorDef& debug_def() const override final {
     CAFFE_ENFORCE(has_debug_def(), "operator_def was null!");
     return *operator_def_;
   }
@@ -220,7 +250,7 @@ class OperatorBase : public Observable<OperatorBase> {
     operator_def_ = operator_def;
   }
 
-  inline bool has_debug_def() const {
+  inline bool has_debug_def() const override final {
     return operator_def_ != nullptr;
   }
 
@@ -242,27 +272,27 @@ class OperatorBase : public Observable<OperatorBase> {
     net_position_ = idx;
   }
 
-  const DeviceOption& device_option() const {
+  const DeviceOption& device_option() const override final {
     return device_option_;
   }
 
-  const Event& event() const {
+  const Event& event() const override final {
     CAFFE_ENFORCE(event_, "Event is disabled");
     return *event_;
   }
 
-  Event& event() {
+  Event& event() override final {
     CAFFE_ENFORCE(event_, "Event is disabled");
     return *event_;
   }
 
-  void ResetEvent() {
+  void ResetEvent() override final {
     if (event_) {
       event_->Reset();
     }
   }
 
-  void DisableEvent() {
+  void DisableEvent() override {
     event_ = nullptr;
   }
 
@@ -273,11 +303,11 @@ class OperatorBase : public Observable<OperatorBase> {
   // Checks whether stream is ready to execute new computation,
   // used in stream allocation optimization to skip stream that is currently
   // busy. Depends on context and operator's device, returns true by default
-  virtual bool IsStreamFree(int /* unused */) const {
+  virtual bool IsStreamFree(int /* unused */) const override {
     return true;
   }
 
-  const std::string& type() const {
+  const std::string& type() const override final {
     return type_;
   }
 
@@ -285,20 +315,17 @@ class OperatorBase : public Observable<OperatorBase> {
     engine_ = engine;
   }
 
-  const std::string& engine() const {
+  const std::string& engine() const override final {
     return engine_;
   }
 
-  void SetExecutorHelper(ExecutorHelper* helper) {
+  void SetExecutorHelper(ExecutorHelper* helper) override final {
     helper_ = helper;
   }
 
-  ExecutorHelper* GetExecutorHelper() const {
+  ExecutorHelper* GetExecutorHelper() const override final {
     return helper_;
   }
-
- public:
-  static constexpr int kNoNetPositionSet = -1;
 
  private:
   Workspace* operator_ws_;
@@ -429,15 +456,19 @@ class Operator : public OperatorBase {
         AddRelatedBlobInfo(&err);
       }
       this->RecordLastFailedOpNetPosition();
+      StopAllObservers();
       throw;
     } catch (...) {
       this->RecordLastFailedOpNetPosition();
+      StopAllObservers();
       throw;
     }
   }
 
   bool RunAsync(int stream_id = 0) final {
     try {
+      StartAllObservers();
+
       context_.SwitchToDevice(stream_id);
       auto result = RunOnDevice();
       if (result) {
@@ -452,6 +483,9 @@ class Operator : public OperatorBase {
         SetEventFinished(getErrorMsg().c_str());
         this->RecordLastFailedOpNetPosition();
       }
+
+      StopAllObservers();
+
       return result;
     } catch (EnforceNotMet& err) {
       if (has_debug_def()) {
@@ -461,14 +495,17 @@ class Operator : public OperatorBase {
       }
       SetEventFinished(err.what());
       this->RecordLastFailedOpNetPosition();
+      StopAllObservers();
       throw;
     } catch (const std::exception& err) {
       SetEventFinished(err.what());
       this->RecordLastFailedOpNetPosition();
+      StopAllObservers();
       throw;
     } catch (...) {
       SetEventFinished(getErrorMsg().c_str());
       this->RecordLastFailedOpNetPosition();
+      StopAllObservers();
       throw;
     }
   }
@@ -772,6 +809,30 @@ CAFFE_DECLARE_REGISTRY(
 // Macros for cudnn since we use it often
 #define REGISTER_CUDNN_OPERATOR(name, ...) \
   REGISTER_CUDA_OPERATOR_WITH_ENGINE(name, CUDNN, __VA_ARGS__)
+
+// Macros for HIP operators
+CAFFE_DECLARE_REGISTRY(
+    HIPOperatorRegistry,
+    OperatorBase,
+    const OperatorDef&,
+    Workspace*);
+#define REGISTER_HIP_OPERATOR_CREATOR(key, ...) \
+  CAFFE_REGISTER_CREATOR(HIPOperatorRegistry, key, __VA_ARGS__)
+#define REGISTER_HIP_OPERATOR(name, ...)                           \
+  extern void CAFFE2_PLEASE_ADD_OPERATOR_SCHEMA_FOR_##name();       \
+  static void CAFFE2_UNUSED CAFFE_ANONYMOUS_VARIABLE_HIP##name() { \
+    CAFFE2_PLEASE_ADD_OPERATOR_SCHEMA_FOR_##name();                 \
+  }                                                                 \
+  CAFFE_REGISTER_CLASS(HIPOperatorRegistry, name, __VA_ARGS__)
+#define REGISTER_HIP_OPERATOR_STR(str_name, ...) \
+  CAFFE_REGISTER_TYPED_CLASS(HIPOperatorRegistry, str_name, __VA_ARGS__)
+
+#define REGISTER_HIP_OPERATOR_WITH_ENGINE(name, engine, ...) \
+  CAFFE_REGISTER_CLASS(                                       \
+      HIPOperatorRegistry, name##_ENGINE_##engine, __VA_ARGS__)
+
+#define REGISTER_MIOPEN_OPERATOR(name, ...) \
+  REGISTER_HIP_OPERATOR_WITH_ENGINE(name, MIOPEN, __VA_ARGS__)
 
 // StaticLinkingProtector is a helper class that ensures that the Caffe2
 // library is linked correctly with whole archives (in the case of static

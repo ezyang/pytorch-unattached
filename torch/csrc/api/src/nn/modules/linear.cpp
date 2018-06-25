@@ -1,36 +1,51 @@
 #include <torch/nn/modules/linear.h>
 
-namespace torch { namespace nn {
+#include <torch/functions.h>
+#include <torch/tensor.h>
 
-Linear::Linear(uint32_t nin, uint32_t nout) : nin(nin), nout(nout) {}
+#include <ATen/ATen.h>
 
-variable_list Linear::forward(variable_list input) {
-  auto x = input[0];
-  if (x.ndimension() == 2 && !no_bias_) {
-    // Fused op is marginally faster
-    assert(x.size(1) == weight.size(1));
-    return variable_list({at::addmm(bias, x, weight.t())});
-  }
+#include <cmath>
+#include <cstdint>
 
-  auto output = x.matmul(weight.t());
-  if (!no_bias_) {
-    output += bias;
-  }
-  return variable_list({output});
+namespace torch {
+namespace nn {
+LinearOptions::LinearOptions(int64_t in, int64_t out) : in_(in), out_(out) {}
+
+LinearImpl::LinearImpl(LinearOptions options) : options_(std::move(options)) {
+  reset();
 }
 
-void Linear::reset_parameters() {
-  auto stdv = 1.0 / std::sqrt(weight.size(1));
+void LinearImpl::reset() {
+  weight_ =
+      register_parameter("weight", torch::empty({options_.out_, options_.in_}));
+  if (options_.with_bias_) {
+    bias_ = register_parameter("bias", torch::empty(options_.out_));
+  }
+
+  const auto stdv = 1.0 / std::sqrt(weight_.size(1));
   for (auto& p : parameters()) {
-    p.second.data().uniform_(-stdv, stdv);
+    p->data().uniform_(-stdv, stdv);
   }
 }
 
-void Linear::initialize_parameters() {
-  weight =
-      this->add(Var(at::CPU(at::kFloat).empty({nout, nin}), true), "weight");
-  if (!no_bias_) {
-    bias = this->add(Var(at::CPU(at::kFloat).empty(nout), true), "bias");
+std::vector<Variable> LinearImpl::forward(std::vector<Variable> input) {
+  auto x = input[0];
+  if (x.ndimension() == 2 && options_.with_bias_) {
+    // Fused op is marginally faster
+    AT_ASSERT(x.size(1) == weight_.size(1));
+    return {at::addmm(bias_, x, weight_.t())};
   }
+
+  auto output = x.matmul(weight_.t());
+  if (options_.with_bias_) {
+    output += bias_;
+  }
+  return {output};
 }
-}} // namespace torch::nn
+
+const LinearOptions& LinearImpl::options() const noexcept {
+  return options_;
+}
+} // namespace nn
+} // namespace torch

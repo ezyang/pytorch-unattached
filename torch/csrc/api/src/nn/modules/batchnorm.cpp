@@ -1,60 +1,69 @@
 #include <torch/nn/modules/batchnorm.h>
 
-namespace torch { namespace nn {
+#include <torch/cuda.h>
+#include <torch/functions.h>
+#include <torch/tensor.h>
 
-BatchNorm::BatchNorm(uint32_t num_features) : num_features_(num_features) {}
+#include <ATen/Error.h>
 
-void BatchNorm::initialize_parameters() {
-  if (affine_) {
-    weight = this->add(Var(at::CPU(at::kFloat).empty(num_features_)), "weight");
-    bias = this->add(Var(at::CPU(at::kFloat).empty(num_features_)), "bias");
+#include <cstddef>
+#include <utility>
+#include <vector>
+
+namespace torch {
+namespace nn {
+BatchNormOptions::BatchNormOptions(int64_t features) : features_(features) {}
+
+BatchNormImpl::BatchNormImpl(BatchNormOptions options)
+    : options_(std::move(options)) {
+  reset();
+}
+
+void BatchNormImpl::reset() {
+  if (options_.affine_) {
+    weight_ = register_parameter(
+        "weight", torch::empty({options_.features_}).uniform_());
+    bias_ = register_parameter("bias", torch::zeros({options_.features_}));
   }
 
-  if (stateful_) {
-    // TODO: Make into buffers instead of parameters
-    running_mean = this->add(
-        Var(at::CPU(at::kFloat).zeros({num_features_}), false), "running_mean");
-    running_var = this->add(
-        Var(at::CPU(at::kFloat).ones({num_features_}), false), "running_var");
+  if (options_.stateful_) {
+    running_mean_ =
+        register_buffer("running_mean", torch::zeros({options_.features_}));
+    running_variance_ =
+        register_buffer("running_variance", torch::ones({options_.features_}));
   }
 }
 
-void BatchNorm::reset_parameters() {
-  if (affine_) {
-    weight.data().uniform_();
-    bias.data().zero_();
-  }
-
-  if (stateful_) {
-    running_mean.data().zero_();
-    running_var.data().fill_(1);
-  }
-}
-
-variable_list BatchNorm::forward(variable_list inputs) {
+std::vector<Variable> BatchNormImpl::forward(std::vector<Variable> inputs) {
   auto& input = inputs[0];
-  auto& running_mean = (stateful_ ? this->running_mean : inputs[1]);
-  auto& running_var = (stateful_ ? this->running_var : inputs[2]);
+  auto& running_mean_ = (options_.stateful_ ? this->running_mean_ : inputs[1]);
+  auto& running_variance_ =
+      (options_.stateful_ ? this->running_variance_ : inputs[2]);
 
   if (is_training()) {
     const auto num_channels = input.dim() > 1 ? input.size(1) : 1;
-    if (input.numel() / num_channels <= 1) {
-      throw std::runtime_error(
-          "BatchNorm expected more than 1 value per channel when training!");
-    }
+    AT_CHECK(
+        input.numel() / num_channels > 1,
+        "BatchNorm expected more than 1 value per channel when training!");
   }
 
   auto output = at::batch_norm(
       input,
-      weight,
-      bias,
-      running_mean,
-      running_var,
+      weight_,
+      bias_,
+      running_mean_,
+      running_variance_,
       is_training(),
-      momentum_,
-      eps_,
-      hasCudnn());
+      options_.momentum_,
+      options_.eps_,
+      torch::cuda::cudnn_is_available());
 
-  return variable_list({output});
+  return std::vector<Variable>({output});
 }
-}} // namespace torch::nn
+
+const BatchNormOptions& BatchNormImpl::options() const noexcept {
+  return options_;
+}
+
+} // namespace nn
+} // namespace torch

@@ -1,5 +1,23 @@
 #include "torch/csrc/jit/script/init.h"
+
+#include "torch/csrc/Device.h"
+#include "torch/csrc/Dtype.h"
+#include "torch/csrc/Layout.h"
 #include "torch/csrc/jit/script/compiler.h"
+#include "torch/csrc/jit/tensor_conversions.h"
+#include "torch/csrc/jit/python_tracer.h"
+
+#include <torch/csrc/api/include/torch/detail/ordered_dict.h>
+
+#include <ATen/ATen.h>
+
+#include <cstddef>
+#include <memory>
+#include <sstream>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
 
 namespace torch {
 namespace jit {
@@ -19,6 +37,12 @@ static std::string typeString(py::handle h) {
   return py::str(h.get_type().attr("__name__"));
 }
 
+static std::shared_ptr<SugaredValue> createConstant(SourceRange loc, Method& m, const at::Tensor& val) {
+  auto n = m.graph()->createConstant(val);
+  n->setSourceLocation(std::make_shared<SourceRange>(loc));
+  return std::make_shared<SimpleValue>(m.graph()->insertNode(n)->output());
+}
+
 struct VISIBILITY_HIDDEN PythonValue : public SugaredValue {
   PythonValue(py::object self)
   : self(std::move(self)) {}
@@ -29,7 +53,8 @@ struct VISIBILITY_HIDDEN PythonValue : public SugaredValue {
   }
 
   // call it like a function, e.g. `outputs = this(inputs)`
-  virtual std::shared_ptr<SugaredValue> call(SourceRange loc, Method & m, at::ArrayRef<Value*> inputs, at::ArrayRef<NamedValue> attributes, size_t n_binders) override {
+  virtual std::shared_ptr<SugaredValue> call(SourceRange loc, Method & m, at::ArrayRef<NamedValue> inputs_, at::ArrayRef<NamedValue> attributes, size_t n_binders) override {
+    auto inputs = toValues(inputs_);
     std::vector<TypePtr> arg_types;
     TypePtr ret_type;
     std::tie(arg_types, ret_type) = getFunctionType(inputs.size(), n_binders);
@@ -64,7 +89,7 @@ struct VISIBILITY_HIDDEN PythonValue : public SugaredValue {
     py::object func = self;
     std::string cconv(inputs.size(), 't');
     Node* new_node = g.insertNode(g.createPythonOp(
-      THPObjectPtr(func.release().ptr()), cconv, {}, {}, false));
+      THPObjectPtr(func.release().ptr()), cconv, {}));
     new_node->setSourceLocation(std::make_shared<SourceRange>(loc));
     for(auto i : inputs)
       new_node->addInput(i);
@@ -92,19 +117,7 @@ struct VISIBILITY_HIDDEN PythonValue : public SugaredValue {
     return packOutputs(*m.graph(), outputs);
   }
 
-  virtual std::shared_ptr<SugaredValue> attr(SourceRange loc, Method & m, const std::string& field) override {
-    // We generally don't want to allow traversing arbitrary Python objects, but we
-    // make an exception for traversing modules because we want to be access
-    // torch, torch.nn.functional, and the functions they expose.
-    py::object member = getattr(loc, field);
-    if (isBuiltinModule() && py::isinstance<py::function>(member)) {
-      return std::make_shared<BuiltinFunction>(field);
-    }
-    if (py::isinstance<py::module>(self) && py::isinstance<py::module>(member)) {
-      return std::make_shared<PythonValue>(member);
-    }
-    throw ErrorReport(loc) << "unsupported attribute lookup on " << py::repr(self) << ".";
-  }
+  virtual std::shared_ptr<SugaredValue> attr(SourceRange loc, Method & m, const std::string& field) override;
 
   virtual std::string kind() const override {
     std::stringstream ss;
@@ -166,16 +179,44 @@ struct VISIBILITY_HIDDEN ConstantPythonValue : public PythonValue {
       return createConstant(loc, m, at::CPU(at::kFloat).scalarTensor(py::cast<float>(self)));
     } else if(py::isinstance<py::bool_>(self)) {
       return createConstant(loc, m, at::CPU(at::kByte).scalarTensor(py::cast<bool>(self)));
+    } else if(THPDevice_Check(self.ptr())) {
+      auto device = (THPDevice*) self.ptr();
+      auto t = as_tensor({static_cast<int64_t>(device->device.type()), device->device.index()});
+      return createConstant(loc, m, t);
+    } else if(THPLayout_Check(self.ptr())) {
+      auto layout = (THPLayout*) self.ptr();
+      const auto v = static_cast<int64_t>(layout->layout);
+      return createConstant(loc, m, at::CPU(at::kLong).scalarTensor(v));
+    } else if(THPDtype_Check(self.ptr())) {
+      auto dtype = (THPDtype*)(self.ptr());
+      const auto v = static_cast<int64_t>(dtype->scalar_type);
+      return createConstant(loc, m, at::CPU(at::kLong).scalarTensor(v));
     }
     return std::make_shared<ConstantPythonValue>(self);
   }
-private:
-  static std::shared_ptr<SugaredValue> createConstant(SourceRange loc, Method& m, const at::Tensor& val) {
-    auto n = m.graph()->createConstant(val);
-    n->setSourceLocation(std::make_shared<SourceRange>(loc));
-    return std::make_shared<SimpleValue>(m.graph()->insertNode(n)->output());
-  }
 };
+
+std::shared_ptr<SugaredValue> PythonValue::attr(SourceRange loc, Method & m, const std::string& field) {
+  // We generally don't want to allow traversing arbitrary Python objects, but we
+  // make an exception for traversing modules because we want to be access
+  // torch, torch.nn.functional, and the functions they expose.
+  py::object member = getattr(loc, field);
+  if (isBuiltinModule()) {
+    if(py::isinstance<py::function>(member)) {
+      return std::make_shared<BuiltinFunction>(field, at::nullopt);
+    }
+    //e.g. any tensor attribute objects such as torch.uint8
+    if(THPDtype_Check(member.ptr()) ||
+       THPLayout_Check(member.ptr()) ||
+       THPDevice_Check(member.ptr())) {
+      return ConstantPythonValue::create(loc, m, member);
+    }
+  }
+  if (py::isinstance<py::module>(self) && py::isinstance<py::module>(member)) {
+    return std::make_shared<PythonValue>(member);
+  }
+  throw ErrorReport(loc) << "unsupported attribute lookup on " << py::repr(self) << ".";
+}
 
 Resolver pythonResolver(ResolutionCallback rcb) {
   return [=](const std::string& name) -> std::shared_ptr<SugaredValue> {
@@ -203,11 +244,8 @@ struct MethodValue : public SugaredValue {
   std::string kind() const override {
     return "method";
   }
-  virtual std::shared_ptr<SugaredValue> call(SourceRange loc, Method & caller, at::ArrayRef<Value*> inputs, at::ArrayRef<NamedValue> attributes, size_t n_binders) override {
-    if(attributes.size() != 0) {
-      throw ErrorReport(loc) << "not yet implemented - calls to script methods using keyword arguments";
-    }
-    return packOutputs(*caller.graph(), caller.emit_call_to(loc, method, inputs));
+  virtual std::shared_ptr<SugaredValue> call(SourceRange loc, Method & caller, at::ArrayRef<NamedValue> inputs, at::ArrayRef<NamedValue> attributes, size_t n_binders) override {
+    return packOutputs(*caller.graph(), caller.emit_call_to(loc, method, inputs, attributes));
   }
 private:
   std::shared_ptr<Module> module;
@@ -226,11 +264,11 @@ struct ModuleValue : public SugaredValue {
 
   // select an attribute on it, e.g. `this.field`
   virtual std::shared_ptr<SugaredValue> attr(SourceRange loc, Method & m, const std::string& field) override {
-    if(at::optional<NamedModule&> v = module->find_module(field)) {
+    if(NamedModule* v = module->find_module(field)) {
       return std::make_shared<ModuleValue>(v->module);
-    } else if(at::optional<Method&> v = module->find_method(field)) {
+    } else if(Method* v = module->find_method(field)) {
       return std::make_shared<MethodValue>(module, *v);
-    } else if(at::optional<NamedParameter&> v = module->find_parameter(field)) {
+    } else if(NamedParameter* v = module->find_parameter(field)) {
       return std::make_shared<SimpleValue>(m.get_or_add_parameter(v->slot()));
     }
     // This can also be a call to a non-script module, or a plain
@@ -248,8 +286,9 @@ struct ModuleValue : public SugaredValue {
     }
     throw ErrorReport(loc) << "module has no attribute '" << field << "'";
   }
+
   // call module.forward
-  virtual std::shared_ptr<SugaredValue> call(SourceRange loc, Method & caller, at::ArrayRef<Value*> inputs, at::ArrayRef<NamedValue> attributes, size_t n_binders) override {
+  virtual std::shared_ptr<SugaredValue> call(SourceRange loc, Method & caller, at::ArrayRef<NamedValue> inputs, at::ArrayRef<NamedValue> attributes, size_t n_binders) override {
     return attr(loc, caller, "forward")->call(loc, caller, inputs, attributes, n_binders);
   }
 
@@ -296,22 +335,22 @@ py::object unpackVariableTensorList(std::vector<at::Tensor> outputs) {
   if (outputs.size() == 0) {
     return py::none();
   } else if (outputs.size() == 1) {
-    return py::cast(static_cast<autograd::Variable&>(outputs[0]));
+    return py::cast(autograd::as_variable_ref(outputs[0]));
   } else {
     py::tuple tuple(outputs.size());
     for(size_t i = 0; i < outputs.size(); i++) {
-      tuple[i] = py::cast(static_cast<autograd::Variable&>(outputs[i]));
+      tuple[i] = py::cast(autograd::as_variable_ref(outputs[i]));
     }
     return tuple;
   }
 }
 
 static void gatherParametersAndBuffers(std::vector<at::Tensor*> & values, const Module & m) {
-  for(auto & params : m.get_parameters()) {
-    values.push_back(params.slot());
+  for(auto & param : m.get_parameters()) {
+    values.push_back(param->slot());
   }
   for(const auto & sub : m.get_modules()) {
-    gatherParametersAndBuffers(values, *sub.module);
+    gatherParametersAndBuffers(values, *sub->module);
   }
 }
 
@@ -355,8 +394,8 @@ void initJitScriptBindings(PyObject* module) {
         auto & modules = self.get_modules();
         py::tuple result(modules.size());
         for(size_t i = 0; i < modules.size(); ++i) {
-          auto & nm = modules[i];
-          result[i] = std::make_pair(nm.name, nm.module);
+          auto & item = modules[i];
+          result[i] = std::make_pair(item.key, item.value);
         }
         return result;
       })
@@ -367,9 +406,9 @@ void initJitScriptBindings(PyObject* module) {
           auto & p = parameters[i];
           py::tuple r(3);
           result[i] = std::make_tuple(
-            p.name,
-            static_cast<const autograd::Variable&>(*p.slot()),
-            p.is_buffer);
+            p.key,
+            autograd::as_variable_ref(*p->slot()),
+            p->is_buffer);
 
         }
         return result;
@@ -393,8 +432,9 @@ void initJitScriptBindings(PyObject* module) {
         return bool(self.find_method(name));
       })
       .def("_method_names", [](Module& self) {
-        return fmap(self.get_methods(), [](const std::unique_ptr<Method> & m) {
-          return m->name();
+        using Item = torch::detail::OrderedDict<std::string, std::unique_ptr<Method>>::Item;
+        return fmap(self.get_methods(), [](const Item & item) {
+          return (*item)->name();
         });
       })
       .def("_create_method_from_trace", [](
@@ -408,13 +448,13 @@ void initJitScriptBindings(PyObject* module) {
           std::vector<at::Tensor*> parameters;
           gatherParametersAndBuffers(parameters, self);
           for(at::Tensor* param : parameters) {
-            inputs.push_back(static_cast<autograd::Variable&>(*param));
+            inputs.push_back(autograd::as_variable_ref(*param));
           }
           auto graph = tracer::createGraphByTracing(func, std::move(inputs), num_inputs);
           self.create_method(name, std::move(graph), std::move(parameters));
       });
 
-  py::class_<Method>(m, "ScriptMethod")
+  py::class_<Method>(m, "ScriptMethod", py::dynamic_attr())
     .def("graph", [&](Method& self) {
       return self.graph();
     })

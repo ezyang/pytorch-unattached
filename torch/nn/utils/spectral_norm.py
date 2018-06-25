@@ -10,30 +10,34 @@ class SpectralNorm(object):
 
     def __init__(self, name='weight', n_power_iterations=1, eps=1e-12):
         self.name = name
+        if n_power_iterations <= 0:
+            raise ValueError('Expected n_power_iterations to be positive, but '
+                             'got n_power_iterations={}'.format(n_power_iterations))
         self.n_power_iterations = n_power_iterations
         self.eps = eps
 
     def compute_weight(self, module):
-        weight = module._parameters[self.name + '_org']
-        u = module._buffers[self.name + '_u']
+        weight = getattr(module, self.name + '_orig')
+        u = getattr(module, self.name + '_u')
         height = weight.size(0)
         weight_mat = weight.view(height, -1)
-        for _ in range(self.n_power_iterations):
-            # Spectral norm of weight equals to `u^T W v`, where `u` and `v`
-            # are the first left and right singular vectors.
-            # This power iteration produces approximations of `u` and `v`.
-            v = normalize(torch.matmul(weight_mat.t(), u), dim=0, eps=self.eps)
-            u = normalize(torch.matmul(weight_mat, v), dim=0, eps=self.eps)
+        with torch.no_grad():
+            for _ in range(self.n_power_iterations):
+                # Spectral norm of weight equals to `u^T W v`, where `u` and `v`
+                # are the first left and right singular vectors.
+                # This power iteration produces approximations of `u` and `v`.
+                v = normalize(torch.matmul(weight_mat.t(), u), dim=0, eps=self.eps)
+                u = normalize(torch.matmul(weight_mat, v), dim=0, eps=self.eps)
 
         sigma = torch.dot(u, torch.matmul(weight_mat, v))
-        weight.data /= sigma
+        weight = weight / sigma
         return weight, u
 
     def remove(self, module):
-        weight = module._parameters[self.name + '_org']
-        del module._parameters[self.name]
-        del module._buffers[self.name + '_u']
-        del module._parameters[self.name + '_org']
+        weight = module._parameters[self.name + '_orig']
+        delattr(module, self.name)
+        delattr(module, self.name + '_u')
+        delattr(module, self.name + '_orig')
         module.register_parameter(self.name, weight)
 
     def __call__(self, module, inputs):
@@ -48,7 +52,15 @@ class SpectralNorm(object):
         height = weight.size(0)
 
         u = normalize(weight.new_empty(height).normal_(0, 1), dim=0, eps=fn.eps)
-        module.register_parameter(fn.name + "_org", weight)
+        delattr(module, fn.name)
+        module.register_parameter(fn.name + "_orig", weight)
+        # We still need to assign weight back as fn.name because all sorts of
+        # things may assume that it exists, e.g., when initializing weights.
+        # However, we can't directly assign as it could be an nn.Parameter and
+        # gets added as a parameter. Instead, we assign weight.data, which will
+        # just be added as plain attribute, and also supports nn.init due to
+        # shared storage.
+        setattr(module, fn.name, weight.data)
         module.register_buffer(fn.name + "_u", u)
 
         module.register_forward_pre_hook(fn)

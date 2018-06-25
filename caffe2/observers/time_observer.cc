@@ -26,10 +26,10 @@ void TimeOperatorObserver::Stop() {
           << " ms to complete.\n";
 }
 
-std::unique_ptr<ObserverBase<OperatorBase>> TimeOperatorObserver::rnnCopy(
-    OperatorBase* subject,
+std::unique_ptr<ObserverBase<IOperatorBase>> TimeOperatorObserver::rnnCopy(
+    IOperatorBase* subject,
     int rnn_order) const {
-  return std::unique_ptr<ObserverBase<OperatorBase>>(
+  return std::unique_ptr<ObserverBase<IOperatorBase>>(
       new TimeOperatorObserver(subject, nullptr));
 }
 

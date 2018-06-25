@@ -24,19 +24,14 @@ class AsyncSimpleNet : public NetBase {
     return true;
   }
 
-  vector<float> TEST_Benchmark(
-      const int warmup_runs,
-      const int main_runs,
-      const bool run_individual) override;
-
   /*
    * This returns a list of pointers to objects stored in unique_ptrs.
    * Used by Observers.
    *
    * Think carefully before using.
    */
-  vector<OperatorBase*> GetOperators() const override {
-    vector<OperatorBase*> op_list;
+  vector<IOperatorBase*> GetOperators() const override {
+    vector<IOperatorBase*> op_list;
     for (auto& op : operators_) {
       op_list.push_back(op.get());
     }
@@ -46,7 +41,7 @@ class AsyncSimpleNet : public NetBase {
  protected:
   bool DoRunAsync() override;
 
-  vector<unique_ptr<OperatorBase>> operators_;
+  vector<unique_ptr<IOperatorBase>> operators_;
 
   DISABLE_COPY_AND_ASSIGN(AsyncSimpleNet);
 };

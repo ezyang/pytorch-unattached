@@ -3,9 +3,9 @@
 namespace caffe2 {
 
 RunCountOperatorObserver::RunCountOperatorObserver(
-    OperatorBase* op,
+    IOperatorBase* op,
     RunCountNetObserver* netObserver)
-    : ObserverBase<OperatorBase>(op), netObserver_(netObserver) {
+    : ObserverBase<IOperatorBase>(op), netObserver_(netObserver) {
   CAFFE_ENFORCE(netObserver_, "Observers can't operate outside of the net");
 }
 
@@ -28,10 +28,10 @@ void RunCountOperatorObserver::Start() {
 }
 void RunCountOperatorObserver::Stop() {}
 
-std::unique_ptr<ObserverBase<OperatorBase>> RunCountOperatorObserver::rnnCopy(
-    OperatorBase* subject,
+std::unique_ptr<ObserverBase<IOperatorBase>> RunCountOperatorObserver::rnnCopy(
+    IOperatorBase* subject,
     int rnn_order) const {
-  return std::unique_ptr<ObserverBase<OperatorBase>>(
+  return std::unique_ptr<ObserverBase<IOperatorBase>>(
       new RunCountOperatorObserver(subject, netObserver_));
 }
 

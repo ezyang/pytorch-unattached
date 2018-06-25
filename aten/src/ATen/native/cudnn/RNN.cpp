@@ -1,4 +1,5 @@
 #include <ATen/ATen.h>
+#include <ATen/TensorUtils.h>
 #include <ATen/Config.h>
 #include <ATen/Error.h>
 #include <ATen/MatrixRef.h>
@@ -586,7 +587,11 @@ std::tuple<Tensor, Tensor, Tensor, Tensor, Tensor> _cudnn_rnn(
 
   auto input = input_r;
   auto weight_buf = weight_buf_r;
-
+  if (fn_dropout_state.defined()) {
+      auto input_arg = TensorArg(input, "input", 1);
+      auto dropout_state_arg = TensorArg(fn_dropout_state, "dropout_states", 15);
+      checkSameGPU("cudnn_rnn", input_arg, dropout_state_arg);
+  }
   RNNParams fn;
   fn.rnn.set(fn_mode, fn_hidden_size, fn_num_layers, fn_bidirectional, getCudnnDataType(input));
   fn.dropout.set(fn_train, fn_dropout, fn_dropout_state);
@@ -774,7 +779,7 @@ std::tuple<Tensor, Tensor, Tensor> _cudnn_rnn_backward_input(
   auto dcx = cx.defined() ? cx.type().tensor(hidden_size) : Tensor();
 
   if (!fn_train) {
-    throw std::runtime_error("backward_input can only be called in training mode");
+    throw std::runtime_error("cudnn RNN backward can only be called in training mode");
   }
   if (!input.sizes().equals(input_size)) {
     std::ostringstream oss;
@@ -894,7 +899,7 @@ std::vector<Tensor> _cudnn_rnn_backward_weight(
   auto hidden_size = _hidden_size(fn.rnn, fn.tensors);
 
   if (!fn_train) {
-    throw std::runtime_error("backward_input can only be called in training mode");
+    throw std::runtime_error("cudnn RNN backward can only be called in training mode");
   }
   if (!input.sizes().equals(input_size)) {
     std::ostringstream oss;

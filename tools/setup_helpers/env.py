@@ -9,12 +9,16 @@ IS_DARWIN = (platform.system() == 'Darwin')
 IS_LINUX = (platform.system() == 'Linux')
 
 
-IS_CONDA = 'conda' in sys.version or 'Continuum' in sys.version
+IS_CONDA = 'conda' in sys.version or 'Continuum' in sys.version or any([x.startswith('CONDA') for x in os.environ])
 CONDA_DIR = os.path.join(os.path.dirname(sys.executable), '..')
 
 
-def check_env_flag(name):
-    return os.getenv(name, '').upper() in ['ON', '1', 'YES', 'TRUE', 'Y']
+def check_env_flag(name, default=''):
+    return os.getenv(name, default).upper() in ['ON', '1', 'YES', 'TRUE', 'Y']
+
+
+def check_negative_env_flag(name, default=''):
+    return os.getenv(name, default).upper() in ['OFF', '0', 'NO', 'FALSE', 'N']
 
 
 def gather_paths(env_vars):

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include "caffe2/core/init.h"
 #include "caffe2/core/logging.h"
 #include "caffe2/core/net.h"
 #include "caffe2/core/operator_gradient.h"
@@ -12,6 +13,8 @@
 #include "caffe2/proto/caffe2.pb.h"
 #include "caffe2/utils/proto_utils.h"
 #include "caffe2/utils/string_utils.h"
+
+#include "operator_c10wrapper.h"
 
 CAFFE2_DEFINE_int(
     caffe2_operator_max_engine_name_length,
@@ -32,6 +35,7 @@ OperatorBase::OperatorBase(const OperatorDef& operator_def, Workspace* ws)
           operator_def.has_device_option() ? operator_def.device_option()
                                            : DeviceOption()),
       event_(caffe2::make_unique<Event>(device_option_)) {
+  static GlobalInitIsCalledGuard guard;
   for (const string& input_str : operator_def.input()) {
     auto* blob = ws->GetBlob(input_str);
     CAFFE_ENFORCE(
@@ -52,7 +56,7 @@ OperatorBase::OperatorBase(const OperatorDef& operator_def, Workspace* ws)
   type_ = operator_def.type();
 }
 
-vector<TensorShape> OperatorBase::InputTensorShapes() {
+vector<TensorShape> OperatorBase::InputTensorShapes() const {
   vector<TensorShape> tps;
   for (const auto& blob : inputs_) {
     tps.push_back(GetTensorShapeOfBlob(blob));
@@ -73,7 +77,7 @@ GlobalEnginePrefType& g_global_engine_pref() {
   return *g_global_engine_pref_;
 }
 
-unique_ptr<OperatorBase> TryCreateOperator(
+unique_ptr<OperatorBase> TryCreateC2Operator(
     const string& key, const OperatorDef& operator_def, Workspace* ws) {
   const auto& type = operator_def.device_option().device_type();
   CAFFE_ENFORCE(
@@ -91,6 +95,23 @@ unique_ptr<OperatorBase> TryCreateOperator(
                  << err.what()
                  << ". Proto is: " << ProtoDebugString(operator_def);
     return nullptr;
+  }
+}
+
+unique_ptr<OperatorBase> TryCreateC10Operator(
+    const string& key, const OperatorDef& operator_def, Workspace* ws) {
+  if (auto op = C10OperatorRegistry()->Create(key, operator_def, ws)) {
+    return op;
+  }
+  return nullptr;
+}
+
+unique_ptr<OperatorBase> TryCreateOperator(
+    const string& key, const OperatorDef& operator_def, Workspace* ws) {
+  if (auto op = TryCreateC10Operator(key, operator_def, ws)) {
+    return op;
+  } else {
+    return TryCreateC2Operator(key, operator_def, ws);
   }
 }
 
@@ -146,7 +167,7 @@ unique_ptr<OperatorBase> _CreateOperator(
             << engine;
     auto op = TryCreateOperator(key, operator_def, ws);
     if (op) {
-      if (engine.size() <= FLAGS_caffe2_operator_max_engine_name_length) {
+      if (engine.size() <= (unsigned)FLAGS_caffe2_operator_max_engine_name_length) {
         op->annotate_engine(engine);
       } else {
         op->annotate_engine(
@@ -302,6 +323,13 @@ CAFFE_DEFINE_REGISTRY(
 CAFFE_REGISTER_DEVICE_TYPE(DeviceType::CUDA, CUDAOperatorRegistry);
 
 CAFFE_DEFINE_REGISTRY(
+    HIPOperatorRegistry,
+    OperatorBase,
+    const OperatorDef&,
+    Workspace*);
+CAFFE_REGISTER_DEVICE_TYPE(DeviceType::HIP, HIPOperatorRegistry);
+
+CAFFE_DEFINE_REGISTRY(
     GradientRegistry,
     GradientMakerBase,
     const OperatorDef&, const vector<GradientWrapper>&);
@@ -441,7 +469,7 @@ TensorShapes InferBlobShapesAndTypes(
           CaffeMap<string, string> grads_to_params =
               GradientMakerBase::MatchGradsToParams(op);
 
-          for (int i = 0; i < out.size(); i++) {
+          for (size_t i = 0; i < out.size(); i++) {
             if (out[i].unknown_shape()) {
               std::string gradout = op.output(i);
 
@@ -470,7 +498,7 @@ TensorShapes InferBlobShapesAndTypes(
         return tps;
       }
 
-      if (out.size() != op.output_size()) {
+      if (out.size() != (unsigned)op.output_size()) {
         if (op.type() == "Slice") {
           CAFFE_ENFORCE(
               out.size() == 0,
@@ -486,7 +514,7 @@ TensorShapes InferBlobShapesAndTypes(
               out.size());
         }
       } else {
-        for (int i = 0; i < out.size(); i++) {
+        for (size_t i = 0; i < out.size(); i++) {
           blob_desc[op.output(i)] = out[i];
         }
       }
@@ -554,7 +582,7 @@ TensorShapes InferBlobShapesAndTypesFromMap(
   for (const auto& blob : blob_dimensions) {
     TensorShape tp;
     for (auto d : blob.second) {
-      CAFFE_ENFORCE_GT(d, 0);
+      CAFFE_ENFORCE_GE(d, 0, blob.first);
       tp.add_dims(d);
     }
     blob_desc[blob.first] = tp;
@@ -594,6 +622,10 @@ std::map<string, std::pair<DeviceOption, DeviceOption>> ValidateTensorDevices(
           blob_device.cuda_gpu_id() != op_device.cuda_gpu_id()) {
         mismatches[blob_name] = std::make_pair(op_device, blob_device);
       }
+      else if (blob_device.device_type() == HIP &&
+          blob_device.hip_gpu_id() != op_device.hip_gpu_id()) {
+        mismatches[blob_name] = std::make_pair(op_device, blob_device);
+      }
     }
   };
 
@@ -616,6 +648,16 @@ std::set<std::string> GetRegisteredOperators() {
   }
   // CUDA operators
   for (const auto& name : CUDAOperatorRegistry()->Keys()) {
+    all_keys.emplace(name);
+  }
+
+  // HIP operators
+  for (const auto& name : HIPOperatorRegistry()->Keys()) {
+    all_keys.emplace(name);
+  }
+
+  // C10 operators
+  for (const auto& name: C10OperatorRegistry()->Keys()) {
     all_keys.emplace(name);
   }
 

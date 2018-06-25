@@ -1,3 +1,4 @@
+
 #ifndef CAFFE2_CORE_NET_DAG_H_
 #define CAFFE2_CORE_NET_DAG_H_
 
@@ -36,16 +37,12 @@ class DAGNetBase : public NetBase {
   // notifies all its children, and for any children that is ready, enqueues
   // it to the job queue.
   void WorkerFunction();
-  vector<float> TEST_Benchmark(
-      const int warmup_runs,
-      const int main_runs,
-      const bool run_individual) override;
 
   const dag_utils::ExecutionChains& TEST_execution_chains() const {
     return execution_chains_;
   }
 
-  vector<OperatorBase*> GetOperators() const override {
+  vector<IOperatorBase*> GetOperators() const override {
     return operators_;
   }
 
@@ -56,7 +53,7 @@ class DAGNetBase : public NetBase {
   void HandleException(int operator_idx, const std::string& exception_str);
 
   vector<dag_utils::OperatorNode> operator_nodes_;
-  vector<OperatorBase*> operators_;
+  vector<IOperatorBase*> operators_;
   dag_utils::ExecutionChains execution_chains_;
   vector<int> initial_frontier_;
   std::unique_ptr<SimpleQueue<int>> job_queue_;

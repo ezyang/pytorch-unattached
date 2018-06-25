@@ -1,11 +1,29 @@
 #include <catch.hpp>
 
-#include <torch/torch.h>
+#include <torch/functions.h>
+#include <torch/nn/modules/linear.h>
+#include <torch/nn/modules/sequential.h>
+#include <torch/optimizers.h>
+#include <torch/serialization.h>
+#include <torch/tensor.h>
 
-#include "cereal/archives/portable_binary.hpp"
+#include <test/cpp/api/util.h>
+
+#include <cereal/archives/portable_binary.hpp>
+
+#include <memory>
+#include <sstream>
+#include <string>
+#include <vector>
 
 using namespace torch;
 using namespace torch::nn;
+
+namespace {
+std::shared_ptr<Sequential> xor_model() {
+  return std::make_shared<Sequential>(SigmoidLinear(2, 8), SigmoidLinear(8, 1));
+}
+} // namespace
 
 TEST_CASE("serialization") {
   SECTION("undefined") {
@@ -13,7 +31,7 @@ TEST_CASE("serialization") {
 
     REQUIRE(!x.defined());
 
-    auto y = at::CPU(at::kFloat).randn({5});
+    auto y = at::randn({5});
 
     std::stringstream ss;
     save(ss, &x);
@@ -34,8 +52,8 @@ TEST_CASE("serialization") {
         continue;
       }
 
-      auto x =
-          at::getType(at::kCPU, static_cast<at::ScalarType>(i)).ones({5, 5});
+      auto x = at::ones(
+          {5, 5}, at::getType(at::kCPU, static_cast<at::ScalarType>(i)));
       auto y = at::Tensor();
 
       std::stringstream ss;
@@ -53,7 +71,7 @@ TEST_CASE("serialization") {
   }
 
   SECTION("binary") {
-    auto x = at::CPU(at::kFloat).randn({5, 5});
+    auto x = at::randn({5, 5});
     auto y = at::Tensor();
 
     std::stringstream ss;
@@ -70,9 +88,8 @@ TEST_CASE("serialization") {
     REQUIRE(x.sizes().vec() == y.sizes().vec());
     REQUIRE(x.allclose(y));
   }
-
   SECTION("portable_binary") {
-    auto x = at::CPU(at::kFloat).randn({5, 5});
+    auto x = at::randn({5, 5});
     auto y = at::Tensor();
 
     std::stringstream ss;
@@ -91,7 +108,7 @@ TEST_CASE("serialization") {
   }
 
   SECTION("resized") {
-    auto x = at::CPU(at::kFloat).randn({11, 5});
+    auto x = at::randn({11, 5});
     x.resize_({5, 5});
     auto y = at::Tensor();
 
@@ -109,9 +126,8 @@ TEST_CASE("serialization") {
     REQUIRE(x.sizes().vec() == y.sizes().vec());
     REQUIRE(x.allclose(y));
   }
-
   SECTION("sliced") {
-    auto x = at::CPU(at::kFloat).randn({11, 5});
+    auto x = at::randn({11, 5});
     x = x.slice(0, 1, 3);
     auto y = at::Tensor();
 
@@ -131,7 +147,7 @@ TEST_CASE("serialization") {
   }
 
   SECTION("noncontig") {
-    auto x = at::CPU(at::kFloat).randn({11, 5});
+    auto x = at::randn({11, 5});
     x = x.slice(1, 1, 4);
     auto y = at::Tensor();
 
@@ -152,15 +168,9 @@ TEST_CASE("serialization") {
 
   SECTION("xor") {
     // We better be able to save and load a XOR model!
-    auto makeModel = []() {
-      ContainerList list;
-      list.append(make(Linear(2, 8)));
-      list.append(make(Linear(8, 1)));
-      return make(list);
-    };
-    auto getLoss = [](std::shared_ptr<ContainerList> model, uint32_t bs) {
-      auto inp = at::CPU(at::kFloat).tensor({bs, 2});
-      auto lab = at::CPU(at::kFloat).tensor({bs});
+    auto getLoss = [](std::shared_ptr<Sequential> model, uint32_t bs) {
+      auto inp = torch::empty({bs, 2});
+      auto lab = torch::empty({bs});
       for (auto i = 0U; i < bs; i++) {
         auto a = std::rand() % 2;
         auto b = std::rand() % 2;
@@ -171,16 +181,13 @@ TEST_CASE("serialization") {
       }
 
       // forward
-      auto x = Var(inp);
-      auto y = Var(lab, false);
-      for (auto layer : *model)
-        x = layer->forward({x})[0].sigmoid_();
-      return at::binary_cross_entropy(x, y);
+      auto x = model->forward<Variable>(inp);
+      return at::binary_cross_entropy(x, lab);
     };
 
-    auto model = makeModel();
-    auto model2 = makeModel();
-    auto model3 = makeModel();
+    auto model = xor_model();
+    auto model2 = xor_model();
+    auto model3 = xor_model();
     auto optim =
         SGD(model, 1e-1).momentum(0.9).nesterov().weight_decay(1e-6).make();
 
@@ -189,7 +196,7 @@ TEST_CASE("serialization") {
     while (running_loss > 0.1) {
       Variable loss = getLoss(model, 4);
       optim->zero_grad();
-      backward(loss);
+      loss.backward();
       optim->step();
 
       running_loss = running_loss * 0.99 + loss.data().sum().toCFloat() * 0.01;
@@ -206,16 +213,16 @@ TEST_CASE("serialization") {
   }
 
   SECTION("optim") {
-    auto model1 = make(Linear(5, 2));
-    auto model2 = make(Linear(5, 2));
-    auto model3 = make(Linear(5, 2));
+    auto model1 = Linear(5, 2);
+    auto model2 = Linear(5, 2);
+    auto model3 = Linear(5, 2);
 
     // Models 1, 2, 3 will have the same params
     std::stringstream ss;
-    save(ss, model1);
-    load(ss, model2);
+    save(ss, model1.get());
+    load(ss, model2.get());
     ss.seekg(0, std::ios::beg);
-    load(ss, model3);
+    load(ss, model3.get());
 
     // Make some optimizers with momentum (and thus state)
     auto optim1 = SGD(model1, 1e-1).momentum(0.9).make();
@@ -224,12 +231,12 @@ TEST_CASE("serialization") {
     auto optim3 = SGD(model3, 1e-1).momentum(0.9).make();
     auto optim3_2 = SGD(model3, 1e-1).momentum(0.9).make();
 
-    auto x = Var(at::CPU(at::kFloat).ones({10, 5}), true);
+    auto x = torch::ones({10, 5}, at::requires_grad());
 
-    auto step = [&](Optimizer optim, std::shared_ptr<Module> model) {
+    auto step = [&](Optimizer optim, Linear model) {
       optim->zero_grad();
       auto y = model->forward({x})[0].sum();
-      backward(y);
+      y.backward();
       optim->step();
     };
 
@@ -252,7 +259,7 @@ TEST_CASE("serialization") {
     auto param2 = model2->parameters();
     auto param3 = model3->parameters();
     for (auto& p : param1) {
-      auto name = p.first;
+      auto& name = p.key;
       // Model 1 and 3 should be the same
       REQUIRE(param1[name].norm().toCFloat() == param3[name].norm().toCFloat());
       REQUIRE(param1[name].norm().toCFloat() != param2[name].norm().toCFloat());
@@ -263,15 +270,9 @@ TEST_CASE("serialization") {
 TEST_CASE("serialization_cuda", "[cuda]") {
   SECTION("xor") {
     // We better be able to save and load a XOR model!
-    auto makeModel = []() {
-      ContainerList list;
-      list.append(make(Linear(2, 8)));
-      list.append(make(Linear(8, 1)));
-      return make(list);
-    };
-    auto getLoss = [](std::shared_ptr<ContainerList> model, uint32_t bs) {
-      auto inp = at::CPU(at::kFloat).tensor({bs, 2});
-      auto lab = at::CPU(at::kFloat).tensor({bs});
+    auto getLoss = [](std::shared_ptr<Sequential> model, uint32_t bs) {
+      auto inp = torch::empty({bs, 2});
+      auto lab = torch::empty({bs});
       for (auto i = 0U; i < bs; i++) {
         auto a = std::rand() % 2;
         auto b = std::rand() % 2;
@@ -282,16 +283,13 @@ TEST_CASE("serialization_cuda", "[cuda]") {
       }
 
       // forward
-      auto x = Var(inp);
-      auto y = Var(lab, false);
-      for (auto layer : *model)
-        x = layer->forward({x})[0].sigmoid_();
-      return at::binary_cross_entropy(x, y);
+      auto x = model->forward<Variable>(inp);
+      return at::binary_cross_entropy(x, lab);
     };
 
-    auto model = makeModel();
-    auto model2 = makeModel();
-    auto model3 = makeModel();
+    auto model = xor_model();
+    auto model2 = xor_model();
+    auto model3 = xor_model();
     auto optim =
         SGD(model, 1e-1).momentum(0.9).nesterov().weight_decay(1e-6).make();
 
@@ -300,7 +298,7 @@ TEST_CASE("serialization_cuda", "[cuda]") {
     while (running_loss > 0.1) {
       Variable loss = getLoss(model, 4);
       optim->zero_grad();
-      backward(loss);
+      loss.backward();
       optim->step();
 
       running_loss = running_loss * 0.99 + loss.data().sum().toCFloat() * 0.01;

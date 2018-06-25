@@ -1,7 +1,6 @@
 #pragma once
 
 #include "torch/csrc/jit/interned_strings.h"
-#include "torch/csrc/jit/generic_if.h"
 #include "torch/csrc/assertions.h"
 
 #include <ATen/ATen.h>
@@ -15,7 +14,11 @@ namespace torch { namespace jit {
 _(DynamicType) \
 _(TensorType) \
 _(HandleType) \
-_(TupleType)
+_(TupleType) \
+_(ListType) \
+_(NumberType) \
+_(FloatType) \
+_(IntType) \
 
 enum class TypeKind {
 #define DEFINE_TYPE(T) T,
@@ -98,6 +101,8 @@ struct DynamicType : public Type {
   static TypePtr get();
 };
 
+struct TensorType;
+using TensorTypePtr = std::shared_ptr<TensorType>;
 // This node represents a single Tensor value with a specific size
 struct TensorType : public Type {
   friend struct Type;
@@ -121,8 +126,8 @@ struct TensorType : public Type {
 
   at::ScalarType scalarType() const { return scalar_type_; }
   int device() const { return device_; }
-  const std::vector<std::int64_t>& sizes() const { return sizes_; }
-  const std::vector<std::int64_t>& strides() const { return strides_; }
+  const std::vector<int64_t>& sizes() const { return sizes_; }
+  const std::vector<int64_t>& strides() const { return strides_; }
 
   TypePtr withSizesStrides(at::IntList sizes, at::IntList strides) const {
     return std::make_shared<TensorType>(scalar_type_, device_, sizes, strides);
@@ -132,11 +137,18 @@ struct TensorType : public Type {
     return withSizesStrides(sizes, TensorType::contiguousStridesOf(sizes));
   }
 
-  TypePtr contiguous() const {
+  TensorTypePtr contiguous() const {
     auto t = std::make_shared<TensorType>(*this);
     t->strides_ = TensorType::contiguousStridesOf(sizes_);
     return t;
   }
+
+  TensorTypePtr toScalarType(at::ScalarType type){
+    auto t = std::make_shared<TensorType>(*this);
+    t->scalar_type_ = type;
+    return t;
+  }
+
   virtual bool operator==(const Type& rhs) const override {
     if(rhs.kind() != kind())
       return false;
@@ -163,7 +175,7 @@ private:
     if(sizes.size() == 0) // zero-dim case
       return strides;
     strides.back() = 1;
-    for(std::size_t i = strides.size() - 1; i > 0; i--) {
+    for(size_t i = strides.size() - 1; i > 0; i--) {
       strides[i-1] = strides[i] * sizes[i];
     }
     return strides;
@@ -206,6 +218,29 @@ struct HandleType : public Type {
   static TypePtr get();
 };
 
+struct ListType : public Type {
+  friend struct Type;
+  static const TypeKind Kind = TypeKind::ListType;
+  ListType(TypePtr elem)
+  : Type(TypeKind::ListType), elem(elem) {}
+  virtual bool operator==(const Type& rhs) const override {
+    return rhs.kind() == kind();
+  }
+  virtual std::string name() const override {
+    std::stringstream ss;
+    ss << "List[" << getElementType()->name() << "]";
+    return ss.str();
+  }
+  TypePtr getElementType() const {
+    return elem;
+  }
+  // common cast List[Tensor]
+  static TypePtr ofTensors();  
+  static TypePtr ofInts();
+private:
+  TypePtr elem;
+};
+
 struct TupleType : public Type {
   friend struct Type;
   TupleType(std::vector<TypePtr> elements_)
@@ -221,6 +256,15 @@ struct TupleType : public Type {
     });
   }
   virtual bool isSubtypeOf(const Type& rhs) const override {
+    // e.g. (Tensor, Tensor, Tensor) <: List[Tensor]
+    if(auto lt = rhs.cast<ListType>()) {
+      for(auto e : elements()) {
+        if(!e->isSubtypeOf(*lt->getElementType()))
+          return false;
+      }
+      return true;
+    }
+    // co-variant rules for tuples
     return compare(rhs, [](const Type& a, const Type&b) {
       return a.isSubtypeOf(b);
     });
@@ -253,6 +297,56 @@ private:
   std::vector<TypePtr> elements_;
 };
 
+// This node represents a Python number value
+struct NumberType : public Type {
+  NumberType()
+  : Type(TypeKind::NumberType) {}
+  virtual bool operator==(const Type& rhs) const override {
+    return rhs.kind() == kind();
+  }
+  virtual std::string name() const override {
+    return "Number";
+  }
+  static const TypeKind Kind = TypeKind::NumberType;
+  // global singleton
+  static TypePtr get();
+};
+
+// This node represents a Python float number value
+struct FloatType : public Type {
+  FloatType()
+  : Type(TypeKind::FloatType) {}
+  virtual bool operator==(const Type& rhs) const override {
+    return rhs.kind() == kind();
+  }
+  virtual std::string name() const override {
+    return "float";
+  }
+  virtual bool isSubtypeOf(const Type& rhs) const override {
+    return *this == rhs || rhs.kind() == TypeKind::NumberType;
+  }
+  static const TypeKind Kind = TypeKind::FloatType;
+  // global singleton
+  static TypePtr get();
+};
+
+// This node represents a Python int number value
+struct IntType : public Type {
+  IntType()
+  : Type(TypeKind::IntType) {}
+  virtual bool operator==(const Type& rhs) const override {
+    return rhs.kind() == kind();
+  }
+  virtual std::string name() const override {
+    return "int";
+  }
+  virtual bool isSubtypeOf(const Type& rhs) const override {
+    return *this == rhs || rhs.kind() == TypeKind::NumberType;
+  }
+  static const TypeKind Kind = TypeKind::IntType;
+  // global singleton
+  static TypePtr get();
+};
 
 
 std::ostream& operator<<(std::ostream & out, const Type & t);

@@ -30,7 +30,7 @@ typedef ObserverBase<NetBase> NetObserver;
 typedef std::function<std::unique_ptr<NetObserver>(NetBase*)>
     NetObserverCreator;
 
-class OperatorBase;
+class IOperatorBase;
 class Workspace;
 
 // Net is a thin struct that owns all the operators together with the operator
@@ -84,10 +84,7 @@ class NetBase : public Observable<NetBase> {
   virtual vector<float> TEST_Benchmark(
       const int /*warmup_runs*/,
       const int /*main_runs*/,
-      const bool /*run_individual*/) {
-    LOG(ERROR) << "Benchmark not implemented for this net type.";
-    return vector<float>();
-  }
+      const bool /*run_individual*/);
 
   inline const vector<string>& external_output() const {
     return external_output_;
@@ -102,7 +99,7 @@ class NetBase : public Observable<NetBase> {
    * Returns pointers to objects owned with unique_ptrs.
    * Use with caution.
    */
-  virtual vector<OperatorBase*> GetOperators() const = 0;
+  virtual vector<IOperatorBase*> GetOperators() const = 0;
 
   const string& Name() const {
     return name_;
@@ -133,8 +130,7 @@ class NetBase : public Observable<NetBase> {
 class ExecutorHelper {
  public:
   ExecutorHelper() {}
-  virtual std::shared_ptr<TaskThreadPool> GetPool(
-      const DeviceOption& option) const;
+  virtual TaskThreadPool* GetPool(const DeviceOption& option) const;
   virtual ~ExecutorHelper() {}
 };
 
