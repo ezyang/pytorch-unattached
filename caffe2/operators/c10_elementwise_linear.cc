@@ -8,6 +8,8 @@ using caffe2::Tensor;
 using caffe2::CPUContext;
 
 struct ElementwiseLinearOp final {
+  static constexpr const char* name = "elementwise_linear";
+
   using Signature = Tensor<CPUContext>(const Tensor<CPUContext>&, const Tensor<CPUContext>&, const Tensor<CPUContext>&);
 
   static constexpr c10::guts::array<const char*, 3> parameter_names = {{"X", "a", "b"}};

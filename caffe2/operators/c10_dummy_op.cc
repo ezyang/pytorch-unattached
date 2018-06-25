@@ -7,6 +7,8 @@ using caffe2::Tensor;
 using caffe2::CPUContext;
 
 struct DummyOp final {
+  static constexpr const char* name = "dummy";
+
   using Signature = Tensor<CPUContext>(Tensor<CPUContext>);
 
   static constexpr c10::guts::array<const char*, 1> parameter_names = {{"input"}};

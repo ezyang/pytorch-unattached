@@ -9,6 +9,8 @@ using namespace c10;
 
 namespace ops {
 struct conditional final {
+  static constexpr const char* name = "conditional";
+
   using Signature = Tensor(bool, const Tensor&, Tensor);
 
   static constexpr guts::array<const char*, 3> parameter_names = {{
@@ -16,6 +18,8 @@ struct conditional final {
   }};
 };
 struct add_notensor final {
+  static constexpr const char* name = "add_notensor";
+
   using Signature = int(int, int);
 
   static constexpr guts::array<const char*, 2> parameter_names = {{
@@ -53,6 +57,7 @@ C10_REGISTER_KERNEL(::ops::add_notensor)
   .dispatchKey("bla");
 
 struct equals final {
+  static constexpr const char* name = "equals";
   using Signature = bool(Tensor, Tensor);
   static constexpr guts::array<const char*, 2> parameter_names = {{
     "lhs", "rhs"
