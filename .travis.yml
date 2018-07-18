@@ -9,6 +9,8 @@ git:
 # https://github.com/travis-ci/travis-ci/issues/2389
 sudo: false
 
+env: ECR_DOMAIN=308535385114.dkr.ecr.us-east-1.amazonaws.com
+
 matrix:
     fast_finish: true
     include:
@@ -20,3 +22,12 @@ matrix:
         python: "3.6"
         install: pip install mypy mypy-extensions
         script: mypy @mypy-files.txt
+      - env: BUILD_ENVIRONMENT=linux-trusty-py3.6-gcc7-build IMAGE_TAG=220
+        sudo: required
+        services:
+          - docker
+        before_install:
+          - pip install --user awscli
+          - export PATH=$PATH:$HOME/.local/bin
+          - aws ecr get-authorization-token --region us-east-1 --output text --query 'authorizationData[].authorizationToken' | base64 -d | cut -d: -f2 | docker login -u AWS --password-stdin "$ECR_DOMAIN" # needs AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY envvars
+          - docker pull "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$IMAGE_TAG"
