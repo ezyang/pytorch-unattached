@@ -30,3 +30,4 @@ matrix:
           - sudo pip install awscli
           - aws ecr get-authorization-token --region us-east-1 --output text --query 'authorizationData[].authorizationToken' | base64 -d | cut -d: -f2 | docker login -u AWS --password-stdin "$ECR_DOMAIN" # needs AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY envvars
           - docker pull "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$IMAGE_TAG"
+
