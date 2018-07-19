@@ -29,5 +29,6 @@ matrix:
         before_install:
           - sudo pip install awscli
           - eval $(aws ecr get-login --region us-east-1 --no-include-email) # needs AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY envvars
+          - echo "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$IMAGE_TAG"
           - docker pull "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$IMAGE_TAG"
 
