@@ -9,7 +9,8 @@ git:
 # https://github.com/travis-ci/travis-ci/issues/2389
 sudo: false
 
-env: ECR_DOMAIN=308535385114.dkr.ecr.us-east-1.amazonaws.com IMAGE_TAG=220
+env:
+- ECR_DOMAIN=308535385114.dkr.ecr.us-east-1.amazonaws.com IMAGE_TAG=224
 
 matrix:
     fast_finish: true
