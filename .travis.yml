@@ -9,6 +9,12 @@ git:
 # https://github.com/travis-ci/travis-ci/issues/2389
 sudo: false
 
+env:
+  global:
+    - ECR_DOMAIN=308535385114.dkr.ecr.us-east-1.amazonaws.com
+    - IMAGE_TAG=224
+    - SCCACHE_BUCKET=ossci-compiler-cache
+
 matrix:
     fast_finish: true
     include:
@@ -20,7 +26,7 @@ matrix:
         python: "3.6"
         install: pip install mypy mypy-extensions
         script: mypy @mypy-files.txt
-      - env: ECR_DOMAIN=308535385114.dkr.ecr.us-east-1.amazonaws.com BUILD_ENVIRONMENT=pytorch-linux-trusty-py3.6-gcc7 IMAGE_TAG=224
+      - env: BUILD_ENVIRONMENT=pytorch-linux-trusty-py3.6-gcc7
         sudo: required
         services:
           - docker
