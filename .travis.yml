@@ -30,6 +30,7 @@ matrix:
           - echo "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$IMAGE_TAG"
           - docker pull "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$IMAGE_TAG"
         script:
-          - id=$(docker run -t -d -v "$TRAVIS_BUILD_DIR:/var/lib/jenkins/workspace" -w /var/lib/jenkins "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$IMAGE_TAG")
-          - (echo 'cd workspace && git submodule update --init && .jenkins/pytorch/build.sh') | docker exec -u jenkins -i "$id" bash
+          - id=$(docker run -t -d -w /var/lib/jenkins "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$IMAGE_TAG")
+          - docker cp "$TRAVIS_BUILD_DIR/." "$id:/var/lib/jenkins/workspace"
+          - (echo 'sudo chown -R jenkins workspace && cd workspace && git submodule update --init && .jenkins/pytorch/build.sh') | docker exec -u jenkins -i "$id" bash
 
