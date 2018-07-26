@@ -30,13 +30,17 @@ matrix:
         sudo: required
         services:
           - docker
-        install:
-          - sudo pip install awscli
-          - eval $(aws ecr get-login --region us-east-1 --no-include-email) # needs AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY envvars
-          - echo "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$IMAGE_TAG"
-          - docker pull "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$IMAGE_TAG"
-        script:
-          - id=$(docker run -t -d -w /var/lib/jenkins "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$IMAGE_TAG")
-          - docker cp "$TRAVIS_BUILD_DIR/." "$id:/var/lib/jenkins/workspace"
-          - (echo "export SCCACHE_BUCKET=$SCCACHE_BUCKET" && echo 'sudo chown -R jenkins workspace && cd workspace && git submodule update --init && .jenkins/pytorch/build.sh') | docker exec -u jenkins -i "$id" bash
+      - env: BUILD_ENVIRONMENT=pytorch-linux-xenial-cuda9.2-cudnn7-py3-gcc7
+        sudo: required
+        services:
+          - docker
 
+install:
+  - sudo pip install awscli
+  - eval $(aws ecr get-login --region us-east-1 --no-include-email) # needs AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY envvars
+  - echo "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$IMAGE_TAG"
+  - docker pull "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$IMAGE_TAG"
+script:
+  - id=$(docker run -t -d -w /var/lib/jenkins "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$IMAGE_TAG")
+  - docker cp "$TRAVIS_BUILD_DIR/." "$id:/var/lib/jenkins/workspace"
+  - (echo "export SCCACHE_BUCKET=$SCCACHE_BUCKET" && echo 'sudo chown -R jenkins workspace && cd workspace && git submodule update --init && .jenkins/pytorch/build.sh') | docker exec -u jenkins -i "$id" bash
