@@ -43,4 +43,4 @@ install:
 script:
   - id=$(docker run -t -d -w /var/lib/jenkins "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$IMAGE_TAG")
   - docker cp "$TRAVIS_BUILD_DIR/." "$id:/var/lib/jenkins/workspace"
-  - (echo "export SCCACHE_BUCKET=$SCCACHE_BUCKET" && echo 'sudo chown -R jenkins workspace && cd workspace && git submodule update --init && .jenkins/pytorch/build.sh') | docker exec -u jenkins -i "$id" bash
+  - (echo "export SCCACHE_BUCKET=$SCCACHE_BUCKET" && echo 'sudo chown -R jenkins workspace && cd workspace && git submodule update --init && .jenkins/pytorch/build.sh && .jenkins/pytorch/test.sh') | docker exec -u jenkins -i "$id" bash
