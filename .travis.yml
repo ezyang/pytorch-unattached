@@ -33,7 +33,7 @@ matrix:
         sudo: required
         services:
           - docker
-      - env: BUILD_ENVIRONMENT=macos-10.13-py3
+      - env: BUILD_ENVIRONMENT=pytorch-macos-10.13-py3
         os: osx
         install:
         script:
