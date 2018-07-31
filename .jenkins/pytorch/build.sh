@@ -53,7 +53,7 @@ if ([[ "$BUILD_ENVIRONMENT" == *cuda* ]] || [[ "$BUILD_ENVIRONMENT" == *gcc7* ]]
 fi
 
 # Target only our CI GPU machine's CUDA arch to speed up the build
-export TORCH_CUDA_ARCH_LIST=5.2
+export TORCH_CUDA_ARCH_LIST=6.0
 
 if [[ "$BUILD_ENVIRONMENT" == *trusty-py3.6-gcc5.4* ]]; then
   export DEBUG=1
