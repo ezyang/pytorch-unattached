@@ -1,5 +1,5 @@
 # https://travis-ci.org/pytorch/pytorch
-language: python
+language: c
 dist: trusty
 git:
   submodules: false
@@ -16,10 +16,12 @@ matrix:
     fast_finish: true
     include:
       - env: LINT_CHECK
+        language: python
         python: "2.7"
         install: pip install flake8
         script: flake8
       - env: MYPY_TYPE_CHECK
+        language: python
         python: "3.6"
         install: pip install mypy mypy-extensions
         script: mypy @mypy-files.txt
