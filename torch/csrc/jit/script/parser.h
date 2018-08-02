@@ -30,7 +30,7 @@ struct Parser {
         List<Attribute>(makeList(range, std::move(attributes))));
   }
   // exp | expr, | expr, expr, ...
-  TreeRef parseExpOrExpList(int end) {
+  TreeRef parseExpOrExpTuple(int end) {
     auto prefix = parseExp();
     if(L.cur().kind == ',') {
       std::vector<Expr> exprs = { prefix };
@@ -39,7 +39,7 @@ struct Parser {
         exprs.push_back(parseExp());
       }
       auto list = List<Expr>::create(prefix.range(), exprs);
-      prefix = ListLiteral::create(list.range(), list);
+      prefix = TupleLiteral::create(list.range(), list);
     }
     return prefix;
   }
@@ -52,7 +52,8 @@ struct Parser {
         prefix = parseConst();
       } break;
       case TK_TRUE:
-      case TK_FALSE: {
+      case TK_FALSE:
+      case TK_NONE: {
         auto k = L.cur().kind;
         auto r = L.cur().range;
         prefix = c(k, r, {});
@@ -60,22 +61,19 @@ struct Parser {
       } break;
       case '(': {
         L.next();
-        prefix = parseExpOrExpList(')');
+        if (L.nextIf(')')) {
+          /// here we have the empty tuple case
+          std::vector<Expr> vecExpr;
+          List<Expr> listExpr = List<Expr>::create(L.cur().range, vecExpr);
+          prefix = TupleLiteral::create(L.cur().range, listExpr);
+          break;
+        }
+        prefix = parseExpOrExpTuple(')');
         L.expect(')');
       } break;
       case '[': {
         auto list = parseList('[', ',', ']', &Parser::parseExp);
         prefix = ListLiteral::create(list.range(), List<Expr>(list));
-      } break;
-      case TK_FLOAT:
-      case TK_INT:
-      case TK_LONG: {
-        auto r = L.cur().range;
-        auto type = c(L.next().kind, r, {});
-        L.expect('(');
-        auto exp = parseExp();
-        L.expect(')');
-        prefix = Cast::create(r, Type(type), Expr(exp));
       } break;
       default: {
         Ident name = parseIdent();
@@ -251,7 +249,7 @@ struct Parser {
   // first[,other,lhs] = rhs
   Assign parseAssign(List<Expr> list) {
     auto red = parseOptionalReduction();
-    auto rhs = parseExpOrExpList(TK_NEWLINE);
+    auto rhs = parseExpOrExpTuple(TK_NEWLINE);
     L.expect(TK_NEWLINE);
     return Assign::create(list.range(), list, AssignKind(red), Expr(rhs));
   }
@@ -284,19 +282,6 @@ struct Parser {
           return ExprStmt::create(exprs[0].range(), exprs);
         }
       }
-    }
-  }
-  TreeRef parseScalarType() {
-    switch (L.cur().kind) {
-      case TK_INT:
-      case TK_FLOAT:
-      case TK_LONG:
-      case TK_DOUBLE: {
-        auto t = L.next();
-        return c(t.kind, t.range, {});
-      }
-      default:
-        return parseIdent();
     }
   }
   TreeRef parseOptionalIdentList() {

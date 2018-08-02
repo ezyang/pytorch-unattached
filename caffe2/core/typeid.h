@@ -1,11 +1,12 @@
 #pragma once
 
+#include <atomic>
 #include <cassert>
 #include <cstdlib>
 #include <iostream>
-#include <unordered_map>
 #include <mutex>
 #include <type_traits>
+#include <unordered_map>
 #include <unordered_set>
 #ifdef __GXX_RTTI
 #include <typeinfo>
@@ -13,8 +14,9 @@
 
 #include <exception>
 
+#include "ATen/core/Half.h"
 #include "caffe2/core/common.h"
-#include "caffe2/utils/IdWrapper.h"
+#include "ATen/core/IdWrapper.h"
 
 namespace caffe2 {
 class CaffeTypeId;
@@ -24,25 +26,28 @@ std::ostream& operator<<(std::ostream& stream, caffe2::CaffeTypeId typeId);
 
 namespace caffe2 {
 
+class TypeMeta;
+
 /**
  * A type id is a unique id for a given C++ type.
  * You need to register your types using CAFFE_KNOWN_TYPE(MyType) to be able to use CaffeTypeId with custom types.
  * This is for example used to store the dtype of tensors.
  */
-class CaffeTypeId final : public c10::guts::IdWrapper<CaffeTypeId, uint16_t> {
+class CaffeTypeId final : public at::IdWrapper<CaffeTypeId, uint16_t> {
 public:
   static CaffeTypeId createTypeId();
 
   friend std::ostream& ::operator<<(std::ostream& stream, CaffeTypeId typeId);
   friend bool operator<(CaffeTypeId lhs, CaffeTypeId rhs);
 
-  // TODO Can we get rid of uninitialized?
+  // This is 8, because 0 is uint8_t (due to ScalarType BC constraint)
   static constexpr CaffeTypeId uninitialized() {
-    return CaffeTypeId(0);
+    return CaffeTypeId(8);
   }
 
 private:
     constexpr explicit CaffeTypeId(uint16_t id): IdWrapper(id) {}
+    friend class TypeMeta;
 };
 
 // Allow usage in std::map / std::set
@@ -53,7 +58,7 @@ inline bool operator<(CaffeTypeId lhs, CaffeTypeId rhs) {
 
 }
 
-C10_DEFINE_HASH_FOR_IDWRAPPER(caffe2::CaffeTypeId)
+AT_DEFINE_HASH_FOR_IDWRAPPER(caffe2::CaffeTypeId)
 
 inline std::ostream& operator<<(std::ostream& stream, caffe2::CaffeTypeId typeId) {
   return stream << typeId.underlyingId();
@@ -403,4 +408,73 @@ inline bool operator!=(const TypeMeta& lhs, const TypeMeta& rhs) noexcept {
   }
 #endif
 
+/**
+ * CAFFE_DECLARE_KNOWN_TYPE and CAFFE_DEFINE_KNOWN_TYPE are used
+ * to preallocate ids for types that are queried very often so that they
+ * can be resolved at compile time. Please use CAFFE_KNOWN_TYPE() instead
+ * for your own types to allocate dynamic ids for them.
+ */
+#ifdef _MSC_VER
+#define CAFFE_DECLARE_KNOWN_TYPE(PreallocatedId, T)              \
+  template <>                                                    \
+  inline CAFFE2_EXPORT CaffeTypeId TypeMeta::Id<T>() { \
+    return CaffeTypeId(PreallocatedId);                          \
+  }
+#else // _MSC_VER
+#define CAFFE_DECLARE_KNOWN_TYPE(PreallocatedId, T) \
+  template <>                                       \
+  inline CaffeTypeId TypeMeta::Id<T>() {  \
+    return CaffeTypeId(PreallocatedId);             \
+  }
+#endif
+
+#define CONCAT_IMPL(x, y) x##y
+#define MACRO_CONCAT(x, y) CONCAT_IMPL(x, y)
+
+#define CAFFE_DEFINE_KNOWN_TYPE(T)                             \
+  namespace {                                                  \
+  TypeNameRegisterer<T> MACRO_CONCAT(registerer, __COUNTER__)( \
+      TypeMeta::Id<T>(),                                       \
+      #T);                                                     \
+  }
+
+class Tensor;
+
+// Note: we have preallocated the numbers 0-8 so they line up exactly
+// with at::ScalarType's numbering.  All other numbers do not matter.
+//
+// Notably, the "uninitialized" type id is 8, not 0, for hysterical raisins.
+
+struct _CaffeHighestPreallocatedTypeId final {};
+
+CAFFE_DECLARE_KNOWN_TYPE(0, uint8_t);
+CAFFE_DECLARE_KNOWN_TYPE(1, int8_t);
+CAFFE_DECLARE_KNOWN_TYPE(2, int16_t);
+CAFFE_DECLARE_KNOWN_TYPE(3, int);
+CAFFE_DECLARE_KNOWN_TYPE(4, int64_t);
+CAFFE_DECLARE_KNOWN_TYPE(5, at::Half);
+CAFFE_DECLARE_KNOWN_TYPE(6, float);
+CAFFE_DECLARE_KNOWN_TYPE(7, double);
+// 8 = undefined type id
+
+CAFFE_DECLARE_KNOWN_TYPE(9, Tensor);
+CAFFE_DECLARE_KNOWN_TYPE(10, std::string);
+CAFFE_DECLARE_KNOWN_TYPE(11, bool);
+CAFFE_DECLARE_KNOWN_TYPE(12, uint16_t);
+CAFFE_DECLARE_KNOWN_TYPE(13, char);
+CAFFE_DECLARE_KNOWN_TYPE(14, std::unique_ptr<std::mutex>);
+CAFFE_DECLARE_KNOWN_TYPE(15, std::unique_ptr<std::atomic<bool>>);
+CAFFE_DECLARE_KNOWN_TYPE(16, std::vector<int32_t>);
+CAFFE_DECLARE_KNOWN_TYPE(17, std::vector<int64_t>);
+CAFFE_DECLARE_KNOWN_TYPE(18, std::vector<unsigned long>);
+CAFFE_DECLARE_KNOWN_TYPE(19, bool*);
+CAFFE_DECLARE_KNOWN_TYPE(20, char*);
+CAFFE_DECLARE_KNOWN_TYPE(21, int*);
+
+#ifdef CAFFE2_UNIQUE_LONG_TYPEMETA
+CAFFE_DECLARE_KNOWN_TYPE(22, long);
+CAFFE_DECLARE_KNOWN_TYPE(23, std::vector<long>);
+#endif // CAFFE2_UNIQUE_LONG_TYPEMETA
+
+CAFFE_DECLARE_KNOWN_TYPE(24, _CaffeHighestPreallocatedTypeId);
 }

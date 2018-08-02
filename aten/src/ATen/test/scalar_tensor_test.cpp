@@ -65,21 +65,13 @@ void test(Type &T) {
     require_equal_size_dim(t2, ones({0}, T));
 
     // unsqueeze
-    if (t.numel() != 0) {
-      REQUIRE(t.unsqueeze(0).dim() == t.dim() + 1);
-    } else {
-      REQUIRE_THROWS(t.unsqueeze(0));
-    }
+    REQUIRE(t.unsqueeze(0).dim() == t.dim() + 1);
 
     // unsqueeze_
     {
       auto t2 = ones(*s, T);
-      if (t2.numel() != 0) {
-        auto r = t2.unsqueeze_(0);
-        REQUIRE(r.dim() == t.dim() + 1);
-      } else {
-        REQUIRE_THROWS(t2.unsqueeze_(0));
-      }
+      auto r = t2.unsqueeze_(0);
+      REQUIRE(r.dim() == t.dim() + 1);
     }
 
     // squeeze (with dimension argument)
