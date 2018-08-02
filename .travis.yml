@@ -21,6 +21,7 @@ matrix:
         install: pip install flake8
         script: flake8
       - env: LINT_CHECK
+        language: python
         python: "3.7"
         dist: xenial    # required for Python 3.7 (travis-ci/travis-ci#9069)
         sudo: required  # required for Python 3.7 (travis-ci/travis-ci#9069)
