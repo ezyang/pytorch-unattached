@@ -1,6 +1,8 @@
 # https://travis-ci.org/pytorch/pytorch
 language: c
-dist: trusty
+
+dist: xenial
+
 git:
   submodules: false
 
@@ -23,8 +25,6 @@ matrix:
       - env: LINT_CHECK
         language: python
         python: "3.7"
-        dist: xenial    # required for Python 3.7 (travis-ci/travis-ci#9069)
-        sudo: required  # required for Python 3.7 (travis-ci/travis-ci#9069)
         install: pip install flake8
         script: flake8
       - env: MYPY_TYPE_CHECK
@@ -33,16 +33,12 @@ matrix:
         install: pip install mypy mypy-extensions
         script: mypy @mypy-files.txt
       - env: BUILD_ENVIRONMENT=pytorch-linux-trusty-py3.6-gcc7
-        sudo: required
-        services:
-          - docker
+        name: "Docker: Trusty / py3.6 / gcc7"
       - env: BUILD_ENVIRONMENT=pytorch-linux-xenial-cuda9.2-cudnn7-py3-gcc7
-        sudo: required
-        services:
-          - docker
+        name: "Docker: Xenial / cuda9.2 / cudnn7 / py3 / gcc7"
       - env: BUILD_ENVIRONMENT=pytorch-macos-10.13-py3
         os: osx
-        install:
+        install: skip
         script:
           - export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
           - ls /Applications
