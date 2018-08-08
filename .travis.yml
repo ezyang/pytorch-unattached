@@ -34,8 +34,12 @@ matrix:
         script: mypy @mypy-files.txt
       - name: "Docker: Trusty / py3.6 / gcc7"
         env: BUILD_ENVIRONMENT=pytorch-linux-trusty-py3.6-gcc7
+        resources:
+          gpu: true
       - name: "Docker: Xenial / cuda9.2 / cudnn7 / py3 / gcc7"
         env: BUILD_ENVIRONMENT=pytorch-linux-xenial-cuda9.2-cudnn7-py3-gcc7
+        resources:
+          gpu: true
       - name: "Mac: 10.13 / py3"
         env: BUILD_ENVIRONMENT=pytorch-macos-10.13-py3
         os: osx
