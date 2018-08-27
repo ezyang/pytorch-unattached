@@ -249,14 +249,26 @@ install:
       nvidia-smi
     fi
   - eval $(aws ecr get-login --region us-east-1 --no-include-email) # needs AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY envvars
-  - echo "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$PYTORCH_IMAGE_TAG"
-  - docker pull "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$PYTORCH_IMAGE_TAG"
+  - |
+    if [[ ${BUILD_ENVIRONMENT} == "pytorch-"* ]]; then  # PyTorch build
+      export IMAGE_TAG=${PYTORCH_IMAGE_TAG}
+    else  # Caffe2 build
+      export IMAGE_TAG=${CAFFE2_IMAGE_TAG}
+    fi
+  - echo "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$IMAGE_TAG"
+  - docker pull "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$IMAGE_TAG"
 script:
   - |
+    if [[ ${BUILD_ENVIRONMENT} == "pytorch-"* ]]; then  # PyTorch build
+      export IMAGE_TAG=${PYTORCH_IMAGE_TAG}
+    else  # Caffe2 build
+      export IMAGE_TAG=${CAFFE2_IMAGE_TAG}
+    fi
+  - |
     if [ -n "${NEED_CUDA_DOCKER}" ]; then
-      id=$(docker run --runtime=nvidia -t -d -w /var/lib/jenkins "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$PYTORCH_IMAGE_TAG")
+      id=$(docker run --runtime=nvidia -t -d -w /var/lib/jenkins "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$IMAGE_TAG")
     else
-      id=$(docker run -t -d -w /var/lib/jenkins "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$PYTORCH_IMAGE_TAG")
+      id=$(docker run -t -d -w /var/lib/jenkins "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$IMAGE_TAG")
     fi
   - echo "declare -x SCCACHE_BUCKET=${SCCACHE_BUCKET}" > $TRAVIS_BUILD_DIR/env
   - # This IAM user allows write access to S3 bucket for sccache
