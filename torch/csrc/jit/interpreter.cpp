@@ -94,7 +94,7 @@ void desugarTripCounts(Block * b) {
       {
         WithInsertPoint guard(n);
         // int i = 0
-        Value* initial_trip_count = insertConstant(*g, 0);
+        Value* initial_trip_count = g->insertConstant(0);
         // Set up initial iteration number value for loop-carried dependency
         n->removeInput(0);
         // Input 0 is now initial termination condition, insert this after that.
@@ -112,7 +112,7 @@ void desugarTripCounts(Block * b) {
         // increment the trip count at the end of the body. Then, emit the same
         // conjunctive stopping condition as above.
 
-        Value* const_one = insertConstant(*g, 1);
+        Value* const_one = g->insertConstant(1);
 
         Value* inc_trip_count =
             g->insertNode(g->create(
@@ -337,7 +337,7 @@ struct PreprocessGraph {
 struct ContainerTensor : public at::TensorImpl {
 public:
   ContainerTensor()
-  : TensorImpl(at::Backend::Undefined,at::ScalarType::Undefined, nullptr, /* is_variable */ false) {}
+  : TensorImpl(at::UndefinedTensorId(), at::ScalarType::Undefined, /* is_variable */ false) {}
 
   virtual ~ContainerTensor() = default;
   virtual at::IntList sizes() const override {
@@ -349,10 +349,7 @@ public:
   virtual int64_t dim() const override {
     throw std::runtime_error("dim() on ContainerTensor");
   }
-  virtual void * unsafeGetTH(bool retain) override {
-    throw std::runtime_error("unsafeGetTH() on ContainerTensor");
-  }
-  virtual std::unique_ptr<at::Storage> storage() override {
+  virtual const at::Storage& storage() const override {
     throw std::runtime_error("storage() on ContainerTensor");
   }
 };
@@ -722,9 +719,6 @@ struct InterpreterStateImpl {
     current_pc = pc;
     current_stage++;
   }
-  const TensorType & tensorTypeForInput(size_t i) const {
-    return *function->preprocess.stage_input_types.at(current_stage).at(i)->expect<TensorType>();
-  }
   int get(const ListHandle<int> & list, int i) {
     return int_data[list.start + i];
   };
@@ -787,10 +781,6 @@ InterpreterState::~InterpreterState() = default;
 
 void InterpreterState::runOneStage(Stack & stack) {
   return pImpl->runOneStage(stack);
-}
-
-const TensorType & InterpreterState::tensorTypeForInput(size_t i) const {
-  return pImpl->tensorTypeForInput(i);
 }
 
 InterpreterState InterpreterState::clone() const {

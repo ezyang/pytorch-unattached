@@ -5,6 +5,7 @@
 #include "torch/csrc/autograd/function.h"
 #include "torch/csrc/jit/constants.h"
 #include "torch/csrc/jit/assertions.h"
+#include "torch/csrc/jit/script/compiler.h"
 
 #include <iostream>
 #include <unordered_map>
@@ -82,6 +83,20 @@ void printPrimList(std::ostream & out, const std::vector<T> & items) {
   }
   out << "]";
 }
+
+std::string escapeString(std::string s) {
+  std::vector<char> search = {'\n', '\t', '\v'};
+  std::vector<std::string> replace = {"\\n", "\\t", "\\v"};
+  for (size_t i = 0; i < search.size(); i++) {
+    size_t pos = s.find(search[i]);
+    while(pos != std::string::npos) {
+      s.replace(pos, 1, replace[i]);
+      pos = s.find(search[i], pos + 1);
+    }
+  }
+  return s;
+}
+
 void printAttributes(std::ostream & out, const Node * n, bool ignore_subgraph=false) {
   out << "[";
   auto names = n->attributeNames();
@@ -110,7 +125,7 @@ void printAttributes(std::ostream & out, const Node * n, bool ignore_subgraph=fa
         printPrimList(out,n->is(name));
         break;
       case AttributeKind::s:
-        out << n->s(name);
+        out << escapeString(n->s(name));
         break;
       case AttributeKind::ss:
         printPrimList(out,n->ss(name));
@@ -120,12 +135,12 @@ void printAttributes(std::ostream & out, const Node * n, bool ignore_subgraph=fa
           at::Tensor t = n->t(name);
           // 1-elem tensors are usually boxed scalars, so print them like it
           if (t.numel() == 1) {
-            auto scalar = at::Scalar(t.view({})).local();
+            auto scalar_tensor = t.view({})._local_scalar();
             out << "{";
-            if (scalar.isFloatingPoint()) {
-              out << scalar.toDouble();
+            if (scalar_tensor.isFloatingPoint()) {
+              out << scalar_tensor.toDouble();
             } else {
-              out << scalar.toLong();
+              out << scalar_tensor.toLong();
             }
             out << "}";
           } else if (t.numel() <= max_tensor_display_size) {
@@ -240,7 +255,7 @@ static void checkSameDevice(const Node* node) {
   bool has_device = false;
   int device;
   auto checkValue = [&](const Value* v) {
-    if(TensorTypePtr type = v->type()->cast<TensorType>()) {
+    if(CompleteTensorTypePtr type = v->type()->cast<CompleteTensorType>()) {
       if(!has_device) {
         has_device = true;
         device = type->device();
@@ -570,57 +585,23 @@ Value* Value::setUniqueName(const std::string & name) {
   return this;
 }
 
-std::pair<size_t, const Argument*> findArgument(const FunctionSchema& the_schema, Symbol name) {
+size_t findArgument(const FunctionSchema& the_schema, Symbol name) {
   auto name_str = name.toUnqualString();
   for (size_t i = 0; i < the_schema.arguments.size(); ++i) {
     const Argument* arg = &the_schema.arguments[i];
     if (arg->name == name_str) {
-      return std::make_pair(i, arg);
+      return i;
     }
   }
   throw std::runtime_error(std::string("Couldn't find an argument called ") + name.toQualString());
 }
 
 at::optional<IValue> Node::get(Symbol name) const {
-  // TODO (apaszke): remove. this is in here for now just so that we can ensure
-  // we always use this in places where the node has a valid schema already
-  // (will make next commits easier).
-  if (hasAttribute(name)) {
-    switch (kindOf(name)) {
-      case AttributeKind::i:
-        return IValue(i(name));
-      case AttributeKind::f:
-        return IValue(f(name));
-      case AttributeKind::t: {
-        // attributes are ambiguous, this might be a at::Scalar
-        // disambiguate via schema
-        at::Tensor ten = t(name);
-        const Argument* arg = findArgument(schema(), name).second;
-        if(arg->type->isSubtypeOf(NumberType::get())) {
-          return IValue(at::Scalar(ten));
-        }
-        return IValue(ten);
-      }
-      case AttributeKind::is:
-        return IValue(is(name));
-      default:
-        throw std::runtime_error("get() NYI");
-    }
-  }
   return toIValue(namedInput(name));
 }
 
 Value* Node::namedInput(Symbol name) const {
-  if(hasAttribute(name)) {
-    // XXX - const cast because this really should not be modifying graph
-    // and once we remove attributes it no longer will
-    Value* v = insertConstant(const_cast<Graph&>(*owningGraph()), get(name).value());
-    // XXX - insert point can be anywhere since modifying the graph is unexpected,
-    // so this is completely unsafe and needs to be gone as soon as possible.
-    return v;
-  }
-  int64_t arg_pos = findArgument(schema(), name).first;
-  return input(arg_pos);
+  return input(findArgument(schema(), name));
 }
 
 bool Node::matches(const char *signature_literal, at::ArrayRef<Symbol> const_inputs) {
@@ -637,6 +618,15 @@ void Node::dump() const {
 
 void Node::findSchema() const {
   schema_ = &getOperatorFor(this).schema();
+}
+
+inline const SourceRange& fakeRange() {
+  static SourceRange range(std::make_shared<std::string>("<internally-created-node>"), 0, 1);
+  return range;
+}
+
+Value* Graph::insert(Symbol opname, at::ArrayRef<NamedValue> args, at::ArrayRef<NamedValue> kwargs) {
+  return script::emitBuiltinCall(fakeRange(), *this, opname, args, kwargs, /*required=*/true);
 }
 
 PythonOp* defaultAllocPythonOp(Graph*g) {
