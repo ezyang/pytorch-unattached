@@ -64,7 +64,9 @@ if ([[ "$BUILD_ENVIRONMENT" == *cuda* ]] || [[ "$BUILD_ENVIRONMENT" == *gcc7* ]]
 fi
 
 # Target only our CI GPU machine's CUDA arch to speed up the build
-export TORCH_CUDA_ARCH_LIST="5.2"
+if [ -z "$TORCH_CUDA_ARCH_LIST" ]; then
+  export TORCH_CUDA_ARCH_LIST="5.2"
+fi
 
 if [[ "$BUILD_ENVIRONMENT" == *ppc64le* ]]; then
   export TORCH_CUDA_ARCH_LIST="6.0"
