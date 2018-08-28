@@ -251,24 +251,28 @@ install:
   - eval $(aws ecr get-login --region us-east-1 --no-include-email) # needs AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY envvars
   - |
     if [[ ${BUILD_ENVIRONMENT} == "pytorch-"* ]]; then  # PyTorch build
+      export REPO_NAME=pytorch
       export IMAGE_TAG=${PYTORCH_IMAGE_TAG} || travis_terminate 1;
     else  # Caffe2 build
+      export REPO_NAME=caffe2
       export IMAGE_TAG=${CAFFE2_IMAGE_TAG} || travis_terminate 1;
     fi
-  - echo "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$IMAGE_TAG"
-  - docker pull "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$IMAGE_TAG"
+  - echo "$ECR_DOMAIN/$REPO_NAME/$BUILD_ENVIRONMENT:$IMAGE_TAG"
+  - docker pull "$ECR_DOMAIN/$REPO_NAME/$BUILD_ENVIRONMENT:$IMAGE_TAG"
 script:
   - |
     if [[ ${BUILD_ENVIRONMENT} == "pytorch-"* ]]; then  # PyTorch build
+      export REPO_NAME=pytorch
       export IMAGE_TAG=${PYTORCH_IMAGE_TAG} || travis_terminate 1;
     else  # Caffe2 build
+      export REPO_NAME=caffe2
       export IMAGE_TAG=${CAFFE2_IMAGE_TAG} || travis_terminate 1;
     fi
   - |
     if [ -n "${NEED_CUDA_DOCKER}" ]; then
-      id=$(docker run --runtime=nvidia -t -d -w /var/lib/jenkins "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$IMAGE_TAG") || travis_terminate 1;
+      id=$(docker run --runtime=nvidia -t -d -w /var/lib/jenkins "$ECR_DOMAIN/$REPO_NAME/$BUILD_ENVIRONMENT:$IMAGE_TAG") || travis_terminate 1;
     else
-      id=$(docker run -t -d -w /var/lib/jenkins "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$IMAGE_TAG") || travis_terminate 1;
+      id=$(docker run -t -d -w /var/lib/jenkins "$ECR_DOMAIN/$REPO_NAME/$BUILD_ENVIRONMENT:$IMAGE_TAG") || travis_terminate 1;
     fi
   - echo "declare -x SCCACHE_BUCKET=${SCCACHE_BUCKET}" > $TRAVIS_BUILD_DIR/env
   - # This IAM user allows write access to S3 bucket for sccache
