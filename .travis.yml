@@ -15,6 +15,58 @@ env:
     - CAFFE2_IMAGE_TAG=189
     - SCCACHE_BUCKET=ossci-compiler-cache
 
+caffe2_macos_build_defaults: &caffe2_macos_build_defaults
+  script:
+    - export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+    - ls /Applications
+
+    - # Install sccache
+    - sudo curl https://s3.amazonaws.com/ossci-macos/sccache --output /usr/local/bin/sccache
+    - sudo chmod +x /usr/local/bin/sccache
+    - export SCCACHE_BUCKET=ossci-compiler-cache
+
+    - # This IAM user allows write access to S3 bucket for sccache
+    - export AWS_ACCESS_KEY_ID=AKIAI62M6LXUOP4I4UZA
+    - export AWS_SECRET_ACCESS_KEY=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
+
+    - brew install cmake
+
+    - # Reinitialize submodules
+    - git submodule update --init --recursive
+
+    - # Reinitialize path (see man page for path_helper(8))
+    - eval `/usr/libexec/path_helper -s`
+
+    - # Use Homebrew Python if configured to do so
+    - |
+      if [ "${PYTHON_INSTALLATION}" == "homebrew" ]; then
+        export PATH=/usr/local/opt/python/libexec/bin:/usr/local/bin:$PATH || travis_terminate 1;
+      fi
+
+    - pip install numpy
+
+    - # Install Anaconda if we need to
+    - |
+      if [ -n "${CAFFE2_USE_ANACONDA}" ]; then
+        rm -rf ${TMPDIR}/anaconda || travis_terminate 1;
+        curl -o ${TMPDIR}/anaconda.sh "https://repo.continuum.io/archive/Anaconda${ANACONDA_VERSION}-5.0.1-MacOSX-x86_64.sh" || travis_terminate 1;
+        /bin/bash ${TMPDIR}/anaconda.sh -b -p ${TMPDIR}/anaconda || travis_terminate 1;
+        rm -f ${TMPDIR}/anaconda.sh || travis_terminate 1;
+        export PATH="${TMPDIR}/anaconda/bin:${PATH}" || travis_terminate 1;
+        source ${TMPDIR}/anaconda/bin/activate || travis_terminate 1;
+      fi
+
+    - # Build
+    - |
+      if [ "${BUILD_IOS:-0}" -eq 1 ]; then
+        scripts/build_ios.sh || travis_terminate 1;
+      elif [ -n "${CAFFE2_USE_ANACONDA}" ]; then
+        # All conda build logic should be in scripts/build_anaconda.sh
+        scripts/build_anaconda.sh || travis_terminate 1;
+      else
+        scripts/build_local.sh || travis_terminate 1;
+      fi
+
 matrix:
     fast_finish: true
     include:
@@ -94,20 +146,62 @@ matrix:
         resources:
           gpu: true
 
-      # We are not running PyTorch macOS builds on Travis currently
-      # - name: "Mac: 10.13 / py3"
-      #   env: BUILD_ENVIRONMENT=pytorch-macos-10.13-py3
-      #   os: osx
-      #   install: skip
-      #   script:
-      #     - export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
-      #     - ls /Applications
-      #     - .jenkins/pytorch/macos-build.sh
-      # - pytorch_macos_10_13_py3_build
-      # - pytorch_macos_10_13_py3_test:
-      #     requires:
-      #       - pytorch_macos_10_13_py3_build
-      # - pytorch_macos_10_13_cuda9_2_cudnn7_py3_build
+      # PyTorch macOS jobs
+      - name: "PyTorch - Mac: 10.13 / py3"
+        env: BUILD_ENVIRONMENT=pytorch-macos-10.13-py3
+        os: osx
+        install: skip
+        script:
+          - export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+          - ls /Applications
+
+          - # Install sccache
+          - sudo curl https://s3.amazonaws.com/ossci-macos/sccache --output /usr/local/bin/sccache
+          - sudo chmod +x /usr/local/bin/sccache
+          - export SCCACHE_BUCKET=ossci-compiler-cache
+
+          - # This IAM user allows write access to S3 bucket for sccache
+          - export AWS_ACCESS_KEY_ID=AKIAI62M6LXUOP4I4UZA
+          - export AWS_SECRET_ACCESS_KEY=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
+
+          - .jenkins/pytorch/macos-build.sh
+          - .jenkins/pytorch/macos-test.sh
+      - name: "PyTorch - Mac: 10.13 / cuda9.2 / cudnn7 / py3"
+        env:
+          - BUILD_ENVIRONMENT=pytorch-macos-10.13-cuda9.2-cudnn7-py3
+          - JOB_BASE_NAME=pytorch-macos-10.13-cuda9.2-cudnn7-py3-build
+        os: osx
+        install: skip
+        script:
+          - export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+          - ls /Applications
+
+          - # Install CUDA 9.2
+          - sudo rm -rf ~/cuda_9.2.64_mac_installer.app || true
+          - curl https://s3.amazonaws.com/ossci-macos/cuda_9.2.64_mac_installer.zip -o ~/cuda_9.2.64_mac_installer.zip
+          - unzip ~/cuda_9.2.64_mac_installer.zip -d ~/
+          - sudo ~/cuda_9.2.64_mac_installer.app/Contents/MacOS/CUDAMacOSXInstaller --accept-eula --no-window
+          - sudo cp /usr/local/cuda/lib/libcuda.dylib /Developer/NVIDIA/CUDA-9.2/lib/libcuda.dylib
+          - sudo rm -rf /usr/local/cuda || true
+
+          - # Install cuDNN 7.1 for CUDA 9.2
+          - curl https://s3.amazonaws.com/ossci-macos/cudnn-9.2-osx-x64-v7.1.tgz -o ~/cudnn-9.2-osx-x64-v7.1.tgz
+          - rm -rf ~/cudnn-9.2-osx-x64-v7.1 && mkdir ~/cudnn-9.2-osx-x64-v7.1
+          - tar -xzvf ~/cudnn-9.2-osx-x64-v7.1.tgz -C ~/cudnn-9.2-osx-x64-v7.1
+          - sudo cp ~/cudnn-9.2-osx-x64-v7.1/cuda/include/cudnn.h /Developer/NVIDIA/CUDA-9.2/include/
+          - sudo cp ~/cudnn-9.2-osx-x64-v7.1/cuda/lib/libcudnn* /Developer/NVIDIA/CUDA-9.2/lib/
+          - sudo chmod a+r /Developer/NVIDIA/CUDA-9.2/include/cudnn.h /Developer/NVIDIA/CUDA-9.2/lib/libcudnn*
+
+          - # Install sccache
+          - sudo curl https://s3.amazonaws.com/ossci-macos/sccache --output /usr/local/bin/sccache
+          - sudo chmod +x /usr/local/bin/sccache
+          - export SCCACHE_BUCKET=ossci-compiler-cache
+
+          - # This IAM user allows write access to S3 bucket for sccache
+          - export AWS_ACCESS_KEY_ID=AKIAI62M6LXUOP4I4UZA
+          - export AWS_SECRET_ACCESS_KEY=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
+
+          - .jenkins/pytorch/macos-build.sh
 
       # Caffe2 CPU build+test
       - name: "Caffe2 - Docker: Xenial / py2 / mkl"
@@ -221,10 +315,30 @@ matrix:
         resources:
           gpu: false
 
-      # We are not running Caffe2 macOS builds on Travis currently
-      # - caffe2_py2_ios_macos10_13_build
-      # - caffe2_py2_system_macos10_13_build
-      # - caffe2_conda2_macos10_13_build
+      - name: "Caffe2 - Mac: 10.13 / py2 / ios"
+        env:
+          - BUILD_IOS=1
+          - PYTHON_INSTALLATION=system
+          - PYTHON_VERSION=2
+        os: osx
+        install: skip
+        <<: *caffe2_macos_build_defaults
+      - name: "Caffe2 - Mac: 10.13 / system py2"
+        env:
+          - PYTHON_INSTALLATION=system
+          - PYTHON_VERSION=2
+        os: osx
+        install: skip
+        <<: *caffe2_macos_build_defaults
+      - name: "Caffe2 - Mac: 10.13 / conda2"
+        env:
+          - CAFFE2_USE_ANACONDA=1
+          - SKIP_CONDA_TESTS=1
+          - PYTHON_INSTALLATION=system
+          - ANACONDA_VERSION=2
+        os: osx
+        install: skip
+        <<: *caffe2_macos_build_defaults
 
 install:
   - sudo pip install awscli
