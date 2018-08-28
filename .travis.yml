@@ -230,45 +230,45 @@ install:
   - sudo pip install awscli
   - |
     if [ -n "${NEED_CUDA_DOCKER}" ]; then
-      curl -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
-      echo "deb https://nvidia.github.io/libnvidia-container/ubuntu14.04/amd64 /" | sudo tee -a /etc/apt/sources.list.d/nvidia-docker.list
-      echo "deb https://nvidia.github.io/nvidia-container-runtime/ubuntu14.04/amd64 /" | sudo tee -a /etc/apt/sources.list.d/nvidia-docker.list
-      echo "deb https://nvidia.github.io/nvidia-docker/ubuntu14.04/amd64 /" | sudo tee -a /etc/apt/sources.list.d/nvidia-docker.list
+      (curl -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -) || travis_terminate 1;
+      (echo "deb https://nvidia.github.io/libnvidia-container/ubuntu14.04/amd64 /" | sudo tee -a /etc/apt/sources.list.d/nvidia-docker.list) || travis_terminate 1;
+      (echo "deb https://nvidia.github.io/nvidia-container-runtime/ubuntu14.04/amd64 /" | sudo tee -a /etc/apt/sources.list.d/nvidia-docker.list) || travis_terminate 1;
+      (echo "deb https://nvidia.github.io/nvidia-docker/ubuntu14.04/amd64 /" | sudo tee -a /etc/apt/sources.list.d/nvidia-docker.list) || travis_terminate 1;
     fi
   - sudo apt-get update
   - sudo apt-get install linux-headers-$(uname -r)
   - |
     if [ -n "${NEED_CUDA_DOCKER}" ]; then
-      wget 'https://s3.amazonaws.com/ossci-linux/nvidia_driver/NVIDIA-Linux-x86_64-396.26.run'
-      sudo /bin/bash ./NVIDIA-Linux-x86_64-396.26.run -s
-      sudo apt-get install -y nvidia-docker2
+      wget 'https://s3.amazonaws.com/ossci-linux/nvidia_driver/NVIDIA-Linux-x86_64-396.26.run' || travis_terminate 1;
+      sudo /bin/bash ./NVIDIA-Linux-x86_64-396.26.run -s || travis_terminate 1;
+      sudo apt-get install -y nvidia-docker2 || travis_terminate 1;
     fi
   - sudo pkill -SIGHUP dockerd
   - |
     if [ -n "${NEED_CUDA_DOCKER}" ]; then
-      nvidia-smi
+      nvidia-smi || travis_terminate 1;
     fi
   - eval $(aws ecr get-login --region us-east-1 --no-include-email) # needs AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY envvars
   - |
     if [[ ${BUILD_ENVIRONMENT} == "pytorch-"* ]]; then  # PyTorch build
-      export IMAGE_TAG=${PYTORCH_IMAGE_TAG}
+      export IMAGE_TAG=${PYTORCH_IMAGE_TAG} || travis_terminate 1;
     else  # Caffe2 build
-      export IMAGE_TAG=${CAFFE2_IMAGE_TAG}
+      export IMAGE_TAG=${CAFFE2_IMAGE_TAG} || travis_terminate 1;
     fi
   - echo "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$IMAGE_TAG"
   - docker pull "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$IMAGE_TAG"
 script:
   - |
     if [[ ${BUILD_ENVIRONMENT} == "pytorch-"* ]]; then  # PyTorch build
-      export IMAGE_TAG=${PYTORCH_IMAGE_TAG}
+      export IMAGE_TAG=${PYTORCH_IMAGE_TAG} || travis_terminate 1;
     else  # Caffe2 build
-      export IMAGE_TAG=${CAFFE2_IMAGE_TAG}
+      export IMAGE_TAG=${CAFFE2_IMAGE_TAG} || travis_terminate 1;
     fi
   - |
     if [ -n "${NEED_CUDA_DOCKER}" ]; then
-      id=$(docker run --runtime=nvidia -t -d -w /var/lib/jenkins "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$IMAGE_TAG")
+      id=$(docker run --runtime=nvidia -t -d -w /var/lib/jenkins "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$IMAGE_TAG") || travis_terminate 1;
     else
-      id=$(docker run -t -d -w /var/lib/jenkins "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$IMAGE_TAG")
+      id=$(docker run -t -d -w /var/lib/jenkins "$ECR_DOMAIN/pytorch/$BUILD_ENVIRONMENT:$IMAGE_TAG") || travis_terminate 1;
     fi
   - echo "declare -x SCCACHE_BUCKET=${SCCACHE_BUCKET}" > $TRAVIS_BUILD_DIR/env
   - # This IAM user allows write access to S3 bucket for sccache
@@ -279,94 +279,92 @@ script:
   - echo "declare -x MAX_JOBS=${MAX_JOBS}" >> $TRAVIS_BUILD_DIR/env
   - echo "declare -x TORCH_CUDA_ARCH_LIST=6.0" >> $TRAVIS_BUILD_DIR/env
   - |
-    if [[ ${BUILD_ENVIRONMENT} != "pytorch-"* ]]; then  # Caffe2 build
-      cat >$TRAVIS_BUILD_DIR/caffe2_ci_build_script.sh <<EOL
-      set -ex
+    cat >$TRAVIS_BUILD_DIR/caffe2_ci_build_script.sh <<EOL
+    set -ex
 
-      # Need to checkout fetch PRs for onnxbot tracking PRs
-      git submodule update --init third_party/onnx || true
-      cd third_party/onnx && git fetch --tags --progress origin +refs/pull/*:refs/remotes/origin/pr/* && cd -
+    # Need to checkout fetch PRs for onnxbot tracking PRs
+    git submodule update --init third_party/onnx || true
+    cd third_party/onnx && git fetch --tags --progress origin +refs/pull/*:refs/remotes/origin/pr/* && cd -
 
-      # Reinitialize submodules
-      git submodule update --init --recursive
+    # Reinitialize submodules
+    git submodule update --init --recursive
 
-      # Ensure jenkins can write to the ccache root dir.
-      sudo chown jenkins:jenkins "${HOME}/.ccache"
+    # Ensure jenkins can write to the ccache root dir.
+    sudo chown jenkins:jenkins "${HOME}/.ccache"
 
-      # Make ccache log to the workspace, so we can archive it after the build
-      mkdir -p build
-      ccache -o log_file=$PWD/build/ccache.log
+    # Make ccache log to the workspace, so we can archive it after the build
+    mkdir -p build
+    ccache -o log_file=$PWD/build/ccache.log
 
-      # Configure additional cmake arguments
-      cmake_args=()
-      cmake_args+=("$CMAKE_ARGS")
+    # Configure additional cmake arguments
+    cmake_args=()
+    cmake_args+=("$CMAKE_ARGS")
 
-      if [[ $BUILD_ENVIRONMENT == *aten* ]]; then
-        cmake_args+=("-DBUILD_ATEN=ON")
-      fi
-
-      # conda must be added to the path for Anaconda builds (this location must be
-      # the same as that in install_anaconda.sh used to build the docker image)
-      if [[ "${BUILD_ENVIRONMENT}" == conda* ]]; then
-        export PATH=/opt/conda/bin:$PATH
-        sudo chown -R jenkins:jenkins '/opt/conda'
-      fi
-
-      # Build
-      if test -x ".jenkins/caffe2/build.sh"; then
-        ./.jenkins/caffe2/build.sh ${cmake_args[@]}
-      else
-        ./.jenkins/build.sh ${cmake_args[@]}
-      fi
-
-      # Show sccache stats if it is running
-      if pgrep sccache > /dev/null; then
-        sccache --show-stats
-      fi
-
-      EOL
-      chmod +x $TRAVIS_BUILD_DIR/caffe2_ci_build_script.sh
-      cat >$TRAVIS_BUILD_DIR/caffe2_ci_test_script.sh << EOL
-      set -ex
-
-      # libdc1394 (dependency of OpenCV) expects /dev/raw1394 to exist...
-      sudo ln /dev/null /dev/raw1394
-
-      # conda must be added to the path for Anaconda builds (this location must be
-      # the same as that in install_anaconda.sh used to build the docker image)
-      if [[ "${BUILD_ENVIRONMENT}" == conda* ]]; then
-        export PATH=/opt/conda/bin:$PATH
-      fi
-
-      pip install --user --no-cache-dir hypothesis==3.59.0
-      pip install --user -b /tmp/pip_install_onnx "file:///var/lib/jenkins/workspace/third_party/onnx#egg=onnx"
-
-      # Hotfix, use hypothesis 3.44.6 on Ubuntu 14.04
-      # See comments on https://github.com/HypothesisWorks/hypothesis-python/commit/eadd62e467d6cee6216e71b391951ec25b4f5830
-      if [[ "$BUILD_ENVIRONMENT" == *ubuntu14.04* ]]; then
-        sudo pip uninstall -y hypothesis
-        sudo pip install hypothesis==3.44.6
-      fi
-
-      # Build
-      if test -x ".jenkins/caffe2/test.sh"; then
-        ./.jenkins/caffe2/test.sh
-      else
-        ./.jenkins/test.sh
-      fi
-
-      # Remove benign core dumps.
-      # These are tests for signal handling (including SIGABRT).
-      rm -f ./crash/core.fatal_signal_as.*
-      rm -f ./crash/core.logging_test.*
-
-      EOL
-      chmod +x $TRAVIS_BUILD_DIR/caffe2_ci_test_script.sh
+    if [[ $BUILD_ENVIRONMENT == *aten* ]]; then
+      cmake_args+=("-DBUILD_ATEN=ON")
     fi
+
+    # conda must be added to the path for Anaconda builds (this location must be
+    # the same as that in install_anaconda.sh used to build the docker image)
+    if [[ "${BUILD_ENVIRONMENT}" == conda* ]]; then
+      export PATH=/opt/conda/bin:$PATH
+      sudo chown -R jenkins:jenkins '/opt/conda'
+    fi
+
+    # Build
+    if test -x ".jenkins/caffe2/build.sh"; then
+      ./.jenkins/caffe2/build.sh ${cmake_args[@]}
+    else
+      ./.jenkins/build.sh ${cmake_args[@]}
+    fi
+
+    # Show sccache stats if it is running
+    if pgrep sccache > /dev/null; then
+      sccache --show-stats
+    fi
+
+    EOL
+    chmod +x $TRAVIS_BUILD_DIR/caffe2_ci_build_script.sh
+    cat >$TRAVIS_BUILD_DIR/caffe2_ci_test_script.sh << EOL
+    set -ex
+
+    # libdc1394 (dependency of OpenCV) expects /dev/raw1394 to exist...
+    sudo ln /dev/null /dev/raw1394
+
+    # conda must be added to the path for Anaconda builds (this location must be
+    # the same as that in install_anaconda.sh used to build the docker image)
+    if [[ "${BUILD_ENVIRONMENT}" == conda* ]]; then
+      export PATH=/opt/conda/bin:$PATH
+    fi
+
+    pip install --user --no-cache-dir hypothesis==3.59.0
+    pip install --user -b /tmp/pip_install_onnx "file:///var/lib/jenkins/workspace/third_party/onnx#egg=onnx"
+
+    # Hotfix, use hypothesis 3.44.6 on Ubuntu 14.04
+    # See comments on https://github.com/HypothesisWorks/hypothesis-python/commit/eadd62e467d6cee6216e71b391951ec25b4f5830
+    if [[ "$BUILD_ENVIRONMENT" == *ubuntu14.04* ]]; then
+      sudo pip uninstall -y hypothesis
+      sudo pip install hypothesis==3.44.6
+    fi
+
+    # Build
+    if test -x ".jenkins/caffe2/test.sh"; then
+      ./.jenkins/caffe2/test.sh
+    else
+      ./.jenkins/test.sh
+    fi
+
+    # Remove benign core dumps.
+    # These are tests for signal handling (including SIGABRT).
+    rm -f ./crash/core.fatal_signal_as.*
+    rm -f ./crash/core.logging_test.*
+
+    EOL
+    chmod +x $TRAVIS_BUILD_DIR/caffe2_ci_test_script.sh
   - docker cp "$TRAVIS_BUILD_DIR/." "$id:/var/lib/jenkins/workspace"
   - |
     if [[ ${BUILD_ENVIRONMENT} == "pytorch-"* ]]; then  # PyTorch build
-      (echo "source ./workspace/env" && echo 'sudo chown -R jenkins workspace && cd workspace && git submodule update --init && .jenkins/pytorch/build.sh && .jenkins/pytorch/test.sh') | docker exec -u jenkins -i "$id" bash
+      ((echo "source ./workspace/env" && echo 'sudo chown -R jenkins workspace && cd workspace && git submodule update --init && .jenkins/pytorch/build.sh && .jenkins/pytorch/test.sh') | docker exec -u jenkins -i "$id" bash) || travis_terminate 1;
     else
-      (echo "source ./workspace/env" && echo 'sudo chown -R jenkins workspace && cd workspace && git submodule update --init && ./caffe2_ci_build_script.sh && if [ -z "${CAFFE2_BUILD_ONLY}" ]; then ./caffe2_ci_test_script.sh; fi') | docker exec -u jenkins -i "$id" bash
+      ((echo "source ./workspace/env" && echo 'sudo chown -R jenkins workspace && cd workspace && git submodule update --init && ./caffe2_ci_build_script.sh && if [ -z "${CAFFE2_BUILD_ONLY}" ]; then ./caffe2_ci_test_script.sh; fi') | docker exec -u jenkins -i "$id" bash) || travis_terminate 1;
     fi
