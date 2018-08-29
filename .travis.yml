@@ -86,65 +86,65 @@ matrix:
         install: pip install mypy mypy-extensions
         script: mypy @mypy-files.txt
 
-      # PyTorch CPU build+test
-      - name: "PyTorch - Docker: Trusty / py2.7.9"
-        env: BUILD_ENVIRONMENT=pytorch-linux-trusty-py2.7.9
-        resources:
-          gpu: false
-      - name: "PyTorch - Docker: Trusty / py2.7"
-        env: BUILD_ENVIRONMENT=pytorch-linux-trusty-py2.7
-        resources:
-          gpu: false
-      - name: "PyTorch - Docker: Trusty / py3.5"
-        env: BUILD_ENVIRONMENT=pytorch-linux-trusty-py3.5
-        resources:
-          gpu: false
-      - name: "PyTorch - Docker: Trusty / py3.6 / gcc4.8"
-        env: BUILD_ENVIRONMENT=pytorch-linux-trusty-py3.6-gcc4.8
-        resources:
-          gpu: false
-      - name: "PyTorch - Docker: Trusty / py3.6 / gcc5.4"
-        env: BUILD_ENVIRONMENT=pytorch-linux-trusty-py3.6-gcc5.4
-        resources:
-          gpu: false
-      - name: "PyTorch - Docker: Trusty / py3.6 / gcc7"
-        env: BUILD_ENVIRONMENT=pytorch-linux-trusty-py3.6-gcc7
-        resources:
-          gpu: false
-      - name: "PyTorch - Docker: Trusty / pynightly"
-        env: BUILD_ENVIRONMENT=pytorch-linux-trusty-pynightly
-        resources:
-          gpu: false
-      - name: "PyTorch - Docker: Xenial / py3.6 / clang5 / asan"
-        env: BUILD_ENVIRONMENT=pytorch-linux-xenial-py3-clang5-asan
-        resources:
-          gpu: false
+      # # PyTorch CPU build+test
+      # - name: "PyTorch - Docker: Trusty / py2.7.9"
+      #   env: BUILD_ENVIRONMENT=pytorch-linux-trusty-py2.7.9
+      #   resources:
+      #     gpu: false
+      # - name: "PyTorch - Docker: Trusty / py2.7"
+      #   env: BUILD_ENVIRONMENT=pytorch-linux-trusty-py2.7
+      #   resources:
+      #     gpu: false
+      # - name: "PyTorch - Docker: Trusty / py3.5"
+      #   env: BUILD_ENVIRONMENT=pytorch-linux-trusty-py3.5
+      #   resources:
+      #     gpu: false
+      # - name: "PyTorch - Docker: Trusty / py3.6 / gcc4.8"
+      #   env: BUILD_ENVIRONMENT=pytorch-linux-trusty-py3.6-gcc4.8
+      #   resources:
+      #     gpu: false
+      # - name: "PyTorch - Docker: Trusty / py3.6 / gcc5.4"
+      #   env: BUILD_ENVIRONMENT=pytorch-linux-trusty-py3.6-gcc5.4
+      #   resources:
+      #     gpu: false
+      # - name: "PyTorch - Docker: Trusty / py3.6 / gcc7"
+      #   env: BUILD_ENVIRONMENT=pytorch-linux-trusty-py3.6-gcc7
+      #   resources:
+      #     gpu: false
+      # - name: "PyTorch - Docker: Trusty / pynightly"
+      #   env: BUILD_ENVIRONMENT=pytorch-linux-trusty-pynightly
+      #   resources:
+      #     gpu: false
+      # - name: "PyTorch - Docker: Xenial / py3.6 / clang5 / asan"
+      #   env: BUILD_ENVIRONMENT=pytorch-linux-xenial-py3-clang5-asan
+      #   resources:
+      #     gpu: false
 
-      # PyTorch CUDA build+test
-      - name: "PyTorch - Docker: Xenial / cuda8 / cudnn6 / py3"
-        env:
-          - BUILD_ENVIRONMENT=pytorch-linux-xenial-cuda8-cudnn6-py3
-          - NEED_CUDA_DOCKER=1
-        resources:
-          gpu: true
-      - name: "PyTorch - Docker: Xenial / cuda9 / cudnn7 / py2"
-        env:
-          - BUILD_ENVIRONMENT=pytorch-linux-xenial-cuda9-cudnn7-py2
-          - NEED_CUDA_DOCKER=1
-        resources:
-          gpu: true
-      - name: "PyTorch - Docker: Xenial / cuda9 / cudnn7 / py3"
-        env:
-          - BUILD_ENVIRONMENT=pytorch-linux-xenial-cuda9-cudnn7-py3
-          - NEED_CUDA_DOCKER=1
-        resources:
-          gpu: true
-      - name: "PyTorch - Docker: Xenial / cuda9.2 / cudnn7 / py3 / gcc7"
-        env:
-          - BUILD_ENVIRONMENT=pytorch-linux-xenial-cuda9.2-cudnn7-py3-gcc7
-          - NEED_CUDA_DOCKER=1
-        resources:
-          gpu: true
+      # # PyTorch CUDA build+test
+      # - name: "PyTorch - Docker: Xenial / cuda8 / cudnn6 / py3"
+      #   env:
+      #     - BUILD_ENVIRONMENT=pytorch-linux-xenial-cuda8-cudnn6-py3
+      #     - NEED_CUDA_DOCKER=1
+      #   resources:
+      #     gpu: true
+      # - name: "PyTorch - Docker: Xenial / cuda9 / cudnn7 / py2"
+      #   env:
+      #     - BUILD_ENVIRONMENT=pytorch-linux-xenial-cuda9-cudnn7-py2
+      #     - NEED_CUDA_DOCKER=1
+      #   resources:
+      #     gpu: true
+      # - name: "PyTorch - Docker: Xenial / cuda9 / cudnn7 / py3"
+      #   env:
+      #     - BUILD_ENVIRONMENT=pytorch-linux-xenial-cuda9-cudnn7-py3
+      #     - NEED_CUDA_DOCKER=1
+      #   resources:
+      #     gpu: true
+      # - name: "PyTorch - Docker: Xenial / cuda9.2 / cudnn7 / py3 / gcc7"
+      #   env:
+      #     - BUILD_ENVIRONMENT=pytorch-linux-xenial-cuda9.2-cudnn7-py3-gcc7
+      #     - NEED_CUDA_DOCKER=1
+      #   resources:
+      #     gpu: true
 
       # PyTorch macOS jobs
       - name: "PyTorch - Mac: 10.13 / py3"
@@ -207,21 +207,25 @@ matrix:
       - name: "Caffe2 - Docker: Xenial / py2 / mkl"
         env:
           - BUILD_ENVIRONMENT=py2-mkl-ubuntu16.04
+          - DOCKER_BASE_IMAGE=py2-mkl-ubuntu16.04
         resources:
           gpu: false
       - name: "Caffe2 - Docker: Trusty / py2 / gcc4.8"
         env:
           - BUILD_ENVIRONMENT=py2-gcc4.8-ubuntu14.04
+          - DOCKER_BASE_IMAGE=py2-gcc4.8-ubuntu14.04
         resources:
           gpu: false
       - name: "Caffe2 - Docker: Xenial / py2 / gcc5 / onnx"
         env:
           - BUILD_ENVIRONMENT=onnx-py2-gcc5-ubuntu16.04
+          - DOCKER_BASE_IMAGE=py2-gcc5-ubuntu16.04
         resources:
           gpu: false
       - name: "Caffe2 - Docker: Xenial / conda2"
         env:
           - BUILD_ENVIRONMENT=conda2-ubuntu16.04
+          - DOCKER_BASE_IMAGE=conda2-ubuntu16.04
         resources:
           gpu: false
 
@@ -229,24 +233,28 @@ matrix:
       - name: "Caffe2 - Docker: Xenial / cuda8 / cudnn6 / py2"
         env:
           - BUILD_ENVIRONMENT=py2-cuda8.0-cudnn6-ubuntu16.04
+          - DOCKER_BASE_IMAGE=py2-cuda8.0-cudnn6-ubuntu16.04
           - NEED_CUDA_DOCKER=1
         resources:
           gpu: true
       - name: "Caffe2 - Docker: Xenial / cuda9 / cudnn7 / py2"
         env:
           - BUILD_ENVIRONMENT=py2-cuda9.0-cudnn7-ubuntu16.04
+          - DOCKER_BASE_IMAGE=py2-cuda9.0-cudnn7-ubuntu16.04
           - NEED_CUDA_DOCKER=1
         resources:
           gpu: true
       - name: "Caffe2 - Docker: Xenial / cuda9 / cudnn7 / py2 / aten"
         env:
           - BUILD_ENVIRONMENT=py2-cuda9.0-cudnn7-aten-ubuntu16.04
+          - DOCKER_BASE_IMAGE=py2-cuda9.0-cudnn7-ubuntu16.04
           - NEED_CUDA_DOCKER=1
         resources:
           gpu: true
       - name: "Caffe2 - Docker: Xenial / cuda9.1 / cudnn7 / py2"
         env:
           - BUILD_ENVIRONMENT=py2-cuda9.1-cudnn7-ubuntu16.04
+          - DOCKER_BASE_IMAGE=py2-cuda9.1-cudnn7-ubuntu16.04
           - NEED_CUDA_DOCKER=1
         resources:
           gpu: true
@@ -255,36 +263,42 @@ matrix:
       - name: "Caffe2 - Docker: Trusty / py2 / gcc4.9"
         env:
           - BUILD_ENVIRONMENT=py2-gcc4.9-ubuntu14.04
+          - DOCKER_BASE_IMAGE=py2-gcc4.9-ubuntu14.04
           - CAFFE2_BUILD_ONLY=1
         resources:
           gpu: false
       - name: "Caffe2 - Docker: Xenial / py2 / clang3.8"
         env:
           - BUILD_ENVIRONMENT=py2-clang3.8-ubuntu16.04
+          - DOCKER_BASE_IMAGE=py2-clang3.8-ubuntu16.04
           - CAFFE2_BUILD_ONLY=1
         resources:
           gpu: false
       - name: "Caffe2 - Docker: Xenial / py2 / clang3.9"
         env:
           - BUILD_ENVIRONMENT=py2-clang3.9-ubuntu16.04
+          - DOCKER_BASE_IMAGE=py2-clang3.9-ubuntu16.04
           - CAFFE2_BUILD_ONLY=1
         resources:
           gpu: false
       - name: "Caffe2 - Docker: Xenial / py2 / gcc6"
         env:
           - BUILD_ENVIRONMENT=py2-gcc6-ubuntu16.04
+          - DOCKER_BASE_IMAGE=py2-gcc6-ubuntu16.04
           - CAFFE2_BUILD_ONLY=1
         resources:
           gpu: false
       - name: "Caffe2 - Docker: Xenial / py2 / gcc7"
         env:
           - BUILD_ENVIRONMENT=py2-gcc7-ubuntu16.04
+          - DOCKER_BASE_IMAGE=py2-gcc7-ubuntu16.04
           - CAFFE2_BUILD_ONLY=1
         resources:
           gpu: false
       - name: "Caffe2 - Docker: Xenial / py2 / android"
         env:
           - BUILD_ENVIRONMENT=py2-android-ubuntu16.04
+          - DOCKER_BASE_IMAGE=py2-android-ubuntu16.04
           - CAFFE2_BUILD_ONLY=1
         resources:
           gpu: false
@@ -293,24 +307,28 @@ matrix:
       - name: "Caffe2 - Docker: Xenial / cuda8 / cudnn7 / py2"
         env:
           - BUILD_ENVIRONMENT=py2-cuda8.0-cudnn7-ubuntu16.04
+          - DOCKER_BASE_IMAGE=py2-cuda8.0-cudnn7-ubuntu16.04
           - CAFFE2_BUILD_ONLY=1
         resources:
           gpu: false
       - name: "Caffe2 - Docker: Xenial / cuda8 / cudnn7 / py2 / aten"
         env:
-          - BUILD_ENVIRONMENT=py2-cuda8.0-cudnn7-ubuntu16.04
+          - BUILD_ENVIRONMENT=py2-cuda8.0-cudnn7-aten-ubuntu16.04
+          - DOCKER_BASE_IMAGE=py2-cuda8.0-cudnn7-ubuntu16.04
           - CAFFE2_BUILD_ONLY=1
         resources:
           gpu: false
       - name: "Caffe2 - Docker: Xenial / cuda9 / cudnn7 / conda3"
         env:
           - BUILD_ENVIRONMENT=conda3-cuda9.0-cudnn7-ubuntu16.04
+          - DOCKER_BASE_IMAGE=conda3-cuda9.0-cudnn7-ubuntu16.04
           - CAFFE2_BUILD_ONLY=1
         resources:
           gpu: false
       - name: "Caffe2 - Docker: CentOS7 / cuda9 / cudnn7 / py2"
         env:
           - BUILD_ENVIRONMENT=py2-cuda9.0-cudnn7-centos7
+          - DOCKER_BASE_IMAGE=py2-cuda9.0-cudnn7-centos7
           - CAFFE2_BUILD_ONLY=1
         resources:
           gpu: false
@@ -371,8 +389,8 @@ install:
       export REPO_NAME=caffe2
       export IMAGE_TAG=${CAFFE2_IMAGE_TAG} || travis_terminate 1;
     fi
-  - echo "$ECR_DOMAIN/$REPO_NAME/$BUILD_ENVIRONMENT:$IMAGE_TAG"
-  - docker pull "$ECR_DOMAIN/$REPO_NAME/$BUILD_ENVIRONMENT:$IMAGE_TAG"
+  - echo "$ECR_DOMAIN/$REPO_NAME/$DOCKER_BASE_IMAGE:$IMAGE_TAG"
+  - docker pull "$ECR_DOMAIN/$REPO_NAME/$DOCKER_BASE_IMAGE:$IMAGE_TAG"
 script:
   - |
     if [[ ${BUILD_ENVIRONMENT} == "pytorch-"* ]]; then  # PyTorch build
@@ -384,9 +402,9 @@ script:
     fi
   - |
     if [ -n "${NEED_CUDA_DOCKER}" ]; then
-      id=$(docker run --runtime=nvidia -t -d -w /var/lib/jenkins "$ECR_DOMAIN/$REPO_NAME/$BUILD_ENVIRONMENT:$IMAGE_TAG") || travis_terminate 1;
+      id=$(docker run --runtime=nvidia -t -d -w /var/lib/jenkins "$ECR_DOMAIN/$REPO_NAME/$DOCKER_BASE_IMAGE:$IMAGE_TAG") || travis_terminate 1;
     else
-      id=$(docker run -t -d -w /var/lib/jenkins "$ECR_DOMAIN/$REPO_NAME/$BUILD_ENVIRONMENT:$IMAGE_TAG") || travis_terminate 1;
+      id=$(docker run -t -d -w /var/lib/jenkins "$ECR_DOMAIN/$REPO_NAME/$DOCKER_BASE_IMAGE:$IMAGE_TAG") || travis_terminate 1;
     fi
   - echo "declare -x SCCACHE_BUCKET=${SCCACHE_BUCKET}" > $TRAVIS_BUILD_DIR/env
   - # This IAM user allows write access to S3 bucket for sccache
