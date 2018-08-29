@@ -407,12 +407,7 @@ script:
     # Reinitialize submodules
     git submodule update --init --recursive
 
-    # Ensure jenkins can write to the ccache root dir.
-    sudo chown jenkins:jenkins "${HOME}/.ccache"
-
-    # Make ccache log to the workspace, so we can archive it after the build
     mkdir -p build
-    ccache -o log_file=$PWD/build/ccache.log
 
     # Configure additional cmake arguments
     cmake_args=()
