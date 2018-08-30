@@ -389,6 +389,10 @@ install:
       export REPO_NAME=caffe2
       export IMAGE_TAG=${CAFFE2_IMAGE_TAG} || travis_terminate 1;
     fi
+  - |
+    if [ -z "$DOCKER_BASE_IMAGE" ]; then
+      export DOCKER_BASE_IMAGE=${BUILD_ENVIRONMENT} || travis_terminate 1;
+    fi
   - echo "$ECR_DOMAIN/$REPO_NAME/$DOCKER_BASE_IMAGE:$IMAGE_TAG"
   - docker pull "$ECR_DOMAIN/$REPO_NAME/$DOCKER_BASE_IMAGE:$IMAGE_TAG"
 script:
@@ -399,6 +403,10 @@ script:
     else  # Caffe2 build
       export REPO_NAME=caffe2
       export IMAGE_TAG=${CAFFE2_IMAGE_TAG} || travis_terminate 1;
+    fi
+  - |
+    if [ -z "$DOCKER_BASE_IMAGE" ]; then
+      export DOCKER_BASE_IMAGE=${BUILD_ENVIRONMENT} || travis_terminate 1;
     fi
   - |
     if [ -n "${NEED_CUDA_DOCKER}" ]; then
