@@ -86,65 +86,65 @@ matrix:
         install: pip install mypy mypy-extensions
         script: mypy @mypy-files.txt
 
-      # # PyTorch CPU build+test
-      # - name: "PyTorch - Docker: Trusty / py2.7.9"
-      #   env: BUILD_ENVIRONMENT=pytorch-linux-trusty-py2.7.9
-      #   resources:
-      #     gpu: false
-      # - name: "PyTorch - Docker: Trusty / py2.7"
-      #   env: BUILD_ENVIRONMENT=pytorch-linux-trusty-py2.7
-      #   resources:
-      #     gpu: false
-      # - name: "PyTorch - Docker: Trusty / py3.5"
-      #   env: BUILD_ENVIRONMENT=pytorch-linux-trusty-py3.5
-      #   resources:
-      #     gpu: false
-      # - name: "PyTorch - Docker: Trusty / py3.6 / gcc4.8"
-      #   env: BUILD_ENVIRONMENT=pytorch-linux-trusty-py3.6-gcc4.8
-      #   resources:
-      #     gpu: false
-      # - name: "PyTorch - Docker: Trusty / py3.6 / gcc5.4"
-      #   env: BUILD_ENVIRONMENT=pytorch-linux-trusty-py3.6-gcc5.4
-      #   resources:
-      #     gpu: false
-      # - name: "PyTorch - Docker: Trusty / py3.6 / gcc7"
-      #   env: BUILD_ENVIRONMENT=pytorch-linux-trusty-py3.6-gcc7
-      #   resources:
-      #     gpu: false
-      # - name: "PyTorch - Docker: Trusty / pynightly"
-      #   env: BUILD_ENVIRONMENT=pytorch-linux-trusty-pynightly
-      #   resources:
-      #     gpu: false
-      # - name: "PyTorch - Docker: Xenial / py3.6 / clang5 / asan"
-      #   env: BUILD_ENVIRONMENT=pytorch-linux-xenial-py3-clang5-asan
-      #   resources:
-      #     gpu: false
+      # PyTorch CPU build+test
+      - name: "PyTorch - Docker: Trusty / py2.7.9"
+        env: BUILD_ENVIRONMENT=pytorch-linux-trusty-py2.7.9
+        resources:
+          gpu: false
+      - name: "PyTorch - Docker: Trusty / py2.7"
+        env: BUILD_ENVIRONMENT=pytorch-linux-trusty-py2.7
+        resources:
+          gpu: false
+      - name: "PyTorch - Docker: Trusty / py3.5"
+        env: BUILD_ENVIRONMENT=pytorch-linux-trusty-py3.5
+        resources:
+          gpu: false
+      - name: "PyTorch - Docker: Trusty / py3.6 / gcc4.8"
+        env: BUILD_ENVIRONMENT=pytorch-linux-trusty-py3.6-gcc4.8
+        resources:
+          gpu: false
+      - name: "PyTorch - Docker: Trusty / py3.6 / gcc5.4"
+        env: BUILD_ENVIRONMENT=pytorch-linux-trusty-py3.6-gcc5.4
+        resources:
+          gpu: false
+      - name: "PyTorch - Docker: Trusty / py3.6 / gcc7"
+        env: BUILD_ENVIRONMENT=pytorch-linux-trusty-py3.6-gcc7
+        resources:
+          gpu: false
+      - name: "PyTorch - Docker: Trusty / pynightly"
+        env: BUILD_ENVIRONMENT=pytorch-linux-trusty-pynightly
+        resources:
+          gpu: false
+      - name: "PyTorch - Docker: Xenial / py3.6 / clang5 / asan"
+        env: BUILD_ENVIRONMENT=pytorch-linux-xenial-py3-clang5-asan
+        resources:
+          gpu: false
 
-      # # PyTorch CUDA build+test
-      # - name: "PyTorch - Docker: Xenial / cuda8 / cudnn6 / py3"
-      #   env:
-      #     - BUILD_ENVIRONMENT=pytorch-linux-xenial-cuda8-cudnn6-py3
-      #     - NEED_CUDA_DOCKER=1
-      #   resources:
-      #     gpu: true
-      # - name: "PyTorch - Docker: Xenial / cuda9 / cudnn7 / py2"
-      #   env:
-      #     - BUILD_ENVIRONMENT=pytorch-linux-xenial-cuda9-cudnn7-py2
-      #     - NEED_CUDA_DOCKER=1
-      #   resources:
-      #     gpu: true
-      # - name: "PyTorch - Docker: Xenial / cuda9 / cudnn7 / py3"
-      #   env:
-      #     - BUILD_ENVIRONMENT=pytorch-linux-xenial-cuda9-cudnn7-py3
-      #     - NEED_CUDA_DOCKER=1
-      #   resources:
-      #     gpu: true
-      # - name: "PyTorch - Docker: Xenial / cuda9.2 / cudnn7 / py3 / gcc7"
-      #   env:
-      #     - BUILD_ENVIRONMENT=pytorch-linux-xenial-cuda9.2-cudnn7-py3-gcc7
-      #     - NEED_CUDA_DOCKER=1
-      #   resources:
-      #     gpu: true
+      # PyTorch CUDA build+test
+      - name: "PyTorch - Docker: Xenial / cuda8 / cudnn6 / py3"
+        env:
+          - BUILD_ENVIRONMENT=pytorch-linux-xenial-cuda8-cudnn6-py3
+          - NEED_CUDA_DOCKER=1
+        resources:
+          gpu: true
+      - name: "PyTorch - Docker: Xenial / cuda9 / cudnn7 / py2"
+        env:
+          - BUILD_ENVIRONMENT=pytorch-linux-xenial-cuda9-cudnn7-py2
+          - NEED_CUDA_DOCKER=1
+        resources:
+          gpu: true
+      - name: "PyTorch - Docker: Xenial / cuda9 / cudnn7 / py3"
+        env:
+          - BUILD_ENVIRONMENT=pytorch-linux-xenial-cuda9-cudnn7-py3
+          - NEED_CUDA_DOCKER=1
+        resources:
+          gpu: true
+      - name: "PyTorch - Docker: Xenial / cuda9.2 / cudnn7 / py3 / gcc7"
+        env:
+          - BUILD_ENVIRONMENT=pytorch-linux-xenial-cuda9.2-cudnn7-py3-gcc7
+          - NEED_CUDA_DOCKER=1
+        resources:
+          gpu: true
 
       # PyTorch macOS jobs
       - name: "PyTorch - Mac: 10.13 / py3"
