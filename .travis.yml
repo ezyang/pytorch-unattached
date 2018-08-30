@@ -12,7 +12,7 @@ env:
   global:
     - ECR_DOMAIN=308535385114.dkr.ecr.us-east-1.amazonaws.com
     - PYTORCH_IMAGE_TAG=226
-    - CAFFE2_IMAGE_TAG=189
+    - CAFFE2_IMAGE_TAG=190
     - SCCACHE_BUCKET=ossci-compiler-cache-travis
 
 caffe2_macos_build_defaults: &caffe2_macos_build_defaults
