@@ -11,7 +11,7 @@ sudo: true
 env:
   global:
     - ECR_DOMAIN=308535385114.dkr.ecr.us-east-1.amazonaws.com
-    - PYTORCH_IMAGE_TAG=226
+    - PYTORCH_IMAGE_TAG=235
     - CAFFE2_IMAGE_TAG=190
     - SCCACHE_BUCKET=ossci-compiler-cache-travis-v2
 
