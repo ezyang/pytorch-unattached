@@ -348,15 +348,6 @@ matrix:
         os: osx
         install: skip
         <<: *caffe2_macos_build_defaults
-      - name: "Caffe2 - Mac: 10.13 / conda2"
-        env:
-          - CAFFE2_USE_ANACONDA=1
-          - SKIP_CONDA_TESTS=1
-          - PYTHON_INSTALLATION=system
-          - ANACONDA_VERSION=2
-        os: osx
-        install: skip
-        <<: *caffe2_macos_build_defaults
 
 install:
   - sudo pip install awscli
